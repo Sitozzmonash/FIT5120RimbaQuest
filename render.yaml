@@ -2,26 +2,21 @@ services:
   - type: web
     name: rimbaquest-api
     runtime: docker
-    dockerContext: ./backend
+    region: singapore
+    plan: starter
     dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        value: sqlite:////app/data/RimbaQuest.db
+        value: sqlite:////var/data/RimbaQuest.db
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: "*"
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: ZHIPU_API_KEY
         sync: false
     disk:
-      name: rimbaquest-data
-      mountPath: /app/data
+      name: rimbaquest-sqlite-data
+      mountPath: /var/data
       sizeGB: 1
-  - type: web
-    name: rimbaquest-web
-    runtime: docker
-    dockerContext: ./frontend
-    dockerfilePath: ./frontend/Dockerfile
-    envVars:
-      - key: NEXT_PUBLIC_API_BASE_URL
-        sync: false

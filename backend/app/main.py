@@ -35,7 +35,8 @@ initialise_database()
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 app = FastAPI(title="RimbaQuest API", version="1.0.0")
-origins = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
+default_origins = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8081,http://127.0.0.1:8081"
+origins = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", default_origins).split(",") if origin.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 
 
