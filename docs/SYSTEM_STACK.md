@@ -13,7 +13,6 @@ Excluded: automatic photo identification, parent map/adventure planning, virtual
 | Layer | Technology | Status | Notes |
 |---|---|---|---|
 | Universal client | React Native + Expo SDK 54 + TypeScript + Expo Router | Implemented | `rimbaquest/` is the active shared client for Web, Android and iOS. |
-| Legacy browser client | Next.js 15 + React 19 | Superseded | Retained as a reference while the Expo client takes over. |
 | API backend | Python 3.12 + FastAPI | Implemented | REST API for species, discoveries, collection and progress. |
 | Persistence / ORM | SQLite + SQLAlchemy 2.x | Implemented | Uses the supplied schema and seed SQL. |
 | Backend deployment | Docker + Render persistent disk | Configured | SQLite path: `/var/data/RimbaQuest.db`; one backend instance only. |

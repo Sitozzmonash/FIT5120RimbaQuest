@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Batch download species images from Wikimedia Commons.
 Usage: python fetch_species_batch.py <max_batch>
@@ -7,20 +8,20 @@ Reads species from DB, checks which are missing images, downloads up to <max_bat
 
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
 import urllib.parse
 import urllib.error
 import subprocess
-import re
 from pathlib import Path
 
-ROOT = Path(r"D:\Documents\ChatGPT\RimbaQuest鏋勫缓")
+ROOT = Path(r"D:\Documents\ChatGPT\RimbaQuest构建")
 DB = ROOT / "backend" / "data" / "RimbaQuest.db"
 OUTPUT = ROOT / "rimbaquest" / "assets" / "species"
 MANIFEST = OUTPUT / "commons-attribution.json"
-TYPESCRIPT = ROOT / "rimbaquest" / "src" / "app" / "index.tsx"
+
 
 def get_db_species():
     """Get all species from SQLite database."""
@@ -40,6 +41,7 @@ def get_db_species():
             })
     return species
 
+
 def get_existing_images():
     """Get set of species IDs that already have images."""
     existing = set()
@@ -48,6 +50,7 @@ def get_existing_images():
             existing.add(f.stem)
     return existing
 
+
 def load_manifest():
     """Load existing attribution manifest."""
     if MANIFEST.exists():
@@ -55,10 +58,44 @@ def load_manifest():
             return json.load(f)
     return {}
 
+
 def save_manifest(manifest):
     """Save attribution manifest."""
     with open(MANIFEST, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+
+# Skipped file types (commons pages ending in these are not photos)
+SKIP_EXTENSIONS = (
+    '.mp3', '.ogg', '.wav', '.flac', '.ogv', '.webm', '.mp4', '.mkv',
+    '.svg', '.pdf', '.tif', '.tiff', '.djvu', '.xcf', '.psd', '.gif',
+    '.odt', '.doc', '.docx', '.zip', '.tar', '.gz', '.7z', '.exe',
+)
+# Year-in-filename pattern, e.g. "Eupetes macrocerus 1838.jpg" - historic plates/specimens
+YEAR_AT_END = re.compile(r'[\s_-]\d{4}\.(jpg|jpeg)$', re.IGNORECASE)
+YEAR_MID = re.compile(r'\b(18|19)\d{2}\b')
+# Keywords indicating non-photo content
+SKIP_KEYWORDS = (
+    'distribution', 'range map', 'diagram', 'illustration', 'stamp', 'print',
+    'iconographia', 'engraving', 'museum', 'specimen', 'painting', 'drawing',
+    'plush', 'toy', 'sculpture', 'taxidermy', 'skull', 'skeleton', 'fossil',
+    'reconstruction', 'deer park', 'zoo sign', 'antique', 'map of',
+    'distribution of', 'habitat of', 'plate from', 'after ', 'drawn by',
+    'sketch', 'lithograph', 'chromolithograph', 'watercolour', 'checklist',
+)
+
+
+def title_needs_skip(title):
+    """Return True if the Commons file title is likely not a wildlife photo."""
+    low = title.lower()
+    if any(low.endswith(ext) for ext in SKIP_EXTENSIONS):
+        return True
+    if YEAR_AT_END.search(low):
+        return True
+    if any(kw in low for kw in SKIP_KEYWORDS):
+        return True
+    return False
+
 
 def search_commons(scientific_name, max_retries=3):
     """Search Wikimedia Commons for the best image of a species."""
@@ -83,21 +120,10 @@ def search_commons(scientific_name, max_retries=3):
             if not pages:
                 return None
 
-            # Skip non-image file types (audio, video, etc.)
-            skip_extensions = ('.mp3', '.ogg', '.wav', '.flac', '.ogv', '.webm', '.mp4', '.svg')
-
             candidates = []
             for page_id, page in pages.items():
                 title = page.get("title", "")
-                title_lower = title.lower()
-
-                # Skip audio/video/svg files
-                if any(title_lower.endswith(ext) for ext in skip_extensions):
-                    continue
-
-                # Skip distribution maps, range maps, diagrams
-                skip_keywords = ['distribution', 'range map', 'map.svg', 'diagram', 'illustration']
-                if any(kw in title_lower for kw in skip_keywords):
+                if title_needs_skip(title):
                     continue
 
                 imageinfo = page.get("imageinfo", [])
@@ -112,8 +138,7 @@ def search_commons(scientific_name, max_retries=3):
 
                 if thumburl and license_short:
                     name_lower = scientific_name.lower()
-                    # Prefer exact scientific name matches in title
-                    exact = name_lower in title_lower
+                    exact = name_lower in title.lower()
                     candidates.append({
                         "title": title,
                         "thumburl": thumburl,
@@ -122,14 +147,16 @@ def search_commons(scientific_name, max_retries=3):
                         "license_url": extmeta.get("LicenseUrl", {}).get("value") if extmeta.get("LicenseUrl") else None,
                         "author": extmeta.get("Artist", {}).get("value") if extmeta.get("Artist") else None,
                         "attribution": extmeta.get("Attribution", {}).get("value") if extmeta.get("Attribution") else None,
-                        "exact": exact
+                        "exact": exact,
+                        "width": info.get("width") or 0,
+                        "height": info.get("height") or 0,
                     })
 
             if not candidates:
                 return None
 
-            # Sort: exact match first, then by thumbnail URL quality
-            candidates.sort(key=lambda c: (not c["exact"], c["thumburl"]))
+            # Prefer exact scientific-name matches, then larger images
+            candidates.sort(key=lambda c: (not c["exact"], -c["width"]))
             return candidates[0]
 
         except urllib.error.HTTPError as e:
@@ -148,21 +175,46 @@ def search_commons(scientific_name, max_retries=3):
             return None
     return None
 
-def download_image(url, output_path):
+
+def is_jpeg(data):
+    """Check JPEG magic bytes."""
+    return data[:3] == b'\xff\xd8\xff'
+
+
+def download_image(url, output_path, max_retries=4):
     """Download an image from URL to file."""
-    try:
-        req = urllib.request.Request(url, headers={
-            "User-Agent": "RimbaQuest/1.0 (species image enrichment; educational project)"
-        })
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            data = resp.read()
-        if len(data) < 5000:
-            return False, f"Too small: {len(data)} bytes"
-        with open(output_path, "wb") as f:
-            f.write(data)
-        return True, None
-    except Exception as e:
-        return False, str(e)
+    for attempt in range(max_retries):
+        try:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "RimbaQuest/1.0 (species image enrichment; educational project)"
+            })
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = resp.read()
+            if len(data) < 5000:
+                return False, f"Too small: {len(data)} bytes"
+            if not is_jpeg(data):
+                # If we got a non-JPEG (e.g. PDF rename), try one more time then give up
+                if not data[:4] == b'%PDF':
+                    return False, f"Not a JPEG (magic: {data[:8].hex()})"
+                return False, "Downloaded a PDF, not an image"
+            with open(output_path, "wb") as f:
+                f.write(data)
+            return True, None
+        except urllib.error.HTTPError as e:
+            if e.code == 429:
+                wait = 15 * (attempt + 1)
+                print(f"  Download 429, waiting {wait}s...")
+                time.sleep(wait)
+                continue
+            return False, str(e)
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"  Download error, retrying... ({e})")
+                time.sleep(5)
+                continue
+            return False, str(e)
+    return False, "max retries exceeded"
+
 
 def main():
     max_batch = int(sys.argv[1]) if len(sys.argv) > 1 else 10
@@ -184,9 +236,9 @@ def main():
     for i, sp in enumerate(batch):
         print(f"\n[{i+1}/{len(batch)}] {sp['id']} - {sp['common_name']} ({sp['scientific_name']})")
 
-        if sp["id"] in manifest:
-            print(f"  Already in manifest, skipping")
-            continue
+        if (OUTPUT / f"{sp['id']}.jpg").exists():
+                    print(f"  Already has image file, skipping")
+                    continue
 
         result = search_commons(sp["scientific_name"])
         if not result:
@@ -195,7 +247,7 @@ def main():
             time.sleep(1.0)
             continue
 
-        print(f"  Found: {result['title']} ({result['license']})")
+        print(f"  Found: {result['title']} ({result['license']}) {result['width']}px")
 
         out_path = OUTPUT / f"{sp['id']}.jpg"
         success, error = download_image(result["thumburl"], out_path)
@@ -225,7 +277,7 @@ def main():
         save_manifest(manifest)
 
         # Rate limit
-        time.sleep(1.5)
+        time.sleep(2.5)
 
     print(f"\n{'='*50}")
     print(f"Batch complete: {len(results['ok'])} OK, {len(results['fail'])} FAIL, {len(results['miss'])} MISS")
@@ -235,6 +287,7 @@ def main():
         print(f"Failed: {', '.join(results['fail'])}")
     if results["miss"]:
         print(f"Missing from Commons: {', '.join(results['miss'])}")
+
 
 if __name__ == "__main__":
     main()

@@ -285,28 +285,6 @@
     "attribution": null,
     "title": "File:Chestnut-capped babbler (Timalia pileata) observed at Pilibhit tiger reserve.jpg"
   },
-  "sp_chestnut_capped_thrush": {
-    "species": "Chestnut-capped Thrush",
-    "scientific_name": "Geokichla interpres",
-    "page": "https://commons.wikimedia.org/wiki/File:Geokichla_interpres_1838.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Geokichla_interpres_1838.jpg/960px-Geokichla_interpres_1838.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-    "licence": "Public domain",
-    "licence_url": null,
-    "author": "<bdi><a href=\"https://en.wikipedia.org/wiki/en:Nicolas_Huet_the_Younger\" class=\"extiw\" title=\"w:en:Nicolas Huet the Younger\"><span title=\"French painter, illustrator and engraver (1770-1830)\">Nicolas Huet</span></a></bdi> / <bdi><a href=\"https://en.wikipedia.org/wiki/en:Jean-Gabriel_Pr%C3%AAtre\" class=\"extiw\" title=\"w:en:Jean-Gabriel Prêtre\"><span title=\"Swiss illustrator (1768-1849)\">Jean Gabriel Prêtre</span></a></bdi>",
-    "attribution": null,
-    "title": "File:Geokichla interpres 1838.jpg"
-  },
-  "sp_chestnut_necklaced_partridge": {
-    "species": "Chestnut-necklaced Partridge",
-    "scientific_name": "Tropicoperdix charltonii",
-    "page": "https://commons.wikimedia.org/wiki/File:Perdix_charltoni_-_1820-1863_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBA01_IZ17100103.png",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/1/12/Perdix_charltoni_-_1820-1863_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBA01_IZ17100103.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
-    "licence": "Public domain",
-    "licence_url": null,
-    "author": null,
-    "attribution": null,
-    "title": "File:Perdix charltoni - 1820-1863 - Print - Iconographia Zoologica - Special Collections University of Amsterdam - UBA01 IZ17100103.png"
-  },
   "sp_cinereous_bulbul": {
     "species": "Cinereous Bulbul",
     "scientific_name": "Hemixos cinereus",
@@ -318,17 +296,6 @@
     "attribution": null,
     "title": "File:Hemixos cinereus - Subir B. Shakya - 27106984.jpeg"
   },
-  "sp_clouded_leopard": {
-    "species": "Clouded Leopard",
-    "scientific_name": "Neofelis nebulosa",
-    "page": "https://commons.wikimedia.org/wiki/File:Stamp_of_Indonesia_-_1978_-_Colnect_259658_-_Clouded_Leopard_Neofelis_nebulosa.jpeg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/4/4a/Stamp_of_Indonesia_-_1978_-_Colnect_259658_-_Clouded_Leopard_Neofelis_nebulosa.jpeg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
-    "licence": "Public domain",
-    "licence_url": null,
-    "author": "Post of Indonesia",
-    "attribution": null,
-    "title": "File:Stamp of Indonesia - 1978 - Colnect 259658 - Clouded Leopard Neofelis nebulosa.jpeg"
-  },
   "sp_collared_mongoose": {
     "species": "Collared Mongoose",
     "scientific_name": "Herpestes semitorquatus",
@@ -339,17 +306,6 @@
     "author": "Waterhouse Hawkins",
     "attribution": null,
     "title": "File:Herpestes semitorquatus.jpg"
-  },
-  "sp_collared_mongoose_2": {
-    "species": "Collared mongoose",
-    "scientific_name": "Urva semitorquata",
-    "page": "https://commons.wikimedia.org/wiki/File:Urva_Distribution.png",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/7/76/Urva_Distribution.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
-    "licence": "CC BY-SA 3.0",
-    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
-    "author": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Craig_Pemberton&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Craig Pemberton (page does not exist)\">Craig Pemberton</a>",
-    "attribution": null,
-    "title": "File:Urva Distribution.png"
   },
   "sp_common_emerald_dove": {
     "species": "Common Emerald Dove",
@@ -372,17 +328,6 @@
     "author": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Nativeplants_garden&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Nativeplants garden (page does not exist)\">Nativeplants garden</a>",
     "attribution": null,
     "title": "File:Dinopium benghalense 2.jpg"
-  },
-  "sp_common_hill_myna": {
-    "species": "Common Hill Myna",
-    "scientific_name": "Gracula religiosa",
-    "page": "https://commons.wikimedia.org/wiki/File:Gracula_religiosa_MHNT_227_Jardin_des_plantes_de_Paris.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Gracula_religiosa_MHNT_227_Jardin_des_plantes_de_Paris.jpg/960px-Gracula_religiosa_MHNT_227_Jardin_des_plantes_de_Paris.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-    "licence": "CC BY-SA 3.0",
-    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
-    "author": "<div class=\"fn value\">\n<a href=\"//commons.wikimedia.org/wiki/User:Archaeodontosaurus\" title=\"User:Archaeodontosaurus\">Didier Descouens</a></div>",
-    "attribution": null,
-    "title": "File:Gracula religiosa MHNT 227 Jardin des plantes de Paris.jpg"
   },
   "sp_common_palm_civet": {
     "species": "Common Palm Civet",
@@ -538,17 +483,6 @@
     "attribution": null,
     "title": "File:Prionailurus planiceps cropped.png"
   },
-  "sp_greater_oriental_chevrotain": {
-    "species": "Greater Oriental Chevrotain",
-    "scientific_name": "Tragulus napu",
-    "page": "https://commons.wikimedia.org/wiki/File:Tragulus_napu_-_1818-1842_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_(white_background).jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Tragulus_napu_-_1818-1842_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_%28white_background%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
-    "licence": "Public domain",
-    "licence_url": null,
-    "author": "<bdi><a href=\"https://www.wikidata.org/wiki/Q47037264\" class=\"extiw\" title=\"d:Q47037264\"><span title=\"natural history artist (1798-1856)\">Jacques Christophe Werner</span></a></bdi> / <bdi><a href=\"https://en.wikipedia.org/wiki/en:Charles_Philibert_de_Lasteyrie\" class=\"extiw\" title=\"w:en:Charles Philibert de Lasteyrie\"><span title=\"French printer (1759–1849)\">Charles Philibert de Lasteyrie</span></a></bdi>",
-    "attribution": null,
-    "title": "File:Tragulus napu - 1818-1842 - Print - Iconographia Zoologica - Special Collections University of Amsterdam - (white background).jpg"
-  },
   "sp_grey_bellied_squirrel": {
     "species": "Grey-bellied Squirrel",
     "scientific_name": "Callosciurus caniceps",
@@ -560,15 +494,510 @@
     "attribution": null,
     "title": "File:Callosciurus caniceps 14025871.jpg"
   },
+  "sp_four_striped_ground_squirrel": {
+    "species": "Four-striped Ground Squirrel",
+    "scientific_name": "Lariscus hosei",
+    "page": "https://commons.wikimedia.org/wiki/File:Lariscus_hosei.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Lariscus_hosei.jpg/960px-Lariscus_hosei.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "Лариса Артемьева",
+    "attribution": null,
+    "title": "File:Lariscus hosei.jpg"
+  },
+  "sp_gaur": {
+    "species": "Gaur",
+    "scientific_name": "Bos gaurus",
+    "page": "https://commons.wikimedia.org/wiki/File:Gaur_(Bos_gaurus).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Gaur_%28Bos_gaurus%29.jpg/960px-Gaur_%28Bos_gaurus%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Shino_jacob_koottanad\" title=\"User:Shino jacob koottanad\">Shino jacob koottanad</a>",
+    "attribution": null,
+    "title": "File:Gaur (Bos gaurus).jpg"
+  },
+  "sp_great_argus": {
+    "species": "Great Argus",
+    "scientific_name": "Argusianus argus",
+    "page": "https://commons.wikimedia.org/wiki/File:Great_argus_(Argusianus_argus).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Great_argus_%28Argusianus_argus%29.jpg/960px-Great_argus_%28Argusianus_argus%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Kaldari\" title=\"User:Kaldari\">Kaldari</a>",
+    "attribution": null,
+    "title": "File:Great argus (Argusianus argus).jpg"
+  },
+  "sp_greater_coucal": {
+    "species": "Greater Coucal",
+    "scientific_name": "Centropus sinensis",
+    "page": "https://commons.wikimedia.org/wiki/File:Greater_Coucal_(Centropus_sinensis)_in_flight_at_Jhor_Buffer_Zone,_Shivapuri_Nagarjun_National_Park,_Nepal.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Greater_Coucal_%28Centropus_sinensis%29_in_flight_at_Jhor_Buffer_Zone%2C_Shivapuri_Nagarjun_National_Park%2C_Nepal.jpg/960px-Greater_Coucal_%28Centropus_sinensis%29_in_flight_at_Jhor_Buffer_Zone%2C_Shivapuri_Nagarjun_National_Park%2C_Nepal.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Sunuwargr\" title=\"User:Sunuwargr\">Sunuwargr</a>",
+    "attribution": null,
+    "title": "File:Greater Coucal (Centropus sinensis) in flight at Jhor Buffer Zone, Shivapuri Nagarjun National Park, Nepal.jpg"
+  },
+  "sp_green_backed_heron": {
+    "species": "Green-backed Heron",
+    "scientific_name": "Butorides striata",
+    "page": "https://commons.wikimedia.org/wiki/File:Striated_heron_(Butorides_striata_striata).JPG",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Striated_heron_%28Butorides_striata_striata%29.JPG/960px-Striated_heron_%28Butorides_striata_striata%29.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<bdi><a href=\"https://www.wikidata.org/wiki/Q54800218\" class=\"extiw\" title=\"d:Q54800218\"><span title=\"Scottish wildlife photographer\">Charles J. Sharp</span></a></bdi>",
+    "attribution": null,
+    "title": "File:Striated heron (Butorides striata striata).JPG"
+  },
+  "sp_green_billed_coucal": {
+    "species": "Green-billed Coucal",
+    "scientific_name": "Centropus chlororhynchos",
+    "page": "https://commons.wikimedia.org/wiki/File:Green-billed_Coucal_(Centropus_chlororhynchos).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Green-billed_Coucal_%28Centropus_chlororhynchos%29.jpg/960px-Green-billed_Coucal_%28Centropus_chlororhynchos%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "desertnaturalist",
+    "attribution": null,
+    "title": "File:Green-billed Coucal (Centropus chlororhynchos).jpg"
+  },
+  "sp_hose_s_civet": {
+    "species": "Hose's Civet",
+    "scientific_name": "Diplogale hosei",
+    "page": "https://commons.wikimedia.org/wiki/File:Diplogale_hosei_(cropped).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Diplogale_hosei_%28cropped%29.jpg/960px-Diplogale_hosei_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "Public domain",
+    "licence_url": null,
+    "author": "<bdi><a href=\"https://en.wikipedia.org/wiki/en:Joseph_Smit\" class=\"extiw\" title=\"w:en:Joseph Smit\"><span title=\"Dutch natural history illustrator (1836-1929)\">Joseph Smit</span></a></bdi>",
+    "attribution": null,
+    "title": "File:Diplogale hosei (cropped).jpg"
+  },
+  "sp_hose_s_langur": {
+    "species": "Hose's Langur",
+    "scientific_name": "Presbytis hosei",
+    "page": "https://commons.wikimedia.org/wiki/File:Presbytis_hosei_hosei_351379376.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Presbytis_hosei_hosei_351379376.jpg/960px-Presbytis_hosei_hosei_351379376.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/6924064\">James Eaton</a>",
+    "attribution": null,
+    "title": "File:Presbytis hosei hosei 351379376.jpg"
+  },
+  "sp_indomalayan_bamboo_rat": {
+    "species": "Indomalayan Bamboo Rat",
+    "scientific_name": "Rhizomys sumatrensis",
+    "page": "https://commons.wikimedia.org/wiki/File:Rhizomys_sumatrensis_cinereus.png",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Rhizomys_sumatrensis_cinereus.png/960px-Rhizomys_sumatrensis_cinereus.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Mariomassone&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Mariomassone (page does not exist)\">Mariomassone</a>",
+    "attribution": null,
+    "title": "File:Rhizomys sumatrensis cinereus.png"
+  },
+  "sp_lar_gibbon": {
+    "species": "Lar Gibbon",
+    "scientific_name": "Hylobates lar",
+    "page": "https://commons.wikimedia.org/wiki/File:Hylobates_lar_-_Kaeng_Krachan_WB.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Hylobates_lar_-_Kaeng_Krachan_WB.jpg/960px-Hylobates_lar_-_Kaeng_Krachan_WB.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by/3.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:JJ_Harrison\" title=\"User:JJ Harrison\">JJ Harrison</a> (<a rel=\"nofollow\" class=\"external text\" href=\"mailto:jjharrison89@facebook.com\">jjharrison89@facebook.com</a>)",
+    "attribution": null,
+    "title": "File:Hylobates lar - Kaeng Krachan WB.jpg"
+  },
+  "sp_large_treeshrew": {
+    "species": "Large Treeshrew",
+    "scientific_name": "Tupaia tana",
+    "page": "https://commons.wikimedia.org/wiki/File:Large_Tree_Shrew_(Tupaia_tana)_from_the_forests_of_South_Asia_(A.220)_@mcrmuseum_-NaturesLibrary_(21069942695).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Large_Tree_Shrew_%28Tupaia_tana%29_from_the_forests_of_South_Asia_%28A.220%29_%40mcrmuseum_-NaturesLibrary_%2821069942695%29.jpg/960px-Large_Tree_Shrew_%28Tupaia_tana%29_from_the_forests_of_South_Asia_%28A.220%29_%40mcrmuseum_-NaturesLibrary_%2821069942695%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/86012097@N08\">akhenatenator</a>",
+    "attribution": null,
+    "title": "File:Large Tree Shrew (Tupaia tana) from the forests of South Asia (A.220) @mcrmuseum -NaturesLibrary (21069942695).jpg"
+  },
+  "sp_leopard": {
+    "species": "Leopard",
+    "scientific_name": "Panthera pardus",
+    "page": "https://commons.wikimedia.org/wiki/File:Panthera_pardus_close_up.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Panthera_pardus_close_up.jpg/960px-Panthera_pardus_close_up.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/tropicaliving/\">tropicaLiving</a>",
+    "attribution": null,
+    "title": "File:Panthera pardus close up.jpg"
+  },
+  "sp_lesser_dog_faced_fruit_bat": {
+    "species": "Lesser Dog-faced Fruit Bat",
+    "scientific_name": "Cynopterus brachyotis",
+    "page": "https://commons.wikimedia.org/wiki/File:Cynopterus_brachyotis,_Philippines_2.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Cynopterus_brachyotis%2C_Philippines_2.jpg/960px-Cynopterus_brachyotis%2C_Philippines_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "Public domain",
+    "licence_url": null,
+    "author": "Unknown author<span style=\"display: none;\">Unknown author</span>",
+    "attribution": null,
+    "title": "File:Cynopterus brachyotis, Philippines 2.jpg"
+  },
+  "sp_long_tailed_sibia": {
+    "species": "Long-tailed Sibia",
+    "scientific_name": "Heterophasia picaoides",
+    "page": "https://commons.wikimedia.org/wiki/File:Heterophasia_picaoides-2004-8-21.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/7e/Heterophasia_picaoides-2004-8-21.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Dougjj\" title=\"User:Dougjj\">Doug Janson</a>",
+    "attribution": null,
+    "title": "File:Heterophasia picaoides-2004-8-21.jpg"
+  },
+  "sp_mainland_leopard_cat": {
+    "species": "Mainland Leopard Cat",
+    "scientific_name": "Prionailurus bengalensis",
+    "page": "https://commons.wikimedia.org/wiki/File:Prionailurus_bengalensis_euptilurus_2686287.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Prionailurus_bengalensis_euptilurus_2686287.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/280\">Kim, Hyun-tae</a>",
+    "attribution": null,
+    "title": "File:Prionailurus bengalensis euptilurus 2686287.jpg"
+  },
+  "sp_malay_banded_pitta": {
+    "species": "Malay Banded Pitta",
+    "scientific_name": "Hydrornis irena",
+    "page": "https://commons.wikimedia.org/wiki/File:Hydrornis_irena_546238227.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Hydrornis_irena_546238227.jpg/960px-Hydrornis_irena_546238227.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/796553\">Ian Dugdale</a>",
+    "attribution": null,
+    "title": "File:Hydrornis irena 546238227.jpg"
+  },
+  "sp_malay_civet": {
+    "species": "Malay Civet",
+    "scientific_name": "Viverra tangalunga",
+    "page": "https://commons.wikimedia.org/wiki/File:Malay_Civet_(Viverra_tangalunga)_white_background.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/68/Malay_Civet_%28Viverra_tangalunga%29_white_background.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/65695019@N07\">Bernard DUPONT</a> from FRANCE",
+    "attribution": null,
+    "title": "File:Malay Civet (Viverra tangalunga) white background.jpg"
+  },
+  "sp_malay_crested_fireback": {
+    "species": "Malay Crested Fireback",
+    "scientific_name": "Lophura rufa",
+    "page": "https://commons.wikimedia.org/wiki/File:Malayan_crested_fireback_(Lophura_rufa)_02.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/Malayan_crested_fireback_%28Lophura_rufa%29_02.jpg/960px-Malayan_crested_fireback_%28Lophura_rufa%29_02.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "D.H. Fischer",
+    "attribution": null,
+    "title": "File:Malayan crested fireback (Lophura rufa) 02.jpg"
+  },
+  "sp_malay_ground_cuckoo": {
+    "species": "Malay Ground-cuckoo",
+    "scientific_name": "Carpococcyx radiceus",
+    "page": "https://commons.wikimedia.org/wiki/File:Carpococcyx_radiceus_102418105_(cropped).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/42/Carpococcyx_radiceus_102418105_%28cropped%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/2533480\">Christoph Moning</a>",
+    "attribution": null,
+    "title": "File:Carpococcyx radiceus 102418105 (cropped).jpg"
+  },
+  "sp_malay_weasel": {
+    "species": "Malay Weasel",
+    "scientific_name": "Mustela nudipes",
+    "page": "https://commons.wikimedia.org/wiki/File:Mustela_nudipes_422965459.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0e/Mustela_nudipes_422965459.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/1443942\">Dan L.</a>",
+    "attribution": null,
+    "title": "File:Mustela nudipes 422965459.jpg"
+  },
+  "sp_malayan_night_heron": {
+    "species": "Malayan Night-Heron",
+    "scientific_name": "Gorsachius melanolophus",
+    "page": "https://commons.wikimedia.org/wiki/File:Gorsachius_melanolophus_from_iNaturalist_photo_136265573.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Gorsachius_melanolophus_from_iNaturalist_photo_136265573.jpg/960px-Gorsachius_melanolophus_from_iNaturalist_photo_136265573.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "葉子 (leaf0605)",
+    "attribution": null,
+    "title": "File:Gorsachius melanolophus from iNaturalist photo 136265573.jpg"
+  },
+  "sp_malayan_peacock_pheasant": {
+    "species": "Malayan Peacock-Pheasant",
+    "scientific_name": "Polyplectron malacense",
+    "page": "https://commons.wikimedia.org/wiki/File:BxZ_Polyplectron_malacense_00.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/33/BxZ_Polyplectron_malacense_00.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "http://creativecommons.org/licenses/by-sa/3.0/",
+    "author": "No machine-readable author provided. <a href=\"//commons.wikimedia.org/wiki/User:Stavenn\" title=\"User:Stavenn\">Stavenn</a> assumed (based on copyright claims).",
+    "attribution": null,
+    "title": "File:BxZ Polyplectron malacense 00.jpg"
+  },
+  "sp_malayan_porcupine": {
+    "species": "Malayan Porcupine",
+    "scientific_name": "Hystrix brachyura",
+    "page": "https://commons.wikimedia.org/wiki/File:Hystrix_brachyura.JPG",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Hystrix_brachyura.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "Modified from original source by <a href=\"//commons.wikimedia.org/wiki/User:Prashanthns\" title=\"User:Prashanthns\">User:Prashanthns</a>",
+    "attribution": null,
+    "title": "File:Hystrix brachyura.JPG"
+  },
+  "sp_malaysian_field_rat": {
+    "species": "Malaysian Field Rat",
+    "scientific_name": "Rattus tiomanicus",
+    "page": "https://commons.wikimedia.org/wiki/File:Rattus_tiomanicus.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Rattus_tiomanicus.jpg/960px-Rattus_tiomanicus.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "Naturalis Biodiversity Center",
+    "attribution": null,
+    "title": "File:Rattus tiomanicus.jpg"
+  },
+  "sp_chestnut_capped_thrush": {
+    "species": "Chestnut-capped Thrush",
+    "scientific_name": "Geokichla interpres",
+    "page": "https://commons.wikimedia.org/wiki/File:Laika_ac_Bird_Market_(6374165359).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Laika_ac_Bird_Market_%286374165359%29.jpg/960px-Laika_ac_Bird_Market_%286374165359%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/68240136@N02\">Laika ac</a> from USA",
+    "attribution": null,
+    "title": "File:Laika ac Bird Market (6374165359).jpg"
+  },
+  "sp_clouded_leopard": {
+    "species": "Clouded Leopard",
+    "scientific_name": "Neofelis nebulosa",
+    "page": "https://commons.wikimedia.org/wiki/File:Neofelis_nebulosa,_Clouded_leopard.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Neofelis_nebulosa%2C_Clouded_leopard.jpg/960px-Neofelis_nebulosa%2C_Clouded_leopard.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Rushenb\" title=\"User:Rushenb\">Rushenb</a>",
+    "attribution": null,
+    "title": "File:Neofelis nebulosa, Clouded leopard.jpg"
+  },
+  "sp_common_hill_myna": {
+    "species": "Common Hill Myna",
+    "scientific_name": "Gracula religiosa",
+    "page": "https://commons.wikimedia.org/wiki/File:Common_Hill_Myna_(Gracula_religiosa).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Common_Hill_Myna_%28Gracula_religiosa%29.jpg/960px-Common_Hill_Myna_%28Gracula_religiosa%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Shiv%27s_fotografia\" title=\"User:Shiv's fotografia\">Shiv's fotografia</a>",
+    "attribution": null,
+    "title": "File:Common Hill Myna (Gracula religiosa).jpg"
+  },
+  "sp_greater_oriental_chevrotain": {
+    "species": "Greater Oriental Chevrotain",
+    "scientific_name": "Tragulus napu",
+    "page": "https://commons.wikimedia.org/wiki/File:Tragulus_napu.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Tragulus_napu.jpg/960px-Tragulus_napu.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 2.5",
+    "licence_url": "https://creativecommons.org/licenses/by/2.5",
+    "author": "The original uploader was <a href=\"https://en.wikipedia.org/wiki/User:Brian.gratwicke\" class=\"extiw\" title=\"wikipedia:User:Brian.gratwicke\">Brian.gratwicke</a> at <a href=\"https://en.wikipedia.org/wiki/\" class=\"extiw\" title=\"wikipedia:\">English Wikipedia</a>.",
+    "attribution": null,
+    "title": "File:Tragulus napu.jpg"
+  },
   "sp_honey_buzzard": {
     "species": "Honey Buzzard",
     "scientific_name": "Pernis apivorus",
-    "page": "https://commons.wikimedia.org/wiki/File:Pernis_apivorus_MHNT.jpg",
-    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Pernis_apivorus_MHNT.jpg/960px-Pernis_apivorus_MHNT.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:European_honey_buzzard,_Pernis_apivorus,_Bivr%C3%A5k.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/European_honey_buzzard%2C_Pernis_apivorus%2C_Bivr%C3%A5k.jpg/960px-European_honey_buzzard%2C_Pernis_apivorus%2C_Bivr%C3%A5k.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by/2.0",
+    "author": "blondinrikard",
+    "attribution": null,
+    "title": "File:European honey buzzard, Pernis apivorus, Bivråk.jpg"
+  },
+  "sp_large_indian_civet": {
+    "species": "Large Indian Civet",
+    "scientific_name": "Viverra zibetha",
+    "page": "https://commons.wikimedia.org/wiki/File:Large_Indian_Civet,_Viverra_zibetha_in_Kaeng_Krachan_national_park.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f8/Large_Indian_Civet%2C_Viverra_zibetha_in_Kaeng_Krachan_national_park.jpg/960px-Large_Indian_Civet%2C_Viverra_zibetha_in_Kaeng_Krachan_national_park.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/photos/tontantravel/\">tontantravel</a>, <a rel=\"nofollow\" class=\"external text\" href=\"http://www.tontantravel.com/tours/en/kaengkrachan-national-park-tours.html\">Kaeng Krachan national park tours</a>",
+    "attribution": null,
+    "title": "File:Large Indian Civet, Viverra zibetha in Kaeng Krachan national park.jpg"
+  },
+  "sp_large_spotted_civet": {
+    "species": "Large-spotted Civet",
+    "scientific_name": "Viverra megaspila",
+    "page": "https://commons.wikimedia.org/wiki/File:Large-spotted_Civet_(Viverra_megaspila).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Large-spotted_Civet_%28Viverra_megaspila%29.jpg/960px-Large-spotted_Civet_%28Viverra_megaspila%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 3.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Dger\" title=\"User:Dger\">D. Gordon E. Robertson</a>",
+    "attribution": null,
+    "title": "File:Large-spotted Civet (Viverra megaspila).jpg"
+  },
+  "sp_long_tailed_porcupine": {
+    "species": "Long-tailed Porcupine",
+    "scientific_name": "Trichys fasciculata",
+    "page": "https://commons.wikimedia.org/wiki/File:Trichys_fasciculata.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Trichys_fasciculata.jpg/960px-Trichys_fasciculata.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "林正文",
+    "attribution": null,
+    "title": "File:Trichys fasciculata.jpg"
+  },
+  "sp_malaysian_rail_babbler": {
+    "species": "Malaysian Rail-babbler",
+    "scientific_name": "Eupetes macrocerus",
+    "page": "https://commons.wikimedia.org/wiki/File:Malaysian_rail-babbler_(Eupetes_macrocerus).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Malaysian_rail-babbler_%28Eupetes_macrocerus%29.jpg/960px-Malaysian_rail-babbler_%28Eupetes_macrocerus%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external free\" href=\"https://www.flickr.com/photos/francesco_veronesi/\">https://www.flickr.com/photos/francesco_veronesi/</a>",
+    "attribution": null,
+    "title": "File:Malaysian rail-babbler (Eupetes macrocerus).jpg"
+  },
+  "sp_marbled_cat": {
+    "species": "Marbled Cat",
+    "scientific_name": "Pardofelis marmorata",
+    "page": "https://commons.wikimedia.org/wiki/File:Pardofelis_marmorata.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Pardofelis_marmorata.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "Public domain",
+    "licence_url": null,
+    "author": "<bdi><a href=\"https://www.wikidata.org/wiki/Q33084749\" class=\"extiw\" title=\"d:Q33084749\"><span title=\"German animal painter (1814–1865)\">August Schleich</span></a></bdi>",
+    "attribution": null,
+    "title": "File:Pardofelis marmorata.jpg"
+  },
+  "sp_maroon_sureli": {
+    "species": "Maroon Sureli",
+    "scientific_name": "Presbytis rubicunda",
+    "page": "https://commons.wikimedia.org/wiki/File:Presbytis_rubicunda_227268231.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Presbytis_rubicunda_227268231.jpg/960px-Presbytis_rubicunda_227268231.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/793005\">Tim</a>",
+    "attribution": null,
+    "title": "File:Presbytis rubicunda 227268231.jpg"
+  },
+  "sp_masked_palm_civet": {
+    "species": "Masked Palm Civet",
+    "scientific_name": "Paguma larvata",
+    "page": "https://commons.wikimedia.org/wiki/File:Paguma_larvata_75486445.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Paguma_larvata_75486445.jpg/960px-Paguma_larvata_75486445.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/506512\">Rejoice Gassah</a>",
+    "attribution": null,
+    "title": "File:Paguma larvata 75486445.jpg"
+  },
+  "sp_moonrat": {
+    "species": "Moonrat",
+    "scientific_name": "Echinosorex gymnura",
+    "page": "https://commons.wikimedia.org/wiki/File:Echinosorex_gymnura.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Echinosorex_gymnura.jpg/960px-Echinosorex_gymnura.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "Max Tibby",
+    "attribution": null,
+    "title": "File:Echinosorex gymnura.jpg"
+  },
+  "sp_mountain_imperial_pigeon": {
+    "species": "Mountain Imperial-pigeon",
+    "scientific_name": "Ducula badia",
+    "page": "https://commons.wikimedia.org/wiki/File:Ducula_badia,_Mountain_imperial_pigeon.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Ducula_badia%2C_Mountain_imperial_pigeon.jpg/960px-Ducula_badia%2C_Mountain_imperial_pigeon.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
     "licence": "CC BY-SA 4.0",
     "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Archaeodontosaurus\" title=\"User:Archaeodontosaurus\">Didier Descouens</a>",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Rushenb\" title=\"User:Rushenb\">Rushenb</a>",
     "attribution": null,
-    "title": "File:Pernis apivorus MHNT.jpg"
+    "title": "File:Ducula badia, Mountain imperial pigeon.jpg"
+  },
+  "sp_noisy_rat": {
+    "species": "Noisy Rat",
+    "scientific_name": "Leopoldamys sabanus",
+    "page": "https://commons.wikimedia.org/wiki/File:Leopoldamys_sabanus.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Leopoldamys_sabanus.jpg/960px-Leopoldamys_sabanus.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "Scott Loarie",
+    "attribution": null,
+    "title": "File:Leopoldamys sabanus.jpg"
+  },
+  "sp_northern_treeshrew": {
+    "species": "Northern Treeshrew",
+    "scientific_name": "Tupaia belangeri",
+    "page": "https://commons.wikimedia.org/wiki/File:Tupaia_belangeri_216996517.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Tupaia_belangeri_216996517.jpg/960px-Tupaia_belangeri_216996517.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/232540\">Toby Y</a>",
+    "attribution": null,
+    "title": "File:Tupaia belangeri 216996517.jpg"
+  },
+  "sp_orange_headed_thrush": {
+    "species": "Orange-headed Thrush",
+    "scientific_name": "Geokichla citrina",
+    "page": "https://commons.wikimedia.org/wiki/File:Geokichla_citrina_MHNT.ZOO.2010.11.189.13.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Geokichla_citrina_MHNT.ZOO.2010.11.189.13.jpg/960px-Geokichla_citrina_MHNT.ZOO.2010.11.189.13.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<div class=\"fn value\">\n<a href=\"//commons.wikimedia.org/wiki/User:Erc%C3%A9\" title=\"User:Ercé\">Roger Culos</a></div>",
+    "attribution": null,
+    "title": "File:Geokichla citrina MHNT.ZOO.2010.11.189.13.jpg"
+  },
+  "sp_oriental_magpie_robin": {
+    "species": "Oriental Magpie-robin",
+    "scientific_name": "Copsychus saularis",
+    "page": "https://commons.wikimedia.org/wiki/File:Copsychus_saularis_@_Kuala_Lumpur_2.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Copsychus_saularis_%40_Kuala_Lumpur_2.jpg/960px-Copsychus_saularis_%40_Kuala_Lumpur_2.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:GerifalteDelSabana\" title=\"User:GerifalteDelSabana\">GerifalteDelSabana</a>",
+    "attribution": null,
+    "title": "File:Copsychus saularis @ Kuala Lumpur 2.jpg"
+  },
+  "sp_otter_civet": {
+    "species": "Otter civet",
+    "scientific_name": "Cynogale bennettii",
+    "page": "https://commons.wikimedia.org/wiki/File:Cynogale_bennettii_-_Museo_Civico_di_Storia_Naturale_Giacomo_Doria_-_Genoa,_Italy_-_DSC02714.JPG",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Cynogale_bennettii_-_Museo_Civico_di_Storia_Naturale_Giacomo_Doria_-_Genoa%2C_Italy_-_DSC02714.JPG/960px-Cynogale_bennettii_-_Museo_Civico_di_Storia_Naturale_Giacomo_Doria_-_Genoa%2C_Italy_-_DSC02714.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Daderot\" title=\"User:Daderot\">Daderot</a>",
+    "attribution": null,
+    "title": "File:Cynogale bennettii - Museo Civico di Storia Naturale Giacomo Doria - Genoa, Italy - DSC02714.JPG"
+  },
+  "sp_pale_giant_squirrel": {
+    "species": "Pale Giant Squirrel",
+    "scientific_name": "Ratufa affinis",
+    "page": "https://commons.wikimedia.org/wiki/File:Ratufa_affinis_60425313.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Ratufa_affinis_60425313.jpg/960px-Ratufa_affinis_60425313.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/413966\">Sebastian Doak</a>",
+    "attribution": null,
+    "title": "File:Ratufa affinis 60425313.jpg"
+  },
+  "sp_plantain_squirrel": {
+    "species": "Plantain Squirrel",
+    "scientific_name": "Callosciurus notatus",
+    "page": "https://commons.wikimedia.org/wiki/File:Callosciurus_notatus_12290417.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Callosciurus_notatus_12290417.jpg/960px-Callosciurus_notatus_12290417.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/730306\">anukma</a>",
+    "attribution": null,
+    "title": "File:Callosciurus notatus 12290417.jpg"
+  },
+  "sp_prevost_s_squirrel": {
+    "species": "Prevost's Squirrel",
+    "scientific_name": "Callosciurus prevostii",
+    "page": "https://commons.wikimedia.org/wiki/File:Callosciurus_prevostii,_the_Tricolor_Squirrel._(12616231455).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/45/Callosciurus_prevostii%2C_the_Tricolor_Squirrel._%2812616231455%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/92252798@N07\">Dick Culbert</a> from Gibsons, B.C., Canada",
+    "attribution": null,
+    "title": "File:Callosciurus prevostii, the Tricolor Squirrel. (12616231455).jpg"
   }
 }

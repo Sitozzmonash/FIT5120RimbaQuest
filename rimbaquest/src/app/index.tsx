@@ -187,7 +187,12 @@ export default function RimbaQuest() {
 
   useEffect(() => { refresh(); }, []);
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
-  const visibleSpecies = useMemo(() => supportedSpecies.filter((item) => filter === 'All' || item.category === filter), [filter, supportedSpecies]);
+  const visibleSpecies = useMemo(() => supportedSpecies
+    .filter((item) => filter === 'All' || item.category === filter)
+    .sort((left, right) => {
+      const unlockOrder = Number(discovered.includes(right.id)) - Number(discovered.includes(left.id));
+      return unlockOrder || left.common_name.localeCompare(right.common_name);
+    }), [discovered, filter, supportedSpecies]);
   const selectedCategorySpecies = useMemo(() => supportedSpecies.filter((item) => item.category === category), [category, supportedSpecies]);
   const displayProgress = useMemo(() => ({
     ...progress,
