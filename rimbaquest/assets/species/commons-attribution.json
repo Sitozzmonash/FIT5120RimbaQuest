@@ -548,5 +548,27 @@
     "author": "<bdi><a href=\"https://www.wikidata.org/wiki/Q47037264\" class=\"extiw\" title=\"d:Q47037264\"><span title=\"natural history artist (1798-1856)\">Jacques Christophe Werner</span></a></bdi> / <bdi><a href=\"https://en.wikipedia.org/wiki/en:Charles_Philibert_de_Lasteyrie\" class=\"extiw\" title=\"w:en:Charles Philibert de Lasteyrie\"><span title=\"French printer (1759–1849)\">Charles Philibert de Lasteyrie</span></a></bdi>",
     "attribution": null,
     "title": "File:Tragulus napu - 1818-1842 - Print - Iconographia Zoologica - Special Collections University of Amsterdam - (white background).jpg"
+  },
+  "sp_grey_bellied_squirrel": {
+    "species": "Grey-bellied Squirrel",
+    "scientific_name": "Callosciurus caniceps",
+    "page": "https://commons.wikimedia.org/wiki/File:Callosciurus_caniceps_14025871.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Callosciurus_caniceps_14025871.jpg/960px-Callosciurus_caniceps_14025871.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/730306\">anukma</a>",
+    "attribution": null,
+    "title": "File:Callosciurus caniceps 14025871.jpg"
+  },
+  "sp_honey_buzzard": {
+    "species": "Honey Buzzard",
+    "scientific_name": "Pernis apivorus",
+    "page": "https://commons.wikimedia.org/wiki/File:Pernis_apivorus_MHNT.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Pernis_apivorus_MHNT.jpg/960px-Pernis_apivorus_MHNT.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY-SA 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "author": "<a href=\"//commons.wikimedia.org/wiki/User:Archaeodontosaurus\" title=\"User:Archaeodontosaurus\">Didier Descouens</a>",
+    "attribution": null,
+    "title": "File:Pernis apivorus MHNT.jpg"
   }
 }
