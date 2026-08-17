@@ -4,8 +4,8 @@ services:
     runtime: docker
     region: singapore
     plan: starter
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

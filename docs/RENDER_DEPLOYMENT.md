@@ -1,6 +1,6 @@
 # Deploy the RimbaQuest API on Render
 
-This repository deploys the FastAPI backend as a Docker web service. The Expo app can then call the public Render HTTPS URL when it is run through an Expo tunnel.
+This repository deploys the FastAPI backend as a Docker web service. The root [`Dockerfile`](../Dockerfile) is the canonical Render build file, so it works for both a Blueprint deployment and a manually created Docker web service. The Expo app can then call the public Render HTTPS URL when it is run through an Expo tunnel.
 
 ## Important data note
 
@@ -25,6 +25,10 @@ Render persistent disks require a paid web-service plan and bind the service to 
    ```
 
    It should return an `ok` status.
+
+### If creating the service manually
+
+Choose **New → Web Service**, select the repository, set **Runtime** to **Docker**, and leave the Dockerfile path as `Dockerfile`. The supplied root Dockerfile copies only the `backend/` API code into the image.
 
 ## Connect Expo to Render
 
