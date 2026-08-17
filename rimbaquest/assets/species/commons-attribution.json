@@ -482,5 +482,71 @@
     "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/2533480\">Christoph Moning</a>",
     "attribution": null,
     "title": "File:Haematortyx sanguiniceps 102415627.jpg"
+  },
+  "sp_crimson_winged_woodpecker": {
+    "species": "Crimson-winged Woodpecker",
+    "scientific_name": "Picus puniceus",
+    "page": "https://commons.wikimedia.org/wiki/File:Picus_puniceus_75870607.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Picus_puniceus_75870607.jpg/960px-Picus_puniceus_75870607.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/730306\">anukma</a>",
+    "attribution": null,
+    "title": "File:Picus puniceus 75870607.jpg"
+  },
+  "sp_dark_necked_tailorbird": {
+    "species": "Dark-necked Tailorbird",
+    "scientific_name": "Orthotomus atrogularis",
+    "page": "https://commons.wikimedia.org/wiki/File:Dark-necked_Tailorbird_(Orthotomus_atrogularis)_-_Male.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Dark-necked_Tailorbird_%28Orthotomus_atrogularis%29_-_Male.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 2.0",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.flickr.com/people/64565252@N00\">Lip Kee Yap</a>",
+    "attribution": null,
+    "title": "File:Dark-necked Tailorbird (Orthotomus atrogularis) - Male.jpg"
+  },
+  "sp_dhole": {
+    "species": "Dhole",
+    "scientific_name": "Cuon alpinus",
+    "page": "https://commons.wikimedia.org/wiki/File:Cuon_alpinus_231650378.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Cuon_alpinus_231650378.jpg/960px-Cuon_alpinus_231650378.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "licence": "CC BY 4.0",
+    "licence_url": "https://creativecommons.org/licenses/by/4.0",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/3203907\">Ramesh Shenai Jr.</a>",
+    "attribution": null,
+    "title": "File:Cuon alpinus 231650378.jpg"
+  },
+  "sp_dusky_leaf_monkey": {
+    "species": "Dusky Leaf Monkey",
+    "scientific_name": "Trachypithecus obscurus",
+    "page": "https://commons.wikimedia.org/wiki/File:Trachypithecus_obscurus_265890621.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Trachypithecus_obscurus_265890621.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC0",
+    "licence_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "author": "<a rel=\"nofollow\" class=\"external text\" href=\"https://www.inaturalist.org/users/3182997\">Светлана Царахова</a>",
+    "attribution": null,
+    "title": "File:Trachypithecus obscurus 265890621.jpg"
+  },
+  "sp_flat_headed_cat": {
+    "species": "Flat-headed Cat",
+    "scientific_name": "Prionailurus planiceps",
+    "page": "https://commons.wikimedia.org/wiki/File:Prionailurus_planiceps_cropped.png",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Prionailurus_planiceps_cropped.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "CC BY-SA 2.5",
+    "licence_url": "https://creativecommons.org/licenses/by-sa/2.5",
+    "author": "<ul><li><a href=\"//commons.wikimedia.org/wiki/File:Plionailurus_planiceps.png\" class=\"mw-redirect\" title=\"File:Plionailurus planiceps.png\">Prionailurus planiceps.png</a>: Andreas Wilting et al.</li>\n<li>derivative work: <a href=\"//commons.wikimedia.org/wiki/User:Toter_Alter_Mann\" title=\"User:Toter Alter Mann\">Toter Alter Mann</a> (<a href=\"//commons.wikimedia.org/wiki/User_talk:Toter_Alter_Mann\" title=\"User talk:Toter Alter Mann\"><span class=\"signature-talk\">talk</span></a>)</li></ul>",
+    "attribution": null,
+    "title": "File:Prionailurus planiceps cropped.png"
+  },
+  "sp_greater_oriental_chevrotain": {
+    "species": "Greater Oriental Chevrotain",
+    "scientific_name": "Tragulus napu",
+    "page": "https://commons.wikimedia.org/wiki/File:Tragulus_napu_-_1818-1842_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_(white_background).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/08/Tragulus_napu_-_1818-1842_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_%28white_background%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "licence": "Public domain",
+    "licence_url": null,
+    "author": "<bdi><a href=\"https://www.wikidata.org/wiki/Q47037264\" class=\"extiw\" title=\"d:Q47037264\"><span title=\"natural history artist (1798-1856)\">Jacques Christophe Werner</span></a></bdi> / <bdi><a href=\"https://en.wikipedia.org/wiki/en:Charles_Philibert_de_Lasteyrie\" class=\"extiw\" title=\"w:en:Charles Philibert de Lasteyrie\"><span title=\"French printer (1759–1849)\">Charles Philibert de Lasteyrie</span></a></bdi>",
+    "attribution": null,
+    "title": "File:Tragulus napu - 1818-1842 - Print - Iconographia Zoologica - Special Collections University of Amsterdam - (white background).jpg"
   }
 }
