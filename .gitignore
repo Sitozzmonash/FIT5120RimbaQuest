@@ -9,3 +9,11 @@ __pycache__/
 backend/data/RimbaQuest.db
 .reference/
 tmp/
+
+# Local AI-agent instructions and editor preferences — keep on this machine only.
+**/AGENTS.md
+**/agents.md
+**/CLAUDE.md
+**/claude.md
+**/.claude/
+**/.vscode/
