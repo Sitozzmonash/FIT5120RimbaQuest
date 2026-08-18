@@ -18,4 +18,9 @@ def test_confirmed_discovery_unlocks_once():
     assert first.status_code == 200 and first.json()["first_discovery"] is True
     assert second.status_code == 200 and second.json()["first_discovery"] is False
     assert client.get("/api/v1/children/1/progress").json()["found"] == before + 1
+    recent = client.get("/api/v1/children/1/recent-captures")
+    assert recent.status_code == 200
+    assert recent.json()["items"][0]["species_id"] == species["id"]
+    quiz = client.get(f"/api/v1/species/{species['id']}/quiz")
+    assert quiz.status_code == 200 and quiz.json()["questions"]
     assert client.get("/health").json()["status"] == "ok"

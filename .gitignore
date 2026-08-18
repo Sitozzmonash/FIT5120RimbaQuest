@@ -17,3 +17,6 @@ tmp/
 **/claude.md
 **/.claude/
 **/.vscode/
+
+# Local submission documentation. Deliberately retained on this workstation only.
+/doc/
