@@ -20,3 +20,7 @@ tmp/
 
 # Local submission documentation. Deliberately retained on this workstation only.
 /doc/
+
+# Local intermediate outputs used while completing the seed and image audit.
+/rimbaquest/tools/generated_seed.txt
+/rimbaquest/tools/generated_spec_images.txt
