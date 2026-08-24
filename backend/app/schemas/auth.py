@@ -11,9 +11,16 @@ class RegisterIn(BaseModel):
     password: str = Field(min_length=6, max_length=100)
     avatar: str = Field(default="tapir", max_length=30)
 
+    @field_validator("username", mode="before")
+    @classmethod
+    def strip_username(cls, v: str) -> str:
+        return v.strip() if isinstance(v, str) else v
+
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
+        if len(v) < 3 or len(v) > 20:
+            raise ValueError("Username must be between 3 and 20 characters.")
         if " " in v:
             raise ValueError("Username cannot contain spaces")
         if not re.match(r"^[a-zA-Z0-9_-]+$", v):

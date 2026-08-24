@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 
-import { LocationItem, QuizQuestion, RecentCapture, Screen, Species, UserProfile } from '../types';
+import { GalleryItem, LocationItem, LocationMode, RecentCapture, Screen, Species, UserProfile } from '../types';
 import { API_BASE } from '../constants/config';
-import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES } from '../constants/seed';
-import { IMAGES, hasReferenceImage } from '../constants/images';
+import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
+import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
+import { clearSession, loadSession, saveSession } from '../constants/session';
 import { styles } from '../styles/theme';
 
 import { BottomNav } from '../components/common/BottomNav';
@@ -30,91 +31,166 @@ import {
 } from '../components/screens/AuthScreens';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const GUEST_USER: UserProfile = {
+  id: 0,
+  username: '',
+  display_name: 'Explorer',
+  avatar: 'tapir',
+  age: 10,
+  age_band: '8-11',
+  xp: 0,
+  level: 1,
+};
+const BATTLE_OPPONENT = {
+  name: 'Wild Boar',
+  image: SPECIES_IMAGES.sp_wild_boar,
+  hp: 110,
+  attack: 20,
+};
+
+function apiMessage(data: unknown, fallback: string): string {
+  if (data && typeof data === 'object' && 'detail' in data) {
+    const detail = (data as { detail: unknown }).detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && detail[0] && 'msg' in detail[0]) {
+      return String((detail[0] as { msg: string }).msg);
+    }
+  }
+  return fallback;
+}
+
+function profileFromAuth(data: Record<string, unknown>): UserProfile {
+  return {
+    id: Number(data.child_id || data.id || 0),
+    username: String(data.username || ''),
+    display_name: String(data.display_name || data.username || 'Explorer'),
+    avatar: String(data.avatar || 'tapir'),
+    age: Number(data.age || 10),
+    age_band: '8-11',
+    xp: Number(data.xp || 0),
+    level: Number(data.level || 1),
+  };
+}
+
+async function readCurrentLocationLabel(): Promise<string | null> {
+  const geo = typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
+  if (!geo) return null;
+  try {
+    const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+      geo.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+    });
+    return `Current location (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+  } catch {
+    return null;
+  }
+}
 
 export default function RimbaQuest() {
-  // Navigation & Core State
-  const [screen, setScreen] = useState<Screen>('home');
+  const [screen, setScreen] = useState<Screen>('auth');
   const [history, setHistory] = useState<Screen[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Data Catalog
   const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
   const [category, setCategory] = useState('Mammal');
   const [speciesSearch, setSpeciesSearch] = useState('');
-  const [discovered, setDiscovered] = useState<string[]>(['sp_common_mormon', 'sp_oriental_pied_hornbill']);
+  const [discovered, setDiscovered] = useState<string[]>([]);
   const [filter, setFilter] = useState('All');
 
-  // Discovery Flow
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [galleryPhotos, setGalleryPhotos] = useState<Record<string, string[]>>({});
+  const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
   const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
-  const [discoveryLocation, setDiscoveryLocation] = useState('Bukit Gasing Forest Reserve');
+  const [discoveryLocation, setDiscoveryLocation] = useState('');
+  const [locationMode, setLocationMode] = useState<LocationMode>('manual');
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [firstDiscovery, setFirstDiscovery] = useState(true);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
-  // Locations Flow
   const [locations, setLocations] = useState<LocationItem[]>(OFFLINE_LOCATIONS);
   const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
   const [locationSearch, setLocationSearch] = useState('');
   const [locationCategoryFilter, setLocationCategoryFilter] = useState('All');
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationsError, setLocationsError] = useState<string | null>(null);
+  const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
 
-  // User & Auth State
-  const [currentUser, setCurrentUser] = useState<UserProfile>({
-    id: 1,
-    username: 'aisyah',
-    display_name: 'Aisyah',
-    avatar: 'tapir',
-    age: 10,
-    age_band: '8-11',
-    xp: 200,
-    level: 1,
-  });
+  const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authUsername, setAuthUsername] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authAge, setAuthAge] = useState('10');
+  const [authAge, setAuthAge] = useState('');
   const [authAvatar, setAuthAvatar] = useState('tapir');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [authSubmitting, setAuthSubmitting] = useState(false);
 
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotToken, setForgotToken] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
   const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+  const [forgotFieldError, setForgotFieldError] = useState<string | null>(null);
+  const [forgotFormError, setForgotFormError] = useState<string | null>(null);
+  const [forgotSubmitting, setForgotSubmitting] = useState(false);
 
-  const [editDisplayName, setEditDisplayName] = useState('Aisyah');
+  const [editDisplayName, setEditDisplayName] = useState('');
   const [editAvatar, setEditAvatar] = useState('tapir');
   const [editAge, setEditAge] = useState('10');
 
-  // Quiz State
-  const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
-  const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
-
-  // Battle State
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
   const [battlePlayerMaxHp, setBattlePlayerMaxHp] = useState(120);
-  const [battleOpponentHp, setBattleOpponentHp] = useState(100);
-  const [battleOpponentMaxHp, setBattleOpponentMaxHp] = useState(100);
-  const [battleOpponentName, setBattleOpponentName] = useState('Wild Forest Boar');
+  const [battleOpponentHp, setBattleOpponentHp] = useState(BATTLE_OPPONENT.hp);
+  const [battleOpponentMaxHp, setBattleOpponentMaxHp] = useState(BATTLE_OPPONENT.hp);
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleRound, setBattleRound] = useState(1);
   const [battleOutcome, setBattleOutcome] = useState<'playing' | 'win' | 'lose' | null>(null);
   const [isAttacking, setIsAttacking] = useState(false);
 
-  // Synchronize Backend Data
-  const refresh = async () => {
+  const applyUser = (user: UserProfile, nextScreen: Screen = 'home') => {
+    setCurrentUser(user);
+    setIsLoggedIn(true);
+    saveSession(user);
+    setHistory([]);
+    setScreen(nextScreen);
+  };
+
+  const loadLocations = async () => {
+    setLocationsLoading(true);
+    setLocationsError(null);
     try {
-      const childId = currentUser.id || 1;
-      const [speciesRes, collectionRes, profileRes, recentRes, locationsRes] = await Promise.all([
+      const res = await fetch(`${API_BASE}/api/v1/locations`);
+      if (!res.ok) throw new Error('Unable to load locations');
+      const data = await res.json();
+      if (!data.items?.length) {
+        setLocations([]);
+        setLocationsError("We couldn't load wildlife locations right now. Please try again.");
+      } else {
+        setLocations(data.items);
+      }
+    } catch {
+      setLocationsError("We couldn't load wildlife locations right now. Please try again.");
+      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  const refresh = async (childId: number) => {
+    try {
+      const [speciesRes, collectionRes, profileRes, recentRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/species`),
         fetch(`${API_BASE}/api/v1/children/${childId}/collection`),
         fetch(`${API_BASE}/api/v1/children/${childId}/profile`),
         fetch(`${API_BASE}/api/v1/children/${childId}/recent-captures`),
-        fetch(`${API_BASE}/api/v1/locations`),
       ]);
 
       if (speciesRes.ok) setSpecies(await speciesRes.json());
@@ -124,28 +200,44 @@ export default function RimbaQuest() {
       }
       if (profileRes.ok) {
         const data = await profileRes.json();
-        setCurrentUser((prev) => ({ ...prev, ...data }));
+        setCurrentUser((prev) => {
+          const next = { ...prev, ...data, username: prev.username };
+          saveSession(next);
+          return next;
+        });
       }
       if (recentRes.ok) {
         const data = await recentRes.json();
         setRecentCaptures(data.items);
       }
-      if (locationsRes.ok) {
-        const data = await locationsRes.json();
-        if (data.items?.length) setLocations(data.items);
-      }
+      await loadLocations();
+      setNotice(null);
     } catch {
       setNotice('You are exploring in offline demo mode. Discoveries will sync when the backend connects.');
+      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    refresh();
-  }, [currentUser.id]);
+    const saved = loadSession();
+    if (saved?.id) {
+      setCurrentUser(saved);
+      setIsLoggedIn(true);
+      setScreen('home');
+    } else {
+      setScreen('auth');
+      setLoading(false);
+    }
+  }, []);
 
-  // Derived Views
+  useEffect(() => {
+    if (isLoggedIn && currentUser.id) {
+      void refresh(currentUser.id);
+    }
+  }, [isLoggedIn, currentUser.id]);
+
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
   const visibleSpecies = useMemo(
     () =>
@@ -168,25 +260,22 @@ export default function RimbaQuest() {
   const filteredCategorySpecies = useMemo(() => {
     const query = speciesSearch.trim().toLowerCase();
     if (!query) return selectedCategorySpecies;
-    return selectedCategorySpecies.filter(
-      (item) => item.common_name.toLowerCase().includes(query) || item.scientific_name.toLowerCase().includes(query)
-    );
+    return selectedCategorySpecies.filter((item) => item.common_name.toLowerCase().includes(query));
   }, [selectedCategorySpecies, speciesSearch]);
 
   const filteredLocations = useMemo(() => {
     const query = locationSearch.trim().toLowerCase();
     return locations.filter((loc) => {
-      const matchesQuery =
-        !query ||
-        loc.name.toLowerCase().includes(query) ||
-        loc.area.toLowerCase().includes(query) ||
-        loc.description.toLowerCase().includes(query);
-      const matchesCategory =
-        locationCategoryFilter === 'All' ||
-        loc.typical_wildlife?.toLowerCase().includes(locationCategoryFilter.toLowerCase().slice(0, 4));
-      return matchesQuery && matchesCategory;
+      const matchesQuery = locationMatchesQuery(loc, query);
+      return matchesQuery && locationMatchesCategory(loc, locationCategoryFilter);
     });
   }, [locations, locationSearch, locationCategoryFilter]);
+
+  const locationsEmptyMessage = locationSearch.trim()
+    ? 'No matching locations found.'
+    : locationCategoryFilter !== 'All'
+      ? 'No locations found for this wildlife category.'
+      : null;
 
   const displayProgress = useMemo(
     () => ({
@@ -198,7 +287,6 @@ export default function RimbaQuest() {
     [discovered, supportedSpecies, currentUser]
   );
 
-  // Router Functions
   const open = (next: Screen) => {
     setHistory((cur) => [...cur, screen]);
     setScreen(next);
@@ -210,23 +298,41 @@ export default function RimbaQuest() {
   const goBack = () => {
     setHistory((cur) => {
       const prev = cur[cur.length - 1];
-      setScreen(prev ?? 'home');
+      setScreen(prev ?? (isLoggedIn ? 'home' : 'auth'));
       return cur.slice(0, -1);
     });
   };
 
-  // Discovery Actions
   const startDiscovery = (presetLocation?: string) => {
-    if (presetLocation) setDiscoveryLocation(presetLocation);
+    if (presetLocation) {
+      setDiscoveryLocation(presetLocation);
+      setLocationMode('manual');
+    }
     setPhotoUri(null);
+    setPhotoError(null);
+    setSaveError(null);
+    setLocationNotice(null);
     resetTo('photo');
   };
 
+  const retakePhoto = () => {
+    setPhotoUri(null);
+    setPhotoError(null);
+    setScreen('photo');
+  };
+
+  const acceptPhoto = (uri: string) => {
+    setPhotoUri(uri);
+    setPhotoError(null);
+    open('category');
+  };
+
   const takePhoto = async () => {
-    const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-    if (photo?.uri) {
-      setPhotoUri(photo.uri);
-      open('category');
+    try {
+      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
+      if (photo?.uri) acceptPhoto(photo.uri);
+    } catch {
+      setPhotoError("Your photo couldn't be uploaded. Please try again.");
     }
   };
 
@@ -237,126 +343,216 @@ export default function RimbaQuest() {
         allowsEditing: true,
         quality: 0.8,
       });
-      if (!result.canceled && result.assets[0]?.uri) {
-        setPhotoUri(result.assets[0].uri);
-        open('category');
-      }
+      if (!result.canceled && result.assets[0]?.uri) acceptPhoto(result.assets[0].uri);
     } catch {
-      setPhotoUri(null);
-      open('category');
+      setPhotoError("Your photo couldn't be uploaded. Please try again.");
     }
   };
 
-  const recordDiscovery = async () => {
-    const savePersonalPhoto = () => {
-      if (!photoUri) return;
-      setGalleryPhotos((current) => ({
-        ...current,
-        [selected.id]: [photoUri, ...(current[selected.id] ?? [])],
-      }));
-    };
+  const recordDiscoveryWithLocation = async (locationLabel: string) => {
+    if (saving) return;
+    if (!photoUri) return;
+    if (!locationLabel) {
+      setSaveError('Please choose or enter a discovery location.');
+      return;
+    }
+    setSaving(true);
+    setSaveError(null);
     try {
       const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ species_id: selected.id, location_label: discoveryLocation }),
+        body: JSON.stringify({
+          species_id: selected.id,
+          location_label: locationLabel,
+          photo_url: photoUri,
+        }),
       });
       if (!response.ok) throw new Error('Unable to save');
       const result = (await response.json()) as { first_discovery?: boolean; total_xp?: number };
+      setFirstDiscovery(Boolean(result.first_discovery));
       if (result.first_discovery && !discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
-        setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp + 100 }));
+        setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
       }
-      savePersonalPhoto();
-      await refresh();
+      setGalleryPhotos((current) => ({
+        ...current,
+        [selected.id]: [{ photo_url: photoUri, location_label: locationLabel }, ...(current[selected.id] ?? [])],
+      }));
+      await refresh(currentUser.id);
       open('success');
     } catch {
-      if (!discovered.includes(selected.id)) {
-        setDiscovered((current) => [...current, selected.id]);
-        setCurrentUser((prev) => ({ ...prev, xp: prev.xp + 100 }));
-      }
-      savePersonalPhoto();
-      open('success');
+      setSaveError("Your discovery wasn't saved. Please try again.");
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Auth Operations
-  const handleRegister = async () => {
-    setAuthError(null);
-    if (!authUsername.trim()) return setAuthError('Please enter a username.');
-    if (authUsername.length < 3 || authUsername.length > 20) return setAuthError('Username must be between 3 and 20 characters.');
-    if (authUsername.includes(' ')) return setAuthError('Username cannot contain spaces.');
-    if (!authEmail.trim() || !authEmail.includes('@') || !authEmail.includes('.')) return setAuthError('Please enter a valid email address.');
-    if (!authPassword) return setAuthError('Please create a password.');
-    if (authPassword.length < 6) return setAuthError('Password must be at least 6 characters.');
-    if (authPassword !== authConfirmPassword) return setAuthError('Passwords do not match. Please confirm your password.');
+  const recordDiscovery = async () => {
+    if (saving) return;
+    if (locationMode === 'auto') {
+      const label = await readCurrentLocationLabel();
+      if (!label) {
+        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
+        setLocationMode('manual');
+        return;
+      }
+      setDiscoveryLocation(label);
+      await recordDiscoveryWithLocation(label);
+      return;
+    }
+    await recordDiscoveryWithLocation(discoveryLocation.trim());
+  };
 
+  const handleRegister = async () => {
+    if (authSubmitting) return;
+    setAuthError(null);
+    const errors: Record<string, string> = {};
+    const username = authUsername.trim();
+    if (!username) errors.username = 'Please enter a username.';
+    else if (username.length < 3 || username.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
+    if (!authAge.trim()) errors.age = 'Please enter your age.';
+    if (!authEmail.trim()) errors.email = 'Please enter an email address.';
+    else if (!EMAIL_RE.test(authEmail.trim())) errors.email = 'Please enter a valid email address.';
+    if (!authPassword) errors.password = 'Please create a password.';
+    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
+    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
+
+    setAuthSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: authUsername.trim(),
+          username,
           age: parseInt(authAge, 10) || 10,
           email: authEmail.trim(),
           password: authPassword,
           avatar: authAvatar,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) return setAuthError(data.detail || 'Registration failed.');
-      setCurrentUser({
-        id: data.child_id,
-        username: data.username,
-        display_name: data.display_name,
-        avatar: data.avatar,
-        age: data.age,
-        age_band: '8-11',
-        xp: data.xp,
-        level: data.level,
-      });
-      resetTo('home');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
+        if (/already taken/i.test(message)) setFieldErrors({ username: 'That username is already taken. Try another one.' });
+        else setAuthError(message);
+        return;
+      }
+      applyUser(profileFromAuth(data));
     } catch {
-      setCurrentUser({
-        id: 2,
-        username: authUsername.trim(),
-        display_name: authUsername.trim(),
-        avatar: authAvatar,
-        age: parseInt(authAge, 10) || 10,
-        age_band: '8-11',
-        xp: 0,
-        level: 1,
-      });
-      resetTo('home');
+      setAuthError('Registration was unsuccessful. Please try again.');
+    } finally {
+      setAuthSubmitting(false);
     }
   };
 
   const handleLogin = async () => {
+    if (authSubmitting) return;
     setAuthError(null);
-    if (!authUsername.trim()) return setAuthError('Please enter your username or email.');
-    if (!authPassword) return setAuthError('Please enter your password.');
+    const errors: Record<string, string> = {};
+    if (!authUsername.trim()) errors.username = 'Please enter your username or email.';
+    if (!authPassword) errors.password = 'Please enter your password.';
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
 
+    setAuthSubmitting(true);
     try {
       const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username_or_email: authUsername.trim(), password: authPassword }),
       });
-      const data = await res.json();
-      if (!res.ok) return setAuthError(data.detail || 'Invalid username or password.');
-      setCurrentUser({
-        id: data.child_id,
-        username: data.username,
-        display_name: data.display_name,
-        avatar: data.avatar,
-        age: data.age,
-        age_band: '8-11',
-        xp: data.xp,
-        level: data.level,
-      });
-      resetTo('home');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status >= 500) setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
+        else setAuthError(apiMessage(data, 'Invalid username or password. Please try again.'));
+        return;
+      }
+      applyUser(profileFromAuth(data));
     } catch {
-      setAuthError('Unable to connect to login server.');
+      setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
+    } finally {
+      setAuthSubmitting(false);
+    }
+  };
+
+  const handleForgotRequest = async () => {
+    if (forgotSubmitting) return;
+    setForgotFormError(null);
+    if (!forgotEmail.trim()) {
+      setForgotFieldError('Please enter an email.');
+      return;
+    }
+    if (!EMAIL_RE.test(forgotEmail.trim())) {
+      setForgotFieldError('Please enter a valid email address.');
+      return;
+    }
+    setForgotFieldError(null);
+    setForgotSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setForgotFieldError(apiMessage(data, 'No RimbaQuest account was found for this email.'));
+        return;
+      }
+      setForgotToken(String(data.simulated_token || ''));
+      setForgotStep(2);
+    } catch {
+      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
+    } finally {
+      setForgotSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (forgotSubmitting) return;
+    if (!forgotToken.trim()) {
+      setForgotFieldError('Please enter your recovery code.');
+      return;
+    }
+    if (!forgotNewPassword) {
+      setForgotFormError('Please create a password.');
+      return;
+    }
+    setForgotSubmitting(true);
+    setForgotFormError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail.trim(),
+          recovery_token: forgotToken.trim(),
+          new_password: forgotNewPassword,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = apiMessage(data, 'Invalid or expired recovery code.');
+        if (/expired/i.test(message)) {
+          setForgotFormError(message);
+          setForgotFieldError(message);
+        } else {
+          setForgotFieldError(message);
+        }
+        return;
+      }
+      Alert.alert('Success', 'Password successfully updated!');
+      setForgotStep(1);
+      setForgotToken('');
+      setForgotNewPassword('');
+      setScreen('auth');
+    } catch {
+      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
+    } finally {
+      setForgotSubmitting(false);
     }
   };
 
@@ -373,32 +569,85 @@ export default function RimbaQuest() {
       });
       if (res.ok) {
         const data = await res.json();
-        setCurrentUser((prev) => ({ ...prev, ...data }));
+        setCurrentUser((prev) => {
+          const next = { ...prev, ...data };
+          saveSession(next);
+          return next;
+        });
       }
     } catch {
-      setCurrentUser((prev) => ({
-        ...prev,
-        display_name: editDisplayName.trim() || prev.display_name,
-        avatar: editAvatar,
-        age: parseInt(editAge, 10) || prev.age,
-      }));
+      setCurrentUser((prev) => {
+        const next = {
+          ...prev,
+          display_name: editDisplayName.trim() || prev.display_name,
+          avatar: editAvatar,
+          age: parseInt(editAge, 10) || prev.age,
+        };
+        saveSession(next);
+        return next;
+      });
     }
     goBack();
   };
 
-  // Battle Logic
+  const handleLogout = () => {
+    clearSession();
+    setIsLoggedIn(false);
+    setCurrentUser(GUEST_USER);
+    setDiscovered([]);
+    setRecentCaptures([]);
+    setGalleryPhotos({});
+    setNotice(null);
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    setFieldErrors({});
+    setAuthError(null);
+    resetTo('auth');
+  };
+
+  const loadLocationDetail = async (loc: LocationItem) => {
+    setSelectedLocation(loc);
+    setLocationDetailError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/locations/${loc.id}`);
+      if (!res.ok) throw new Error('fail');
+      const data = await res.json();
+      setSelectedLocation({
+        ...loc,
+        ...data,
+        facilities: Array.isArray(data.facilities) ? data.facilities : loc.facilities,
+      });
+    } catch {
+      if (!loc.description) {
+        setLocationDetailError("We couldn't load this location. Please try again.");
+      }
+    }
+  };
+
+  const loadSpeciesGallery = async (speciesId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = (data.items || []) as GalleryItem[];
+      if (items.length) {
+        setGalleryPhotos((current) => ({ ...current, [speciesId]: items }));
+      }
+    } catch {
+      // keep local gallery
+    }
+  };
+
   const initBattle = (card: Species) => {
     setBattlePlayerCard(card);
     const hp = card.hp || 120;
     setBattlePlayerHp(hp);
     setBattlePlayerMaxHp(hp);
-    const opponentHp = 100 + Math.floor(Math.random() * 20);
-    setBattleOpponentHp(opponentHp);
-    setBattleOpponentMaxHp(opponentHp);
-    setBattleOpponentName('Wild Forest Boar');
+    setBattleOpponentHp(BATTLE_OPPONENT.hp);
+    setBattleOpponentMaxHp(BATTLE_OPPONENT.hp);
     setBattleLog([
-      '🌲 A wild opponent (Wild Forest Boar) appeared!',
-      `🐾 You sent out ${card.common_name} (HP: ${hp}, ATK: ${card.base_attack || 25})!`,
+      `A wild ${BATTLE_OPPONENT.name} appeared!`,
+      `You sent out ${card.common_name}.`,
     ]);
     setBattleRound(1);
     setBattleOutcome('playing');
@@ -408,34 +657,24 @@ export default function RimbaQuest() {
   const performAttack = () => {
     if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
     setIsAttacking(true);
-
-    const playerAtk = battlePlayerCard.base_attack || 25;
-    const playerDmg = playerAtk + Math.floor(Math.random() * 8) - 3;
+    const playerDmg = battlePlayerCard.base_attack || 25;
     const nextOpponentHp = Math.max(0, battleOpponentHp - playerDmg);
-    const newLogs = [...battleLog, `⚔️ ${battlePlayerCard.common_name} used Basic Strike for ${playerDmg} DMG!`];
-
+    const newLogs = [...battleLog, `${battlePlayerCard.common_name} used Basic Attack for ${playerDmg} damage.`];
     if (nextOpponentHp <= 0) {
       setBattleOpponentHp(0);
-      newLogs.push('🏆 Wild Forest Boar fainted! You won the battle!');
+      newLogs.push(`${BATTLE_OPPONENT.name} fainted. You won!`);
       setBattleLog(newLogs);
       setBattleOutcome('win');
       setIsAttacking(false);
-      fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ won: true, opponent_name: battleOpponentName, rounds: battleRound }),
-      }).then(() => refresh()).catch(() => {});
       return;
     }
-
     setBattleOpponentHp(nextOpponentHp);
     setTimeout(() => {
-      const oppDmg = 18 + Math.floor(Math.random() * 10);
-      const nextPlayerHp = Math.max(0, battlePlayerHp - oppDmg);
-      newLogs.push(`💥 ${battleOpponentName} counter-attacked for ${oppDmg} DMG!`);
+      const nextPlayerHp = Math.max(0, battlePlayerHp - BATTLE_OPPONENT.attack);
+      newLogs.push(`${BATTLE_OPPONENT.name} attacked for ${BATTLE_OPPONENT.attack} damage.`);
       if (nextPlayerHp <= 0) {
         setBattlePlayerHp(0);
-        newLogs.push(`💔 ${battlePlayerCard.common_name} is exhausted! Try another round!`);
+        newLogs.push(`${battlePlayerCard.common_name} is too tired to continue.`);
         setBattleOutcome('lose');
       } else {
         setBattlePlayerHp(nextPlayerHp);
@@ -443,30 +682,14 @@ export default function RimbaQuest() {
       setBattleLog(newLogs);
       setBattleRound((r) => r + 1);
       setIsAttacking(false);
-    }, 600);
+    }, 500);
   };
 
-  const openQuiz = async () => {
-    const fallback: QuizQuestion = {
-      question: `Which statement about ${selected.common_name} is true?`,
-      options: [selected.fun_fact, 'Wild animals are safest when we touch and feed them.', 'Every Malaysian animal lives in the ocean.'],
-      correct_index: 0,
-      explanation: selected.fun_fact,
-    };
-    setQuizAnswer(null);
-    setQuizQuestion(fallback);
-    open('quiz');
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/species/${selected.id}/quiz`);
-      if (res.ok) {
-        const data = await res.json();
-        const questions = typeof data.questions === 'string' ? JSON.parse(data.questions) : data.questions;
-        if (questions[0]) setQuizQuestion(questions[0]);
-      }
-    } catch {}
-  };
-
-  const discoveryPhoto = photoUri ? { uri: photoUri } : IMAGES.marmoset;
+  const discoveryPhoto = photoUri ? { uri: photoUri } : null;
+  const profileDirty =
+    editDisplayName !== currentUser.display_name ||
+    editAvatar !== currentUser.avatar ||
+    editAge !== String(currentUser.age);
 
   if (loading) {
     return (
@@ -482,7 +705,7 @@ export default function RimbaQuest() {
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.page}>
-        {screen === 'home' && (
+        {screen === 'home' && isLoggedIn && (
           <HomeScreen
             currentUser={currentUser}
             displayProgress={displayProgress}
@@ -502,9 +725,13 @@ export default function RimbaQuest() {
             setSearch={setLocationSearch}
             categoryFilter={locationCategoryFilter}
             setCategoryFilter={setLocationCategoryFilter}
+            loading={locationsLoading}
+            error={locationsError}
+            emptyMessage={locationsEmptyMessage}
+            onRetry={() => void loadLocations()}
             onSelectLocation={(loc) => {
-              setSelectedLocation(loc);
               open('location_detail');
+              void loadLocationDetail(loc);
             }}
           />
         )}
@@ -512,6 +739,8 @@ export default function RimbaQuest() {
         {screen === 'location_detail' && selectedLocation && (
           <LocationDetailScreen
             location={selectedLocation}
+            error={locationDetailError}
+            onRetry={() => void loadLocationDetail(selectedLocation)}
             onBack={goBack}
             onRecordHere={(locName) => startDiscovery(locName)}
           />
@@ -521,18 +750,15 @@ export default function RimbaQuest() {
           <CameraScreen
             cameraRef={cameraRef}
             cameraPermission={cameraPermission}
+            photoError={photoError}
             onRequestPermission={requestCameraPermission}
-            onTakePhoto={takePhoto}
-            onPickFromGallery={pickFromGallery}
-            onUseSamplePhoto={() => {
-              setPhotoUri(null);
-              open('category');
-            }}
+            onTakePhoto={() => void takePhoto()}
+            onPickFromGallery={() => void pickFromGallery()}
             onBack={goBack}
           />
         )}
 
-        {screen === 'category' && (
+        {screen === 'category' && discoveryPhoto && (
           <CategoryScreen
             photo={discoveryPhoto}
             categories={CATEGORIES}
@@ -541,11 +767,12 @@ export default function RimbaQuest() {
               setSpeciesSearch('');
               open('species');
             }}
+            onRetake={retakePhoto}
             onBack={goBack}
           />
         )}
 
-        {screen === 'species' && (
+        {screen === 'species' && discoveryPhoto && (
           <SpeciesScreen
             photo={discoveryPhoto}
             category={category}
@@ -560,14 +787,24 @@ export default function RimbaQuest() {
           />
         )}
 
-        {screen === 'confirm' && (
+        {screen === 'confirm' && discoveryPhoto && (
           <ConfirmScreen
             photo={discoveryPhoto}
             selected={selected}
             discoveryLocation={discoveryLocation}
             setDiscoveryLocation={setDiscoveryLocation}
-            onConfirm={recordDiscovery}
+            locationMode={locationMode}
+            setLocationMode={(mode) => {
+              setLocationMode(mode);
+              setLocationNotice(null);
+            }}
+            locationOptions={locations}
+            locationNotice={locationNotice}
+            saveError={saveError}
+            saving={saving}
+            onConfirm={() => void recordDiscovery()}
             onChangeSpecies={() => open('species')}
+            onRetake={retakePhoto}
             onBack={goBack}
           />
         )}
@@ -576,10 +813,11 @@ export default function RimbaQuest() {
           <SuccessScreen
             selected={selected}
             discoveryLocation={discoveryLocation}
+            firstDiscovery={firstDiscovery}
             onViewCard={() => open('about')}
             onEnterBattle={() => initBattle(selected)}
             onViewCollection={() => resetTo('collection')}
-            onRecordAnother={() => resetTo('category')}
+            onRecordAnother={() => startDiscovery()}
             onBack={goBack}
           />
         )}
@@ -593,6 +831,7 @@ export default function RimbaQuest() {
             displayProgress={displayProgress}
             onSelectSpecies={(item) => {
               setSelected(item);
+              void loadSpeciesGallery(item.id);
               open('about');
             }}
             onSelectLocked={(item) => {
@@ -602,18 +841,13 @@ export default function RimbaQuest() {
           />
         )}
 
-        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
+        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery') && (
           <SpeciesDetailScreen
             species={selected}
             screen={screen}
             photos={galleryPhotos[selected.id] ?? []}
-            quizQuestion={quizQuestion}
-            quizAnswer={quizAnswer}
             onTabChange={(tab) => open(tab)}
             onStartBattle={() => initBattle(selected)}
-            onOpenQuiz={() => void openQuiz()}
-            onAnswerQuiz={setQuizAnswer}
-            onFinishQuiz={() => open('facts')}
             onBack={goBack}
           />
         )}
@@ -621,10 +855,7 @@ export default function RimbaQuest() {
         {screen === 'locked' && (
           <LockedScreen
             species={selected}
-            onStartDiscovery={() => {
-              setSelected(selected);
-              startDiscovery();
-            }}
+            onStartDiscovery={() => startDiscovery()}
             onBack={goBack}
           />
         )}
@@ -632,8 +863,9 @@ export default function RimbaQuest() {
         {screen === 'battle_select' && (
           <BattleSelectScreen
             unlockedSpecies={unlockedSpeciesList}
-            battleCard={battlePlayerCard}
-            onSelectCard={(card) => initBattle(card)}
+            selectedCard={battlePlayerCard}
+            onSelectCard={setBattlePlayerCard}
+            onStartBattle={() => battlePlayerCard && initBattle(battlePlayerCard)}
             onStartDiscovery={() => startDiscovery()}
           />
         )}
@@ -641,7 +873,8 @@ export default function RimbaQuest() {
         {screen === 'battle_arena' && battlePlayerCard && (
           <BattleArenaScreen
             card={battlePlayerCard}
-            opponentName={battleOpponentName}
+            opponentName={BATTLE_OPPONENT.name}
+            opponentImage={BATTLE_OPPONENT.image}
             playerHp={battlePlayerHp}
             playerMaxHp={battlePlayerMaxHp}
             opponentHp={battleOpponentHp}
@@ -660,8 +893,14 @@ export default function RimbaQuest() {
         {screen === 'auth' && (
           <AuthScreen
             authMode={authMode}
-            setAuthMode={setAuthMode}
+            setAuthMode={(mode) => {
+              setAuthMode(mode);
+              setAuthError(null);
+              setFieldErrors({});
+            }}
             authError={authError}
+            fieldErrors={fieldErrors}
+            submitting={authSubmitting}
             username={authUsername}
             setUsername={setAuthUsername}
             email={authEmail}
@@ -674,12 +913,41 @@ export default function RimbaQuest() {
             setAge={setAuthAge}
             avatar={authAvatar}
             setAvatar={setAuthAvatar}
-            onLogin={handleLogin}
-            onRegister={handleRegister}
+            onLogin={() => void handleLogin()}
+            onRegister={() => void handleRegister()}
             onForgotPassword={() => {
               setForgotStep(1);
+              setForgotFieldError(null);
+              setForgotFormError(null);
               open('forgot_password');
             }}
+            onBlurUsername={() => {
+              const name = authUsername.trim();
+              if (!name) return;
+              if (name.length < 3 || name.length > 20) {
+                setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
+              } else {
+                setFieldErrors((cur) => {
+                  const next = { ...cur };
+                  delete next.username;
+                  return next;
+                });
+              }
+            }}
+            onBlurEmail={() => {
+              const email = authEmail.trim();
+              if (!email) return;
+              if (!EMAIL_RE.test(email)) {
+                setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
+              } else {
+                setFieldErrors((cur) => {
+                  const next = { ...cur };
+                  delete next.email;
+                  return next;
+                });
+              }
+            }}
+            showBack={isLoggedIn}
             onBack={goBack}
           />
         )}
@@ -693,13 +961,16 @@ export default function RimbaQuest() {
             setToken={setForgotToken}
             newPassword={forgotNewPassword}
             setNewPassword={setForgotNewPassword}
-            onRequestCode={() => {
-              setForgotToken('RESET-2026');
-              setForgotStep(2);
-            }}
-            onResetPassword={() => {
-              Alert.alert('Success', 'Password successfully updated!');
-              open('auth');
+            fieldError={forgotFieldError}
+            formError={forgotFormError}
+            submitting={forgotSubmitting}
+            onRequestCode={() => void handleForgotRequest()}
+            onResetPassword={() => void handleResetPassword()}
+            onRequestNewCode={() => {
+              setForgotStep(1);
+              setForgotFieldError(null);
+              setForgotFormError(null);
+              setForgotToken('');
             }}
             onBack={goBack}
           />
@@ -713,8 +984,9 @@ export default function RimbaQuest() {
             setAge={setEditAge}
             avatar={editAvatar}
             setAvatar={setEditAvatar}
-            onSave={handleSaveProfile}
+            onSave={() => void handleSaveProfile()}
             onBack={goBack}
+            isDirty={profileDirty}
           />
         )}
 
@@ -733,12 +1005,12 @@ export default function RimbaQuest() {
               setEditAge(String(currentUser.age));
               open('profile_edit');
             }}
-            onSwitchAccount={() => open('auth')}
+            onLogout={handleLogout}
           />
         )}
       </View>
 
-      {['home', 'locations', 'collection', 'battle_select', 'progress'].includes(screen) && (
+      {isLoggedIn && ['home', 'locations', 'collection', 'battle_select', 'progress'].includes(screen) && (
         <BottomNav screen={screen} onNavigate={(s) => resetTo(s)} onStartDiscovery={() => startDiscovery()} />
       )}
     </SafeAreaView>
