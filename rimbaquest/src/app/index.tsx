@@ -14,10 +14,85 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type Screen = 'home' | 'photo' | 'category' | 'species' | 'confirm' | 'success' | 'collection' | 'about' | 'facts' | 'gallery' | 'quiz' | 'locked' | 'progress';
-type Species = { id: string; common_name: string; scientific_name: string; category: string; habitat: string; diet: string; fun_fact: string; act716_status?: string | null };
-type QuizQuestion = { question: string; options: string[]; correct_index: number; explanation?: string };
-type RecentCapture = Species & { location_label?: string | null; recorded_at?: string | null };
+type Screen =
+  | 'home'
+  | 'photo'
+  | 'category'
+  | 'species'
+  | 'confirm'
+  | 'success'
+  | 'collection'
+  | 'about'
+  | 'battle_stats'
+  | 'facts'
+  | 'gallery'
+  | 'quiz'
+  | 'locked'
+  | 'progress'
+  | 'locations'
+  | 'location_detail'
+  | 'battle_select'
+  | 'battle_arena'
+  | 'auth'
+  | 'profile_edit'
+  | 'forgot_password';
+
+type Species = {
+  id: string;
+  common_name: string;
+  scientific_name: string;
+  category: string;
+  habitat: string;
+  diet: string;
+  fun_fact: string;
+  act716_status?: string | null;
+  hp?: number;
+  base_attack?: number;
+  ability_1?: string;
+  ability_2?: string;
+  ability_3?: string;
+  abilities_locked?: boolean;
+};
+
+type QuizQuestion = {
+  question: string;
+  options: string[];
+  correct_index: number;
+  explanation?: string;
+};
+
+type RecentCapture = Species & {
+  location_label?: string | null;
+  recorded_at?: string | null;
+  photo_url?: string | null;
+};
+
+type LocationItem = {
+  id: string;
+  name: string;
+  type: string;
+  area: string;
+  lat?: number;
+  lng?: number;
+  verified?: boolean;
+  description: string;
+  facilities: string[];
+  best_time: string;
+  distance_km: number;
+  why_recommended: string;
+  typical_wildlife?: string;
+};
+
+type UserProfile = {
+  id: number;
+  username: string;
+  display_name: string;
+  avatar: string;
+  age: number;
+  age_band: string;
+  xp: number;
+  level: number;
+};
 
 const IMAGES = {
   Mammal: require('../../assets/wildlife/mammals.jpg'),
@@ -29,8 +104,15 @@ const IMAGES = {
   recent: require('../../assets/wildlife/recent-marmoset.jpg'),
 };
 
-// Iteration 1 is intentionally a limited, image-backed catalogue. Do not show
-// a species as selectable until we have a real local reference photo for it.
+const AVATAR_ICONS: Record<string, string> = {
+  tapir: '🦛',
+  tiger: '🐯',
+  hornbill: '🦜',
+  elephant: '🐘',
+  pangolin: '🦔',
+  butterfly: '🦋',
+};
+
 const SPECIES_IMAGES: Record<string, number> = {
   sp_asian_elephant: require('../../assets/species/sp_asian_elephant.jpg'),
   sp_common_mormon: require('../../assets/species/sp_common_mormon.jpg'),
@@ -192,158 +274,29 @@ Object.assign(SPECIES_IMAGES, {
 });
 
 const SEED: Species[] = [
-  { id: 'sp_common_mormon', common_name: 'Common Mormon', scientific_name: 'Papilio polytes', category: 'Butterfly', habitat: 'Gardens, parks and forest edges across Malaysia.', diet: 'Flower nectar and citrus leaves.', fun_fact: 'Some females copy the look of a poisonous butterfly.' },
-  { id: 'sp_malayan_tapir', common_name: 'Malayan Tapir', scientific_name: 'Tapirus indicus', category: 'Mammal', habitat: 'Rainforest, often near water.', diet: 'Leaves, shoots and fruit.', fun_fact: 'Tapir babies are born with stripes and spots.' },
-  { id: 'sp_oriental_pied_hornbill', common_name: 'Oriental Pied Hornbill', scientific_name: 'Anthracoceros albirostris', category: 'Bird', habitat: 'Lowland forests, forest edges and gardens.', diet: 'Fruit, insects and small animals.', fun_fact: 'Its wingbeats can make a loud whooshing sound.' },
-  { id: 'sp_asian_elephant', common_name: 'Asian Elephant', scientific_name: 'Elephas maximus', category: 'Mammal', habitat: 'Forests and forest edges in Malaysia.', diet: 'Grass, leaves, bark and fruit.', fun_fact: 'Its trunk helps it smell, drink and pick up food.' },
-  { id: 'sp_green_sea_turtle', common_name: 'Green Sea Turtle', scientific_name: 'Chelonia mydas', category: 'Reptile', habitat: 'Tropical seas, seagrass beds and nesting beaches.', diet: 'Seagrass and algae.', fun_fact: 'They return to beaches near where they hatched.' },
-  { id: 'sp_malayan_pangolin', common_name: 'Malayan Pangolin', scientific_name: 'Manis javanica', category: 'Mammal', habitat: 'Forests and plantations with plenty of cover.', diet: 'Ants and termites.', fun_fact: 'Its scales are made from keratin, like our fingernails.' },
-  { id: 'sp_malayan_tiger', common_name: 'Malayan Tiger', scientific_name: 'Panthera tigris jacksoni', category: 'Mammal', habitat: 'Dense tropical forests in Peninsular Malaysia.', diet: 'Deer and other wild animals.', fun_fact: 'Every tiger has a unique stripe pattern.' },
-  { id: 'sp_mouse_deer', common_name: 'Lesser Mouse-deer', scientific_name: 'Tragulus kanchil', category: 'Mammal', habitat: 'Forest undergrowth and river edges.', diet: 'Leaves, fruit and fungi.', fun_fact: 'It is one of the world’s smallest hoofed mammals.' },
-  { id: 'sp_proboscis_monkey', common_name: 'Proboscis Monkey', scientific_name: 'Nasalis larvatus', category: 'Mammal', habitat: 'Mangroves and riverine forests in Borneo.', diet: 'Leaves, seeds and unripe fruit.', fun_fact: 'Adult males have famously long noses.' },
-  { id: 'sp_reticulated_python', common_name: 'Reticulated Python', scientific_name: 'Malayopython reticulatus', category: 'Reptile', habitat: 'Forests, wetlands and waterways.', diet: 'Small animals.', fun_fact: 'It has a beautiful net-like pattern on its skin.' },
-  { id: 'sp_rhinoceros_hornbill', common_name: 'Rhinoceros Hornbill', scientific_name: 'Buceros rhinoceros', category: 'Bird', habitat: 'Large, mature rainforests.', diet: 'Fruit, insects and small animals.', fun_fact: 'It is the state bird of Sarawak.' },
-  { id: 'sp_saltwater_crocodile', common_name: 'Saltwater Crocodile', scientific_name: 'Crocodylus porosus', category: 'Reptile', habitat: 'Rivers, mangroves and estuaries.', diet: 'Fish and other animals.', fun_fact: 'It is the world’s largest living reptile.' },
-  { id: 'sp_sunda_colugo', common_name: 'Sunda Colugo', scientific_name: 'Galeopterus variegatus', category: 'Mammal', habitat: 'Forest canopy and tall trees.', diet: 'Leaves, shoots and fruit.', fun_fact: 'It glides between trees using a wide skin membrane.' },
-  { id: 'sp_sun_bear', common_name: 'Sun Bear', scientific_name: 'Helarctos malayanus', category: 'Mammal', habitat: 'Lowland tropical rainforest.', diet: 'Fruit, insects and honey.', fun_fact: 'It is the smallest bear species in the world.' },
-  { id: 'sp_tailed_jay', common_name: 'Tailed Jay', scientific_name: 'Graphium agamemnon', category: 'Butterfly', habitat: 'Gardens and forest edges.', diet: 'Flower nectar.', fun_fact: 'It is a very fast-flying butterfly.' },
-  {"id":"sp_ashy_tailorbird","common_name":"Ashy Tailorbird","scientific_name":"Orthotomus ruficeps","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_asian_blue_quail","common_name":"Asian Blue Quail","scientific_name":"Synoicus chinensis","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_asian_small_clawed_otter","common_name":"Asian Small-clawed Otter","scientific_name":"Aonyx cinereus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_asiatic_brush_tailed_porcupine","common_name":"Asiatic Brush-tailed Porcupine","scientific_name":"Atherurus macrourus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_asiatic_golden_cat","common_name":"Asiatic Golden Cat","scientific_name":"Catopuma temminckii","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_asiatic_striped_squirrels","common_name":"Asiatic Striped Squirrels","scientific_name":"Tamiops rodolphii","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_banded_civet","common_name":"Banded Civet","scientific_name":"Hemigalus derbyanus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_banded_leaf_monkey","common_name":"Banded Leaf Monkey","scientific_name":"Presbytis femoralis","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_banded_linsang","common_name":"Banded Linsang","scientific_name":"Prionodon linsang","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_banteng","common_name":"Banteng","scientific_name":"Bos javanicus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_barred_eagle_owl","common_name":"Barred Eagle-owl","scientific_name":"Bubo sumatranus","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_bearded_pig","common_name":"Bearded Pig","scientific_name":"Sus barbatus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_binturong","common_name":"Binturong","scientific_name":"Arctictis binturong","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_black_crowned_pitta","common_name":"Black-crowned Pitta","scientific_name":"Erythropitta ussheri","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_black_crowned_pitta_2","common_name":"Black-crowned Pitta","scientific_name":"Pittasoma michleri","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_black_giant_squirrel","common_name":"Black Giant Squirrel","scientific_name":"Ratufa bicolor","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife.","act716_status":"Totally Protected"},
+  { id: 'sp_common_mormon', common_name: 'Common Mormon', scientific_name: 'Papilio polytes', category: 'Butterfly', habitat: 'Gardens, parks and forest edges across Malaysia.', diet: 'Flower nectar and citrus leaves.', fun_fact: 'Some females copy the look of a poisonous butterfly.', hp: 75, base_attack: 34 },
+  { id: 'sp_malayan_tapir', common_name: 'Malayan Tapir', scientific_name: 'Tapirus indicus', category: 'Mammal', habitat: 'Rainforest, often near water.', diet: 'Leaves, shoots and fruit.', fun_fact: 'Tapir babies are born with stripes and spots.', hp: 125, base_attack: 26 },
+  { id: 'sp_oriental_pied_hornbill', common_name: 'Oriental Pied Hornbill', scientific_name: 'Anthracoceros albirostris', category: 'Bird', habitat: 'Lowland forests, forest edges and gardens.', diet: 'Fruit, insects and small animals.', fun_fact: 'Its wingbeats can make a loud whooshing sound.', hp: 98, base_attack: 32 },
+  { id: 'sp_asian_elephant', common_name: 'Asian Elephant', scientific_name: 'Elephas maximus', category: 'Mammal', habitat: 'Forests and forest edges in Malaysia.', diet: 'Grass, leaves, bark and fruit.', fun_fact: 'Its trunk helps it smell, drink and pick up food.', hp: 135, base_attack: 28 },
+  { id: 'sp_green_sea_turtle', common_name: 'Green Sea Turtle', scientific_name: 'Chelonia mydas', category: 'Reptile', habitat: 'Tropical seas, seagrass beds and nesting beaches.', diet: 'Seagrass and algae.', fun_fact: 'They return to beaches near where they hatched.', hp: 145, base_attack: 22 },
+  { id: 'sp_malayan_pangolin', common_name: 'Malayan Pangolin', scientific_name: 'Manis javanica', category: 'Mammal', habitat: 'Forests and plantations with plenty of cover.', diet: 'Ants and termites.', fun_fact: 'Its scales are made from keratin, like our fingernails.', hp: 120, base_attack: 24 },
+  { id: 'sp_malayan_tiger', common_name: 'Malayan Tiger', scientific_name: 'Panthera tigris jacksoni', category: 'Mammal', habitat: 'Dense tropical forests in Peninsular Malaysia.', diet: 'Deer and other wild animals.', fun_fact: 'Every tiger has a unique stripe pattern.', hp: 130, base_attack: 30 },
+  { id: 'sp_mouse_deer', common_name: 'Lesser Mouse-deer', scientific_name: 'Tragulus kanchil', category: 'Mammal', habitat: 'Forest undergrowth and river edges.', diet: 'Leaves, fruit and fungi.', fun_fact: 'It is one of the world’s smallest hoofed mammals.', hp: 115, base_attack: 23 },
+  { id: 'sp_proboscis_monkey', common_name: 'Proboscis Monkey', scientific_name: 'Nasalis larvatus', category: 'Mammal', habitat: 'Mangroves and riverine forests in Borneo.', diet: 'Leaves, seeds and unripe fruit.', fun_fact: 'Adult males have famously long noses.', hp: 122, base_attack: 25 },
+  { id: 'sp_reticulated_python', common_name: 'Reticulated Python', scientific_name: 'Malayopython reticulatus', category: 'Reptile', habitat: 'Forests, wetlands and waterways.', diet: 'Small animals.', fun_fact: 'It has a beautiful net-like pattern on its skin.', hp: 142, base_attack: 26 },
+  { id: 'sp_rhinoceros_hornbill', common_name: 'Rhinoceros Hornbill', scientific_name: 'Buceros rhinoceros', category: 'Bird', habitat: 'Large, mature rainforests.', diet: 'Fruit, insects and small animals.', fun_fact: 'It is the state bird of Sarawak.', hp: 102, base_attack: 31 },
+  { id: 'sp_saltwater_crocodile', common_name: 'Saltwater Crocodile', scientific_name: 'Crocodylus porosus', category: 'Reptile', habitat: 'Rivers, mangroves and estuaries.', diet: 'Fish and other animals.', fun_fact: 'It is the world’s largest living reptile.', hp: 150, base_attack: 27 },
+  { id: 'sp_sunda_colugo', common_name: 'Sunda Colugo', scientific_name: 'Galeopterus variegatus', category: 'Mammal', habitat: 'Forest canopy and tall trees.', diet: 'Leaves, shoots and fruit.', fun_fact: 'It glides between trees using a wide skin membrane.', hp: 118, base_attack: 25 },
+  { id: 'sp_sun_bear', common_name: 'Sun Bear', scientific_name: 'Helarctos malayanus', category: 'Mammal', habitat: 'Lowland tropical rainforest.', diet: 'Fruit, insects and honey.', fun_fact: 'It is the smallest bear species in the world.', hp: 128, base_attack: 27 },
+  { id: 'sp_tailed_jay', common_name: 'Tailed Jay', scientific_name: 'Graphium agamemnon', category: 'Butterfly', habitat: 'Gardens and forest edges.', diet: 'Flower nectar.', fun_fact: 'It is a very fast-flying butterfly.', hp: 78, base_attack: 35 },
+];
 
-  {"id":"sp_black_rumped_flameback","common_name":"Black-rumped Flameback","scientific_name":"Dinopium benghalense","category":"Bird","habitat":"Forests, plantations and gardens.","diet":"Insects, especially ants and beetles.","fun_fact":"It has a brilliant golden back."},
-  {"id":"sp_changeable_hawk_eagle","common_name":"Changeable Hawk-eagle","scientific_name":"Nisaetus cirrhatus","category":"Bird","habitat":"Forests and forest edges.","diet":"Birds, mammals and reptiles.","fun_fact":"Its plumage changes colour as it ages."},
-  {"id":"sp_chestnut_capped_babbler","common_name":"Chestnut-capped Babbler","scientific_name":"Timalia pileata","category":"Bird","habitat":"Grasslands and scrub.","diet":"Insects and seeds.","fun_fact":"It has a rich chestnut cap."},
-  {"id":"sp_chestnut_capped_thrush","common_name":"Chestnut-capped Thrush","scientific_name":"Geokichla interpres","category":"Bird","habitat":"Lowland rainforests.","diet":"Insects, worms and fruit.","fun_fact":"It has a striking chestnut cap."},
-  {"id":"sp_cinereous_bulbul","common_name":"Cinereous Bulbul","scientific_name":"Hemixos cinereus","category":"Bird","habitat":"Montane forests.","diet":"Fruit, nectar and insects.","fun_fact":"It has a greyish, cinereous plumage."},
-  {"id":"sp_clouded_leopard","common_name":"Clouded Leopard","scientific_name":"Neofelis nebulosa","category":"Mammal","habitat":"Dense tropical forests across Southeast Asia.","diet":"Deer, monkeys and wild pigs.","fun_fact":"Its cloud-like spots help it blend into the forest canopy."},
-  {"id":"sp_collared_mongoose","common_name":"Collared Mongoose","scientific_name":"Herpestes semitorquatus","category":"Mammal","habitat":"Lowland forests near water.","diet":"Small animals, insects and crustaceans.","fun_fact":"It has a distinctive white collar."},
-  {"id":"sp_common_emerald_dove","common_name":"Common Emerald Dove","scientific_name":"Chalcophaps indica","category":"Bird","habitat":"Forests, mangroves and gardens.","diet":"Seeds and fallen fruit.","fun_fact":"Its wings make a distinctive whistling sound in flight."},
-  {"id":"sp_common_hill_myna","common_name":"Common Hill Myna","scientific_name":"Gracula religiosa","category":"Bird","habitat":"Lowland and hill forests.","diet":"Fruit, nectar and insects.","fun_fact":"It is famous for its ability to mimic human speech."},
-  {"id":"sp_common_palm_civet","common_name":"Common Palm Civet","scientific_name":"Paradoxurus hermaphroditus","category":"Mammal","habitat":"Forests, gardens and urban areas.","diet":"Fruit, small animals and insects.","fun_fact":"It is famous for producing civet coffee."},
-  {"id":"sp_common_sun_skink","common_name":"Common Sun Skink","scientific_name":"Eutropis multifasciata","category":"Reptile","habitat":"Forests, gardens and urban areas.","diet":"Insects and small invertebrates.","fun_fact":"It is one of the most common lizards in Malaysia."},
-  {"id":"sp_common_treeshrew","common_name":"Common Treeshrew","scientific_name":"Tupaia glis","category":"Mammal","habitat":"Forests and plantations.","diet":"Insects and fruit.","fun_fact":"It looks like a squirrel but is more closely related to primates."},
-  {"id":"sp_common_water_monitor","common_name":"Common Water Monitor","scientific_name":"Varanus salvator","category":"Reptile","habitat":"Rivers, lakes and mangroves.","diet":"Fish, birds, eggs and carrion.","fun_fact":"It is the second-largest lizard in the world."},
-  {"id":"sp_crab_eating_macaque","common_name":"Crab-eating Macaque","scientific_name":"Macaca fascicularis","category":"Mammal","habitat":"Mangroves, forests and river edges.","diet":"Fruit, crabs and small animals.","fun_fact":"These macaques are known for washing food before eating."},
-  {"id":"sp_crab_eating_mongoose","common_name":"Crab-eating Mongoose","scientific_name":"Herpestes urva","category":"Mammal","habitat":"Streams, rivers and wetlands.","diet":"Crabs, fish and amphibians.","fun_fact":"It is named for its diet of crabs."},
-  {"id":"sp_crested_partridge","common_name":"Crested Partridge","scientific_name":"Rollulus rouloul","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Seeds, fruit and insects.","fun_fact":"Males have a distinctive red crest."},
-  {"id":"sp_crested_serpent_eagle","common_name":"Crested Serpent-eagle","scientific_name":"Spilornis cheela","category":"Bird","habitat":"Forests, plantations and open areas.","diet":"Snakes, lizards and small mammals.","fun_fact":"It is a specialist snake hunter."},
-  {"id":"sp_crimson_headed_partridge","common_name":"Crimson-headed Partridge","scientific_name":"Haematortyx sanguiniceps","category":"Bird","habitat":"Montane forests of Borneo.","diet":"Seeds, fruit and insects.","fun_fact":"It has a bright crimson head."},
-  {"id":"sp_crimson_winged_woodpecker","common_name":"Crimson-winged Woodpecker","scientific_name":"Picus puniceus","category":"Bird","habitat":"Lowland and hill forests.","diet":"Insects and larvae.","fun_fact":"Its crimson wings make it easy to spot."},
-  {"id":"sp_dark_necked_tailorbird","common_name":"Dark-necked Tailorbird","scientific_name":"Orthotomus atrogularis","category":"Bird","habitat":"Forests and gardens.","diet":"Insects and spiders.","fun_fact":"It has a dark chestnut neck."},
-  {"id":"sp_dhole","common_name":"Dhole","scientific_name":"Cuon alpinus","category":"Mammal","habitat":"Forests, scrub and grasslands.","diet":"Deer and other medium-sized mammals.","fun_fact":"Dholes hunt in packs and communicate with whistles."},
-  {"id":"sp_dusky_leaf_monkey","common_name":"Dusky Leaf Monkey","scientific_name":"Trachypithecus obscurus","category":"Mammal","habitat":"Rainforest canopy and river edges.","diet":"Leaves, fruit and seeds.","fun_fact":"Babies are born bright orange for camouflage."},
-  {"id":"sp_flat_headed_cat","common_name":"Flat-headed Cat","scientific_name":"Prionailurus planiceps","category":"Mammal","habitat":"Wetlands, rivers and swamp forests.","diet":"Fish, frogs and crustaceans.","fun_fact":"It has partially webbed feet for catching fish."},
-  {"id":"sp_four_striped_ground_squirrel","common_name":"Four-striped Ground Squirrel","scientific_name":"Lariscus hosei","category":"Mammal","habitat":"Forest floor and undergrowth.","diet":"Fruit, seeds and insects.","fun_fact":"It has four distinctive stripes on its back."},
-  {"id":"sp_gaur","common_name":"Gaur","scientific_name":"Bos gaurus","category":"Mammal","habitat":"Evergreen forests and grasslands.","diet":"Grass, leaves and bamboo shoots.","fun_fact":"The gaur is the largest species of wild cattle.","act716_status":"Totally Protected"},
-  {"id":"sp_great_argus","common_name":"Great Argus","scientific_name":"Argusianus argus","category":"Bird","habitat":"Lowland rainforests.","diet":"Fruit, seeds and insects.","fun_fact":"Males have the longest tail feathers of any bird."},
-  {"id":"sp_greater_coucal","common_name":"Greater Coucal","scientific_name":"Centropus sinensis","category":"Bird","habitat":"Forests, scrub and wetlands.","diet":"Insects, small animals and fruit.","fun_fact":"It is also called the Crow Pheasant."},
-  {"id":"sp_greater_oriental_chevrotain","common_name":"Greater Oriental Chevrotain","scientific_name":"Tragulus napu","category":"Mammal","habitat":"Forests near water.","diet":"Leaves, fruit and fungi.","fun_fact":"It is also known as the Greater Mouse-deer."},
-  {"id":"sp_green_backed_heron","common_name":"Green-backed Heron","scientific_name":"Butorides striata","category":"Bird","habitat":"Wetlands, rivers and mangroves.","diet":"Fish, frogs and insects.","fun_fact":"It uses bait to attract fish."},
-  {"id":"sp_green_billed_coucal","common_name":"Green-billed Coucal","scientific_name":"Centropus chlororhynchos","category":"Bird","habitat":"Rainforests and dense thickets.","diet":"Insects, small animals and fruit.","fun_fact":"It is endemic to Sri Lanka's wet zone."},
-  {"id":"sp_grey_bellied_squirrel","common_name":"Grey-bellied Squirrel","scientific_name":"Callosciurus caniceps","category":"Mammal","habitat":"Forests and plantations.","diet":"Fruit, nuts and seeds.","fun_fact":"Its grey belly distinguishes it from other squirrels."},
-  {"id":"sp_honey_buzzard","common_name":"Honey Buzzard","scientific_name":"Pernis apivorus","category":"Bird","habitat":"Forests and open woodlands.","diet":"Wasp and bee larvae.","fun_fact":"It digs up wasp nests to eat the larvae."},
-  {"id":"sp_hose_s_civet","common_name":"Hose's Civet","scientific_name":"Diplogale hosei","category":"Mammal","habitat":"Montane forests of Borneo.","diet":"Small animals, fruit and insects.","fun_fact":"One of the least known civet species."},
-  {"id":"sp_hose_s_langur","common_name":"Hose's Langur","scientific_name":"Presbytis hosei","category":"Mammal","habitat":"Montane forests of Borneo.","diet":"Leaves and fruit.","fun_fact":"Named after zoologist Charles Hose."},
-  {"id":"sp_indomalayan_bamboo_rat","common_name":"Indomalayan Bamboo Rat","scientific_name":"Rhizomys sumatrensis","category":"Mammal","habitat":"Bamboo forests and plantations.","diet":"Bamboo roots and shoots.","fun_fact":"It is one of the largest rat species."},
-  {"id":"sp_lar_gibbon","common_name":"Lar Gibbon","scientific_name":"Hylobates lar","category":"Mammal","habitat":"Tall rainforest canopy.","diet":"Fruit, leaves and insects.","fun_fact":"Gibbons sing duets to strengthen family bonds."},
-  {"id":"sp_large_indian_civet","common_name":"Large Indian Civet","scientific_name":"Viverra zibetha","category":"Mammal","habitat":"Forests, scrub and agricultural areas.","diet":"Small animals, birds and fruit.","fun_fact":"It has a distinctive black-and-white striped tail."},
-  {"id":"sp_large_spotted_civet","common_name":"Large-spotted Civet","scientific_name":"Viverra megaspila","category":"Mammal","habitat":"Lowland forests.","diet":"Small mammals, birds and fruit.","fun_fact":"One of the largest civet species."},
-  {"id":"sp_large_treeshrew","common_name":"Large Treeshrew","scientific_name":"Tupaia tana","category":"Mammal","habitat":"Lowland and hill forests.","diet":"Insects and fruit.","fun_fact":"It is the largest species of treeshrew."},
-  {"id":"sp_leopard","common_name":"Leopard","scientific_name":"Panthera pardus","category":"Mammal","habitat":"Forests, mountains and grasslands.","diet":"Deer, monkeys and small mammals.","fun_fact":"Leopards are strong swimmers and excellent climbers.","act716_status":"Totally Protected"},
-  {"id":"sp_lesser_dog_faced_fruit_bat","common_name":"Lesser Dog-faced Fruit Bat","scientific_name":"Cynopterus brachyotis","category":"Mammal","habitat":"Forests and urban gardens.","diet":"Fruit, nectar and pollen.","fun_fact":"It has a dog-like face."},
-  {"id":"sp_long_tailed_porcupine","common_name":"Long-tailed Porcupine","scientific_name":"Trichys fasciculata","category":"Mammal","habitat":"Lowland forests.","diet":"Fruit, roots and bark.","fun_fact":"It has an unusually long tail for a porcupine."},
-  {"id":"sp_long_tailed_sibia","common_name":"Long-tailed Sibia","scientific_name":"Heterophasia picaoides","category":"Bird","habitat":"Montane forests.","diet":"Insects, fruit and nectar.","fun_fact":"It has a very long, graduated tail."},
-  {"id":"sp_mainland_leopard_cat","common_name":"Mainland Leopard Cat","scientific_name":"Prionailurus bengalensis","category":"Mammal","habitat":"Forests, grasslands and wetlands.","diet":"Small mammals, birds and reptiles.","fun_fact":"It is the most widespread wild cat in Asia.","act716_status":"Totally Protected"},
-  {"id":"sp_malay_banded_pitta","common_name":"Malay Banded Pitta","scientific_name":"Hydrornis irena","category":"Bird","habitat":"Lowland rainforests.","diet":"Insects, worms and snails.","fun_fact":"It is also known as the Graceful Pitta."},
-  {"id":"sp_malay_civet","common_name":"Malay Civet","scientific_name":"Viverra tangalunga","category":"Mammal","habitat":"Forests and plantations.","diet":"Fruit, small mammals and insects.","fun_fact":"Also known as the Oriental Civet."},
-  {"id":"sp_malay_crested_fireback","common_name":"Malay Crested Fireback","scientific_name":"Lophura rufa","category":"Bird","habitat":"Lowland rainforests.","diet":"Fruit, seeds and insects.","fun_fact":"Males have a brilliant blue-black plumage."},
-  {"id":"sp_malay_ground_cuckoo","common_name":"Malay Ground-cuckoo","scientific_name":"Carpococcyx radiceus","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Insects, snails and fruit.","fun_fact":"It is a secretive, ground-dwelling bird."},
-  {"id":"sp_malay_weasel","common_name":"Malay Weasel","scientific_name":"Mustela nudipes","category":"Mammal","habitat":"Lowland and hill forests.","diet":"Small mammals and birds.","fun_fact":"It is one of the least studied weasel species."},
-  {"id":"sp_malayan_night_heron","common_name":"Malayan Night-Heron","scientific_name":"Gorsachius melanolophus","category":"Bird","habitat":"Forests near water.","diet":"Fish, frogs and crustaceans.","fun_fact":"It is most active at dusk and night."},
-  {"id":"sp_malayan_peacock_pheasant","common_name":"Malayan Peacock-Pheasant","scientific_name":"Polyplectron malacense","category":"Bird","habitat":"Lowland rainforests.","diet":"Seeds, fruit and insects.","fun_fact":"Its tail feathers have eye-like spots."},
-  {"id":"sp_malayan_porcupine","common_name":"Malayan Porcupine","scientific_name":"Hystrix brachyura","category":"Mammal","habitat":"Forests, plantations and caves.","diet":"Roots, fruit and bark.","fun_fact":"Its quills can be up to 30 cm long.","act716_status":"Protected"},
-  {"id":"sp_malaysian_field_rat","common_name":"Malaysian Field Rat","scientific_name":"Rattus tiomanicus","category":"Mammal","habitat":"Agricultural areas and grasslands.","diet":"Grains, fruit and insects.","fun_fact":"It is common in oil palm plantations."},
-  {"id":"sp_malaysian_rail_babbler","common_name":"Malaysian Rail-babbler","scientific_name":"Eupetes macrocerus","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Insects and small invertebrates.","fun_fact":"It is more closely related to rails than babblers."},
-  {"id":"sp_marbled_cat","common_name":"Marbled Cat","scientific_name":"Pardofelis marmorata","category":"Mammal","habitat":"Rainforest canopy.","diet":"Squirrels, birds and lizards.","fun_fact":"Its long tail helps it balance in trees."},
-  {"id":"sp_maroon_sureli","common_name":"Maroon Sureli","scientific_name":"Presbytis rubicunda","category":"Mammal","habitat":"Bornean rainforest canopy.","diet":"Leaves, fruit and seeds.","fun_fact":"This monkey has a rich maroon coat."},
-  {"id":"sp_masked_palm_civet","common_name":"Masked Palm Civet","scientific_name":"Paguma larvata","category":"Mammal","habitat":"Forests, plantations and gardens.","diet":"Fruit, small animals and insects.","fun_fact":"Also known as the Gem-faced Civet."},
-  {"id":"sp_moonrat","common_name":"Moonrat","scientific_name":"Echinosorex gymnura","category":"Mammal","habitat":"Lowland forests near streams.","diet":"Insects, worms and small animals.","fun_fact":"Despite its name, it is related to hedgehogs."},
-  {"id":"sp_mountain_imperial_pigeon","common_name":"Mountain Imperial-pigeon","scientific_name":"Ducula badia","category":"Bird","habitat":"Montane and hill forests.","diet":"Fruit and berries.","fun_fact":"It is one of the largest pigeon species."},
-  {"id":"sp_noisy_rat","common_name":"Noisy Rat","scientific_name":"Leopoldamys sabanus","category":"Mammal","habitat":"Lowland and hill forests.","diet":"Fruit, seeds and insects.","fun_fact":"It is named for its loud vocalisations."},
-  {"id":"sp_northern_treeshrew","common_name":"Northern Treeshrew","scientific_name":"Tupaia belangeri","category":"Mammal","habitat":"Forests across Southeast Asia.","diet":"Insects and fruit.","fun_fact":"Treeshrews have a very high brain-to-body ratio."},
-  {"id":"sp_orange_headed_thrush","common_name":"Orange-headed Thrush","scientific_name":"Geokichla citrina","category":"Bird","habitat":"Lowland and hill forests.","diet":"Insects, worms and fruit.","fun_fact":"It has an orange head and breast."},
-  {"id":"sp_oriental_magpie_robin","common_name":"Oriental Magpie-robin","scientific_name":"Copsychus saularis","category":"Bird","habitat":"Forests, gardens and urban areas.","diet":"Insects, worms and fruit.","fun_fact":"It is the national bird of Bangladesh."},
-  {"id":"sp_otter_civet","common_name":"Otter civet","scientific_name":"Cynogale bennettii","category":"Mammal","habitat":"Lowland forests near water.","diet":"Fish, crabs and amphibians.","fun_fact":"It is adapted for a semi-aquatic lifestyle."},
-  {"id":"sp_pale_giant_squirrel","common_name":"Pale Giant Squirrel","scientific_name":"Ratufa affinis","category":"Mammal","habitat":"Forest canopy in Borneo.","diet":"Fruit, nuts and seeds.","fun_fact":"It is also known as the Cream-coloured Giant Squirrel.","act716_status":"Totally Protected"},
-  {"id":"sp_plantain_squirrel","common_name":"Plantain Squirrel","scientific_name":"Callosciurus notatus","category":"Mammal","habitat":"Forests, gardens and urban parks.","diet":"Fruit, nuts and flowers.","fun_fact":"It is one of the most common squirrels in Malaysia."},
-  {"id":"sp_prevost_s_squirrel","common_name":"Prevost's Squirrel","scientific_name":"Callosciurus prevostii","category":"Mammal","habitat":"Rainforest canopy.","diet":"Fruit, nuts and insects.","fun_fact":"It has a striking tri-colour pattern.","act716_status":"Totally Protected"},
-  {"id":"sp_red_junglefowl","common_name":"Red Junglefowl","scientific_name":"Gallus gallus","category":"Bird","habitat":"Forest edges and bamboo thickets.","diet":"Seeds, fruit and insects.","fun_fact":"It is the wild ancestor of domestic chickens."},
-  {"id":"sp_roughneck_monitor","common_name":"Roughneck Monitor","scientific_name":"Varanus rudicollis","category":"Reptile","habitat":"Lowland rainforests.","diet":"Insects, small mammals and eggs.","fun_fact":"It has rough, keeled scales on its neck."},
-  {"id":"sp_rufous_browed_babbler","common_name":"Rufous-browed Babbler","scientific_name":"Pellorneum capistratum","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Insects and small invertebrates.","fun_fact":"It has a distinctive rufous brow."},
-  {"id":"sp_rufous_tailed_pheasant","common_name":"Rufous-tailed Pheasant","scientific_name":"Lophura erythrophthalma","category":"Bird","habitat":"Lowland rainforests.","diet":"Fruit, seeds and insects.","fun_fact":"Also known as the Crestless Fireback."},
-  {"id":"sp_rufous_tailed_shama","common_name":"Rufous-tailed shama","scientific_name":"Copsychus pyrropygus","category":"Bird","habitat":"Lowland rainforests.","diet":"Insects, worms and fruit.","fun_fact":"It has a long rufous tail."},
-  {"id":"sp_sambar","common_name":"Sambar","scientific_name":"Rusa unicolor","category":"Mammal","habitat":"Forests near water sources.","diet":"Leaves, grass and aquatic plants.","fun_fact":"Sambar are the largest deer species in Southeast Asia.","act716_status":"Protected"},
-  {"id":"sp_serow","common_name":"Serow","scientific_name":"Capricornis sumatraensis","category":"Mammal","habitat":"Rocky hillsides and montane forests.","diet":"Grass, leaves and bamboo shoots.","fun_fact":"Serows are goat-like mammals that live near cliffs.","act716_status":"Totally Protected"},
-  {"id":"sp_short_tailed_babbler","common_name":"Short-tailed Babbler","scientific_name":"Pellorneum malaccense","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Insects and small invertebrates.","fun_fact":"It has a very short tail."},
-  {"id":"sp_short_tailed_mongoose","common_name":"Short-tailed Mongoose","scientific_name":"Herpestes brachyurus","category":"Mammal","habitat":"Forests, scrub and plantations.","diet":"Small mammals, birds and insects.","fun_fact":"It is a skilled hunter of small prey."},
-  {"id":"sp_short_tailed_mongoose_2","common_name":"Short-tailed mongoose","scientific_name":"Urva brachyura","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"Leaves, fruit, insects and small animals.","fun_fact":"This species is part of Malaysia's diverse wildlife."},
-  {"id":"sp_small_indian_mongoose","common_name":"Small Indian Mongoose","scientific_name":"Herpestes auropunctatus","category":"Mammal","habitat":"Forests, scrub and urban areas.","diet":"Insects, small animals and fruit.","fun_fact":"It was introduced to many islands for pest control."},
-  {"id":"sp_small_toothed_palm_civet","common_name":"Small-toothed Palm Civet","scientific_name":"Arctogalidia trivirgata","category":"Mammal","habitat":"Rainforest canopy.","diet":"Fruit, nectar and small animals.","fun_fact":"It has a prehensile tail for climbing."},
-  {"id":"sp_smooth_coated_otter","common_name":"Smooth-coated Otter","scientific_name":"Lutrogale perspicillata","category":"Mammal","habitat":"Rivers, lakes and mangroves.","diet":"Fish, crabs and amphibians.","fun_fact":"It has a shorter, smoother coat than other otters."},
-  {"id":"sp_sooty_capped_babbler","common_name":"Sooty-capped Babbler","scientific_name":"Malacopteron affine","category":"Bird","habitat":"Lowland rainforests.","diet":"Insects and small invertebrates.","fun_fact":"It has a sooty-coloured cap."},
-  {"id":"sp_southern_pig_tailed_macaque","common_name":"Southern Pig-tailed Macaque","scientific_name":"Macaca nemestrina","category":"Mammal","habitat":"Lowland and hill forests.","diet":"Fruit, seeds and small animals.","fun_fact":"They have a short, pig-like tail."},
-  {"id":"sp_southern_red_muntjac","common_name":"Southern Red Muntjac","scientific_name":"Muntiacus muntjak","category":"Mammal","habitat":"Forests across Southeast Asia.","diet":"Leaves, fruit and grass.","fun_fact":"It is also called the Indian Muntjac."},
-  {"id":"sp_spotted_giant_flying_squirrel","common_name":"Spotted Giant Flying Squirrel","scientific_name":"Petaurista elegans","category":"Mammal","habitat":"Tall rainforest canopy.","diet":"Leaves, fruit and nuts.","fun_fact":"It can glide up to 100 metres between trees."},
-  {"id":"sp_striped_wren_babbler","common_name":"Striped Wren-babbler","scientific_name":"Kenopia striata","category":"Bird","habitat":"Lowland rainforest floor.","diet":"Insects and small invertebrates.","fun_fact":"Its striped pattern helps it hide in leaf litter."},
-  {"id":"sp_stump_tailed_macaque","common_name":"Stump-tailed Macaque","scientific_name":"Macaca arctoides","category":"Mammal","habitat":"Hill and montane forests.","diet":"Fruit, leaves and insects.","fun_fact":"Their faces turn bright red when excited."},
-  {"id":"sp_sunda_clouded_leopard","common_name":"Sunda Clouded Leopard","scientific_name":"Neofelis diardi","category":"Mammal","habitat":"Bornean and Sumatran rainforests.","diet":"Deer, monkeys and wild pigs.","fun_fact":"It has the longest canine teeth of any cat."},
-  {"id":"sp_sunda_laughingthrush","common_name":"Sunda Laughingthrush","scientific_name":"Garrulax palliatus","category":"Bird","habitat":"Montane forests.","diet":"Insects, fruit and seeds.","fun_fact":"It has a loud, laughing call."},
-  {"id":"sp_sunda_pied_fantail","common_name":"Sunda Pied Fantail","scientific_name":"Rhipidura javanica","category":"Bird","habitat":"Forests, mangroves and gardens.","diet":"Insects caught in flight.","fun_fact":"It fans its tail while foraging."},
-  {"id":"sp_sunda_stink_badger","common_name":"Sunda Stink-badger","scientific_name":"Mydaus javanensis","category":"Mammal","habitat":"Forests and plantations.","diet":"Insects, worms and small animals.","fun_fact":"It sprays a foul-smelling liquid when threatened."},
-  {"id":"sp_thick_spined_porcupine","common_name":"Thick-spined Porcupine","scientific_name":"Hystrix crassispinis","category":"Mammal","habitat":"Forests and rocky areas.","diet":"Roots, fruit and bark.","fun_fact":"It has the thickest spines of any porcupine."},
-  {"id":"sp_three_striped_ground_squirrel","common_name":"Three-striped Ground Squirrel","scientific_name":"Lariscus insignis","category":"Mammal","habitat":"Forest floor, often near streams.","diet":"Fruit, seeds and insects.","fun_fact":"It is named for its three back stripes."},
-  {"id":"sp_tiger_shrike","common_name":"Tiger Shrike","scientific_name":"Lanius tigrinus","category":"Bird","habitat":"Forest edges, scrub and gardens.","diet":"Insects, lizards and small birds.","fun_fact":"It impales prey on thorns for storage."},
-  {"id":"sp_tufted_ground_squirrel","common_name":"Tufted Ground Squirrel","scientific_name":"Rheithrosciurus macrotis","category":"Mammal","habitat":"Bornean rainforests.","diet":"Fruit, nuts and seeds.","fun_fact":"It has a large, bushy tail."},
-  {"id":"sp_vieillot_s_fireback","common_name":"Vieillot's Fireback","scientific_name":"Lophura ignita","category":"Bird","habitat":"Lowland rainforests.","diet":"Fruit, seeds and insects.","fun_fact":"Named after the French ornithologist Louis Vieillot."},
-  {"id":"sp_western_hooded_pitta","common_name":"Western Hooded Pitta","scientific_name":"Pitta sordida","category":"Bird","habitat":"Forests, plantations and gardens.","diet":"Insects, worms and snails.","fun_fact":"It is known for its colourful plumage."},
-  {"id":"sp_white_breasted_waterhen","common_name":"White-breasted Waterhen","scientific_name":"Amaurornis phoenicurus","category":"Bird","habitat":"Wetlands, marshes and ponds.","diet":"Insects, seeds and aquatic plants.","fun_fact":"It is often seen walking on floating vegetation."},
-  {"id":"sp_white_crested_hornbill","common_name":"White-crested hornbill","scientific_name":"Tropicranus albocristatus","category":"Bird","habitat":"Lowland rainforests of Africa.","diet":"Fruit, insects and small animals.","fun_fact":"It has a white crest on its head."},
-  {"id":"sp_white_crowned_forktail","common_name":"White-crowned Forktail","scientific_name":"Enicurus leschenaulti","category":"Bird","habitat":"Fast-flowing forest streams.","diet":"Insects and small invertebrates.","fun_fact":"It bobs its tail constantly while foraging."},
-  {"id":"sp_white_fronted_langur","common_name":"White-fronted Langur","scientific_name":"Presbytis frontata","category":"Mammal","habitat":"Lowland rainforests in Borneo.","diet":"Leaves, fruit and seeds.","fun_fact":"Also known as the White-fronted Surili."},
-  {"id":"sp_white_rumped_shama","common_name":"White-rumped Shama","scientific_name":"Copsychus malabaricus","category":"Bird","habitat":"Forests, plantations and gardens.","diet":"Insects, worms and fruit.","fun_fact":"It is known for its beautiful song."},
-  {"id":"sp_white_tailed_wattled_pheasant","common_name":"White-tailed Wattled Pheasant","scientific_name":"Lophura bulweri","category":"Bird","habitat":"Bornean rainforests.","diet":"Fruit, seeds and insects.","fun_fact":"Males have bright blue facial wattles."},
-  {"id":"sp_white_thighed_surili","common_name":"White-thighed Surili","scientific_name":"Presbytis siamensis","category":"Mammal","habitat":"Rainforests in Sumatra and Malaysia.","diet":"Leaves, fruit and flowers.","fun_fact":"This monkey has distinctive white thighs."},
-  {"id":"sp_wild_boar","common_name":"Wild Boar","scientific_name":"Sus scrofa","category":"Mammal","habitat":"Forests, grasslands and wetlands.","diet":"Roots, fruit, insects and small animals.","fun_fact":"Wild boar are the ancestors of domestic pigs."},
-  {"id":"sp_yellow_bellied_bulbul","common_name":"Yellow-bellied Bulbul","scientific_name":"Alophoixus phaeocephalus","category":"Bird","habitat":"Lowland and hill forests.","diet":"Fruit, nectar and insects.","fun_fact":"It has a bright yellow belly."},
-  {"id":"sp_yellow_handed_mitered_langur","common_name":"Yellow-handed Mitered Langur","scientific_name":"Presbytis melalophos","category":"Mammal","habitat":"Lowland and hill rainforests.","diet":"Young leaves, fruit and seeds.","fun_fact":"Its hands have a distinctive yellow colour."},
-  {"id":"sp_yellow_rumped_flycatcher","common_name":"Yellow-rumped Flycatcher","scientific_name":"Ficedula zanthopygia","category":"Bird","habitat":"Forests and woodlands.","diet":"Insects caught in flight.","fun_fact":"Males have a bright yellow rump."},
-  {"id":"sp_yellow_throated_marten","common_name":"Yellow-throated Marten","scientific_name":"Martes flavigula","category":"Mammal","habitat":"Forests across Asia.","diet":"Small mammals, birds and fruit.","fun_fact":"It has a striking yellow-orange throat."},
-  {"id":"sp_blue_breasted_quail","common_name":"Blue-breasted Quail","scientific_name":"Coturnix chinensis","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_blue_headed_pitta","common_name":"Blue-headed Pitta","scientific_name":"Hydrornis baudii","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  
-  {"id":"sp_blyth_s_hawk_eagle","common_name":"Blyth's Hawk-Eagle","scientific_name":"Nisaetus alboniger","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_bornean_banded_pitta","common_name":"Bornean Banded Pitta","scientific_name":"Hydrornis schwaneri","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_bornean_orangutan","common_name":"Bornean Orangutan","scientific_name":"Pongo pygmaeus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_bornean_partridge","common_name":"Bornean Partridge","scientific_name":"Arborophila hyperythra","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_bornean_yellow_muntjac","common_name":"Bornean Yellow Muntjac","scientific_name":"Muntiacus atherodes","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_borneo_bay_cat","common_name":"Borneo Bay Cat","scientific_name":"Catopuma badia","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_borneo_earless_monitor","common_name":"Borneo Earless Monitor","scientific_name":"Lanthanotus borneensis","category":"Reptile","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_brown_rat","common_name":"Brown Rat","scientific_name":"Rattus norvegicus","category":"Mammal","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife."},
-  {"id":"sp_buffy_fish_owl","common_name":"Buffy Fish-owl","scientific_name":"Ketupa ketupu","category":"Bird","habitat":"Malaysian forests and suitable natural habitat.","diet":"A natural diet suited to its forest habitat.","fun_fact":"This species is part of Malaysia’s diverse wildlife.","act716_status":"Totally Protected"},
+const OFFLINE_LOCATIONS: LocationItem[] = [
+  { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest reserve', area: 'Petaling Jaya, Selangor', description: 'A family-friendly green lung with gentle forest trails and regular bird and butterfly sightings.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: '7:00–10:00 AM', distance_km: 1.2, why_recommended: 'Gentle trails, safe walking paths, and frequent butterfly observations.', typical_wildlife: 'Butterflies, Birds, Small Mammals' },
+  { id: 'loc_frim', name: 'FRIM (Forest Research Institute Malaysia)', type: 'Research forest', area: 'Kepong, Kuala Lumpur', description: 'A massive research rainforest with canopy trails, nature trails and rich biodiversity.', facilities: ['Canopy walkway', 'Trails', 'Visitor Centre', 'Parking'], best_time: '8:00–11:00 AM', distance_km: 12.0, why_recommended: 'Canopy walkway gives a high view of canopy birds and monkeys.', typical_wildlife: 'Canopy Birds, Mammals, Butterflies' },
+  { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature park', area: 'Kuala Selangor, Selangor', description: 'Protected mangrove forest with boardwalks for watching wetland birds, mudskippers, and reptiles.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: '5:00–8:00 PM', distance_km: 65.0, why_recommended: 'Safe boardwalks over tidal wetlands.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies' },
+  { id: 'loc_per_paya_indah', name: 'Paya Indah Wetlands', type: 'Wetland reserve', area: 'Dengkil, Selangor', description: 'PERHILITAN eco-tourism reserve with observation towers and diverse wetland bird species.', facilities: ['Wetland trails', 'Observation towers', 'Visitor Centre'], best_time: '8:00–11:00 AM', distance_km: 45.0, why_recommended: 'Bird-watching towers and educational trails for children.', typical_wildlife: 'Wetland Birds, Crocodiles, Sun Bears' },
+  { id: 'loc_taman_negara', name: 'Taman Negara National Park', type: 'National park', area: 'Jerantut, Pahang', description: 'One of the world’s oldest rainforests, home to elephants, tapirs and hornbills.', facilities: ['Guided trails', 'River boat trips', 'Accommodation'], best_time: 'March–September', distance_km: 180.0, why_recommended: 'Deep rainforest experience with expert rangers.', typical_wildlife: 'Asian Elephants, Tapirs, Hornbills' },
 ];
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED.map((item) => [item.id, item])).values());
@@ -360,49 +313,113 @@ export default function RimbaQuest() {
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
   const [category, setCategory] = useState('Mammal');
   const [speciesSearch, setSpeciesSearch] = useState('');
-  const [discovered, setDiscovered] = useState<string[]>([]);
+  const [discovered, setDiscovered] = useState<string[]>(['sp_common_mormon', 'sp_oriental_pied_hornbill']);
   const [filter, setFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
-  const [progress, setProgress] = useState({ found: 0, total: 20, xp: 0, categories: [] as { category: string; total: number; discovered: number }[] });
   const [history, setHistory] = useState<Screen[]>([]);
-  const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
-  const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<Record<string, string[]>>({});
   const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
+  const [locations, setLocations] = useState<LocationItem[]>(OFFLINE_LOCATIONS);
+  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationCategoryFilter, setLocationCategoryFilter] = useState('All');
+  const [discoveryLocation, setDiscoveryLocation] = useState('Bukit Gasing Forest Reserve');
+
+  // User Auth & Profile State (Epic 1)
+  const [currentUser, setCurrentUser] = useState<UserProfile>({
+    id: 1,
+    username: 'aisyah',
+    display_name: 'Aisyah',
+    avatar: 'tapir',
+    age: 10,
+    age_band: '8-11',
+    xp: 200,
+    level: 1,
+  });
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authUsername, setAuthUsername] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
+  const [authAge, setAuthAge] = useState('10');
+  const [authAvatar, setAuthAvatar] = useState('tapir');
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotToken, setForgotToken] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+
+  // Profile Edit State
+  const [editDisplayName, setEditDisplayName] = useState('Aisyah');
+  const [editAvatar, setEditAvatar] = useState('tapir');
+  const [editAge, setEditAge] = useState('10');
+
+  // Quiz State
+  const [quizAnswer, setQuizAnswer] = useState<number | null>(null);
+  const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
+
+  // Battle State (Epic 8)
+  const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
+  const [battlePlayerHp, setBattlePlayerHp] = useState(120);
+  const [battlePlayerMaxHp, setBattlePlayerMaxHp] = useState(120);
+  const [battleOpponentHp, setBattleOpponentHp] = useState(100);
+  const [battleOpponentMaxHp, setBattleOpponentMaxHp] = useState(100);
+  const [battleOpponentName, setBattleOpponentName] = useState('Wild Forest Boar');
+  const [battleLog, setBattleLog] = useState<string[]>([]);
+  const [battleRound, setBattleRound] = useState(1);
+  const [battleOutcome, setBattleOutcome] = useState<'playing' | 'win' | 'lose' | null>(null);
+  const [isAttacking, setIsAttacking] = useState(false);
+
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const refresh = async () => {
     try {
-      const [speciesResponse, collectionResponse, progressResponse, recentResponse] = await Promise.all([
+      const childId = currentUser.id || 1;
+      const [speciesRes, collectionRes, profileRes, recentRes, locationsRes] = await Promise.all([
         fetch(`${apiBase}/api/v1/species`),
-        fetch(`${apiBase}/api/v1/children/1/collection`),
-        fetch(`${apiBase}/api/v1/children/1/progress`),
-        fetch(`${apiBase}/api/v1/children/1/recent-captures`),
+        fetch(`${apiBase}/api/v1/children/${childId}/collection`),
+        fetch(`${apiBase}/api/v1/children/${childId}/profile`),
+        fetch(`${apiBase}/api/v1/children/${childId}/recent-captures`),
+        fetch(`${apiBase}/api/v1/locations`),
       ]);
-      if (speciesResponse.ok) setSpecies(await speciesResponse.json());
-      if (collectionResponse.ok) {
-        const data = await collectionResponse.json();
+
+      if (speciesRes.ok) setSpecies(await speciesRes.json());
+      if (collectionRes.ok) {
+        const data = await collectionRes.json();
         setDiscovered(data.items.filter((item: { discovered: number }) => item.discovered).map((item: { id: string }) => item.id));
       }
-      if (progressResponse.ok) {
-        const data = await progressResponse.json();
-        setProgress({ found: data.found, total: data.total, xp: data.profile.xp, categories: data.categories });
+      if (profileRes.ok) {
+        const data = await profileRes.json();
+        setCurrentUser((prev) => ({
+          ...prev,
+          display_name: data.display_name,
+          avatar: data.avatar,
+          age: data.age,
+          age_band: data.age_band,
+          xp: data.xp,
+          level: data.level,
+        }));
       }
-      if (recentResponse.ok) {
-        const data = await recentResponse.json();
+      if (recentRes.ok) {
+        const data = await recentRes.json();
         setRecentCaptures(data.items);
       }
+      if (locationsRes.ok) {
+        const data = await locationsRes.json();
+        if (data.items?.length) setLocations(data.items);
+      }
     } catch {
-      setNotice('You are exploring in offline demo mode. Discoveries will save when the backend is running.');
+      setNotice('You are exploring in offline demo mode. Discoveries will sync when the backend connects.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh(); }, [currentUser.id]);
+
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
   const visibleSpecies = useMemo(() => supportedSpecies
     .filter((item) => filter === 'All' || item.category === filter)
@@ -410,17 +427,32 @@ export default function RimbaQuest() {
       const unlockOrder = Number(discovered.includes(right.id)) - Number(discovered.includes(left.id));
       return unlockOrder || left.common_name.localeCompare(right.common_name);
     }), [discovered, filter, supportedSpecies]);
+
+  const unlockedSpeciesList = useMemo(() => supportedSpecies.filter((item) => discovered.includes(item.id)), [discovered, supportedSpecies]);
+
   const selectedCategorySpecies = useMemo(() => supportedSpecies.filter((item) => item.category === category), [category, supportedSpecies]);
   const filteredCategorySpecies = useMemo(() => {
-    const query = speciesSearch.trim().toLocaleLowerCase();
+    const query = speciesSearch.trim().toLowerCase();
     if (!query) return selectedCategorySpecies;
-    return selectedCategorySpecies.filter((item) => item.common_name.toLocaleLowerCase().includes(query));
+    return selectedCategorySpecies.filter((item) => item.common_name.toLowerCase().includes(query) || item.scientific_name.toLowerCase().includes(query));
   }, [selectedCategorySpecies, speciesSearch]);
+
+  const filteredLocations = useMemo(() => {
+    const query = locationSearch.trim().toLowerCase();
+    return locations.filter((loc) => {
+      const matchesQuery = !query || loc.name.toLowerCase().includes(query) || loc.area.toLowerCase().includes(query) || loc.description.toLowerCase().includes(query);
+      const matchesCategory = locationCategoryFilter === 'All' || (loc.typical_wildlife?.toLowerCase().includes(locationCategoryFilter.toLowerCase().slice(0, 4)));
+      return matchesQuery && matchesCategory;
+    });
+  }, [locations, locationSearch, locationCategoryFilter]);
+
   const displayProgress = useMemo(() => ({
-    ...progress,
     found: discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length,
     total: supportedSpecies.length,
-  }), [discovered, progress, supportedSpecies]);
+    xp: currentUser.xp,
+    level: currentUser.level,
+  }), [discovered, supportedSpecies, currentUser]);
+
   const open = (next: Screen) => {
     setHistory((current) => [...current, screen]);
     setScreen(next);
@@ -436,10 +468,13 @@ export default function RimbaQuest() {
       return current.slice(0, -1);
     });
   };
-  const startDiscovery = () => {
+
+  const startDiscovery = (presetLocation?: string) => {
+    if (presetLocation) setDiscoveryLocation(presetLocation);
     setPhotoUri(null);
     resetTo('photo');
   };
+
   const takePhoto = async () => {
     const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
     if (photo?.uri) {
@@ -447,24 +482,17 @@ export default function RimbaQuest() {
       open('category');
     }
   };
+
+  const useSamplePhoto = () => {
+    setPhotoUri(null);
+    open('category');
+  };
+
   const discoveryPhoto = photoUri ? { uri: photoUri } : IMAGES.marmoset;
-  const chooseSpecies = (item: Species) => { setSelected(item); open('confirm'); };
-  const openQuiz = async () => {
-    const fallback: QuizQuestion = {
-      question: `Which statement about ${selected.common_name} is true?`,
-      options: [selected.fun_fact, 'Wild animals are safest when we feed and touch them.', 'Every Malaysian wildlife species lives in the ocean.'],
-      correct_index: 0,
-    };
-    setQuizAnswer(null);
-    setQuizQuestion(fallback);
-    open('quiz');
-    try {
-      const response = await fetch(`${apiBase}/api/v1/species/${selected.id}/quiz`);
-      if (!response.ok) return;
-      const data = await response.json() as { questions: QuizQuestion[] | string };
-      const questions = typeof data.questions === 'string' ? JSON.parse(data.questions) as QuizQuestion[] : data.questions;
-      if (questions[0]) setQuizQuestion(questions[0]);
-    } catch { /* The fully populated offline fallback remains available. */ }
+
+  const chooseSpecies = (item: Species) => {
+    setSelected(item);
+    open('confirm');
   };
 
   const recordDiscovery = async () => {
@@ -476,15 +504,16 @@ export default function RimbaQuest() {
       }));
     };
     try {
-      const response = await fetch(`${apiBase}/api/v1/children/1/discoveries`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ species_id: selected.id, location_label: 'Kuala Lumpur, Malaysia' }),
+      const response = await fetch(`${apiBase}/api/v1/children/${currentUser.id}/discoveries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ species_id: selected.id, location_label: discoveryLocation }),
       });
       if (!response.ok) throw new Error('Unable to save');
-      const result = await response.json() as { first_discovery?: boolean };
+      const result = await response.json() as { first_discovery?: boolean; total_xp?: number };
       if (result.first_discovery && !discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
-        setProgress((current) => ({ ...current, found: current.found + 1, xp: current.xp + 100 }));
+        setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? (prev.xp + 100) }));
       }
       savePersonalPhoto();
       await refresh();
@@ -492,109 +521,1496 @@ export default function RimbaQuest() {
     } catch {
       if (!discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
-        setProgress((current) => ({ ...current, found: current.found + 1, xp: current.xp + 100 }));
+        setCurrentUser((prev) => ({ ...prev, xp: prev.xp + 100 }));
       }
       savePersonalPhoto();
-      setNotice('Saved in demo mode. Start FastAPI to persist this discovery.');
       open('success');
     }
   };
 
+  // Auth Operations (Epic 1)
+  const handleRegister = async () => {
+    setAuthError(null);
+    if (!authUsername.trim()) return setAuthError('Please enter a username.');
+    if (authUsername.length < 3 || authUsername.length > 20) return setAuthError('Username must be between 3 and 20 characters.');
+    if (authUsername.includes(' ')) return setAuthError('Username cannot contain spaces.');
+    if (!authEmail.trim() || !authEmail.includes('@') || !authEmail.includes('.')) return setAuthError('Please enter a valid email address.');
+    if (!authPassword) return setAuthError('Please create a password.');
+    if (authPassword.length < 6) return setAuthError('Password must be at least 6 characters.');
+    if (authPassword !== authConfirmPassword) return setAuthError('Passwords do not match. Please confirm your password.');
+
+    try {
+      const res = await fetch(`${apiBase}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: authUsername.trim(),
+          age: parseInt(authAge, 10) || 10,
+          email: authEmail.trim(),
+          password: authPassword,
+          avatar: authAvatar,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setAuthError(data.detail || 'Registration failed.');
+      setCurrentUser({
+        id: data.child_id,
+        username: data.username,
+        display_name: data.display_name,
+        avatar: data.avatar,
+        age: data.age,
+        age_band: '8-11',
+        xp: data.xp,
+        level: data.level,
+      });
+      resetTo('home');
+    } catch {
+      // Offline fallback
+      setCurrentUser({
+        id: 2,
+        username: authUsername.trim(),
+        display_name: authUsername.trim(),
+        avatar: authAvatar,
+        age: parseInt(authAge, 10) || 10,
+        age_band: '8-11',
+        xp: 0,
+        level: 1,
+      });
+      resetTo('home');
+    }
+  };
+
+  const handleLogin = async () => {
+    setAuthError(null);
+    if (!authUsername.trim()) return setAuthError('Please enter your username or email.');
+    if (!authPassword) return setAuthError('Please enter your password.');
+
+    try {
+      const res = await fetch(`${apiBase}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username_or_email: authUsername.trim(), password: authPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setAuthError(data.detail || 'Invalid username or password.');
+      setCurrentUser({
+        id: data.child_id,
+        username: data.username,
+        display_name: data.display_name,
+        avatar: data.avatar,
+        age: data.age,
+        age_band: '8-11',
+        xp: data.xp,
+        level: data.level,
+      });
+      resetTo('home');
+    } catch {
+      setAuthError('Unable to connect to login server. Please check connection.');
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const res = await fetch(`${apiBase}/api/v1/children/${currentUser.id}/profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          display_name: editDisplayName.trim() || currentUser.display_name,
+          avatar: editAvatar,
+          age: parseInt(editAge, 10) || currentUser.age,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUser((prev) => ({
+          ...prev,
+          display_name: data.display_name,
+          avatar: data.avatar,
+          age: data.age,
+        }));
+      }
+    } catch {
+      setCurrentUser((prev) => ({
+        ...prev,
+        display_name: editDisplayName.trim() || prev.display_name,
+        avatar: editAvatar,
+        age: parseInt(editAge, 10) || prev.age,
+      }));
+    }
+    goBack();
+  };
+
+  // Battle Logic (Epic 8)
+  const initBattle = (card: Species) => {
+    setBattlePlayerCard(card);
+    const hp = card.hp || 120;
+    setBattlePlayerHp(hp);
+    setBattlePlayerMaxHp(hp);
+
+    const opponentHp = 100 + Math.floor(Math.random() * 20);
+    setBattleOpponentHp(opponentHp);
+    setBattleOpponentMaxHp(opponentHp);
+    setBattleOpponentName('Wild Forest Boar');
+    setBattleLog([
+      `🌲 A wild opponent (${'Wild Forest Boar'}) appeared!`,
+      `🐾 You sent out ${card.common_name} (HP: ${hp}, ATK: ${card.base_attack || 25})!`,
+    ]);
+    setBattleRound(1);
+    setBattleOutcome('playing');
+    open('battle_arena');
+  };
+
+  const performAttack = () => {
+    if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
+    setIsAttacking(true);
+
+    const playerAtk = battlePlayerCard.base_attack || 25;
+    const playerDmg = playerAtk + Math.floor(Math.random() * 8) - 3;
+    const nextOpponentHp = Math.max(0, battleOpponentHp - playerDmg);
+
+    const newLogs = [...battleLog, `⚔️ ${battlePlayerCard.common_name} used Basic Strike for ${playerDmg} DMG!`];
+
+    if (nextOpponentHp <= 0) {
+      setBattleOpponentHp(0);
+      newLogs.push(`🏆 Wild Forest Boar fainted! You won the battle!`);
+      setBattleLog(newLogs);
+      setBattleOutcome('win');
+      setIsAttacking(false);
+
+      // Award XP
+      fetch(`${apiBase}/api/v1/children/${currentUser.id}/battle/record`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ won: true, opponent_name: battleOpponentName, rounds: battleRound }),
+      }).then(() => refresh()).catch(() => {});
+      return;
+    }
+
+    setBattleOpponentHp(nextOpponentHp);
+
+    // Opponent counter-attack after small delay
+    setTimeout(() => {
+      const oppDmg = 18 + Math.floor(Math.random() * 10);
+      const nextPlayerHp = Math.max(0, battlePlayerHp - oppDmg);
+      newLogs.push(`💥 ${battleOpponentName} counter-attacked for ${oppDmg} DMG!`);
+
+      if (nextPlayerHp <= 0) {
+        setBattlePlayerHp(0);
+        newLogs.push(`💔 ${battlePlayerCard.common_name} is exhausted! Try another round!`);
+        setBattleOutcome('lose');
+      } else {
+        setBattlePlayerHp(nextPlayerHp);
+      }
+
+      setBattleLog(newLogs);
+      setBattleRound((r) => r + 1);
+      setIsAttacking(false);
+    }, 600);
+  };
+
+  const openQuiz = async () => {
+    const fallback: QuizQuestion = {
+      question: `Which statement about ${selected.common_name} is true?`,
+      options: [selected.fun_fact, 'Wild animals are safest when we touch and feed them.', 'Every Malaysian animal lives in the ocean.'],
+      correct_index: 0,
+      explanation: selected.fun_fact,
+    };
+    setQuizAnswer(null);
+    setQuizQuestion(fallback);
+    open('quiz');
+    try {
+      const response = await fetch(`${apiBase}/api/v1/species/${selected.id}/quiz`);
+      if (!response.ok) return;
+      const data = await response.json() as { questions: QuizQuestion[] | string };
+      const questions = typeof data.questions === 'string' ? JSON.parse(data.questions) as QuizQuestion[] : data.questions;
+      if (questions[0]) setQuizQuestion(questions[0]);
+    } catch { /* Offline fallback */ }
+  };
+
+  // Reusable UI Components
   const Header = ({ title, back = true }: { title: string; back?: boolean }) => (
     <View style={styles.header}>
       {back ? <Tap label="Go back" style={styles.back} onPress={goBack}><Text style={styles.backText}>‹</Text></Tap> : <View style={styles.backSpacer} />}
-      <Text style={styles.headerTitle}>{title}</Text><View style={styles.backSpacer} />
+      <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
+      <View style={styles.backSpacer} />
     </View>
   );
-  const Bottom = () => <View style={styles.bottomNav}>
-    <Nav icon="⌂" label="Home" active={screen === 'home'} onPress={() => resetTo('home')} />
-    <Nav icon="⌕" label="Explore" onPress={() => {}} disabled />
-    <Tap label="Open camera to record a discovery" style={styles.recordButton} onPress={startDiscovery}>
-      <View style={styles.cameraNavIcon}><View style={styles.cameraNavLens} /></View>
-    </Tap>
-    <Nav icon="▣" label="Collection" active={screen === 'collection'} onPress={() => resetTo('collection')} />
-    <Nav icon="♙" label="Profile" active={screen === 'progress'} onPress={() => resetTo('progress')} />
-  </View>;
-  const Page = ({ children, nav = false }: { children: React.ReactNode; nav?: boolean }) => <SafeAreaView style={styles.safe}><StatusBar barStyle="dark-content" /><View style={styles.page}>{children}</View>{nav && <Bottom />}</SafeAreaView>;
+
+  const Bottom = () => (
+    <View style={styles.bottomNav}>
+      <Nav icon="⌂" label="Home" active={screen === 'home'} onPress={() => resetTo('home')} />
+      <Nav icon="🗺️" label="Places" active={screen === 'locations'} onPress={() => resetTo('locations')} />
+      <Tap label="Record wildlife sighting" style={styles.recordButton} onPress={() => startDiscovery()}>
+        <View style={styles.cameraNavIcon}><View style={styles.cameraNavLens} /></View>
+      </Tap>
+      <Nav icon="🗃️" label="Cards" active={screen === 'collection'} onPress={() => resetTo('collection')} />
+      <Nav icon="⚔️" label="Battle" active={screen === 'battle_select' || screen === 'battle_arena'} onPress={() => resetTo('battle_select')} />
+      <Nav icon="👤" label="Profile" active={screen === 'progress'} onPress={() => resetTo('progress')} />
+    </View>
+  );
+
+  const Page = ({ children, nav = false }: { children: React.ReactNode; nav?: boolean }) => (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.page}>{children}</View>
+      {nav && <Bottom />}
+    </SafeAreaView>
+  );
 
   if (loading) return <Page><View style={styles.loading}><ActivityIndicator color="#0BA84A" size="large" /><Text>Preparing your rainforest quest…</Text></View></Page>;
-  if (screen === 'home') return <Page nav><ScrollView contentContainerStyle={styles.content}>
-    <Text style={styles.brand}>RimbaQuest</Text>
-    {notice && <Text style={styles.notice}>{notice}</Text>}
-    <View style={styles.hero}><Text style={styles.level}>LV. 1 JUNGLE SCOUT</Text><Text style={styles.heroTitle}>Welcome, Explorer!</Text><Text style={styles.heroCopy}>Every discovery helps protect{`\n`}our beautiful rainforest wildlife!</Text><Text style={styles.mascot}>🌿</Text></View>
-    <View style={styles.stats}><Stat value={`${displayProgress.found} / ${displayProgress.total}`} label="Wildlife Discovered" /><Stat value={`${displayProgress.xp}`} label="Explorer Points" /></View>
-    <Section title="Begin Your Quest" /><Quest number="1" title="Record a Discovery" detail="Take a photo, then log your sighting!" onPress={startDiscovery} /><Quest number="2" title="View My Collection" detail="See your unlocked Wildlife Cards!" onPress={() => resetTo('collection')} />
-    <Section title="Recent Captures" right="See All" />{recentCaptures.length ? <View style={styles.recent}>{recentCaptures.map((capture) => <View key={`${capture.id}-${capture.recorded_at}`} style={styles.recentItem}><Image source={imageFor(capture) ?? IMAGES.recent} style={styles.recentImage} /><View style={styles.recentCopy}><Text style={styles.cardTitle}>{capture.common_name}</Text><Text style={styles.muted}>{capture.location_label || 'Kuala Lumpur, Malaysia'}</Text></View></View>)}</View> : <View style={styles.recentEmpty}><Text style={styles.muted}>Your latest confirmed discoveries will appear here.</Text></View>}
-  </ScrollView></Page>;
-  if (screen === 'photo') return <Page><View style={styles.cameraPage}>{!cameraPermission ? <View style={styles.cameraPermission}><ActivityIndicator color="#FFFFFF" size="large" /></View> : !cameraPermission.granted ? <View style={styles.cameraPermission}><Text style={styles.cameraTitle}>Camera access is needed to record your wildlife discovery.</Text><Tap label="Allow camera" style={styles.primary} onPress={requestCameraPermission}><Text style={styles.primaryText}>Allow Camera</Text></Tap><Tap label="Go back" style={styles.cameraBackButton} onPress={goBack}><Text style={styles.cameraBackText}>Back</Text></Tap></View> : <><CameraView ref={cameraRef} style={styles.cameraPreview} facing="back" /><View style={styles.cameraOverlay}><Tap label="Go back" style={styles.cameraBackButton} onPress={goBack}><Text style={styles.cameraBackText}>‹</Text></Tap><Text style={styles.cameraBrand}>RimbaQuest</Text><Text style={styles.cameraHint}>Point at wildlife & tap to capture</Text><Text style={styles.cameraPersonalRecord}>Photo is a personal record, not AI identification</Text><Tap label="Take photo" style={styles.shutter} onPress={takePhoto}><View style={styles.shutterInner} /></Tap></View></>}</View></Page>;
-  if (screen === 'category') return <Page><ScrollView contentContainerStyle={styles.content}><Header title="Record a Discovery" /><Image source={discoveryPhoto} style={styles.heroImage} /><Text style={styles.caption}>Your personal discovery photo</Text><Text style={styles.pageTitle}>Choose a Wildlife Category</Text><Text style={styles.subTitle}>What type of animal did you see?</Text><View style={styles.grid}>{categories.map((item) => <Tap key={item} label={`Choose ${item}`} style={styles.categoryTile} onPress={() => { setCategory(item); setSpeciesSearch(''); open('species'); }}><Image source={IMAGES[item as keyof typeof IMAGES]} style={styles.tileImage} /><View style={styles.tileShade} /><Text style={styles.tileLabel}>{item}s</Text></Tap>)}</View></ScrollView></Page>;
-  if (screen === 'species') return <StableScreenPage><ScrollView contentContainerStyle={styles.content}><Header title="Record a Discovery" /><Image source={discoveryPhoto} style={styles.heroImage} /><Text style={styles.caption}>Your personal discovery photo</Text><Text style={styles.pageTitle}>Which {category.toLowerCase()} did you see?</Text><Text style={styles.subTitle}>Select the species that looks most like what you saw</Text><View style={styles.searchBox}><Text style={styles.searchIcon}>⌕</Text><TextInput accessibilityLabel="Search supported species by name" accessibilityHint="Filters the supported species list as you type" placeholder="Search species..." placeholderTextColor="#879089" value={speciesSearch} onChangeText={setSpeciesSearch} autoCapitalize="none" autoCorrect={false} returnKeyType="search" style={styles.searchInput} />{speciesSearch.length > 0 && <Tap label="Clear species search" style={styles.searchClear} onPress={() => setSpeciesSearch('')}><Text style={styles.searchClearText}>×</Text></Tap>}</View>{filteredCategorySpecies.length ? <View style={styles.grid}>{filteredCategorySpecies.map((item) => <SpeciesCard key={item.id} item={item} onPress={() => chooseSpecies(item)} />)}</View> : <View accessibilityLiveRegion="polite" style={styles.searchEmpty}><Text style={styles.searchEmptyTitle}>No matching species found</Text><Text style={styles.muted}>Try a different name or clear your search to see all supported species.</Text></View>}</ScrollView></StableScreenPage>;
-  if (screen === 'confirm') return <Page><ScrollView contentContainerStyle={styles.content}><Header title="Confirm Discovery" /><Image source={discoveryPhoto} style={styles.confirmImage} /><Text style={styles.caption}>Your personal discovery photo</Text><Text style={styles.pageTitle}>{selected.common_name} <Text style={styles.categoryPill}>{selected.category}</Text></Text><Info label="LOCATION" value="Kuala Lumpur, Malaysia" /><Info label="DATE & TIME" value={new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })} /><Text style={styles.question}>Is this the species you saw?</Text><Text style={styles.subTitle}>Double-check the photo and details before you record your discovery.</Text><Tap label="Record my discovery" style={styles.primary} onPress={recordDiscovery}><Text style={styles.primaryText}>Yes, Record My Discovery!</Text></Tap><Tap label="Choose another species" style={styles.secondary} onPress={() => open('species')}><Text style={styles.secondaryText}>Choose Another Species</Text></Tap></ScrollView></Page>;
-  if (screen === 'success') return <Page><ScrollView contentContainerStyle={[styles.content, styles.success]}><View style={{ alignSelf: 'stretch' }}><Header title="Discovery Recorded" /></View><Text style={styles.successSmall}>Success!</Text><Text style={styles.successTitle}>New Wildlife Discovered!</Text><Text style={styles.level}>Level 1 · Discovered</Text><Image source={imageFor(selected)!} style={styles.unlockImage} /><Text style={styles.pageTitle}>{selected.common_name}</Text><Text style={styles.scientific}>{selected.scientific_name}</Text><View style={styles.infoPair}><Info label="DATE RECORDED" value="Today" /><Info label="DISCOVERY STATUS" value="Confirmed" /></View><Text style={styles.xp}>+100 Explorer Experience Points</Text><Tap label="View my card" style={[styles.primary, styles.fullWidth]} onPress={() => open('about')}><Text style={styles.primaryText}>View My Card</Text></Tap><Tap label="View my collection" style={[styles.primary, styles.fullWidth]} onPress={() => resetTo('collection')}><Text style={styles.primaryText}>View My Collection</Text></Tap><Tap label="Record another discovery" style={styles.textButton} onPress={() => resetTo('category')}><Text style={styles.textButtonText}>Record Another Discovery</Text></Tap></ScrollView></Page>;
-  if (screen === 'collection') return <Page nav><ScrollView contentContainerStyle={styles.content}><Header title="My Collection" /><ProgressCard progress={displayProgress} /><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>{['All', ...categories].map((item) => <Tap key={item} label={`Filter ${item}`} style={[styles.chip, filter === item && styles.chipActive]} onPress={() => setFilter(item)}><Text style={[styles.chipText, filter === item && styles.chipTextActive]}>{item}s</Text></Tap>)}</ScrollView><View style={styles.grid}>{visibleSpecies.map((item) => discovered.includes(item.id) ? <SpeciesCard key={item.id} item={item} onPress={() => { setSelected(item); open('about'); }} /> : <LockedCard key={item.id} item={item} onPress={() => { setSelected(item); open('locked'); }} />)}</View></ScrollView></Page>;
-  if (screen === 'about' || screen === 'facts' || screen === 'gallery') return <Page nav><ScrollView contentContainerStyle={styles.content}><Header title={selected.common_name} /><View style={styles.tabs}>{([['about', 'About'], ['facts', 'Fun Facts'], ['gallery', 'Gallery']] as [Screen, string][]).map(([key, label]) => <Tap key={key} label={label} style={[styles.tab, screen === key && styles.tabActive]} onPress={() => open(key)}><Text style={[styles.tabText, screen === key && styles.tabTextActive]}>{label}</Text></Tap>)}</View>{screen === 'about' && <About item={selected} />}{screen === 'facts' && <Facts item={selected} onPlay={() => { void openQuiz(); }} />}{screen === 'gallery' && <Gallery photos={galleryPhotos[selected.id] ?? []} />}</ScrollView></Page>;
-  if (screen === 'quiz') return <Page><ScrollView contentContainerStyle={styles.content}><Header title={`${selected.common_name} Quiz`} /><Quiz item={selected} question={quizQuestion} answer={quizAnswer} onAnswer={setQuizAnswer} onDone={() => open('facts')} /></ScrollView></Page>;
-  if (screen === 'locked') return <Page nav><ScrollView contentContainerStyle={styles.content}><Header title="Undiscovered" /><View style={styles.lockedDetail}><Image source={imageFor(selected)!} style={styles.lockedImage} /><Text style={styles.pageTitle}>{selected.common_name} <Text style={styles.categoryPill}>{selected.category}</Text></Text><Text style={styles.scientific}>{selected.scientific_name}</Text><Text style={styles.body}>{selected.habitat}</Text><Info label="DISCOVERY HINT" value="Keep exploring safely and observe wildlife from a respectful distance." /><Text style={styles.hint}>Keep exploring! Your first confirmed discovery unlocks this card.</Text></View></ScrollView></Page>;
-  return <Page nav><ScrollView contentContainerStyle={styles.content}><Header title="My Progress" /><ProgressCard progress={displayProgress} /><Section title="CATEGORY PROGRESS" />{categories.map((item) => { const items = supportedSpecies.filter((speciesItem) => speciesItem.category === item); const found = items.filter((speciesItem) => discovered.includes(speciesItem.id)).length; return <View style={styles.progressRow} key={item}><Text style={styles.cardTitle}>{item}s</Text><Text style={styles.muted}>{found} / {items.length} Found</Text></View>; })}<Text style={styles.hint}>Spot more wildlife to level up your scout status!</Text><Section title="ACHIEVEMENTS UNLOCKED" /><View style={styles.badges}><Text style={styles.badge}>🏅 First Discovery</Text><Text style={styles.badge}>🌱 Wildlife Friend</Text></View></ScrollView></Page>;
+
+  // SCREEN: HOME
+  if (screen === 'home') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.topBrandRow}>
+          <Text style={styles.brand}>RimbaQuest</Text>
+          <Tap label="View Profile" style={styles.avatarPill} onPress={() => open('progress')}>
+            <Text style={styles.avatarEmoji}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
+            <Text style={styles.avatarName}>{currentUser.display_name}</Text>
+          </Tap>
+        </View>
+
+        {notice && <Text style={styles.notice}>{notice}</Text>}
+
+        <View style={styles.hero}>
+          <Text style={styles.level}>LV. {currentUser.level} JUNGLE SCOUT</Text>
+          <Text style={styles.heroTitle}>Welcome, {currentUser.display_name}!</Text>
+          <Text style={styles.heroCopy}>Every discovery helps protect{'\n'}Malaysia’s precious rainforest wildlife!</Text>
+          <Text style={styles.mascot}>🌿</Text>
+        </View>
+
+        <View style={styles.stats}>
+          <Stat value={`${displayProgress.found} / ${displayProgress.total}`} label="Wildlife Discovered" />
+          <Stat value={`${displayProgress.xp}`} label="Explorer Points" />
+        </View>
+
+        <Section title="Begin Your Adventure" />
+        <Quest number="1" title="Explore Wildlife Places" detail="Find where animals live in KL & Malaysia!" onPress={() => resetTo('locations')} />
+        <Quest number="2" title="Record a Discovery" detail="Take a photo and log your sighting!" onPress={() => startDiscovery()} />
+        <Quest number="3" title="Wildlife Card Battles" detail="Battle with your unlocked cards!" onPress={() => resetTo('battle_select')} />
+
+        <Section title="Recent Captures" />
+        {recentCaptures.length ? (
+          <View style={styles.recentGrid}>
+            {recentCaptures.map((capture) => (
+              <View key={`${capture.id}-${capture.recorded_at}`} style={styles.recentItem}>
+                <Image source={imageFor(capture) ?? IMAGES.recent} style={styles.recentImage} />
+                <View style={styles.recentCopy}>
+                  <Text style={styles.cardTitle}>{capture.common_name}</Text>
+                  <Text style={styles.muted}>{capture.location_label || 'Kuala Lumpur, Malaysia'}</Text>
+                  <Text style={styles.categoryPill}>{capture.category}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.recentEmpty}>
+            <Text style={styles.muted}>Your latest confirmed discoveries will appear here.</Text>
+          </View>
+        )}
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: EXPLORE LOCATIONS (Epic 2)
+  if (screen === 'locations') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Wildlife Locations" back={false} />
+        
+        <View style={styles.disclaimerBox}>
+          <Text style={styles.disclaimerTitle}>🌿 Nature Explorer Safety Note</Text>
+          <Text style={styles.disclaimerText}>
+            Wildlife encounters depend on nature and cannot be guaranteed. Always observe from a safe distance and stay on designated park trails.
+          </Text>
+        </View>
+
+        <View style={styles.searchBox}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            placeholder="Search places by name or area (e.g. Gasing, FRIM)..."
+            placeholderTextColor="#879089"
+            value={locationSearch}
+            onChangeText={setLocationSearch}
+            autoCapitalize="none"
+            style={styles.searchInput}
+          />
+          {locationSearch.length > 0 && (
+            <Tap label="Clear" style={styles.searchClear} onPress={() => setLocationSearch('')}>
+              <Text style={styles.searchClearText}>×</Text>
+            </Tap>
+          )}
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {['All', ...categories].map((item) => (
+            <Tap
+              key={item}
+              label={`Filter ${item}`}
+              style={[styles.chip, locationCategoryFilter === item && styles.chipActive]}
+              onPress={() => setLocationCategoryFilter(item)}
+            >
+              <Text style={[styles.chipText, locationCategoryFilter === item && styles.chipTextActive]}>
+                {item === 'All' ? 'All Wildlife' : `${item}s`}
+              </Text>
+            </Tap>
+          ))}
+        </ScrollView>
+
+        {filteredLocations.length ? (
+          <View style={styles.locationList}>
+            {filteredLocations.map((loc) => (
+              <Tap
+                key={loc.id}
+                label={`View ${loc.name}`}
+                style={styles.locationCard}
+                onPress={() => { setSelectedLocation(loc); open('location_detail'); }}
+              >
+                <View style={styles.locationTopRow}>
+                  <Text style={styles.locationName}>{loc.name}</Text>
+                  <Text style={styles.distanceBadge}>{loc.distance_km} km</Text>
+                </View>
+                <Text style={styles.locationArea}>📍 {loc.area}</Text>
+                <Text style={styles.locationDesc} numberOfLines={2}>{loc.description}</Text>
+                {loc.typical_wildlife && (
+                  <View style={styles.wildlifeTagRow}>
+                    <Text style={styles.wildlifeTagLabel}>Typical Wildlife:</Text>
+                    <Text style={styles.wildlifeTagValue}>{loc.typical_wildlife}</Text>
+                  </View>
+                )}
+                <View style={styles.locationCardBottom}>
+                  <Text style={styles.bestTimeText}>⏰ Best Time: {loc.best_time}</Text>
+                  <Text style={styles.viewDetailText}>View Details ›</Text>
+                </View>
+              </Tap>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.searchEmpty}>
+            <Text style={styles.searchEmptyTitle}>No matching locations found</Text>
+            <Text style={styles.muted}>Try clearing your search or choosing a different wildlife category.</Text>
+          </View>
+        )}
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: LOCATION DETAIL
+  if (screen === 'location_detail' && selectedLocation) return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title={selectedLocation.name} />
+        <View style={styles.locationDetailHero}>
+          <Text style={styles.locationAreaHero}>📍 {selectedLocation.area}</Text>
+          <Text style={styles.locationTypeBadge}>{selectedLocation.type}</Text>
+        </View>
+
+        <Info label="ABOUT THIS LOCATION" value={selectedLocation.description} />
+        <Info label="BEST TIME TO VISIT" value={selectedLocation.best_time} />
+        <Info label="WHY EXPLORE HERE" value={selectedLocation.why_recommended} />
+        {selectedLocation.typical_wildlife && <Info label="TYPICAL WILDLIFE SIGHTINGS" value={selectedLocation.typical_wildlife} />}
+
+        {selectedLocation.facilities && selectedLocation.facilities.length > 0 && (
+          <View style={styles.info}>
+            <Text style={styles.infoLabel}>PARK FACILITIES</Text>
+            <View style={styles.badges}>
+              {selectedLocation.facilities.map((fac) => (
+                <Text key={fac} style={styles.badge}>✓ {fac}</Text>
+              ))}
+            </View>
+          </View>
+        )}
+
+        <Tap
+          label="Record Discovery Here"
+          style={styles.primary}
+          onPress={() => startDiscovery(selectedLocation.name)}
+        >
+          <Text style={styles.primaryText}>📷 Record Wildlife Sighting Here</Text>
+        </Tap>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: PHOTO CAPTURE (Epic 3)
+  if (screen === 'photo') return (
+    <Page>
+      <View style={styles.cameraPage}>
+        {!cameraPermission ? (
+          <View style={styles.cameraPermission}><ActivityIndicator color="#FFFFFF" size="large" /></View>
+        ) : !cameraPermission.granted ? (
+          <View style={styles.cameraPermission}>
+            <Text style={styles.cameraTitle}>Camera access is needed to record your wildlife discovery.</Text>
+            <Tap label="Allow camera" style={styles.primary} onPress={requestCameraPermission}>
+              <Text style={styles.primaryText}>Allow Camera</Text>
+            </Tap>
+            <Tap label="Use Sample Photo" style={styles.secondary} onPress={useSamplePhoto}>
+              <Text style={styles.secondaryText}>Use Sample Wildlife Photo</Text>
+            </Tap>
+            <Tap label="Go back" style={styles.cameraBackButton} onPress={goBack}>
+              <Text style={styles.cameraBackText}>Back</Text>
+            </Tap>
+          </View>
+        ) : (
+          <>
+            <CameraView ref={cameraRef} style={styles.cameraPreview} facing="back" />
+            <View style={styles.cameraOverlay}>
+              <Tap label="Go back" style={styles.cameraBackButton} onPress={goBack}>
+                <Text style={styles.cameraBackText}>‹</Text>
+              </Tap>
+              <Text style={styles.cameraBrand}>RimbaQuest Wildlife Camera</Text>
+              <Text style={styles.cameraHint}>Point at wildlife & tap shutter to capture</Text>
+              <Text style={styles.cameraPersonalRecord}>Photo is a personal record, not automated AI identification</Text>
+              <View style={styles.cameraActionsRow}>
+                <Tap label="Sample Photo" style={styles.samplePhotoButton} onPress={useSamplePhoto}>
+                  <Text style={styles.samplePhotoText}>Sample</Text>
+                </Tap>
+                <Tap label="Take photo" style={styles.shutter} onPress={takePhoto}>
+                  <View style={styles.shutterInner} />
+                </Tap>
+                <View style={{ width: 60 }} />
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    </Page>
+  );
+
+  // SCREEN: CHOOSE CATEGORY (Epic 3)
+  if (screen === 'category') return (
+    <Page>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Record a Discovery" />
+        <Image source={discoveryPhoto} style={styles.heroImage} />
+        <Text style={styles.caption}>Your personal discovery photo</Text>
+        <Text style={styles.pageTitle}>Choose a Wildlife Category</Text>
+        <Text style={styles.subTitle}>What type of animal did you observe?</Text>
+        <View style={styles.grid}>
+          {categories.map((item) => (
+            <Tap
+              key={item}
+              label={`Choose ${item}`}
+              style={styles.categoryTile}
+              onPress={() => { setCategory(item); setSpeciesSearch(''); open('species'); }}
+            >
+              <Image source={IMAGES[item as keyof typeof IMAGES]} style={styles.tileImage} />
+              <View style={styles.tileShade} />
+              <Text style={styles.tileLabel}>{item}s</Text>
+            </Tap>
+          ))}
+        </View>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: SELECT SPECIES (Epic 3)
+  if (screen === 'species') return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.page}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Header title="Record a Discovery" />
+          <Image source={discoveryPhoto} style={styles.heroImage} />
+          <Text style={styles.caption}>Your personal discovery photo</Text>
+          <Text style={styles.pageTitle}>Which {category.toLowerCase()} did you see?</Text>
+          <Text style={styles.subTitle}>Select the species that matches your observation</Text>
+          <View style={styles.searchBox}>
+            <Text style={styles.searchIcon}>⌕</Text>
+            <TextInput
+              placeholder="Search species name or scientific name..."
+              placeholderTextColor="#879089"
+              value={speciesSearch}
+              onChangeText={setSpeciesSearch}
+              autoCapitalize="none"
+              style={styles.searchInput}
+            />
+            {speciesSearch.length > 0 && (
+              <Tap label="Clear" style={styles.searchClear} onPress={() => setSpeciesSearch('')}>
+                <Text style={styles.searchClearText}>×</Text>
+              </Tap>
+            )}
+          </View>
+          {filteredCategorySpecies.length ? (
+            <View style={styles.grid}>
+              {filteredCategorySpecies.map((item) => (
+                <SpeciesCard key={item.id} item={item} onPress={() => chooseSpecies(item)} />
+              ))}
+            </View>
+          ) : (
+            <View style={styles.searchEmpty}>
+              <Text style={styles.searchEmptyTitle}>No matching species found</Text>
+              <Text style={styles.muted}>Try searching a different name or clear to see all {category}s.</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+
+  // SCREEN: CONFIRM DISCOVERY (Epic 3)
+  if (screen === 'confirm') return (
+    <Page>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Confirm Discovery" />
+        <Image source={discoveryPhoto} style={styles.confirmImage} />
+        <Text style={styles.caption}>Your personal discovery photo</Text>
+        <Text style={styles.pageTitle}>{selected.common_name} <Text style={styles.categoryPill}>{selected.category}</Text></Text>
+        <Text style={styles.scientific}>{selected.scientific_name}</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>OBSERVATION LOCATION</Text>
+          <TextInput
+            style={styles.textInput}
+            value={discoveryLocation}
+            onChangeText={setDiscoveryLocation}
+            placeholder="Enter location (e.g. Bukit Gasing, FRIM)..."
+          />
+        </View>
+
+        <Info label="DATE & TIME" value={new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })} />
+        <Text style={styles.question}>Is this the species you saw?</Text>
+        <Text style={styles.subTitle}>Double-check the photo and details before saving your discovery.</Text>
+        
+        <Tap label="Record my discovery" style={styles.primary} onPress={recordDiscovery}>
+          <Text style={styles.primaryText}>Yes, Record My Discovery! (+100 XP)</Text>
+        </Tap>
+        <Tap label="Choose another species" style={styles.secondary} onPress={() => open('species')}>
+          <Text style={styles.secondaryText}>Choose Another Species</Text>
+        </Tap>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: SUCCESS UNLOCK (Epic 4)
+  if (screen === 'success') return (
+    <Page>
+      <ScrollView contentContainerStyle={[styles.content, styles.success]}>
+        <View style={{ alignSelf: 'stretch' }}><Header title="Discovery Recorded" /></View>
+        <Text style={styles.successSmall}>🎉 Awesome Work!</Text>
+        <Text style={styles.successTitle}>New Wildlife Card Unlocked!</Text>
+        <Text style={styles.level}>Level 1 · Discovered</Text>
+        <Image source={imageFor(selected)!} style={styles.unlockImage} />
+        <Text style={styles.pageTitle}>{selected.common_name}</Text>
+        <Text style={styles.scientific}>{selected.scientific_name}</Text>
+        <View style={styles.infoPair}>
+          <Info label="LOCATION" value={discoveryLocation} />
+          <Info label="STATUS" value="Confirmed" />
+        </View>
+        <Text style={styles.xp}>✨ +100 Explorer Experience Points</Text>
+        <Tap label="View my card" style={[styles.primary, styles.fullWidth]} onPress={() => open('about')}>
+          <Text style={styles.primaryText}>View Wildlife Card</Text>
+        </Tap>
+        <Tap label="Enter Card Battle" style={[styles.secondary, styles.fullWidth]} onPress={() => initBattle(selected)}>
+          <Text style={styles.secondaryText}>⚔️ Battle With This Card!</Text>
+        </Tap>
+        <Tap label="View my collection" style={[styles.primary, styles.fullWidth]} onPress={() => resetTo('collection')}>
+          <Text style={styles.primaryText}>View My Collection</Text>
+        </Tap>
+        <Tap label="Record another discovery" style={styles.textButton} onPress={() => resetTo('category')}>
+          <Text style={styles.textButtonText}>Record Another Discovery</Text>
+        </Tap>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: MY COLLECTION (Epic 4)
+  if (screen === 'collection') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="My Collection" back={false} />
+        <ProgressCard progress={displayProgress} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {['All', ...categories].map((item) => (
+            <Tap
+              key={item}
+              label={`Filter ${item}`}
+              style={[styles.chip, filter === item && styles.chipActive]}
+              onPress={() => setFilter(item)}
+            >
+              <Text style={[styles.chipText, filter === item && styles.chipTextActive]}>
+                {item === 'All' ? 'All Wildlife' : `${item}s`}
+              </Text>
+            </Tap>
+          ))}
+        </ScrollView>
+        <View style={styles.grid}>
+          {visibleSpecies.map((item) =>
+            discovered.includes(item.id) ? (
+              <SpeciesCard key={item.id} item={item} onPress={() => { setSelected(item); open('about'); }} />
+            ) : (
+              <LockedCard key={item.id} item={item} onPress={() => { setSelected(item); open('locked'); }} />
+            )
+          )}
+        </View>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: SPECIES DETAIL TABS (About, Battle Stats, Facts, Gallery)
+  if (screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title={selected.common_name} />
+        <View style={styles.tabs}>
+          {([
+            ['about', 'About'],
+            ['battle_stats', 'Battle Stats'],
+            ['facts', 'Fun Facts'],
+            ['gallery', 'Gallery'],
+          ] as [Screen, string][]).map(([key, label]) => (
+            <Tap
+              key={key}
+              label={label}
+              style={[styles.tab, screen === key && styles.tabActive]}
+              onPress={() => open(key)}
+            >
+              <Text style={[styles.tabText, screen === key && styles.tabTextActive]}>{label}</Text>
+            </Tap>
+          ))}
+        </View>
+
+        {screen === 'about' && <About item={selected} />}
+        {screen === 'battle_stats' && <BattleStatsTab item={selected} onBattle={() => initBattle(selected)} />}
+        {screen === 'facts' && <Facts item={selected} onPlay={() => { void openQuiz(); }} />}
+        {screen === 'gallery' && <Gallery photos={galleryPhotos[selected.id] ?? []} />}
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: QUIZ
+  if (screen === 'quiz') return (
+    <Page>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title={`${selected.common_name} Quiz`} />
+        <Quiz item={selected} question={quizQuestion} answer={quizAnswer} onAnswer={setQuizAnswer} onDone={() => open('facts')} />
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: LOCKED SPECIES PREVIEW (AC4.1.8, AC4.1.9, AC4.1.10)
+  if (screen === 'locked') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Undiscovered Wildlife" />
+        <View style={styles.lockedDetail}>
+          <Image source={imageFor(selected)!} style={styles.lockedImage} />
+          <Text style={styles.pageTitle}>{selected.common_name} <Text style={styles.categoryPill}>{selected.category}</Text></Text>
+          <Text style={styles.scientific}>{selected.scientific_name}</Text>
+          <Info label="HABITAT" value={selected.habitat} />
+          <Info label="DISCOVERY HINT" value="Explore Malaysian nature parks or reserves safely to encounter and unlock this species!" />
+          <View style={styles.lockedWarningBox}>
+            <Text style={styles.lockedWarningTitle}>🔒 Detailed Card Info Locked</Text>
+            <Text style={styles.lockedWarningText}>
+              Fun facts, battle abilities, diet details, and personal observation galleries unlock once you record your first confirmed sighting!
+            </Text>
+          </View>
+          <Tap label="Record discovery" style={styles.primary} onPress={() => { setSelected(selected); startDiscovery(); }}>
+            <Text style={styles.primaryText}>📷 Record Sighting to Unlock</Text>
+          </Tap>
+        </View>
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: CARD BATTLE SELECTION (Epic 8)
+  if (screen === 'battle_select') return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Wildlife Card Battles" back={false} />
+        <View style={styles.battleHero}>
+          <Text style={styles.battleHeroTitle}>⚔️ Rainforest Battle Arena</Text>
+          <Text style={styles.battleHeroCopy}>
+            Select one of your discovered Wildlife Cards to test its strength against wild forest challengers!
+          </Text>
+        </View>
+
+        <Section title="Select Your Battle Card" />
+        {unlockedSpeciesList.length > 0 ? (
+          <View style={styles.grid}>
+            {unlockedSpeciesList.map((item) => (
+              <Tap
+                key={item.id}
+                label={`Select ${item.common_name}`}
+                style={[styles.battleCardSelect, battlePlayerCard?.id === item.id && styles.battleCardSelectActive]}
+                onPress={() => initBattle(item)}
+              >
+                <Image source={imageFor(item)!} style={styles.battleCardImage} />
+                <Text style={styles.cardTitle} numberOfLines={1}>{item.common_name}</Text>
+                <View style={styles.battleStatsRow}>
+                  <Text style={styles.hpBadge}>❤️ {item.hp || 120} HP</Text>
+                  <Text style={styles.atkBadge}>⚔️ {item.base_attack || 25} ATK</Text>
+                </View>
+                <View style={styles.battleButtonSmall}>
+                  <Text style={styles.battleButtonSmallText}>Choose & Battle ›</Text>
+                </View>
+              </Tap>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.searchEmpty}>
+            <Text style={styles.searchEmptyTitle}>No unlocked Wildlife Cards yet!</Text>
+            <Text style={styles.muted}>Record your first wildlife discovery to unlock cards for battle.</Text>
+            <Tap label="Record discovery" style={styles.primary} onPress={() => startDiscovery()}>
+              <Text style={styles.primaryText}>📷 Record a Discovery</Text>
+            </Tap>
+          </View>
+        )}
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: BATTLE ARENA (Epic 8)
+  if (screen === 'battle_arena' && battlePlayerCard) return (
+    <Page>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Battle in Progress" />
+
+        {/* Opponent Arena Box */}
+        <View style={styles.arenaOpponentBox}>
+          <View style={styles.arenaHeaderRow}>
+            <Text style={styles.arenaOpponentName}>🐗 {battleOpponentName}</Text>
+            <Text style={styles.arenaHpText}>{battleOpponentHp} / {battleOpponentMaxHp} HP</Text>
+          </View>
+          <View style={styles.hpTrack}>
+            <View style={[styles.hpFillOpponent, { width: `${(battleOpponentHp / battleOpponentMaxHp) * 100}%` }]} />
+          </View>
+        </View>
+
+        <Text style={styles.arenaVsText}>⚡ VS ⚡</Text>
+
+        {/* Player Arena Box */}
+        <View style={styles.arenaPlayerBox}>
+          <View style={styles.arenaHeaderRow}>
+            <Text style={styles.arenaPlayerName}>🐾 {battlePlayerCard.common_name}</Text>
+            <Text style={styles.arenaHpText}>{battlePlayerHp} / {battlePlayerMaxHp} HP</Text>
+          </View>
+          <View style={styles.hpTrack}>
+            <View style={[styles.hpFillPlayer, { width: `${(battlePlayerHp / battlePlayerMaxHp) * 100}%` }]} />
+          </View>
+          <View style={styles.battleStatsRow}>
+            <Text style={styles.categoryPill}>{battlePlayerCard.category}</Text>
+            <Text style={styles.atkBadge}>Base ATK: {battlePlayerCard.base_attack || 25}</Text>
+          </View>
+        </View>
+
+        {/* Battle Logs */}
+        <View style={styles.battleLogBox}>
+          <Text style={styles.battleLogTitle}>📜 Battle Log (Round {battleRound})</Text>
+          {battleLog.slice(-4).map((log, idx) => (
+            <Text key={idx} style={styles.battleLogText}>{log}</Text>
+          ))}
+        </View>
+
+        {/* Combat Actions */}
+        {battleOutcome === 'playing' ? (
+          <View style={styles.battleActions}>
+            <Tap
+              label="Basic Attack"
+              style={[styles.primary, isAttacking && styles.buttonDisabled]}
+              disabled={isAttacking}
+              onPress={performAttack}
+            >
+              <Text style={styles.primaryText}>
+                {isAttacking ? 'Attacking...' : `⚔️ Basic Strike (${battlePlayerCard.base_attack || 25} ATK)`}
+              </Text>
+            </Tap>
+            <View style={styles.lockedAbilityNotice}>
+              <Text style={styles.lockedAbilityNoticeText}>
+                🔒 Special Abilities unlock in Iteration 2 via Species Quizzes!
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.battleOutcomeBox}>
+            <Text style={styles.battleOutcomeTitle}>
+              {battleOutcome === 'win' ? '🎉 VICTORY! (+50 XP)' : '💔 DEFEATED (+10 XP)'}
+            </Text>
+            <Text style={styles.battleOutcomeCopy}>
+              {battleOutcome === 'win'
+                ? 'Your wildlife card fought bravely and protected the rainforest!'
+                : 'Good effort! Train your wildlife cards and try again!'}
+            </Text>
+            <Tap label="Battle Again" style={styles.primary} onPress={() => initBattle(battlePlayerCard)}>
+              <Text style={styles.primaryText}>🔄 Battle Again</Text>
+            </Tap>
+            <Tap label="Choose Another Card" style={styles.secondary} onPress={() => resetTo('battle_select')}>
+              <Text style={styles.secondaryText}>Choose Another Card</Text>
+            </Tap>
+          </View>
+        )}
+      </ScrollView>
+    </Page>
+  );
+
+  // SCREEN: AUTH (LOGIN & REGISTER) (Epic 1)
+  if (screen === 'auth') return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title={authMode === 'login' ? 'Log In to RimbaQuest' : 'Create Your Account'} />
+
+        <View style={styles.authTabRow}>
+          <Tap label="Login Tab" style={[styles.authTab, authMode === 'login' && styles.authTabActive]} onPress={() => { setAuthMode('login'); setAuthError(null); }}>
+            <Text style={[styles.authTabText, authMode === 'login' && styles.authTabTextActive]}>Log In</Text>
+          </Tap>
+          <Tap label="Register Tab" style={[styles.authTab, authMode === 'register' && styles.authTabActive]} onPress={() => { setAuthMode('register'); setAuthError(null); }}>
+            <Text style={[styles.authTabText, authMode === 'register' && styles.authTabTextActive]}>Create Account</Text>
+          </Tap>
+        </View>
+
+        {authError && <Text style={styles.authError}>{authError}</Text>}
+
+        {authMode === 'register' ? (
+          <View style={styles.authForm}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>USERNAME * (3–20 characters, no spaces)</Text>
+              <TextInput style={styles.textInput} placeholder="e.g. jungle_scout" value={authUsername} onChangeText={setAuthUsername} autoCapitalize="none" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>AGE * (8–12 recommended)</Text>
+              <TextInput style={styles.textInput} placeholder="e.g. 10" value={authAge} onChangeText={setAuthAge} keyboardType="numeric" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>EMAIL ADDRESS *</Text>
+              <TextInput style={styles.textInput} placeholder="e.g. scout@rimbaquest.my" value={authEmail} onChangeText={setAuthEmail} autoCapitalize="none" keyboardType="email-address" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>PASSWORD * (min. 6 characters)</Text>
+              <TextInput style={styles.textInput} placeholder="Create password" value={authPassword} onChangeText={setAuthPassword} secureTextEntry />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>CONFIRM PASSWORD *</Text>
+              <TextInput style={styles.textInput} placeholder="Repeat password" value={authConfirmPassword} onChangeText={setAuthConfirmPassword} secureTextEntry />
+            </View>
+
+            <Text style={styles.inputLabel}>CHOOSE YOUR EXPLORER AVATAR</Text>
+            <View style={styles.avatarPicker}>
+              {Object.entries(AVATAR_ICONS).map(([key, emoji]) => (
+                <Tap key={key} label={key} style={[styles.avatarChoice, authAvatar === key && styles.avatarChoiceActive]} onPress={() => setAuthAvatar(key)}>
+                  <Text style={styles.avatarChoiceEmoji}>{emoji}</Text>
+                  <Text style={styles.avatarChoiceName}>{key}</Text>
+                </Tap>
+              ))}
+            </View>
+
+            <Tap label="Create Account" style={styles.primary} onPress={handleRegister}>
+              <Text style={styles.primaryText}>Create RimbaQuest Account</Text>
+            </Tap>
+          </View>
+        ) : (
+          <View style={styles.authForm}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>USERNAME OR EMAIL *</Text>
+              <TextInput style={styles.textInput} placeholder="Enter your username or email" value={authUsername} onChangeText={setAuthUsername} autoCapitalize="none" />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>PASSWORD *</Text>
+              <TextInput style={styles.textInput} placeholder="Enter password" value={authPassword} onChangeText={setAuthPassword} secureTextEntry />
+            </View>
+
+            <Tap label="Log In" style={styles.primary} onPress={handleLogin}>
+              <Text style={styles.primaryText}>Log In</Text>
+            </Tap>
+
+            <Tap label="Forgot Password" style={styles.textButton} onPress={() => { setForgotStep(1); open('forgot_password'); }}>
+              <Text style={styles.textButtonText}>Forgot your password?</Text>
+            </Tap>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+
+  // SCREEN: FORGOT PASSWORD (Epic 1)
+  if (screen === 'forgot_password') return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Recover Account Access" />
+        {forgotStep === 1 ? (
+          <View style={styles.authForm}>
+            <Text style={styles.subTitle}>Enter the email address associated with your RimbaQuest account.</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>EMAIL ADDRESS *</Text>
+              <TextInput style={styles.textInput} placeholder="scout@rimbaquest.my" value={forgotEmail} onChangeText={setForgotEmail} autoCapitalize="none" keyboardType="email-address" />
+            </View>
+            <Tap label="Request Reset" style={styles.primary} onPress={() => { setForgotToken('RESET-2026'); setForgotStep(2); }}>
+              <Text style={styles.primaryText}>Send Recovery Code</Text>
+            </Tap>
+          </View>
+        ) : (
+          <View style={styles.authForm}>
+            <Text style={styles.subTitle}>Recovery code sent! Please enter the code and your new password.</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>RECOVERY CODE *</Text>
+              <TextInput style={styles.textInput} value={forgotToken} onChangeText={setForgotToken} placeholder="e.g. RESET-2026" />
+            </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>NEW PASSWORD *</Text>
+              <TextInput style={styles.textInput} value={forgotNewPassword} onChangeText={setForgotNewPassword} placeholder="New password" secureTextEntry />
+            </View>
+            <Tap label="Reset Password" style={styles.primary} onPress={() => { alert('Password successfully updated!'); open('auth'); }}>
+              <Text style={styles.primaryText}>Reset Password & Log In</Text>
+            </Tap>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+
+  // SCREEN: EDIT PROFILE (Epic 1)
+  if (screen === 'profile_edit') return (
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="Edit Profile" />
+        <View style={styles.authForm}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>DISPLAY NAME</Text>
+            <TextInput style={styles.textInput} value={editDisplayName} onChangeText={setEditDisplayName} />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>AGE</Text>
+            <TextInput style={styles.textInput} value={editAge} onChangeText={setEditAge} keyboardType="numeric" />
+          </View>
+          <Text style={styles.inputLabel}>CHOOSE AVATAR</Text>
+          <View style={styles.avatarPicker}>
+            {Object.entries(AVATAR_ICONS).map(([key, emoji]) => (
+              <Tap key={key} label={key} style={[styles.avatarChoice, editAvatar === key && styles.avatarChoiceActive]} onPress={() => setEditAvatar(key)}>
+                <Text style={styles.avatarChoiceEmoji}>{emoji}</Text>
+                <Text style={styles.avatarChoiceName}>{key}</Text>
+              </Tap>
+            ))}
+          </View>
+          <Tap label="Save Changes" style={styles.primary} onPress={handleSaveProfile}>
+            <Text style={styles.primaryText}>Save Profile Changes</Text>
+          </Tap>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+
+  // SCREEN: PROFILE & PROGRESS (Epic 1 & Epic 4)
+  return (
+    <Page nav>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Header title="My Explorer Profile" back={false} />
+        
+        {/* User Card */}
+        <View style={styles.profileHero}>
+          <Text style={styles.profileHeroAvatar}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
+          <View style={styles.profileHeroInfo}>
+            <Text style={styles.profileHeroName}>{currentUser.display_name}</Text>
+            <Text style={styles.profileHeroBand}>Age {currentUser.age} · Level {currentUser.level} Jungle Scout</Text>
+          </View>
+          <Tap label="Edit Profile" style={styles.editProfileBtn} onPress={() => { setEditDisplayName(currentUser.display_name); setEditAvatar(currentUser.avatar); setEditAge(String(currentUser.age)); open('profile_edit'); }}>
+            <Text style={styles.editProfileBtnText}>✏️ Edit</Text>
+          </Tap>
+        </View>
+
+        <ProgressCard progress={displayProgress} />
+
+        <Section title="CATEGORY COLLECTION PROGRESS" />
+        {categories.map((item) => {
+          const items = supportedSpecies.filter((speciesItem) => speciesItem.category === item);
+          const found = items.filter((speciesItem) => discovered.includes(speciesItem.id)).length;
+          return (
+            <View style={styles.progressRow} key={item}>
+              <Text style={styles.cardTitle}>{item}s</Text>
+              <Text style={styles.muted}>{found} / {items.length} Discovered</Text>
+            </View>
+          );
+        })}
+
+        <Section title="ACHIEVEMENTS & BADGES" />
+        <View style={styles.badges}>
+          <Text style={styles.badge}>🏅 First Discovery</Text>
+          <Text style={styles.badge}>🌱 Wildlife Friend</Text>
+          <Text style={styles.badge}>⚔️ Battle Rookie</Text>
+          <Text style={styles.badge}>🦉 Forest Scholar</Text>
+        </View>
+
+        <View style={{ marginTop: 20 }}>
+          <Tap label="Switch Account / Log In" style={styles.secondary} onPress={() => open('auth')}>
+            <Text style={styles.secondaryText}>🔐 Switch Account / Log In</Text>
+          </Tap>
+        </View>
+      </ScrollView>
+    </Page>
+  );
 }
 
-function StableScreenPage({ children }: { children: React.ReactNode }) { return <SafeAreaView style={styles.safe}><StatusBar barStyle="dark-content" /><View style={styles.page}>{children}</View></SafeAreaView>; }
-function Tap({ children, onPress, style, label, disabled = false }: { children: React.ReactNode; onPress: () => void; style?: object | object[]; label: string; disabled?: boolean }) { return <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} onPress={onPress} style={({ pressed }) => [style, pressed && !disabled && styles.pressed]}>{children}</Pressable>; }
-function Nav({ icon, label, onPress, active = false, disabled = false }: { icon: string; label: string; onPress: () => void; active?: boolean; disabled?: boolean }) { return <Tap label={label} onPress={onPress} disabled={disabled} style={styles.navItem}><Text style={[styles.navIcon, active && styles.navActive, disabled && styles.navDisabled]}>{icon}</Text><Text style={[styles.navLabel, active && styles.navActive, disabled && styles.navDisabled]}>{label}</Text></Tap>; }
-function Stat({ value, label }: { value: string; label: string }) { return <View style={styles.stat}><Text style={styles.statValue}>{value}</Text><Text style={styles.statLabel}>{label}</Text></View>; }
-function Section({ title, right }: { title: string; right?: string }) { return <View style={styles.section}><Text style={styles.sectionTitle}>{title}</Text>{right && <Text style={styles.seeAll}>{right}</Text>}</View>; }
-function Quest({ number, title, detail, onPress }: { number: string; title: string; detail: string; onPress: () => void }) { return <Tap label={title} style={styles.quest} onPress={onPress}><Text style={styles.questNumber}>{number}</Text><View><Text style={styles.cardTitle}>{title}</Text><Text style={styles.muted}>{detail}</Text></View></Tap>; }
-function Info({ label, value }: { label: string; value: string }) { return <View style={styles.info}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>; }
-function SpeciesCard({ item, onPress }: { item: Species; onPress: () => void }) { return <Tap label={`View ${item.common_name}`} style={styles.speciesCard} onPress={onPress}><Image source={imageFor(item)!} style={styles.speciesImage} /><Text numberOfLines={2} style={styles.cardTitle}>{item.common_name}</Text><Text style={styles.categoryText}>{item.category}</Text></Tap>; }
-function LockedCard({ item, onPress }: { item: Species; onPress: () => void }) { return <Tap label={`Preview undiscovered ${item.common_name}`} style={styles.speciesCard} onPress={onPress}><Image source={imageFor(item)!} style={[styles.speciesImage, styles.lockedSpeciesImage]} /><View style={styles.lockedOverlay}><Text style={styles.lockIcon}>🔒</Text><Text style={styles.lockedLabel}>UNDISCOVERED</Text></View><Text numberOfLines={2} style={styles.cardTitle}>{item.common_name}</Text><Text style={styles.muted}>{item.category}</Text></Tap>; }
-function ProgressCard({ progress }: { progress: { found: number; total: number; xp: number } }) { const percentage = progress.total ? Math.min(100, Math.round((progress.found / progress.total) * 100)) : 0; return <View style={styles.progressCard}><View style={styles.progressTop}><View><Text style={styles.infoLabel}>OVERALL PROGRESS</Text><Text style={styles.progressValue}>{progress.found} / {progress.total}</Text></View><Text style={styles.unlocked}>{percentage}% Unlocked</Text></View><View style={styles.track}><View style={[styles.fill, { width: `${percentage}%` }]} /></View><View style={styles.infoPair}><Info label="EXPLORER POINTS" value={`${progress.xp} XP`} /><Info label="CURRENT LEVEL" value="LV. 1 Scout" /></View></View>; }
-function ecologicalRole(item: Species) { if (item.category === 'Butterfly') return 'Helps pollinate flowering plants while moving between gardens and forest edges.'; if (item.category === 'Bird') return 'Helps spread seeds and supports a healthy rainforest food web.'; if (item.category === 'Reptile') return 'Helps keep the food web in balance as part of its wetland and forest habitat.'; return 'Plays an important role in Malaysia’s forest food web and healthy habitat.'; }
-function About({ item }: { item: Species }) { return <><View style={styles.badges}><Text style={styles.badge}>Level 1 · Discovered</Text><Text style={styles.badge}>{item.category}</Text></View><Info label="SCIENTIFIC NAME" value={item.scientific_name} />{item.act716_status && <Info label="MALAYSIAN PROTECTION STATUS" value={item.act716_status} />}<Info label="HABITAT" value={item.habitat} /><Info label="DIET" value={item.diet} /><Info label="ECOLOGICAL ROLE" value={ecologicalRole(item)} /><Info label="ABOUT" value={`Learn about ${item.common_name} while observing wildlife safely and giving every animal plenty of space.`} /></>; }
-function Facts({ item, onPlay }: { item: Species; onPlay: () => void }) { return <><View style={styles.quiz}><Text style={styles.quizLabel}>QUIZ</Text><Text style={styles.quizTitle}>Test Your Knowledge!</Text><Text style={styles.muted}>Take a quiz about {item.common_name} and earn XP!</Text><Tap label="Play quiz" style={styles.quizButton} onPress={onPlay}><Text style={styles.primaryText}>▶ Play Quiz</Text></Tap></View><Section title="Fun Facts" />{[item.fun_fact, 'Wild animals need space and quiet to thrive.', 'Every careful observation can help us learn.'].map((fact) => <Text key={fact} style={styles.fact}>• {fact}</Text>)}</>; }
-function Quiz({ item, question, answer, onAnswer, onDone }: { item: Species; question: QuizQuestion | null; answer: number | null; onAnswer: (index: number) => void; onDone: () => void }) { const activeQuestion = question ?? { question: `Which statement about ${item.common_name} is true?`, options: [item.fun_fact], correct_index: 0 }; const correct = answer === activeQuestion.correct_index; return <View style={styles.quiz}><Text style={styles.quizLabel}>QUESTION 1 OF 1</Text><Text style={styles.quizTitle}>{activeQuestion.question}</Text>{activeQuestion.options.map((option, index) => <Tap key={`${option}-${index}`} label={`Answer ${index + 1}`} style={[styles.secondary, styles.quizOption, answer === index && styles.quizOptionSelected]} onPress={() => onAnswer(index)}><Text style={[styles.secondaryText, styles.quizOptionText, answer === index && styles.quizOptionTextSelected]}>{option}</Text></Tap>)}{answer !== null && <><Text style={styles.hint}>{correct ? 'Great job! That is correct.' : (activeQuestion.explanation || 'Not quite. Read the fun facts and try again!')}</Text><Tap label="Return to fun facts" style={styles.primary} onPress={onDone}><Text style={styles.primaryText}>Back to Fun Facts</Text></Tap></>}</View>; }
-function Gallery({ photos }: { photos: string[] }) { return <><Text style={styles.subTitle}>Your past personal discovery photos for this species.</Text>{photos.length ? <View style={styles.gallery}>{photos.map((uri, index) => <Image key={`${uri}-${index}`} source={{ uri }} style={styles.galleryImage} />)}</View> : <View style={styles.galleryEmpty}><Text style={styles.galleryEmptyTitle}>No personal photos yet</Text><Text style={styles.muted}>Record this species again to add another photo to its gallery.</Text></View>}</>; }
+// Sub-components
+function Tap({ children, onPress, style, label, disabled = false }: { children: React.ReactNode; onPress: () => void; style?: object | object[]; label: string; disabled?: boolean }) {
+  return (
+    <Pressable disabled={disabled} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }} onPress={onPress} style={({ pressed }) => [style, pressed && !disabled && styles.pressed]}>
+      {children}
+    </Pressable>
+  );
+}
 
-const cameraStyles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#182019', overflow: 'hidden' },
-  permission: { flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', gap: 16, backgroundColor: '#182019' },
-  title: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', textAlign: 'center', lineHeight: 26 },
-  preview: { flex: 1 },
-  overlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 25, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.15)' },
-  backButton: { position: 'absolute', top: 16, left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.52)', alignItems: 'center', justifyContent: 'center' },
-  backText: { color: '#FFFFFF', fontSize: 28, lineHeight: 30, fontWeight: '700' },
-  brand: { position: 'absolute', top: 28, color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
-  hint: { position: 'absolute', top: 78, color: '#FFFFFF', backgroundColor: 'rgba(0,0,0,0.62)', borderRadius: 18, paddingHorizontal: 12, paddingVertical: 7, fontSize: 11, fontWeight: '700' },
-  personalRecord: { color: '#FFFFFF', backgroundColor: 'rgba(0,0,0,0.62)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 10, textAlign: 'center', overflow: 'hidden', marginBottom: 18 },
-  shutter: { width: 74, height: 74, borderRadius: 37, backgroundColor: 'rgba(255,255,255,0.82)', padding: 5, alignItems: 'center', justifyContent: 'center' },
-  shutterInner: { width: '100%', height: '100%', borderRadius: 32, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#D9E2DB' },
-});
+function Nav({ icon, label, onPress, active = false, disabled = false }: { icon: string; label: string; onPress: () => void; active?: boolean; disabled?: boolean }) {
+  return (
+    <Tap label={label} onPress={onPress} disabled={disabled} style={styles.navItem}>
+      <Text style={[styles.navIcon, active && styles.navActive, disabled && styles.navDisabled]}>{icon}</Text>
+      <Text style={[styles.navLabel, active && styles.navActive, disabled && styles.navDisabled]}>{label}</Text>
+    </Tap>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function Section({ title, right }: { title: string; right?: string }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {right && <Text style={styles.seeAll}>{right}</Text>}
+    </View>
+  );
+}
+
+function Quest({ number, title, detail, onPress }: { number: string; title: string; detail: string; onPress: () => void }) {
+  return (
+    <Tap label={title} style={styles.quest} onPress={onPress}>
+      <Text style={styles.questNumber}>{number}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.muted}>{detail}</Text>
+      </View>
+    </Tap>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.info}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
+}
+
+function SpeciesCard({ item, onPress }: { item: Species; onPress: () => void }) {
+  return (
+    <Tap label={`View ${item.common_name}`} style={styles.speciesCard} onPress={onPress}>
+      <Image source={imageFor(item)!} style={styles.speciesImage} />
+      <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
+      <View style={styles.cardBottomRow}>
+        <Text style={styles.categoryText}>{item.category}</Text>
+        <Text style={styles.hpBadgeMini}>❤️ {item.hp || 120}</Text>
+      </View>
+    </Tap>
+  );
+}
+
+function LockedCard({ item, onPress }: { item: Species; onPress: () => void }) {
+  return (
+    <Tap label={`Preview undiscovered ${item.common_name}`} style={styles.speciesCard} onPress={onPress}>
+      <Image source={imageFor(item)!} style={[styles.speciesImage, styles.lockedSpeciesImage]} />
+      <View style={styles.lockedOverlay}>
+        <Text style={styles.lockIcon}>🔒</Text>
+        <Text style={styles.lockedLabel}>UNDISCOVERED</Text>
+      </View>
+      <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
+      <Text style={styles.muted}>{item.category}</Text>
+    </Tap>
+  );
+}
+
+function ProgressCard({ progress }: { progress: { found: number; total: number; xp: number; level?: number } }) {
+  const percentage = progress.total ? Math.min(100, Math.round((progress.found / progress.total) * 100)) : 0;
+  return (
+    <View style={styles.progressCard}>
+      <View style={styles.progressTop}>
+        <View>
+          <Text style={styles.infoLabel}>OVERALL COLLECTION PROGRESS</Text>
+          <Text style={styles.progressValue}>{progress.found} / {progress.total}</Text>
+        </View>
+        <Text style={styles.unlocked}>{percentage}% Unlocked</Text>
+      </View>
+      <View style={styles.track}>
+        <View style={[styles.fill, { width: `${percentage}%` }]} />
+      </View>
+      <View style={styles.infoPair}>
+        <Info label="EXPLORER POINTS" value={`${progress.xp} XP`} />
+        <Info label="SCOUT RANK" value={`Level ${progress.level || 1}`} />
+      </View>
+    </View>
+  );
+}
+
+function ecologicalRole(item: Species) {
+  if (item.category === 'Butterfly') return 'Helps pollinate flowering plants while moving between gardens and forest edges.';
+  if (item.category === 'Bird') return 'Helps spread seeds and supports a healthy rainforest food web.';
+  if (item.category === 'Reptile') return 'Helps keep the food web in balance as part of its wetland and forest habitat.';
+  return 'Plays an important role in Malaysia’s forest food web and healthy habitat.';
+}
+
+function About({ item }: { item: Species }) {
+  return (
+    <>
+      <View style={styles.badges}>
+        <Text style={styles.badge}>Level 1 · Discovered</Text>
+        <Text style={styles.badge}>{item.category}</Text>
+      </View>
+      <Info label="SCIENTIFIC NAME" value={item.scientific_name} />
+      {item.act716_status && <Info label="MALAYSIAN LEGAL PROTECTION" value={item.act716_status} />}
+      <Info label="HABITAT" value={item.habitat} />
+      <Info label="DIET" value={item.diet} />
+      <Info label="ECOLOGICAL ROLE" value={ecologicalRole(item)} />
+      <Info label="RESPONSIBLE OBSERVATION" value="Always observe wildlife from a respectful distance without feeding, touching or making loud noises." />
+    </>
+  );
+}
+
+function BattleStatsTab({ item, onBattle }: { item: Species; onBattle: () => void }) {
+  return (
+    <View style={styles.battleStatsContainer}>
+      <View style={styles.battleStatHeader}>
+        <Text style={styles.battleStatHeaderTitle}>Card Combat Attributes</Text>
+        <View style={styles.stats}>
+          <Stat value={`❤️ ${item.hp || 120}`} label="Base HP" />
+          <Stat value={`⚔️ ${item.base_attack || 25}`} label="Base Attack" />
+        </View>
+      </View>
+
+      <Section title="SPECIAL ABILITIES (Iteration 2)" />
+      {[
+        item.ability_1 || 'Swift Pounce',
+        item.ability_2 || 'Wild Roar',
+        item.ability_3 || 'Guardian Guard',
+      ].map((ability, idx) => (
+        <View key={idx} style={styles.abilitySlotLocked}>
+          <Text style={styles.abilitySlotIcon}>🔒</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.abilitySlotName}>Ability {idx + 1}: {ability}</Text>
+            <Text style={styles.abilitySlotHint}>Unlocked by completing Species Quiz {idx + 1} in Iteration 2!</Text>
+          </View>
+        </View>
+      ))}
+
+      <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
+        <Text style={styles.primaryText}>⚔️ Enter Card Battle</Text>
+      </Tap>
+    </View>
+  );
+}
+
+function Facts({ item, onPlay }: { item: Species; onPlay: () => void }) {
+  return (
+    <>
+      <View style={styles.quiz}>
+        <Text style={styles.quizLabel}>KNOWLEDGE QUIZ</Text>
+        <Text style={styles.quizTitle}>Test Your Rainforest Knowledge!</Text>
+        <Text style={styles.muted}>Answer a quiz question about {item.common_name} to test what you learned!</Text>
+        <Tap label="Play quiz" style={styles.quizButton} onPress={onPlay}>
+          <Text style={styles.primaryText}>▶ Play Quiz</Text>
+        </Tap>
+      </View>
+      <Section title="Species Fun Facts" />
+      {[item.fun_fact, 'Wild animals need peaceful space to thrive in their natural habitat.', 'Every observation recorded contributes to wildlife appreciation!'].map((fact, idx) => (
+        <Text key={idx} style={styles.fact}>• {fact}</Text>
+      ))}
+    </>
+  );
+}
+
+function Quiz({ item, question, answer, onAnswer, onDone }: { item: Species; question: QuizQuestion | null; answer: number | null; onAnswer: (index: number) => void; onDone: () => void }) {
+  const activeQuestion = question ?? { question: `Which statement about ${item.common_name} is true?`, options: [item.fun_fact], correct_index: 0 };
+  const correct = answer === activeQuestion.correct_index;
+  return (
+    <View style={styles.quiz}>
+      <Text style={styles.quizLabel}>QUESTION 1 OF 1</Text>
+      <Text style={styles.quizTitle}>{activeQuestion.question}</Text>
+      {activeQuestion.options.map((option, index) => (
+        <Tap key={`${option}-${index}`} label={`Answer ${index + 1}`} style={[styles.secondary, styles.quizOption, answer === index && styles.quizOptionSelected]} onPress={() => onAnswer(index)}>
+          <Text style={[styles.secondaryText, styles.quizOptionText, answer === index && styles.quizOptionTextSelected]}>{option}</Text>
+        </Tap>
+      ))}
+      {answer !== null && (
+        <>
+          <Text style={styles.hint}>{correct ? '🎉 Great job! That is correct.' : (activeQuestion.explanation || 'Not quite. Read the fun facts and try again!')}</Text>
+          <Tap label="Return to fun facts" style={styles.primary} onPress={onDone}>
+            <Text style={styles.primaryText}>Back to Fun Facts</Text>
+          </Tap>
+        </>
+      )}
+    </View>
+  );
+}
+
+function Gallery({ photos }: { photos: string[] }) {
+  return (
+    <>
+      <Text style={styles.subTitle}>Your past personal discovery photos for this species.</Text>
+      {photos.length ? (
+        <View style={styles.gallery}>
+          {photos.map((uri, index) => (
+            <Image key={`${uri}-${index}`} source={{ uri }} style={styles.galleryImage} />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.galleryEmpty}>
+          <Text style={styles.galleryEmptyTitle}>No personal photos yet</Text>
+          <Text style={styles.muted}>Record this species again to add another photo to its gallery.</Text>
+        </View>
+      )}
+    </>
+  );
+}
 
 const styles: any = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' }, page: { flex: 1, alignSelf: 'center', width: '100%', maxWidth: 500, backgroundColor: '#FFFFFF' }, content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 100 }, loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 }, brand: { fontSize: 22, fontWeight: '800', color: '#182019', marginVertical: 17 }, notice: { color: '#8B5D00', backgroundColor: '#FFF7DD', borderRadius: 10, padding: 10, fontSize: 12, marginBottom: 10 }, hero: { minHeight: 160, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 25, padding: 20, position: 'relative', overflow: 'hidden' }, level: { alignSelf: 'flex-start', overflow: 'hidden', color: '#087B35', backgroundColor: '#DFF6E7', fontSize: 10, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 }, heroTitle: { color: '#1B211C', fontSize: 29, lineHeight: 32, fontWeight: '800', marginTop: 10 }, heroCopy: { color: '#66706A', fontSize: 14, lineHeight: 21, marginTop: 10 }, mascot: { position: 'absolute', right: 18, bottom: 20, fontSize: 50 }, stats: { flexDirection: 'row', gap: 12, marginVertical: 19 }, stat: { flex: 1, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 18, padding: 15 }, statValue: { color: '#0BA84A', fontSize: 23, fontWeight: '800' }, statLabel: { color: '#66706A', fontSize: 11, marginTop: 4 }, section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, marginBottom: 8 }, sectionTitle: { fontSize: 16, fontWeight: '800', color: '#1B211C' }, seeAll: { color: '#0BA84A', fontSize: 12, fontWeight: '700' }, quest: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9 }, questNumber: { width: 30, height: 30, lineHeight: 30, textAlign: 'center', color: '#FFFFFF', backgroundColor: '#35B85E', borderRadius: 15, fontWeight: '800' }, cardTitle: { color: '#1B211C', fontSize: 14, fontWeight: '800' }, muted: { color: '#707872', fontSize: 11, marginTop: 3 }, recent: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 15, overflow: 'hidden', flexDirection: 'row', alignItems: 'center' }, recentImage: { width: 78, height: 78, marginRight: 12 }, header: { height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }, headerTitle: { fontSize: 20, fontWeight: '800', color: '#1B211C' }, back: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: '#DFE7E1', alignItems: 'center', justifyContent: 'center' }, backSpacer: { width: 38 }, backText: { fontSize: 32, color: '#1B211C', lineHeight: 34 }, heroImage: { width: 155, height: 155, borderRadius: 20, alignSelf: 'center', marginBottom: 6 }, confirmImage: { width: 180, height: 180, borderRadius: 20, alignSelf: 'center', marginBottom: 17 }, caption: { color: '#69716B', fontSize: 11, textAlign: 'center', marginBottom: 20 }, pageTitle: { color: '#1B211C', fontSize: 22, lineHeight: 27, fontWeight: '800', marginTop: 4 }, subTitle: { color: '#68716C', fontSize: 13, lineHeight: 19, marginTop: 7, marginBottom: 17 }, grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 13 }, categoryTile: { width: '48%', height: 151, borderRadius: 19, overflow: 'hidden', position: 'relative', backgroundColor: '#E4E8E5' }, tileImage: { width: '100%', height: '100%' }, tileShade: { position: 'absolute', left: 0, right: 0, bottom: 0, top: '45%', backgroundColor: 'rgba(0,0,0,0.48)' }, tileLabel: { position: 'absolute', bottom: 17, left: 0, right: 0, textAlign: 'center', color: '#FFFFFF', fontSize: 16, fontWeight: '800' }, speciesCard: { width: '48%', minHeight: 155, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 17, overflow: 'hidden', paddingBottom: 9, backgroundColor: '#FFFFFF' }, speciesImage: { width: '100%', height: 94 }, lockedSpeciesImage: { opacity: 0.34 }, lockedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, height: 94, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.18)' }, categoryText: { color: '#0BA84A', fontSize: 11, paddingHorizontal: 10, marginTop: 3 }, lockedPreview: { height: 94, justifyContent: 'center', alignItems: 'center', backgroundColor: '#E9EEEA' }, lockIcon: { fontSize: 20 }, lockedLabel: { color: '#68716C', fontSize: 9, fontWeight: '800', marginTop: 3 }, categoryPill: { fontSize: 10, color: '#087B35', backgroundColor: '#DFF6E7' }, info: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 13, padding: 13, marginTop: 11 }, infoLabel: { color: '#78817B', fontSize: 9, fontWeight: '800', letterSpacing: 0.4 }, infoValue: { color: '#1B211C', fontSize: 12, lineHeight: 18, fontWeight: '700', marginTop: 5 }, question: { color: '#1B211C', fontSize: 14, fontWeight: '800', marginTop: 18 }, primary: { minHeight: 50, marginTop: 16, borderRadius: 25, backgroundColor: '#0BA84A', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 }, primaryText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' }, secondary: { minHeight: 48, marginTop: 9, borderRadius: 24, backgroundColor: '#FFFFFF', borderColor: '#C8D1CA', borderWidth: 1, alignItems: 'center', justifyContent: 'center' }, secondaryText: { color: '#1B211C', fontSize: 14, fontWeight: '700' }, success: { alignItems: 'center', paddingTop: 34 }, successSmall: { color: '#1B211C', fontSize: 16, fontWeight: '800' }, successTitle: { color: '#0BA84A', fontSize: 23, fontWeight: '800', marginTop: 7 }, unlockImage: { width: 130, height: 130, borderRadius: 15, marginVertical: 15 }, scientific: { color: '#68716C', fontStyle: 'italic', fontSize: 12, marginTop: 4 }, infoPair: { flexDirection: 'row', alignSelf: 'stretch', gap: 8, marginTop: 6 }, xp: { alignSelf: 'stretch', color: '#087B35', borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 11, textAlign: 'center', fontSize: 12, fontWeight: '700', padding: 11, marginTop: 14 }, textButton: { paddingVertical: 13, alignItems: 'center' }, textButtonText: { color: '#0BA84A', fontWeight: '800', fontSize: 13 }, progressCard: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12 }, progressTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }, progressValue: { fontSize: 24, color: '#1B211C', fontWeight: '800', marginTop: 4 }, unlocked: { color: '#0BA84A', fontSize: 12, fontWeight: '800' }, track: { height: 7, backgroundColor: '#E8EEEA', borderRadius: 5, overflow: 'hidden', marginTop: 13 }, fill: { height: '100%', backgroundColor: '#0BA84A', borderRadius: 5 }, chips: { gap: 8, paddingBottom: 12 }, chip: { borderRadius: 18, backgroundColor: '#F0F4F1', paddingHorizontal: 11, paddingVertical: 7 }, chipActive: { backgroundColor: '#0BA84A' }, chipText: { fontSize: 11, color: '#607068', fontWeight: '700' }, chipTextActive: { color: '#FFFFFF' }, tabs: { flexDirection: 'row', gap: 18, borderBottomWidth: 1, borderBottomColor: '#E2E7E3', marginBottom: 15 }, tab: { paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent' }, tabActive: { borderBottomColor: '#0BA84A' }, tabText: { color: '#6A736D', fontSize: 12 }, tabTextActive: { color: '#0BA84A', fontWeight: '800' }, badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 2 }, badge: { color: '#31613F', backgroundColor: '#EDF5EF', borderRadius: 15, fontSize: 10, paddingHorizontal: 9, paddingVertical: 6, overflow: 'hidden' }, quiz: { borderColor: '#CBECD6', borderWidth: 1, backgroundColor: '#F4FFF7', borderRadius: 16, padding: 16 }, quizLabel: { color: '#087B35', fontSize: 10, fontWeight: '800' }, quizTitle: { fontSize: 19, color: '#1B211C', fontWeight: '800', marginTop: 6 }, quizButton: { backgroundColor: '#0BA84A', alignSelf: 'flex-start', borderRadius: 18, marginTop: 13, paddingVertical: 9, paddingHorizontal: 14 }, fact: { color: '#273229', fontSize: 13, lineHeight: 20, borderBottomWidth: 1, borderBottomColor: '#E6EAE7', paddingVertical: 13 }, gallery: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, galleryImage: { width: '48%', height: 140, borderRadius: 14 }, lockedDetail: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 22, padding: 13 }, lockedImage: { width: '100%', height: 245, borderRadius: 16, opacity: 0.6 }, body: { color: '#68716C', fontSize: 13, lineHeight: 19, marginTop: 13 }, hint: { color: '#117B3A', backgroundColor: '#F0FAF3', borderColor: '#CBECD6', borderWidth: 1, borderRadius: 10, fontSize: 11, lineHeight: 16, padding: 11, marginTop: 14 }, progressRow: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 13, paddingHorizontal: 13, paddingVertical: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }, bottomNav: { position: 'absolute', height: 71, bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E1E7E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }, navItem: { width: 52, alignItems: 'center', justifyContent: 'center', minHeight: 48 }, navIcon: { color: '#879089', fontSize: 19 }, navLabel: { color: '#879089', fontSize: 9, marginTop: 2 }, navActive: { color: '#0BA84A', fontWeight: '800' }, recordButton: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#0BA84A', alignItems: 'center', justifyContent: 'center', marginTop: -25, shadowColor: '#0BA84A', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 }, recordIcon: { color: '#FFFFFF', fontSize: 29, lineHeight: 31 }, fullWidth: { alignSelf: 'stretch' }, quizOption: { minHeight: 58, paddingHorizontal: 16, paddingVertical: 12 }, quizOptionSelected: { backgroundColor: '#0BA84A', borderColor: '#0BA84A' }, quizOptionText: { textAlign: 'center', lineHeight: 18 }, quizOptionTextSelected: { color: '#FFFFFF' }, pressed: { opacity: 0.72 },
-});
-Object.assign(styles, {
-  cameraPage: cameraStyles.page,
-  cameraPermission: cameraStyles.permission,
-  cameraTitle: cameraStyles.title,
-  cameraPreview: cameraStyles.preview,
-  cameraOverlay: cameraStyles.overlay,
-  cameraBackButton: cameraStyles.backButton,
-  cameraBackText: cameraStyles.backText,
-  cameraBrand: cameraStyles.brand,
-  cameraHint: cameraStyles.hint,
-  cameraPersonalRecord: cameraStyles.personalRecord,
-  shutter: cameraStyles.shutter,
-  shutterInner: cameraStyles.shutterInner,
-  cameraNavIcon: { width: 25, height: 18, borderRadius: 4, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  page: { flex: 1, alignSelf: 'center', width: '100%', maxWidth: 520, backgroundColor: '#FFFFFF' },
+  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 110 },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  topBrandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: 14 },
+  brand: { fontSize: 24, fontWeight: '900', color: '#182019' },
+  avatarPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDF5EF', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, gap: 6 },
+  avatarEmoji: { fontSize: 18 },
+  avatarName: { fontSize: 12, fontWeight: '800', color: '#087B35' },
+  notice: { color: '#8B5D00', backgroundColor: '#FFF7DD', borderRadius: 10, padding: 10, fontSize: 12, marginBottom: 10 },
+  hero: { minHeight: 155, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 22, padding: 18, position: 'relative', overflow: 'hidden', backgroundColor: '#FAFCFA' },
+  level: { alignSelf: 'flex-start', overflow: 'hidden', color: '#087B35', backgroundColor: '#DFF6E7', fontSize: 10, fontWeight: '800', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  heroTitle: { color: '#1B211C', fontSize: 26, lineHeight: 30, fontWeight: '900', marginTop: 10 },
+  heroCopy: { color: '#66706A', fontSize: 13, lineHeight: 20, marginTop: 8 },
+  mascot: { position: 'absolute', right: 14, bottom: 14, fontSize: 44 },
+  stats: { flexDirection: 'row', gap: 12, marginVertical: 16 },
+  stat: { flex: 1, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 18, padding: 14, backgroundColor: '#FFFFFF' },
+  statValue: { color: '#0BA84A', fontSize: 22, fontWeight: '900' },
+  statLabel: { color: '#66706A', fontSize: 11, marginTop: 4, fontWeight: '700' },
+  section: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, marginBottom: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: '#1B211C' },
+  seeAll: { color: '#0BA84A', fontSize: 12, fontWeight: '700' },
+  quest: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F4F1' },
+  questNumber: { width: 32, height: 32, lineHeight: 32, textAlign: 'center', color: '#FFFFFF', backgroundColor: '#35B85E', borderRadius: 16, fontWeight: '900' },
+  cardTitle: { color: '#1B211C', fontSize: 14, fontWeight: '800', marginTop: 6, paddingHorizontal: 6 },
+  muted: { color: '#707872', fontSize: 11, marginTop: 2, paddingHorizontal: 6 },
+  recentGrid: { gap: 10, marginTop: 6 },
+  recentItem: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 14, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', padding: 8, backgroundColor: '#FFFFFF' },
+  recentImage: { width: 70, height: 70, borderRadius: 10 },
+  recentCopy: { marginLeft: 12, flex: 1 },
+  recentEmpty: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 14, padding: 18, alignItems: 'center', backgroundColor: '#FAFCFA' },
+  header: { height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: '#1B211C', flex: 1, textAlign: 'center' },
+  back: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: '#DFE7E1', alignItems: 'center', justifyContent: 'center' },
+  backSpacer: { width: 38 },
+  backText: { fontSize: 30, color: '#1B211C', lineHeight: 32 },
+  heroImage: { width: 145, height: 145, borderRadius: 18, alignSelf: 'center', marginBottom: 6 },
+  confirmImage: { width: 170, height: 170, borderRadius: 18, alignSelf: 'center', marginBottom: 14 },
+  caption: { color: '#69716B', fontSize: 11, textAlign: 'center', marginBottom: 16 },
+  pageTitle: { color: '#1B211C', fontSize: 22, lineHeight: 26, fontWeight: '900', marginTop: 4 },
+  subTitle: { color: '#68716C', fontSize: 13, lineHeight: 18, marginTop: 6, marginBottom: 14 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  categoryTile: { width: '48%', height: 145, borderRadius: 18, overflow: 'hidden', position: 'relative', backgroundColor: '#E4E8E5' },
+  tileImage: { width: '100%', height: '100%' },
+  tileShade: { position: 'absolute', left: 0, right: 0, bottom: 0, top: '40%', backgroundColor: 'rgba(0,0,0,0.5)' },
+  tileLabel: { position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center', color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  speciesCard: { width: '48%', minHeight: 165, borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 16, overflow: 'hidden', paddingBottom: 8, backgroundColor: '#FFFFFF' },
+  speciesImage: { width: '100%', height: 96 },
+  cardBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6, marginTop: 4 },
+  categoryText: { color: '#0BA84A', fontSize: 10, fontWeight: '700' },
+  hpBadgeMini: { color: '#D9383A', fontSize: 10, fontWeight: '800' },
+  lockedSpeciesImage: { opacity: 0.28 },
+  lockedOverlay: { position: 'absolute', top: 0, left: 0, right: 0, height: 96, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)' },
+  lockIcon: { fontSize: 20 },
+  lockedLabel: { color: '#68716C', fontSize: 9, fontWeight: '900', marginTop: 2 },
+  categoryPill: { fontSize: 10, color: '#087B35', backgroundColor: '#DFF6E7', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, overflow: 'hidden', alignSelf: 'flex-start' },
+  info: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 14, padding: 12, marginTop: 10, backgroundColor: '#FFFFFF' },
+  infoLabel: { color: '#78817B', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 },
+  infoValue: { color: '#1B211C', fontSize: 12, lineHeight: 18, fontWeight: '700', marginTop: 4 },
+  inputGroup: { marginTop: 12 },
+  inputLabel: { color: '#566159', fontSize: 10, fontWeight: '800', marginBottom: 5 },
+  textInput: { borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, minHeight: 44, fontSize: 14, color: '#1B211C', backgroundColor: '#FFFFFF' },
+  question: { color: '#1B211C', fontSize: 14, fontWeight: '800', marginTop: 16 },
+  primary: { minHeight: 48, marginTop: 14, borderRadius: 24, backgroundColor: '#0BA84A', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  primaryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
+  secondary: { minHeight: 46, marginTop: 9, borderRadius: 23, backgroundColor: '#FFFFFF', borderColor: '#C8D1CA', borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
+  secondaryText: { color: '#1B211C', fontSize: 13, fontWeight: '700' },
+  success: { alignItems: 'center', paddingTop: 20 },
+  successSmall: { color: '#1B211C', fontSize: 16, fontWeight: '800' },
+  successTitle: { color: '#0BA84A', fontSize: 22, fontWeight: '900', marginTop: 6 },
+  unlockImage: { width: 125, height: 125, borderRadius: 16, marginVertical: 12 },
+  scientific: { color: '#68716C', fontStyle: 'italic', fontSize: 12, marginTop: 3 },
+  infoPair: { flexDirection: 'row', alignSelf: 'stretch', gap: 8, marginTop: 6 },
+  xp: { alignSelf: 'stretch', color: '#087B35', borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 12, textAlign: 'center', fontSize: 13, fontWeight: '800', padding: 10, marginTop: 12 },
+  textButton: { paddingVertical: 12, alignItems: 'center' },
+  textButtonText: { color: '#0BA84A', fontWeight: '800', fontSize: 13 },
+  progressCard: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12, backgroundColor: '#FFFFFF' },
+  progressTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  progressValue: { fontSize: 22, color: '#1B211C', fontWeight: '900', marginTop: 3 },
+  unlocked: { color: '#0BA84A', fontSize: 12, fontWeight: '800' },
+  track: { height: 8, backgroundColor: '#E8EEEA', borderRadius: 4, overflow: 'hidden', marginTop: 12 },
+  fill: { height: '100%', backgroundColor: '#0BA84A', borderRadius: 4 },
+  chips: { gap: 8, paddingBottom: 12 },
+  chip: { borderRadius: 16, backgroundColor: '#F0F4F1', paddingHorizontal: 12, paddingVertical: 7 },
+  chipActive: { backgroundColor: '#0BA84A' },
+  chipText: { fontSize: 11, color: '#607068', fontWeight: '700' },
+  chipTextActive: { color: '#FFFFFF' },
+  tabs: { flexDirection: 'row', gap: 14, borderBottomWidth: 1, borderBottomColor: '#E2E7E3', marginBottom: 14 },
+  tab: { paddingVertical: 9, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabActive: { borderBottomColor: '#0BA84A' },
+  tabText: { color: '#6A736D', fontSize: 12, fontWeight: '700' },
+  tabTextActive: { color: '#0BA84A', fontWeight: '900' },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 },
+  badge: { color: '#31613F', backgroundColor: '#EDF5EF', borderRadius: 14, fontSize: 10, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 6, overflow: 'hidden' },
+  quiz: { borderColor: '#CBECD6', borderWidth: 1, backgroundColor: '#F4FFF7', borderRadius: 16, padding: 14 },
+  quizLabel: { color: '#087B35', fontSize: 10, fontWeight: '800' },
+  quizTitle: { fontSize: 17, color: '#1B211C', fontWeight: '800', marginTop: 4 },
+  quizButton: { backgroundColor: '#0BA84A', alignSelf: 'flex-start', borderRadius: 16, marginTop: 12, paddingVertical: 8, paddingHorizontal: 14 },
+  fact: { color: '#273229', fontSize: 12, lineHeight: 18, borderBottomWidth: 1, borderBottomColor: '#E6EAE7', paddingVertical: 10 },
+  gallery: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  galleryImage: { width: '48%', height: 130, borderRadius: 12 },
+  lockedDetail: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 20, padding: 14, backgroundColor: '#FFFFFF' },
+  lockedImage: { width: '100%', height: 210, borderRadius: 14, opacity: 0.5 },
+  lockedWarningBox: { borderWidth: 1, borderColor: '#F5C6CB', backgroundColor: '#FFF3CD', borderRadius: 12, padding: 12, marginTop: 12 },
+  lockedWarningTitle: { color: '#856404', fontSize: 12, fontWeight: '800' },
+  lockedWarningText: { color: '#856404', fontSize: 11, lineHeight: 16, marginTop: 4 },
+  hint: { color: '#117B3A', backgroundColor: '#F0FAF3', borderColor: '#CBECD6', borderWidth: 1, borderRadius: 10, fontSize: 11, lineHeight: 16, padding: 10, marginTop: 12 },
+  progressRow: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, backgroundColor: '#FFFFFF' },
+  
+  // Locations Styling
+  disclaimerBox: { borderWidth: 1, borderColor: '#BEE5EB', backgroundColor: '#E2F0D9', borderRadius: 14, padding: 12, marginBottom: 12 },
+  disclaimerTitle: { color: '#1E4620', fontSize: 12, fontWeight: '800' },
+  disclaimerText: { color: '#2C5E2E', fontSize: 11, lineHeight: 16, marginTop: 3 },
+  locationList: { gap: 12 },
+  locationCard: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 16, padding: 14, backgroundColor: '#FFFFFF' },
+  locationTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  locationName: { color: '#1B211C', fontSize: 15, fontWeight: '800', flex: 1 },
+  distanceBadge: { color: '#0BA84A', backgroundColor: '#EAF8EF', borderRadius: 10, fontSize: 10, fontWeight: '800', paddingHorizontal: 8, paddingVertical: 3, overflow: 'hidden' },
+  locationArea: { color: '#68716C', fontSize: 11, fontWeight: '700', marginTop: 3 },
+  locationDesc: { color: '#525B55', fontSize: 12, lineHeight: 17, marginTop: 6 },
+  wildlifeTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 8, alignItems: 'center' },
+  wildlifeTagLabel: { fontSize: 10, color: '#7B857F', fontWeight: '800' },
+  wildlifeTagValue: { fontSize: 10, color: '#087B35', fontWeight: '700' },
+  locationCardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F0F4F1' },
+  bestTimeText: { fontSize: 10, color: '#7B857F' },
+  viewDetailText: { fontSize: 11, color: '#0BA84A', fontWeight: '800' },
+  locationDetailHero: { backgroundColor: '#F4FAF6', padding: 16, borderRadius: 16, marginBottom: 12, alignItems: 'center' },
+  locationAreaHero: { fontSize: 14, fontWeight: '800', color: '#1B211C' },
+  locationTypeBadge: { fontSize: 11, color: '#0BA84A', fontWeight: '700', marginTop: 4 },
+
+  // Battle Styling
+  battleHero: { backgroundColor: '#FDF4E7', borderColor: '#F5DEB3', borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 14 },
+  battleHeroTitle: { color: '#8A4B08', fontSize: 16, fontWeight: '900' },
+  battleHeroCopy: { color: '#8A4B08', fontSize: 12, lineHeight: 17, marginTop: 4 },
+  battleCardSelect: { width: '48%', borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 16, overflow: 'hidden', padding: 6, backgroundColor: '#FFFFFF' },
+  battleCardSelectActive: { borderColor: '#0BA84A', borderWidth: 2 },
+  battleCardImage: { width: '100%', height: 90, borderRadius: 10 },
+  battleStatsRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 6 },
+  hpBadge: { fontSize: 10, fontWeight: '800', color: '#D9383A', backgroundColor: '#FCE8E8', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, overflow: 'hidden' },
+  atkBadge: { fontSize: 10, fontWeight: '800', color: '#B36200', backgroundColor: '#FFF2DF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, overflow: 'hidden' },
+  battleButtonSmall: { backgroundColor: '#0BA84A', borderRadius: 8, paddingVertical: 6, alignItems: 'center', marginTop: 6 },
+  battleButtonSmallText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+
+  // Battle Arena Styling
+  arenaOpponentBox: { borderWidth: 1, borderColor: '#F5C6CB', backgroundColor: '#FFF5F5', borderRadius: 16, padding: 14 },
+  arenaPlayerBox: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 16, padding: 14 },
+  arenaHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  arenaOpponentName: { color: '#8C1D24', fontSize: 15, fontWeight: '900' },
+  arenaPlayerName: { color: '#087B35', fontSize: 15, fontWeight: '900' },
+  arenaHpText: { fontSize: 12, fontWeight: '800', color: '#1B211C' },
+  hpTrack: { height: 10, backgroundColor: '#E0E6E2', borderRadius: 5, overflow: 'hidden', marginTop: 8 },
+  hpFillOpponent: { height: '100%', backgroundColor: '#D9383A' },
+  hpFillPlayer: { height: '100%', backgroundColor: '#0BA84A' },
+  arenaVsText: { textAlign: 'center', fontSize: 16, fontWeight: '900', color: '#879089', marginVertical: 8 },
+  battleLogBox: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 14, padding: 12, marginVertical: 12, backgroundColor: '#FAFCFA', minHeight: 90 },
+  battleLogTitle: { fontSize: 11, fontWeight: '900', color: '#566159', marginBottom: 6 },
+  battleLogText: { fontSize: 11, color: '#273229', lineHeight: 16, marginTop: 2 },
+  battleActions: { gap: 8 },
+  lockedAbilityNotice: { borderWidth: 1, borderColor: '#E2E7E3', borderRadius: 10, padding: 8, alignItems: 'center', backgroundColor: '#F8FAF8' },
+  lockedAbilityNoticeText: { fontSize: 10, color: '#7B857F', fontWeight: '700' },
+  battleOutcomeBox: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 16, padding: 16, alignItems: 'center' },
+  battleOutcomeTitle: { fontSize: 18, fontWeight: '900', color: '#087B35' },
+  battleOutcomeCopy: { fontSize: 12, color: '#566159', textAlign: 'center', marginVertical: 8 },
+  buttonDisabled: { opacity: 0.5 },
+
+  // Battle Stats Tab
+  battleStatsContainer: { gap: 10 },
+  battleStatHeader: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 16, padding: 14, backgroundColor: '#FFFFFF' },
+  battleStatHeaderTitle: { fontSize: 14, fontWeight: '800', color: '#1B211C' },
+  abilitySlotLocked: { flexDirection: 'row', alignItems: 'center', gap: 10, borderWidth: 1, borderColor: '#E1E8E3', borderRadius: 12, padding: 10, backgroundColor: '#F8FAF8', marginBottom: 6 },
+  abilitySlotIcon: { fontSize: 16 },
+  abilitySlotName: { fontSize: 12, fontWeight: '800', color: '#566159' },
+  abilitySlotHint: { fontSize: 10, color: '#879089', marginTop: 2 },
+
+  // Auth Styling
+  authTabRow: { flexDirection: 'row', borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 14, overflow: 'hidden', marginBottom: 14 },
+  authTab: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: '#F8FAF8' },
+  authTabActive: { backgroundColor: '#0BA84A' },
+  authTabText: { fontSize: 13, fontWeight: '700', color: '#68716C' },
+  authTabTextActive: { color: '#FFFFFF', fontWeight: '900' },
+  authError: { color: '#D9383A', backgroundColor: '#FCE8E8', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: '700', marginBottom: 12 },
+  authForm: { gap: 10 },
+  avatarPicker: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 6 },
+  avatarChoice: { width: '30%', borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 12, padding: 8, alignItems: 'center', backgroundColor: '#FFFFFF' },
+  avatarChoiceActive: { borderColor: '#0BA84A', borderWidth: 2, backgroundColor: '#EDF5EF' },
+  avatarChoiceEmoji: { fontSize: 24 },
+  avatarChoiceName: { fontSize: 10, fontWeight: '800', color: '#566159', textTransform: 'capitalize', marginTop: 2 },
+
+  // Profile Hero
+  profileHero: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 18, padding: 14, marginBottom: 12, backgroundColor: '#FFFFFF' },
+  profileHeroAvatar: { fontSize: 36, marginRight: 12 },
+  profileHeroInfo: { flex: 1 },
+  profileHeroName: { fontSize: 17, fontWeight: '900', color: '#1B211C' },
+  profileHeroBand: { fontSize: 11, color: '#68716C', marginTop: 2 },
+  editProfileBtn: { borderWidth: 1, borderColor: '#0BA84A', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
+  editProfileBtnText: { color: '#0BA84A', fontSize: 11, fontWeight: '800' },
+
+  // Camera Styles
+  cameraPage: { flex: 1, backgroundColor: '#182019', overflow: 'hidden' },
+  cameraPermission: { flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center', gap: 16, backgroundColor: '#182019' },
+  cameraTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', lineHeight: 24 },
+  cameraPreview: { flex: 1 },
+  cameraOverlay: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 25, justifyContent: 'flex-end', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.15)' },
+  cameraBackButton: { position: 'absolute', top: 16, left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.52)', alignItems: 'center', justifyContent: 'center' },
+  cameraBackText: { color: '#FFFFFF', fontSize: 28, lineHeight: 30, fontWeight: '700' },
+  cameraBrand: { position: 'absolute', top: 26, color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
+  cameraHint: { position: 'absolute', top: 68, color: '#FFFFFF', backgroundColor: 'rgba(0,0,0,0.62)', borderRadius: 18, paddingHorizontal: 12, paddingVertical: 6, fontSize: 11, fontWeight: '700' },
+  cameraPersonalRecord: { color: '#FFFFFF', backgroundColor: 'rgba(0,0,0,0.62)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, fontSize: 10, textAlign: 'center', overflow: 'hidden', marginBottom: 16 },
+  cameraActionsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%', paddingHorizontal: 10 },
+  samplePhotoButton: { backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
+  samplePhotoText: { color: '#FFFFFF', fontSize: 11, fontWeight: '800' },
+  shutter: { width: 70, height: 70, borderRadius: 35, backgroundColor: 'rgba(255,255,255,0.82)', padding: 5, alignItems: 'center', justifyContent: 'center' },
+  shutterInner: { width: '100%', height: '100%', borderRadius: 30, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#D9E2DB' },
+
+  // Bottom Nav
+  bottomNav: { position: 'absolute', height: 68, bottom: 0, left: 0, right: 0, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E1E7E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
+  navItem: { width: 50, alignItems: 'center', justifyContent: 'center', minHeight: 46 },
+  navIcon: { color: '#879089', fontSize: 17 },
+  navLabel: { color: '#879089', fontSize: 9, marginTop: 2 },
+  navActive: { color: '#0BA84A', fontWeight: '900' },
+  navDisabled: { color: '#B9C1BC' },
+  recordButton: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#0BA84A', alignItems: 'center', justifyContent: 'center', marginTop: -24, shadowColor: '#0BA84A', shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
+  cameraNavIcon: { width: 24, height: 18, borderRadius: 4, borderWidth: 2, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   cameraNavLens: { width: 8, height: 8, borderRadius: 4, borderWidth: 2, borderColor: '#FFFFFF' },
+  fullWidth: { alignSelf: 'stretch' },
+  quizOption: { minHeight: 52, paddingHorizontal: 14, paddingVertical: 10 },
+  quizOptionSelected: { backgroundColor: '#0BA84A', borderColor: '#0BA84A' },
+  quizOptionText: { textAlign: 'center', lineHeight: 18 },
+  quizOptionTextSelected: { color: '#FFFFFF' },
+  pressed: { opacity: 0.72 },
   galleryEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 18, alignItems: 'center' },
   galleryEmptyTitle: { color: '#087B35', fontSize: 15, fontWeight: '800', marginBottom: 5 },
-  navDisabled: { color: '#B9C1BC' },
-  searchBox: { minHeight: 48, marginBottom: 14, borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF' },
-  searchIcon: { color: '#879089', fontSize: 20, marginRight: 8 },
-  searchInput: { flex: 1, color: '#1B211C', fontSize: 14, minHeight: 46, paddingVertical: 0 },
-  searchClear: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
-  searchClearText: { color: '#087B35', fontSize: 22, lineHeight: 24, fontWeight: '700' },
-  searchEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 20, alignItems: 'center' },
-  searchEmptyTitle: { color: '#087B35', fontSize: 16, fontWeight: '800', marginBottom: 5 },
+  searchBox: { minHeight: 46, marginBottom: 12, borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF' },
+  searchIcon: { color: '#879089', fontSize: 18, marginRight: 8 },
+  searchInput: { flex: 1, color: '#1B211C', fontSize: 13, minHeight: 44, paddingVertical: 0 },
+  searchClear: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
+  searchClearText: { color: '#087B35', fontSize: 20, lineHeight: 22, fontWeight: '700' },
+  searchEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 18, alignItems: 'center' },
+  searchEmptyTitle: { color: '#087B35', fontSize: 15, fontWeight: '800', marginBottom: 4 },
 });
