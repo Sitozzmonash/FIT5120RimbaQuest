@@ -10,7 +10,6 @@ export type Screen =
   | 'battle_stats'
   | 'facts'
   | 'gallery'
-  | 'quiz'
   | 'locked'
   | 'progress'
   | 'locations'
@@ -36,13 +35,6 @@ export type Species = {
   ability_2?: string;
   ability_3?: string;
   abilities_locked?: boolean;
-};
-
-export type QuizQuestion = {
-  question: string;
-  options: string[];
-  correct_index: number;
-  explanation?: string;
 };
 
 export type RecentCapture = Species & {
@@ -77,3 +69,11 @@ export type UserProfile = {
   xp: number;
   level: number;
 };
+
+export type GalleryItem = {
+  photo_url?: string | null;
+  location_label?: string | null;
+  recorded_at?: string | null;
+};
+
+export type LocationMode = 'auto' | 'manual';
