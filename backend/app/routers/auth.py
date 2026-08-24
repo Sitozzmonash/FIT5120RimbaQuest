@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, HTTPException
@@ -29,7 +30,7 @@ def register(payload: RegisterIn):
             {"u": username_clean}
         ).first()
         if existing_username:
-            raise HTTPException(400, "This username is already taken. Please choose another one.")
+            raise HTTPException(400, "That username is already taken. Try another one.")
 
         existing_email = connection.execute(
             text("SELECT id FROM users WHERE lower(email) = lower(:e)"),
@@ -130,9 +131,9 @@ def forgot_password(payload: ForgotPasswordIn):
             {"e": email_clean}
         ).mappings().first()
         if not user:
-            return {"success": True, "message": "If an account exists with this email, recovery instructions have been prepared.", "simulated_token": "RESET-2026"}
+            raise HTTPException(400, "No RimbaQuest account was found for this email.")
 
-        token = f"RESET-{user['id']}-2026"
+        token = f"RESET-{user['id']}-{int(time.time()) + 15 * 60}"
         connection.execute(
             text("UPDATE users SET recovery_token = :tok WHERE id = :id"),
             {"tok": token, "id": user["id"]}
@@ -159,8 +160,18 @@ def reset_password(payload: ResetPasswordIn):
         if not user:
             raise HTTPException(404, "No account found with this email.")
 
-        if user["recovery_token"] != token_clean and token_clean != "RESET-2026":
+        stored = user["recovery_token"] or ""
+        expired = False
+        try:
+            expiry = int(str(stored).rsplit("-", 1)[-1])
+            expired = time.time() > expiry
+        except ValueError:
+            expired = True
+
+        if not stored or stored != token_clean:
             raise HTTPException(400, "Invalid or expired recovery code.")
+        if expired:
+            raise HTTPException(400, "This recovery code has expired. Please request a new one.")
 
         new_hash = hash_password(payload.new_password)
         connection.execute(
@@ -236,9 +247,6 @@ def update_child_profile(child_id: int, payload: ProfileUpdateIn):
             if child["parent_user_id"]:
                 user_updates = []
                 user_params: dict[str, Any] = {"uid": child["parent_user_id"]}
-                if payload.display_name is not None:
-                    user_updates.append("username = :username")
-                    user_params["username"] = payload.display_name.strip()
                 if payload.avatar is not None:
                     user_updates.append("avatar = :avatar")
                     user_params["avatar"] = payload.avatar.strip()

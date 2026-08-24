@@ -1,7 +1,7 @@
 import React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
-import { QuizQuestion, Screen, Species } from '../../types';
-import { CATEGORIES } from '../../constants/seed';
+import { GalleryItem, Screen, Species } from '../../types';
+import { WILDLIFE_FILTERS } from '../../constants/seed';
 import { imageFor } from '../../constants/images';
 import { Tap } from '../common/Tap';
 import { Header, Info, ProgressCard, Section, Stat } from '../common/CommonUI';
@@ -29,15 +29,15 @@ export function CollectionScreen({
       <Header title="My Collection" back={false} />
       <ProgressCard progress={displayProgress} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {['All', ...CATEGORIES].map((item) => (
+        {WILDLIFE_FILTERS.map((item) => (
           <Tap
-            key={item}
-            label={`Filter ${item}`}
-            style={[styles.chip, filter === item && styles.chipActive]}
-            onPress={() => setFilter(item)}
+            key={item.id}
+            label={`Filter ${item.label}`}
+            style={[styles.chip, filter === item.id && styles.chipActive]}
+            onPress={() => setFilter(item.id)}
           >
-            <Text style={[styles.chipText, filter === item && styles.chipTextActive]}>
-              {item === 'All' ? 'All Wildlife' : `${item}s`}
+            <Text style={[styles.chipText, filter === item.id && styles.chipTextActive]}>
+              {item.label}
             </Text>
           </Tap>
         ))}
@@ -54,7 +54,7 @@ export function CollectionScreen({
               <Image source={imageFor(item)!} style={styles.speciesImage} />
               <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
               <View style={styles.cardBottomRow}>
-                <Text style={styles.categoryText}>{item.category}</Text>
+                <Text style={styles.categoryText}>Discovered</Text>
                 <Text style={styles.hpBadgeMini}>❤️ {item.hp || 120}</Text>
               </View>
             </Tap>
@@ -84,25 +84,15 @@ export function SpeciesDetailScreen({
   species,
   screen,
   photos,
-  quizQuestion,
-  quizAnswer,
   onTabChange,
   onStartBattle,
-  onOpenQuiz,
-  onAnswerQuiz,
-  onFinishQuiz,
   onBack,
 }: {
   species: Species;
   screen: Screen;
-  photos: string[];
-  quizQuestion: QuizQuestion | null;
-  quizAnswer: number | null;
+  photos: GalleryItem[];
   onTabChange: (s: Screen) => void;
   onStartBattle: () => void;
-  onOpenQuiz: () => void;
-  onAnswerQuiz: (idx: number) => void;
-  onFinishQuiz: () => void;
   onBack: () => void;
 }) {
   return (
@@ -128,17 +118,8 @@ export function SpeciesDetailScreen({
 
       {screen === 'about' && <AboutTab item={species} />}
       {screen === 'battle_stats' && <BattleStatsTab item={species} onBattle={onStartBattle} />}
-      {screen === 'facts' && <FactsTab item={species} onPlay={onOpenQuiz} />}
+      {screen === 'facts' && <FactsTab item={species} />}
       {screen === 'gallery' && <GalleryTab photos={photos} />}
-      {screen === 'quiz' && (
-        <QuizTab
-          item={species}
-          question={quizQuestion}
-          answer={quizAnswer}
-          onAnswer={onAnswerQuiz}
-          onDone={onFinishQuiz}
-        />
-      )}
     </ScrollView>
   );
 }
@@ -161,16 +142,17 @@ export function LockedScreen({
           {species.common_name} <Text style={styles.categoryPill}>{species.category}</Text>
         </Text>
         <Text style={styles.scientific}>{species.scientific_name}</Text>
-        <Info label="HABITAT" value={species.habitat} />
-        <Info label="DISCOVERY HINT" value="Explore Malaysian nature parks or reserves safely to encounter and unlock this species!" />
+        {species.fun_fact ? <Info label="INTRODUCTION" value={species.fun_fact} /> : null}
+        {species.habitat ? <Info label="HABITAT" value={species.habitat} /> : null}
+        <Info label="DISCOVERY HINT" value="Explore parks and nature reserves in KL and the Klang Valley, then record a photo to unlock this Wildlife Card." />
         <View style={styles.lockedWarningBox}>
-          <Text style={styles.lockedWarningTitle}>🔒 Detailed Card Info Locked</Text>
+          <Text style={styles.lockedWarningTitle}>Locked until discovered</Text>
           <Text style={styles.lockedWarningText}>
-            Fun facts, battle abilities, diet details, and personal observation galleries unlock once you record your first confirmed sighting!
+            The full Wildlife Card, personal gallery and battle use unlock after you save a confirmed discovery of this species.
           </Text>
         </View>
         <Tap label="Record discovery" style={styles.primary} onPress={onStartDiscovery}>
-          <Text style={styles.primaryText}>📷 Record Sighting to Unlock</Text>
+          <Text style={styles.primaryText}>Record a Sighting to Unlock</Text>
         </Tap>
       </View>
     </ScrollView>
@@ -190,15 +172,16 @@ function AboutTab({ item }: { item: Species }) {
   return (
     <>
       <View style={styles.badges}>
-        <Text style={styles.badge}>Level 1 · Discovered</Text>
+        <Text style={styles.badge}>Discovered</Text>
         <Text style={styles.badge}>{item.category}</Text>
       </View>
+      <Info label="COMMON NAME" value={item.common_name} />
       <Info label="SCIENTIFIC NAME" value={item.scientific_name} />
-      {item.act716_status && <Info label="MALAYSIAN LEGAL PROTECTION" value={item.act716_status} />}
-      <Info label="HABITAT" value={item.habitat} />
-      <Info label="DIET" value={item.diet} />
+      {item.act716_status ? <Info label="PROTECTION STATUS" value={item.act716_status} /> : null}
+      {item.habitat ? <Info label="HABITAT" value={item.habitat} /> : null}
+      {item.diet ? <Info label="DIET" value={item.diet} /> : null}
       <Info label="ECOLOGICAL ROLE" value={role} />
-      <Info label="RESPONSIBLE OBSERVATION" value="Always observe wildlife from a respectful distance without feeding, touching or making loud noises." />
+      {item.fun_fact ? <Info label="SPECIES DESCRIPTION" value={item.fun_fact} /> : null}
     </>
   );
 }
@@ -209,111 +192,65 @@ function BattleStatsTab({ item, onBattle }: { item: Species; onBattle: () => voi
       <View style={styles.battleStatHeader}>
         <Text style={styles.battleStatHeaderTitle}>Card Combat Attributes</Text>
         <View style={styles.stats}>
-          <Stat value={`❤️ ${item.hp || 120}`} label="Base HP" />
+          <Stat value={`❤️ ${item.hp || 120}`} label="HP" />
           <Stat value={`⚔️ ${item.base_attack || 25}`} label="Base Attack" />
         </View>
       </View>
 
-      <Section title="SPECIAL ABILITIES (Iteration 2)" />
+      <Section title="SPECIAL ABILITIES" />
       {[
-        item.ability_1 || 'Swift Pounce',
-        item.ability_2 || 'Wild Roar',
-        item.ability_3 || 'Guardian Guard',
+        item.ability_1 || 'Ability 1',
+        item.ability_2 || 'Ability 2',
+        item.ability_3 || 'Ability 3',
       ].map((ability, idx) => (
         <View key={idx} style={styles.abilitySlotLocked}>
           <Text style={styles.abilitySlotIcon}>🔒</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.abilitySlotName}>Ability {idx + 1}: {ability}</Text>
-            <Text style={styles.abilitySlotHint}>Unlocked by completing Species Quiz {idx + 1} in Iteration 2!</Text>
+            <Text style={styles.abilitySlotHint}>Locked</Text>
           </View>
         </View>
       ))}
 
       <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
-        <Text style={styles.primaryText}>⚔️ Enter Card Battle</Text>
+        <Text style={styles.primaryText}>Enter Card Battle</Text>
       </Tap>
     </View>
   );
 }
 
-function FactsTab({ item, onPlay }: { item: Species; onPlay: () => void }) {
+function FactsTab({ item }: { item: Species }) {
   return (
     <>
-      <View style={styles.quiz}>
-        <Text style={styles.quizLabel}>KNOWLEDGE QUIZ</Text>
-        <Text style={styles.quizTitle}>Test Your Rainforest Knowledge!</Text>
-        <Text style={styles.muted}>Answer a quiz question about {item.common_name} to test what you learned!</Text>
-        <Tap label="Play quiz" style={styles.quizButton} onPress={onPlay}>
-          <Text style={styles.primaryText}>▶ Play Quiz</Text>
-        </Tap>
-      </View>
       <Section title="Species Fun Facts" />
-      {[item.fun_fact, 'Wild animals need peaceful space to thrive in their natural habitat.', 'Every observation recorded contributes to wildlife appreciation!'].map((fact, idx) => (
+      {[item.fun_fact, 'Wild animals need peaceful space to thrive in their natural habitat.', 'Watch from a respectful distance and never feed or touch wildlife.'].filter(Boolean).map((fact, idx) => (
         <Text key={idx} style={styles.fact}>• {fact}</Text>
       ))}
     </>
   );
 }
 
-function QuizTab({
-  item,
-  question,
-  answer,
-  onAnswer,
-  onDone,
-}: {
-  item: Species;
-  question: QuizQuestion | null;
-  answer: number | null;
-  onAnswer: (idx: number) => void;
-  onDone: () => void;
-}) {
-  const activeQuestion = question ?? { question: `Which statement about ${item.common_name} is true?`, options: [item.fun_fact], correct_index: 0 };
-  const correct = answer === activeQuestion.correct_index;
-  return (
-    <View style={styles.quiz}>
-      <Text style={styles.quizLabel}>QUESTION 1 OF 1</Text>
-      <Text style={styles.quizTitle}>{activeQuestion.question}</Text>
-      {activeQuestion.options.map((option, index) => (
-        <Tap
-          key={`${option}-${index}`}
-          label={`Answer ${index + 1}`}
-          style={[styles.secondary, styles.quizOption, answer === index && styles.quizOptionSelected]}
-          onPress={() => onAnswer(index)}
-        >
-          <Text style={[styles.secondaryText, styles.quizOptionText, answer === index && styles.quizOptionTextSelected]}>
-            {option}
-          </Text>
-        </Tap>
-      ))}
-      {answer !== null && (
-        <>
-          <Text style={styles.hint}>
-            {correct ? '🎉 Great job! That is correct.' : activeQuestion.explanation || 'Not quite. Read the fun facts and try again!'}
-          </Text>
-          <Tap label="Return to fun facts" style={styles.primary} onPress={onDone}>
-            <Text style={styles.primaryText}>Back to Fun Facts</Text>
-          </Tap>
-        </>
-      )}
-    </View>
-  );
-}
-
-function GalleryTab({ photos }: { photos: string[] }) {
+function GalleryTab({ photos }: { photos: GalleryItem[] }) {
   return (
     <>
-      <Text style={styles.subTitle}>Your past personal discovery photos for this species.</Text>
+      <Text style={styles.subTitle}>Your confirmed discovery photos for this species.</Text>
       {photos.length ? (
         <View style={styles.gallery}>
-          {photos.map((uri, index) => (
-            <Image key={`${uri}-${index}`} source={{ uri }} style={styles.galleryImage} />
+          {photos.map((item, index) => (
+            <View key={`${item.photo_url || 'photo'}-${index}`} style={styles.galleryItem}>
+              {item.photo_url ? (
+                <Image source={{ uri: item.photo_url }} style={styles.galleryImage} />
+              ) : (
+                <View style={[styles.galleryImage, styles.galleryPlaceholder]} />
+              )}
+              {item.location_label ? <Text style={styles.muted}>{item.location_label}</Text> : null}
+            </View>
           ))}
         </View>
       ) : (
         <View style={styles.galleryEmpty}>
           <Text style={styles.galleryEmptyTitle}>No personal photos yet</Text>
-          <Text style={styles.muted}>Record this species again to add another photo to its gallery.</Text>
+          <Text style={styles.muted}>Each saved observation of this species will appear here.</Text>
         </View>
       )}
     </>

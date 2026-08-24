@@ -55,7 +55,7 @@ export function HomeScreen({
       <Quest
         number="1"
         title="Explore Wildlife Places"
-        detail="Find where animals live in KL & Malaysia!"
+        detail="Find KL and Klang Valley places where wildlife may be encountered."
         onPress={onOpenLocations}
       />
       <Quest

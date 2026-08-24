@@ -64,6 +64,17 @@ def test_auth_registration_and_login():
         "avatar": "tiger"
     })
     assert dup.status_code == 400
+    assert "already taken" in dup.json()["detail"]
+
+    # 4b. Leading/trailing username spaces are trimmed before uniqueness/length checks
+    trimmed = client.post("/api/v1/auth/register", json={
+        "username": "  malayan_explorer  ",
+        "age": 11,
+        "email": "trim@rimbaquest.my",
+        "password": "junglePassword123",
+        "avatar": "tiger"
+    })
+    assert trimmed.status_code == 400
 
     # 5. Successful login with username
     login_user = client.post("/api/v1/auth/login", json={
@@ -89,6 +100,10 @@ def test_auth_registration_and_login():
 
 
 def test_auth_password_reset():
+    unknown = client.post("/api/v1/auth/forgot-password", json={"email": "nobody@rimbaquest.my"})
+    assert unknown.status_code == 400
+    assert "account" in unknown.json()["detail"].lower()
+
     # Forgot password request
     forgot = client.post("/api/v1/auth/forgot-password", json={"email": "explorer@rimbaquest.my"})
     assert forgot.status_code == 200
@@ -133,6 +148,9 @@ def test_locations_search_and_filter():
     assert all_locs.status_code == 200
     items = all_locs.json()["items"]
     assert len(items) >= 5
+    names = [loc["name"] for loc in items]
+    assert any("Gasing" in name for name in names)
+    assert all("Bako" not in name and "Cherating" not in name and "Taman Negara" not in name for name in names)
 
     # Search by keyword (case insensitive)
     gasing = client.get("/api/v1/locations?query=gasing")

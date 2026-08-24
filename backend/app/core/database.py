@@ -128,15 +128,24 @@ def migrate_schema() -> None:
             location_enrichments = [
                 ("loc_bukit_gasing", "Petaling Jaya, Selangor", "Butterflies, Birds, Small Mammals"),
                 ("loc_frim", "Kepong, Kuala Lumpur", "Rainforest Canopy Birds, Mammals, Butterflies"),
-                ("loc_taman_negara", "Jerantut, Pahang", "Elephants, Tapirs, Hornbills, Rainforest Mammals"),
                 ("loc_kuala_selangor", "Kuala Selangor, Selangor", "Mangrove Birds, Reptiles, Fireflies"),
-                ("loc_bako", "Kuching, Sarawak", "Proboscis Monkeys, Flying Lemurs, Coastal Birds"),
-                ("loc_cherating", "Cherating, Pahang", "Green Sea Turtles, Marine Life"),
-                ("loc_per_paya_indah", "Dengkil, Selangor", "Wetland Birds, Sun Bears, Crocodiles"),
-                ("loc_per_tn_penang", "Teluk Bahang, Penang", "Monkeys, Sea Eagles, Coastal Reptiles"),
-                ("loc_per_kuala_gandah", "Lanchang, Pahang", "Asian Elephants, Forest Birds"),
-                ("loc_per_tasek_bera", "Bera, Pahang", "Freshwater Reptiles, Wetland Birds"),
+                ("loc_per_paya_indah", "Dengkil, Selangor", "Wetland Birds, Sun Bears, Crocodiles, Reptiles"),
+                ("loc_kl_forest_eco_park", "Kuala Lumpur", "Birds, Small Mammals, Butterflies"),
+                ("loc_perdana_botanical", "Kuala Lumpur", "Butterflies, Birds"),
             ]
+            connection.execute(
+                """INSERT OR IGNORE INTO locations
+                   (id, name, type, lat, lng, verified, description, facilities, best_time, distance_km, why_recommended)
+                   VALUES
+                   ('loc_kl_forest_eco_park', 'KL Forest Eco Park', 'Forest park', 3.151, 101.703, 1,
+                    'A pocket of lowland rainforest in the heart of Kuala Lumpur, beside the KL Tower.',
+                    '["Trails", "Boardwalk", "Rest area"]', '7:00–10:00 AM', 3.5,
+                    'Easy city-centre forest paths where birds and small mammals have previously been observed.'),
+                   ('loc_perdana_botanical', 'Perdana Botanical Gardens', 'Botanical garden', 3.143, 101.685, 1,
+                    'Kuala Lumpur''s main botanical gardens with lakes, lawns and planted forest edges.',
+                    '["Paths", "Parking", "Restroom", "Playground"]', '8:00–11:00 AM', 2.0,
+                    'Open garden paths where butterflies and garden birds may be encountered.')"""
+            )
             for loc_id, area, typical in location_enrichments:
                 connection.execute(
                     "UPDATE locations SET area = :area, typical_wildlife = :typical WHERE id = :id",

@@ -92,10 +92,10 @@ export function ProgressCard({
         <View>
           <Text style={styles.infoLabel}>OVERALL COLLECTION PROGRESS</Text>
           <Text style={styles.progressValue}>
-            {progress.found} / {progress.total}
+            {progress.found} / {progress.total} Wildlife Discovered
           </Text>
         </View>
-        <Text style={styles.unlocked}>{percentage}% Unlocked</Text>
+        <Text style={styles.unlocked}>{percentage}% Complete</Text>
       </View>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${percentage}%` }]} />
