@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
   Image,
@@ -483,6 +484,23 @@ export default function RimbaQuest() {
     }
   };
 
+  const pickFromGallery = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]?.uri) {
+        setPhotoUri(result.assets[0].uri);
+        open('category');
+      }
+    } catch {
+      setPhotoUri(null);
+      open('category');
+    }
+  };
+
   const useSamplePhoto = () => {
     setPhotoUri(null);
     open('category');
@@ -945,6 +963,9 @@ export default function RimbaQuest() {
             <Tap label="Allow camera" style={styles.primary} onPress={requestCameraPermission}>
               <Text style={styles.primaryText}>Allow Camera</Text>
             </Tap>
+            <Tap label="Upload Photo from Device" style={styles.secondary} onPress={pickFromGallery}>
+              <Text style={styles.secondaryText}>📁 Choose from Device Gallery</Text>
+            </Tap>
             <Tap label="Use Sample Photo" style={styles.secondary} onPress={useSamplePhoto}>
               <Text style={styles.secondaryText}>Use Sample Wildlife Photo</Text>
             </Tap>
@@ -963,13 +984,15 @@ export default function RimbaQuest() {
               <Text style={styles.cameraHint}>Point at wildlife & tap shutter to capture</Text>
               <Text style={styles.cameraPersonalRecord}>Photo is a personal record, not automated AI identification</Text>
               <View style={styles.cameraActionsRow}>
-                <Tap label="Sample Photo" style={styles.samplePhotoButton} onPress={useSamplePhoto}>
-                  <Text style={styles.samplePhotoText}>Sample</Text>
+                <Tap label="Gallery" style={styles.samplePhotoButton} onPress={pickFromGallery}>
+                  <Text style={styles.samplePhotoText}>📁 Gallery</Text>
                 </Tap>
                 <Tap label="Take photo" style={styles.shutter} onPress={takePhoto}>
                   <View style={styles.shutterInner} />
                 </Tap>
-                <View style={{ width: 60 }} />
+                <Tap label="Sample Photo" style={styles.samplePhotoButton} onPress={useSamplePhoto}>
+                  <Text style={styles.samplePhotoText}>Sample</Text>
+                </Tap>
               </View>
             </View>
           </>
