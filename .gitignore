@@ -9,19 +9,13 @@ __pycache__/
 backend/data/RimbaQuest.db
 .reference/
 tmp/
+.vscode/
+.idea/
+.DS_Store
+*.log
 
-# Local AI-agent instructions and editor preferences — keep on this machine only.
-**/AGENTS.md
-**/agents.md
-**/CLAUDE.md
-**/claude.md
-**/.claude/
-**/.vscode/
-
-# Local submission documentation. Deliberately retained on this workstation only.
 /doc/
 /docs/
 
-# Local intermediate outputs used while completing the seed and image audit.
 /rimbaquest/tools/generated_seed.txt
 /rimbaquest/tools/generated_spec_images.txt
