@@ -8,7 +8,7 @@ import { GalleryItem, LocationItem, LocationMode, RecentCapture, Screen, Species
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
-import { clearSession, loadSession, saveSession } from '../constants/session';
+import { clearSession, loadGallery, loadSession, saveGallery, saveSession } from '../constants/session';
 import { styles } from '../styles/theme';
 
 import { BottomNav } from '../components/common/BottomNav';
@@ -58,6 +58,28 @@ function apiMessage(data: unknown, fallback: string): string {
     }
   }
   return fallback;
+}
+
+function isHttpPhotoUrl(url?: string | null): boolean {
+  return Boolean(url && /^https?:\/\//i.test(url));
+}
+
+async function storedPhotoUrl(uri: string): Promise<string> {
+  if (isHttpPhotoUrl(uri) || uri.startsWith('data:') || uri.startsWith('file:') || uri.startsWith('content:')) {
+    return uri;
+  }
+  if (!uri.startsWith('blob:')) return uri;
+  try {
+    const blob = await fetch(uri).then((response) => response.blob());
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result || uri));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return uri;
+  }
 }
 
 function profileFromAuth(data: Record<string, unknown>): UserProfile {
@@ -153,10 +175,13 @@ export default function RimbaQuest() {
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleRound, setBattleRound] = useState(1);
   const [battleOutcome, setBattleOutcome] = useState<'playing' | 'win' | 'lose' | null>(null);
+  const [battleXpAwarded, setBattleXpAwarded] = useState<number | null>(null);
   const [isAttacking, setIsAttacking] = useState(false);
+  const battleRecordedRef = useRef(false);
 
   const applyUser = (user: UserProfile, nextScreen: Screen = 'home') => {
     setCurrentUser(user);
+    setGalleryPhotos(loadGallery(user.id));
     setIsLoggedIn(true);
     saveSession(user);
     setHistory([]);
@@ -224,6 +249,7 @@ export default function RimbaQuest() {
     const saved = loadSession();
     if (saved?.id) {
       setCurrentUser(saved);
+      setGalleryPhotos(loadGallery(saved.id));
       setIsLoggedIn(true);
       setScreen('home');
     } else {
@@ -359,13 +385,14 @@ export default function RimbaQuest() {
     setSaving(true);
     setSaveError(null);
     try {
+      const storedPhoto = await storedPhotoUrl(photoUri);
       const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           species_id: selected.id,
           location_label: locationLabel,
-          photo_url: photoUri,
+          ...(isHttpPhotoUrl(storedPhoto) ? { photo_url: storedPhoto } : {}),
         }),
       });
       if (!response.ok) throw new Error('Unable to save');
@@ -375,10 +402,14 @@ export default function RimbaQuest() {
         setDiscovered((current) => [...current, selected.id]);
         setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
       }
-      setGalleryPhotos((current) => ({
-        ...current,
-        [selected.id]: [{ photo_url: photoUri, location_label: locationLabel }, ...(current[selected.id] ?? [])],
-      }));
+      setGalleryPhotos((current) => {
+        const next = {
+          ...current,
+          [selected.id]: [{ photo_url: storedPhoto, location_label: locationLabel }, ...(current[selected.id] ?? [])],
+        };
+        saveGallery(currentUser.id, next);
+        return next;
+      });
       await refresh(currentUser.id);
       open('success');
     } catch {
@@ -629,16 +660,30 @@ export default function RimbaQuest() {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`);
       if (!res.ok) return;
       const data = await res.json();
-      const items = (data.items || []) as GalleryItem[];
-      if (items.length) {
-        setGalleryPhotos((current) => ({ ...current, [speciesId]: items }));
-      }
+      const remote = ((data.items || []) as GalleryItem[]).filter((item) => isHttpPhotoUrl(item.photo_url));
+      if (!remote.length) return;
+      setGalleryPhotos((current) => {
+        const local = current[speciesId] ?? [];
+        const seen = new Set(local.map((item) => `${item.photo_url}|${item.location_label}`));
+        const merged = [...local];
+        for (const item of remote) {
+          const key = `${item.photo_url}|${item.location_label}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          merged.push(item);
+        }
+        const next = { ...current, [speciesId]: merged };
+        saveGallery(currentUser.id, next);
+        return next;
+      });
     } catch {
       // keep local gallery
     }
   };
 
   const initBattle = (card: Species) => {
+    battleRecordedRef.current = false;
+    setBattleXpAwarded(null);
     setBattlePlayerCard(card);
     const hp = card.hp || 120;
     setBattlePlayerHp(hp);
@@ -654,6 +699,37 @@ export default function RimbaQuest() {
     open('battle_arena');
   };
 
+  const recordBattleResult = async (won: boolean, rounds: number) => {
+    if (battleRecordedRef.current || !currentUser.id) return;
+    battleRecordedRef.current = true;
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/record`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          won,
+          opponent_name: BATTLE_OPPONENT.name,
+          rounds,
+        }),
+      });
+      if (!res.ok) {
+        battleRecordedRef.current = false;
+        return;
+      }
+      const data = (await res.json()) as { xp_awarded?: number; total_xp?: number };
+      if (typeof data.xp_awarded === 'number') setBattleXpAwarded(data.xp_awarded);
+      if (typeof data.total_xp === 'number') {
+        setCurrentUser((prev) => {
+          const next = { ...prev, xp: data.total_xp as number };
+          saveSession(next);
+          return next;
+        });
+      }
+    } catch {
+      battleRecordedRef.current = false;
+    }
+  };
+
   const performAttack = () => {
     if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
     setIsAttacking(true);
@@ -666,6 +742,7 @@ export default function RimbaQuest() {
       setBattleLog(newLogs);
       setBattleOutcome('win');
       setIsAttacking(false);
+      void recordBattleResult(true, battleRound);
       return;
     }
     setBattleOpponentHp(nextOpponentHp);
@@ -676,6 +753,7 @@ export default function RimbaQuest() {
         setBattlePlayerHp(0);
         newLogs.push(`${battlePlayerCard.common_name} is too tired to continue.`);
         setBattleOutcome('lose');
+        void recordBattleResult(false, battleRound);
       } else {
         setBattlePlayerHp(nextPlayerHp);
       }
@@ -882,6 +960,7 @@ export default function RimbaQuest() {
             battleLog={battleLog}
             battleRound={battleRound}
             battleOutcome={battleOutcome}
+            xpAwarded={battleXpAwarded}
             isAttacking={isAttacking}
             onAttack={performAttack}
             onBattleAgain={() => initBattle(battlePlayerCard)}

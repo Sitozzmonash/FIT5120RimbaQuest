@@ -223,3 +223,11 @@ def test_battle_recording():
     assert win.status_code == 200
     assert win.json()["won"] is True
     assert win.json()["xp_awarded"] == 50
+
+    lose = client.post("/api/v1/children/1/battle/record", json={
+        "won": False,
+        "opponent_name": "Forest Wild Boar",
+        "rounds": 2
+    })
+    assert lose.status_code == 200
+    assert lose.json()["xp_awarded"] == 10

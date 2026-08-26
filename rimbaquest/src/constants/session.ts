@@ -1,6 +1,7 @@
-import { UserProfile } from '../types';
+import { GalleryItem, UserProfile } from '../types';
 
 const SESSION_KEY = 'rimbaquest.session.v1';
+const GALLERY_KEY_PREFIX = 'rimbaquest.gallery.v1.';
 
 function storage(): Storage | null {
   try {
@@ -11,6 +12,10 @@ function storage(): Storage | null {
     return null;
   }
   return null;
+}
+
+function galleryKey(childId: number): string {
+  return `${GALLERY_KEY_PREFIX}${childId}`;
 }
 
 export function loadSession(): UserProfile | null {
@@ -38,5 +43,26 @@ export function clearSession(): void {
     storage()?.removeItem(SESSION_KEY);
   } catch {
     // ignore
+  }
+}
+
+export function loadGallery(childId: number): Record<string, GalleryItem[]> {
+  if (!childId) return {};
+  try {
+    const raw = storage()?.getItem(galleryKey(childId));
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, GalleryItem[]>;
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export function saveGallery(childId: number, photos: Record<string, GalleryItem[]>): void {
+  if (!childId) return;
+  try {
+    storage()?.setItem(galleryKey(childId), JSON.stringify(photos));
+  } catch {
+    // Gallery persistence is best-effort; private mode and quota can both fail.
   }
 }
