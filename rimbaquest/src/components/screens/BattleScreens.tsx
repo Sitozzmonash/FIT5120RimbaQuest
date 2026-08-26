@@ -88,6 +88,7 @@ export function BattleArenaScreen({
   battleLog,
   battleRound,
   battleOutcome,
+  xpAwarded,
   isAttacking,
   onAttack,
   onBattleAgain,
@@ -104,6 +105,7 @@ export function BattleArenaScreen({
   battleLog: string[];
   battleRound: number;
   battleOutcome: 'playing' | 'win' | 'lose' | null;
+  xpAwarded?: number | null;
   isAttacking: boolean;
   onAttack: () => void;
   onBattleAgain: () => void;
@@ -173,8 +175,12 @@ export function BattleArenaScreen({
           </Text>
           <Text style={styles.battleOutcomeCopy}>
             {battleOutcome === 'win'
-              ? 'Your Wildlife Card won this battle.'
-              : 'Your Wildlife Card was defeated. Try another card or battle again.'}
+              ? (xpAwarded
+                ? `Your Wildlife Card won this battle. +${xpAwarded} Explorer XP`
+                : 'Your Wildlife Card won this battle.')
+              : (xpAwarded
+                ? `Your Wildlife Card was defeated. +${xpAwarded} Explorer XP. Try another card or battle again.`
+                : 'Your Wildlife Card was defeated. Try another card or battle again.')}
           </Text>
           <Tap label="Battle Again" style={styles.primary} onPress={onBattleAgain}>
             <Text style={styles.primaryText}>Battle Again</Text>
