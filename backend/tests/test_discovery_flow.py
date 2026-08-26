@@ -3,10 +3,15 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
 # Use isolated test SQLite database
 temp_dir = tempfile.mkdtemp()
 os.environ["DATABASE_URL"] = f"sqlite:///{Path(temp_dir) / 'test.db'}"
 
+from app.core.database import engine
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -17,6 +22,66 @@ def test_system_health():
     res = client.get("/health")
     assert res.status_code == 200
     assert res.json()["status"] == "ok"
+
+
+def test_fresh_database_starts_and_enforces_collection_foreign_keys():
+    with engine.connect() as connection:
+        assert connection.execute(text("PRAGMA foreign_keys")).scalar() == 1
+
+    with engine.begin() as connection:
+        existing = connection.execute(text("""SELECT child_id, species_id
+            FROM collection_entries LIMIT 1""")).mappings().one()
+
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO collection_entries
+                    (child_id, species_id, unlock_reason, observed_boolean)
+                    VALUES (:child_id, :species_id, 'audit', 0)"""), dict(existing))
+
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO collection_entries
+                    (child_id, species_id, unlock_reason, observed_boolean)
+                    VALUES (999999, :species_id, 'audit', 0)"""), {
+                    "species_id": existing["species_id"],
+                })
+
+
+def test_database_enforces_account_and_badge_uniqueness():
+    with engine.begin() as connection:
+        user = connection.execute(text("SELECT username, email FROM users WHERE username IS NOT NULL LIMIT 1")).mappings().one()
+
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO users
+                    (role, username, email) VALUES ('child', :username, 'new-email@rimbaquest.my')"""), {
+                    "username": user["username"].upper(),
+                })
+
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO users
+                    (role, username, email) VALUES ('child', 'new_explorer', :email)"""), {
+                    "email": user["email"].upper(),
+                })
+
+        unawarded_pair = connection.execute(text("""SELECT child_profiles.id AS child_id,
+            badges.id AS badge_id
+            FROM child_profiles CROSS JOIN badges
+            WHERE NOT EXISTS (
+                SELECT 1 FROM child_badges
+                WHERE child_badges.child_id = child_profiles.id
+                  AND child_badges.badge_id = badges.id
+            )
+            LIMIT 1""")).mappings().one()
+        badge_params = {
+            "child": unawarded_pair["child_id"],
+            "badge": unawarded_pair["badge_id"],
+        }
+        connection.execute(text("INSERT INTO child_badges (child_id, badge_id) VALUES (:child, :badge)"), badge_params)
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("INSERT INTO child_badges (child_id, badge_id) VALUES (:child, :badge)"), badge_params)
 
 
 def test_auth_registration_and_login():

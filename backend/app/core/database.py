@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 from typing import Any
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 
 from app.core.config import (
     DATABASE_URL,
@@ -27,7 +27,10 @@ def initialise_database() -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         with sqlite3.connect(path) as connection:
+            # The legacy seed inserts child rows before every parent table exists.
+            # Enable foreign keys only after the full seed has been imported.
             connection.executescript(SEED_SQL.read_text(encoding="utf-8"))
+            connection.execute("PRAGMA foreign_keys = ON")
 
 
 def apply_seed_block(start_marker: str, end_marker: str) -> None:
@@ -38,6 +41,7 @@ def apply_seed_block(start_marker: str, end_marker: str) -> None:
     end = seed.index(end_marker, start) + len(end_marker)
     try:
         with sqlite3.connect(database_path()) as connection:
+            connection.execute("PRAGMA foreign_keys = ON")
             connection.executescript(seed[start:end])
     except sqlite3.OperationalError as error:
         if "readonly" not in str(error).lower():
@@ -48,6 +52,7 @@ def migrate_schema() -> None:
     """Ensure all required columns and default data exist across restarts/persistent disks."""
     try:
         with sqlite3.connect(database_path()) as connection:
+            connection.execute("PRAGMA foreign_keys = ON")
             # Check users table
             user_cols = {row[1] for row in connection.execute("PRAGMA table_info(users)")}
             if "username" not in user_cols:
@@ -124,6 +129,34 @@ def migrate_schema() -> None:
                 WHERE collection_entries.child_id = child_profiles.id
             ) WHERE xp IS NULL OR xp = 0""")
 
+            # Retain one existing row before applying the database-level rules.
+            connection.execute("""DELETE FROM collection_entries
+                WHERE id NOT IN (
+                    SELECT MIN(id) FROM collection_entries
+                    GROUP BY child_id, species_id
+                )""")
+            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
+                uq_collection_entries_child_species
+                ON collection_entries(child_id, species_id)""")
+
+            connection.execute("""DELETE FROM child_badges
+                WHERE id NOT IN (
+                    SELECT MIN(id) FROM child_badges
+                    GROUP BY child_id, badge_id
+                )""")
+            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
+                uq_child_badges_child_badge
+                ON child_badges(child_id, badge_id)""")
+
+            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
+                uq_users_username_ci
+                ON users(lower(username))
+                WHERE username IS NOT NULL""")
+            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
+                uq_users_email_ci
+                ON users(lower(email))
+                WHERE email IS NOT NULL""")
+
             # Enrich locations with area and typical wildlife tags
             location_enrichments = [
                 ("loc_bukit_gasing", "Petaling Jaya, Selangor", "Butterflies, Birds, Small Mammals"),
@@ -163,6 +196,11 @@ apply_seed_block(LEARNING_DATA_START, LEARNING_DATA_END)
 migrate_schema()
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+
+
+@event.listens_for(engine, "connect")
+def enable_sqlite_foreign_keys(dbapi_connection: Any, _connection_record: Any) -> None:
+    dbapi_connection.execute("PRAGMA foreign_keys = ON")
 
 
 def rows(result: Any) -> list[dict[str, Any]]:
