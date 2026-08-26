@@ -88,6 +88,7 @@ CREATE TABLE collection_entries (
 	FOREIGN KEY(child_id) REFERENCES child_profiles (id), 
 	FOREIGN KEY(species_id) REFERENCES species (id)
 );
+CREATE UNIQUE INDEX uq_collection_entries_child_species ON collection_entries(child_id, species_id);
 INSERT INTO "collection_entries" VALUES(1,1,'sp_common_mormon','learned',0);
 INSERT INTO "collection_entries" VALUES(2,1,'sp_oriental_pied_hornbill','learned',0);
 CREATE TABLE consent_events (
