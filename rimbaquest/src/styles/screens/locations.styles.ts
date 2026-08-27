@@ -1,9 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 export const locationsStyles = StyleSheet.create({
-  disclaimerBox: { borderWidth: 1, borderColor: '#BEE5EB', backgroundColor: '#E2F0D9', borderRadius: 14, padding: 12, marginBottom: 12 },
-  disclaimerTitle: { color: '#1E4620', fontSize: 12, fontWeight: '800' },
-  disclaimerText: { color: '#2C5E2E', fontSize: 11, lineHeight: 16, marginTop: 3 },
   locationList: { gap: 12 },
   locationCard: { borderWidth: 1, borderColor: '#DFE7E1', borderRadius: 16, padding: 14, backgroundColor: '#FFFFFF' },
   locationTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
@@ -16,7 +13,7 @@ export const locationsStyles = StyleSheet.create({
   locationCardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F0F4F1' },
   bestTimeText: { fontSize: 10, color: '#7B857F' },
   viewDetailText: { fontSize: 11, color: '#0BA84A', fontWeight: '800' },
-  locationDetailHero: { backgroundColor: '#F4FAF6', padding: 16, borderRadius: 16, marginBottom: 12, alignItems: 'center' },
+  locationDetailHero: { backgroundColor: '#F4FAF6', padding: 16, borderRadius: 16, marginTop: 14, marginBottom: 12, alignItems: 'center' },
   locationAreaHero: { fontSize: 14, fontWeight: '800', color: '#1B211C' },
   locationTypeBadge: { fontSize: 11, color: '#0BA84A', fontWeight: '700', marginTop: 4 },
   noticeBanner: { marginBottom: 10 },
