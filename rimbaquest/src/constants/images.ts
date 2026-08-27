@@ -20,6 +20,12 @@ export const HOME_IMAGES = {
   tileBattle: require('../../assets/home/tile-battle.png'),
 };
 
+export const COLLECTION_IMAGES = {
+  vineBottomLeft: require('../../assets/collection/vine-bottom-left.png'),
+  tigerTopRight: require('../../assets/collection/tiger-top-right.png'),
+  vineBottomRight: require('../../assets/collection/vine-bottom-right.png'),
+};
+
 export const AUTH_IMAGES = {
   mascotWelcome: require('../../assets/auth/mascot-id-card.png'),
   mascotLogin: require('../../assets/auth/mascot-wave.png'),
