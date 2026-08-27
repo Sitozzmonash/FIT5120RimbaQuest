@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery app built for FIT5120. It uses one Expo/React Native codebase for iOS, Android and the web, backed by a Python FastAPI API and SQLite.
+RimbaQuest is a child-friendly wildlife discovery app built for FIT5120. It uses one Expo/React Native codebase for iOS, Android and the web, backed by a Python FastAPI API, Supabase PostgreSQL, and private Supabase Storage.
 
 Iteration 1 is intentionally a **manual wildlife-recording experience**. A child takes a personal photo, chooses a category and species from reference cards, confirms the discovery, unlocks a Wildlife Card, learns about the species, and tracks progress. The photo is **not** sent to AI for automatic identification in this iteration.
 
@@ -36,9 +36,11 @@ The app includes:
 | Cross-platform client | React 19, React Native 0.81, TypeScript, Expo SDK 54 |
 | Navigation/runtime | Expo Router, React Native Web, Expo Camera |
 | Backend | Python 3.12, FastAPI, Uvicorn |
-| Persistence | SQLAlchemy 2.0 and SQLite |
+| Persistence | SQLAlchemy 2.0; Supabase PostgreSQL in production and SQLite for local fallback/testing |
+| Authentication | Backend-issued JWT bearer tokens, Argon2 password hashes, and per-child ownership checks |
+| Discovery photos | Private Supabase Storage objects with short-lived signed read URLs |
 | Data and assets | Seed SQL, local species JPEG assets, image attribution metadata |
-| Container/deployment | Docker, Render web service, Render persistent disk |
+| Container/deployment | Docker and Render web service; Supabase provides durable managed data storage |
 | Build/distribution | Expo Go for compatible development testing; EAS Build/Update for installable builds and updates |
 
 ### Planned, but not active in Iteration 1
@@ -112,11 +114,12 @@ npx expo start --tunnel --clear
 
 ## Test and build checks
 
-Run the backend tests:
+Run the backend tests. Disabling pytest's cache avoids a Windows cache-provider issue when the checkout path contains Chinese characters:
 
 ```powershell
 cd backend
-python -m pytest
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
+python -m pytest -q -p no:cacheprovider
 ```
 
 Run the client type check and web export:
@@ -131,26 +134,33 @@ Before a release, manually test the complete chain on both a mobile device and w
 
 ## Render deployment
 
-The repository includes a root `Dockerfile` and `render.yaml` for the FastAPI service. Render must attach a persistent disk at `/var/data` and use:
+The repository includes a root `Dockerfile` and `render.yaml` for the FastAPI service. No Render persistent disk is required: durable account, progress, collection, and sighting records are stored in Supabase PostgreSQL, while private discovery photos are stored in Supabase Storage.
+
+Configure these required Render environment variables:
 
 ```text
-DATABASE_URL=sqlite:////var/data/RimbaQuest.db
+DATABASE_URL=postgresql://postgres.PROJECT_REF:YOUR_DATABASE_PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
+SUPABASE_SECRET_KEY=sb_secret_YOUR_ROTATED_SECRET_KEY
+JWT_SECRET=YOUR_RANDOM_SECRET_WITH_AT_LEAST_32_BYTES
+CORS_ALLOWED_ORIGINS=https://rimbaquest-preview--latest.expo.app
 ```
 
-This prevents the SQLite database from being lost when the container is redeployed. The current deployed API URL is:
+`DATABASE_URL` should use Supabase's Session pooler (port 5432), which is suitable for a persistent Render web service. The API creates the Iteration 1 schema and idempotently loads the versioned static species, quiz, image-metadata, and location catalogue on startup. It never deletes registered users or their discoveries during seeding.
+
+The project-specific Supabase URL and private bucket name have safe defaults in backend configuration. They can optionally be overridden with `SUPABASE_URL` and `SUPABASE_STORAGE_BUCKET`. The current deployed API URL is:
 
 ```text
 https://fit5120rimbaquest.onrender.com
 ```
 
-Set deployment secrets only in Render environment variables, never in source control:
+Set deployment secrets only in Render environment variables, never in source control. Existing optional model keys remain:
 
 ```text
 DEEPSEEK_API_KEY=...
 ZHIPU_API_KEY=...
 ```
 
-The current Iteration 1 app does not make runtime language-model or vision-model calls, so these keys are reserved for later work. Restrict `CORS_ALLOWED_ORIGINS` to known deployed web origins before a public launch.
+The current Iteration 1 app does not make runtime language-model or vision-model calls, so these keys are reserved for later work. Multiple allowed web origins can be supplied as a comma-separated list. Native iOS and Android requests are not governed by browser CORS.
 
 ## EAS and device distribution
 
@@ -168,11 +178,11 @@ EAS Update can deliver compatible JavaScript and asset updates to an installed b
 - Species visual assets are bundled into the Expo client and source/attribution metadata is retained in `rimbaquest/assets/species/commons-attribution.json`.
 - Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence; they require source/accuracy review before public release.
 - A discovery records a human-readable location label and timestamp. It does not promise GPS precision.
-- A local SQLite file and local `.env` are intentionally ignored; the versioned `backend/data/seed.sql` is the reproducible baseline.
+- A local SQLite file and local `.env` are intentionally ignored; the versioned `backend/data/seed.sql` remains the reproducible static catalogue baseline.
 
 ## Security and privacy
 
-Do not commit API keys, `.env` files, local databases, personal photos, `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, or local documentation folders. Rotate any credential that has been shared in a terminal, screenshot, chat, or commit history.
+Do not commit API keys, database passwords, `.env` files, local databases, personal photos, `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, or local documentation folders. Rotate any credential that has been shared in a terminal, screenshot, chat, or commit history.
 
 This is an educational prototype. Public child-facing use requires authentication/ownership controls, parent or guardian consent, clear photo retention/deletion policies, rate limiting, backups, monitoring, explicit production CORS rules, and reviewed/cited species content.
 

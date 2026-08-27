@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class DiscoveryIn(BaseModel):
     species_id: str
     location_label: str = Field(min_length=2, max_length=120)
-    photo_url: str | None = None
+    photo_path: str | None = Field(default=None, max_length=500)
     notes: str | None = None
 
 

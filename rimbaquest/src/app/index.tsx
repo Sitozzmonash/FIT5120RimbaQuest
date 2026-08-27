@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, StatusBar, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -64,24 +64,6 @@ function isHttpPhotoUrl(url?: string | null): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
 }
 
-async function storedPhotoUrl(uri: string): Promise<string> {
-  if (isHttpPhotoUrl(uri) || uri.startsWith('data:') || uri.startsWith('file:') || uri.startsWith('content:')) {
-    return uri;
-  }
-  if (!uri.startsWith('blob:')) return uri;
-  try {
-    const blob = await fetch(uri).then((response) => response.blob());
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(String(reader.result || uri));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return uri;
-  }
-}
-
 function profileFromAuth(data: Record<string, unknown>): UserProfile {
   return {
     id: Number(data.child_id || data.id || 0),
@@ -114,6 +96,7 @@ export default function RimbaQuest() {
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [accessToken, setAccessToken] = useState('');
 
   const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
@@ -123,6 +106,7 @@ export default function RimbaQuest() {
   const [filter, setFilter] = useState('All');
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoMimeType, setPhotoMimeType] = useState('image/jpeg');
   const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
   const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
   const [discoveryLocation, setDiscoveryLocation] = useState('');
@@ -179,14 +163,18 @@ export default function RimbaQuest() {
   const [isAttacking, setIsAttacking] = useState(false);
   const battleRecordedRef = useRef(false);
 
-  const applyUser = (user: UserProfile, nextScreen: Screen = 'home') => {
+  const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
     setCurrentUser(user);
+    setAccessToken(token);
     setGalleryPhotos(loadGallery(user.id));
     setIsLoggedIn(true);
-    saveSession(user);
+    void saveSession({ user, accessToken: token });
     setHistory([]);
     setScreen(nextScreen);
   };
+
+  const authenticatedHeaders = (token = accessToken): Record<string, string> =>
+    token ? { Authorization: `Bearer ${token}` } : {};
 
   const loadLocations = async () => {
     setLocationsLoading(true);
@@ -209,14 +197,25 @@ export default function RimbaQuest() {
     }
   };
 
-  const refresh = async (childId: number) => {
+  const refresh = async (childId: number, token = accessToken) => {
     try {
+      const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const [speciesRes, collectionRes, profileRes, recentRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/species`),
-        fetch(`${API_BASE}/api/v1/children/${childId}/collection`),
-        fetch(`${API_BASE}/api/v1/children/${childId}/profile`),
-        fetch(`${API_BASE}/api/v1/children/${childId}/recent-captures`),
+        fetch(`${API_BASE}/api/v1/children/${childId}/collection`, { headers: auth }),
+        fetch(`${API_BASE}/api/v1/children/${childId}/profile`, { headers: auth }),
+        fetch(`${API_BASE}/api/v1/children/${childId}/recent-captures`, { headers: auth }),
       ]);
+
+      if (profileRes.status === 401 || profileRes.status === 403) {
+        await clearSession();
+        setAccessToken('');
+        setIsLoggedIn(false);
+        setCurrentUser(GUEST_USER);
+        setScreen('auth');
+        setLoading(false);
+        return;
+      }
 
       if (speciesRes.ok) setSpecies(await speciesRes.json());
       if (collectionRes.ok) {
@@ -227,7 +226,7 @@ export default function RimbaQuest() {
         const data = await profileRes.json();
         setCurrentUser((prev) => {
           const next = { ...prev, ...data, username: prev.username };
-          saveSession(next);
+          void saveSession({ user: next, accessToken: token });
           return next;
         });
       }
@@ -246,23 +245,26 @@ export default function RimbaQuest() {
   };
 
   useEffect(() => {
-    const saved = loadSession();
-    if (saved?.id) {
-      setCurrentUser(saved);
-      setGalleryPhotos(loadGallery(saved.id));
-      setIsLoggedIn(true);
-      setScreen('home');
-    } else {
-      setScreen('auth');
-      setLoading(false);
-    }
+    void (async () => {
+      const saved = await loadSession();
+      if (saved?.user?.id && saved.accessToken) {
+        setCurrentUser(saved.user);
+        setAccessToken(saved.accessToken);
+        setGalleryPhotos(loadGallery(saved.user.id));
+        setIsLoggedIn(true);
+        setScreen('home');
+      } else {
+        setScreen('auth');
+        setLoading(false);
+      }
+    })();
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn && currentUser.id) {
-      void refresh(currentUser.id);
+    if (isLoggedIn && currentUser.id && accessToken) {
+      void refresh(currentUser.id, accessToken);
     }
-  }, [isLoggedIn, currentUser.id]);
+  }, [isLoggedIn, currentUser.id, accessToken]);
 
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
   const visibleSpecies = useMemo(
@@ -335,6 +337,7 @@ export default function RimbaQuest() {
       setLocationMode('manual');
     }
     setPhotoUri(null);
+    setPhotoMimeType('image/jpeg');
     setPhotoError(null);
     setSaveError(null);
     setLocationNotice(null);
@@ -347,8 +350,9 @@ export default function RimbaQuest() {
     setScreen('photo');
   };
 
-  const acceptPhoto = (uri: string) => {
+  const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
     setPhotoUri(uri);
+    setPhotoMimeType(mimeType);
     setPhotoError(null);
     open('category');
   };
@@ -369,10 +373,34 @@ export default function RimbaQuest() {
         allowsEditing: true,
         quality: 0.8,
       });
-      if (!result.canceled && result.assets[0]?.uri) acceptPhoto(result.assets[0].uri);
+      if (!result.canceled && result.assets[0]?.uri) {
+        acceptPhoto(result.assets[0].uri, result.assets[0].mimeType || 'image/jpeg');
+      }
     } catch {
       setPhotoError("Your photo couldn't be uploaded. Please try again.");
     }
+  };
+
+  const uploadDiscoveryPhoto = async (uri: string): Promise<{ photo_path: string; photo_url?: string | null }> => {
+    const form = new FormData();
+    if (Platform.OS === 'web') {
+      const blob = await fetch(uri).then((response) => response.blob());
+      form.append('photo', blob, `discovery.${photoMimeType === 'image/png' ? 'png' : photoMimeType === 'image/webp' ? 'webp' : 'jpg'}`);
+    } else {
+      form.append('photo', {
+        uri,
+        name: `discovery.${photoMimeType === 'image/png' ? 'png' : photoMimeType === 'image/webp' ? 'webp' : 'jpg'}`,
+        type: photoMimeType,
+      } as unknown as Blob);
+    }
+    const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/photos`, {
+      method: 'POST',
+      headers: authenticatedHeaders(),
+      body: form,
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(apiMessage(data, "Your photo couldn't be uploaded. Please try again."));
+    return data as { photo_path: string; photo_url?: string | null };
   };
 
   const recordDiscoveryWithLocation = async (locationLabel: string) => {
@@ -385,18 +413,19 @@ export default function RimbaQuest() {
     setSaving(true);
     setSaveError(null);
     try {
-      const storedPhoto = await storedPhotoUrl(photoUri);
+      const storedPhoto = await uploadDiscoveryPhoto(photoUri);
       const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
           species_id: selected.id,
           location_label: locationLabel,
-          ...(isHttpPhotoUrl(storedPhoto) ? { photo_url: storedPhoto } : {}),
+          photo_path: storedPhoto.photo_path,
         }),
       });
-      if (!response.ok) throw new Error('Unable to save');
-      const result = (await response.json()) as { first_discovery?: boolean; total_xp?: number };
+      const responseData = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(apiMessage(responseData, 'Unable to save'));
+      const result = responseData as { first_discovery?: boolean; total_xp?: number; photo_url?: string | null };
       setFirstDiscovery(Boolean(result.first_discovery));
       if (result.first_discovery && !discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
@@ -405,15 +434,15 @@ export default function RimbaQuest() {
       setGalleryPhotos((current) => {
         const next = {
           ...current,
-          [selected.id]: [{ photo_url: storedPhoto, location_label: locationLabel }, ...(current[selected.id] ?? [])],
+          [selected.id]: [{ photo_url: result.photo_url || storedPhoto.photo_url || photoUri, location_label: locationLabel }, ...(current[selected.id] ?? [])],
         };
         saveGallery(currentUser.id, next);
         return next;
       });
-      await refresh(currentUser.id);
+      await refresh(currentUser.id, accessToken);
       open('success');
-    } catch {
-      setSaveError("Your discovery wasn't saved. Please try again.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Your discovery wasn't saved. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -471,7 +500,9 @@ export default function RimbaQuest() {
         else setAuthError(message);
         return;
       }
-      applyUser(profileFromAuth(data));
+      const token = String(data.access_token || '');
+      if (!token) throw new Error('Registration did not return an access token.');
+      applyUser(profileFromAuth(data), token);
     } catch {
       setAuthError('Registration was unsuccessful. Please try again.');
     } finally {
@@ -501,7 +532,9 @@ export default function RimbaQuest() {
         else setAuthError(apiMessage(data, 'Invalid username or password. Please try again.'));
         return;
       }
-      applyUser(profileFromAuth(data));
+      const token = String(data.access_token || '');
+      if (!token) throw new Error('Login did not return an access token.');
+      applyUser(profileFromAuth(data), token);
     } catch {
       setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
@@ -591,7 +624,7 @@ export default function RimbaQuest() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/profile`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
           display_name: editDisplayName.trim() || currentUser.display_name,
           avatar: editAvatar,
@@ -602,7 +635,7 @@ export default function RimbaQuest() {
         const data = await res.json();
         setCurrentUser((prev) => {
           const next = { ...prev, ...data };
-          saveSession(next);
+          void saveSession({ user: next, accessToken });
           return next;
         });
       }
@@ -614,7 +647,7 @@ export default function RimbaQuest() {
           avatar: editAvatar,
           age: parseInt(editAge, 10) || prev.age,
         };
-        saveSession(next);
+        void saveSession({ user: next, accessToken });
         return next;
       });
     }
@@ -622,7 +655,8 @@ export default function RimbaQuest() {
   };
 
   const handleLogout = () => {
-    clearSession();
+    void clearSession();
+    setAccessToken('');
     setIsLoggedIn(false);
     setCurrentUser(GUEST_USER);
     setDiscovered([]);
@@ -657,7 +691,9 @@ export default function RimbaQuest() {
 
   const loadSpeciesGallery = async (speciesId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`);
+      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`, {
+        headers: authenticatedHeaders(),
+      });
       if (!res.ok) return;
       const data = await res.json();
       const remote = ((data.items || []) as GalleryItem[]).filter((item) => isHttpPhotoUrl(item.photo_url));
@@ -705,7 +741,7 @@ export default function RimbaQuest() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/record`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
           won,
           opponent_name: BATTLE_OPPONENT.name,
@@ -721,7 +757,7 @@ export default function RimbaQuest() {
       if (typeof data.total_xp === 'number') {
         setCurrentUser((prev) => {
           const next = { ...prev, xp: data.total_xp as number };
-          saveSession(next);
+          void saveSession({ user: next, accessToken });
           return next;
         });
       }
