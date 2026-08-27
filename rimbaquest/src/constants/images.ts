@@ -10,6 +10,13 @@ export const IMAGES = {
   recent: require('../../assets/wildlife/recent-marmoset.jpg'),
 };
 
+export const DISCOVERY_CATEGORY_IMAGES = {
+  Mammal: require('../../assets/discovery/mammals.png'),
+  Bird: require('../../assets/discovery/birds.png'),
+  Butterfly: require('../../assets/discovery/butterflies.png'),
+  Reptile: require('../../assets/discovery/reptiles.png'),
+};
+
 export const HOME_IMAGES = {
   brandLogo: require('../../assets/home/brand-logo.png'),
   leafDecor: require('../../assets/home/image-decor.png'),
