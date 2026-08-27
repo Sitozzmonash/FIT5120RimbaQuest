@@ -15,7 +15,7 @@ Iteration 1 is a **manual wildlife recording and learning experience**. A photo 
 
 Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
 
-> **Deployment status (verified 27 August 2026):** the EAS-hosted Web application responds successfully, but the live API health response still reports `"database": "sqlite"` and `"version": "1.1.0"`. The repository contains the PostgreSQL/Storage migration and API version `1.2.0`, but the Render service still needs the production environment variables below and a deployment of the latest `master`. Do not consider the production persistence migration complete until `/health` reports `"database": "postgresql"` and `"version": "1.2.0"`.
+> **Deployment status (verified 27 August 2026):** the production API reports `"database": "postgresql"` and `"version": "1.2.0"`, and Supabase PostgreSQL plus the private `discovery-photos` Storage bucket are verified live end-to-end (registration, JWT auth, photo upload, and discovery creation all succeed against production). **Remaining:** rebuild and redeploy the EAS-hosted Web application from current `master` — the live Web bundle predates JWT authentication, so protected API calls fail with `401 Unauthorized` until the client is redeployed.
 
 ## Iteration 1 scope
 
