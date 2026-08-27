@@ -2,7 +2,6 @@ import { StyleSheet } from 'react-native';
 
 import { battleStyles } from './screens/battle.styles';
 import { collectionStyles } from './screens/collection.styles';
-import { discoveryStyles } from './screens/discovery.styles';
 import { homeStyles } from './screens/home.styles';
 import { locationsStyles } from './screens/locations.styles';
 import { profileStyles } from './screens/profile.styles';
@@ -88,5 +87,4 @@ export const styles: any = {
   ...loginStyles,
   ...forgotPasswordStyles,
   ...resetPasswordStyles,
-  ...discoveryStyles,
 };

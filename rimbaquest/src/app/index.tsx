@@ -15,11 +15,12 @@ import { HomeScreen } from '../components/screens/HomeScreen';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/LocationsScreen';
 import {
   CameraScreen,
+  PhotoPreviewScreen,
   CategoryScreen,
   ConfirmScreen,
   SpeciesScreen,
   SuccessScreen,
-} from '../components/screens/DiscoveryScreens';
+} from '../components/screens/discovery';
 import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/BattleScreens';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
@@ -133,6 +134,8 @@ export default function RimbaQuest() {
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [firstDiscovery, setFirstDiscovery] = useState(true);
+  const [discoveryXpAwarded, setDiscoveryXpAwarded] = useState(0);
+  const [discoveryRecordedAt, setDiscoveryRecordedAt] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
@@ -341,16 +344,27 @@ export default function RimbaQuest() {
     resetTo('photo');
   };
 
+  const acceptPhoto = (uri: string) => {
+    setPhotoUri(uri);
+    setPhotoError(null);
+    open('photo_preview');
+  };
+
+  // Confirmed from the discard-photo dialog: abandon the in-progress
+  // discovery entirely and land back on Home, rather than stepping back
+  // one screen at a time.
+  const discardDiscovery = () => {
+    setPhotoUri(null);
+    setPhotoError(null);
+    setSaveError(null);
+    setLocationNotice(null);
+    resetTo('home');
+  };
+
   const retakePhoto = () => {
     setPhotoUri(null);
     setPhotoError(null);
     setScreen('photo');
-  };
-
-  const acceptPhoto = (uri: string) => {
-    setPhotoUri(uri);
-    setPhotoError(null);
-    open('category');
   };
 
   const takePhoto = async () => {
@@ -396,8 +410,15 @@ export default function RimbaQuest() {
         }),
       });
       if (!response.ok) throw new Error('Unable to save');
-      const result = (await response.json()) as { first_discovery?: boolean; total_xp?: number };
+      const result = (await response.json()) as {
+        first_discovery?: boolean;
+        total_xp?: number;
+        xp_awarded?: number;
+        recorded_at?: string;
+      };
       setFirstDiscovery(Boolean(result.first_discovery));
+      setDiscoveryXpAwarded(Number(result.xp_awarded ?? 0));
+      setDiscoveryRecordedAt(result.recorded_at ?? new Date().toISOString());
       if (result.first_discovery && !discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
         setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
@@ -882,6 +903,7 @@ export default function RimbaQuest() {
             cameraRef={cameraRef}
             cameraPermission={cameraPermission}
             photoError={photoError}
+            lastCaptureUri={recentCaptures[0]?.photo_url ?? null}
             onRequestPermission={requestCameraPermission}
             onTakePhoto={() => void takePhoto()}
             onPickFromGallery={() => void pickFromGallery()}
@@ -889,17 +911,22 @@ export default function RimbaQuest() {
           />
         )}
 
+        {screen === 'photo_preview' && discoveryPhoto && (
+          <PhotoPreviewScreen photo={discoveryPhoto} onRetake={retakePhoto} onUpload={() => open('category')} />
+        )}
+
         {screen === 'category' && discoveryPhoto && (
           <CategoryScreen
             photo={discoveryPhoto}
             categories={CATEGORIES}
+            category={category}
             onSelectCategory={(cat) => {
               setCategory(cat);
               setSpeciesSearch('');
               open('species');
             }}
-            onRetake={retakePhoto}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -915,6 +942,7 @@ export default function RimbaQuest() {
               open('confirm');
             }}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -934,9 +962,8 @@ export default function RimbaQuest() {
             saveError={saveError}
             saving={saving}
             onConfirm={() => void recordDiscovery()}
-            onChangeSpecies={() => open('species')}
-            onRetake={retakePhoto}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -945,11 +972,10 @@ export default function RimbaQuest() {
             selected={selected}
             discoveryLocation={discoveryLocation}
             firstDiscovery={firstDiscovery}
+            xpAwarded={discoveryXpAwarded}
+            recordedAt={discoveryRecordedAt}
             onViewCard={() => open('about')}
-            onEnterBattle={() => initBattle(selected)}
-            onViewCollection={() => resetTo('collection')}
             onRecordAnother={() => startDiscovery()}
-            onBack={goBack}
           />
         )}
 

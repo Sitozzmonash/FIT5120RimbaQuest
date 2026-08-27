@@ -1,6 +1,7 @@
 export type Screen =
   | 'home'
   | 'photo'
+  | 'photo_preview'
   | 'category'
   | 'species'
   | 'confirm'

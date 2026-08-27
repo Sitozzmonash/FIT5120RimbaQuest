@@ -68,7 +68,7 @@ export function SpeciesDetailScreen({
     <View style={styles.detailRoot}>
       <View style={styles.detailHeaderBar}>
         <Tap label="Go back" style={styles.collectionBackBtn} onPress={onBack}>
-          <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
+          <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
         </Tap>
         <Text numberOfLines={1} style={styles.detailHeaderTitle}>
           {species.common_name}
@@ -143,10 +143,12 @@ export function SpeciesDetailScreen({
 const styles = StyleSheet.create({
   detailRoot: { flex: 1, backgroundColor: "#FFFFFF" },
   collectionBackBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#0A4D26",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2ECE4",
+    backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },

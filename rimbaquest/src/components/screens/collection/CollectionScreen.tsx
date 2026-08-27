@@ -203,11 +203,17 @@ export function CollectionScreen({
             label="Go back"
             style={[
               styles.collectionBackBtn,
-              !stuck && styles.collectionBackBtnOnDark,
+              stuck
+                ? styles.collectionBackBtnOnLight
+                : styles.collectionBackBtnOnDark,
             ]}
             onPress={onBack}
           >
-            <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
+            <MaterialIcons
+              name="chevron-left"
+              size={20}
+              color={stuck ? "#1B211C" : "#FFFFFF"}
+            />
           </Tap>
           <Text
             style={[
@@ -267,6 +273,11 @@ const styles = StyleSheet.create({
   collectionBackBtnOnDark: {
     borderWidth: 1.5,
     borderColor: "rgba(255,255,255,0.6)",
+  },
+  collectionBackBtnOnLight: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2ECE4",
   },
   collectionHeaderTitle: { color: "#1A1A1A", fontSize: 22, fontWeight: "900" },
   collectionHeaderTitleOnDark: { color: "#FFFFFF" },
