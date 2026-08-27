@@ -8,7 +8,7 @@ import { GalleryItem, LocationItem, LocationMode, RecentCapture, Screen, Species
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
-import { clearSession, loadGallery, loadSession, saveGallery, saveSession } from '../constants/session';
+import { clearSession, loadSession, saveSession } from '../constants/session';
 import { styles } from '../styles/theme';
 
 import { BottomNav } from '../components/common/BottomNav';
@@ -32,6 +32,7 @@ import {
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
 const GUEST_USER: UserProfile = {
   id: 0,
   username: '',
@@ -166,7 +167,7 @@ export default function RimbaQuest() {
   const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
     setCurrentUser(user);
     setAccessToken(token);
-    setGalleryPhotos(loadGallery(user.id));
+    setGalleryPhotos({});
     setIsLoggedIn(true);
     void saveSession({ user, accessToken: token });
     setHistory([]);
@@ -175,6 +176,21 @@ export default function RimbaQuest() {
 
   const authenticatedHeaders = (token = accessToken): Record<string, string> =>
     token ? { Authorization: `Bearer ${token}` } : {};
+
+  const expireSession = async () => {
+    await clearSession();
+    setAccessToken('');
+    setIsLoggedIn(false);
+    setCurrentUser(GUEST_USER);
+    setDiscovered([]);
+    setRecentCaptures([]);
+    setGalleryPhotos({});
+    setAuthMode('login');
+    setAuthPassword('');
+    setAuthError('Your session is no longer valid. Please sign in again.');
+    setHistory([]);
+    setScreen('auth');
+  };
 
   const loadLocations = async () => {
     setLocationsLoading(true);
@@ -208,11 +224,7 @@ export default function RimbaQuest() {
       ]);
 
       if (profileRes.status === 401 || profileRes.status === 403) {
-        await clearSession();
-        setAccessToken('');
-        setIsLoggedIn(false);
-        setCurrentUser(GUEST_USER);
-        setScreen('auth');
+        await expireSession();
         setLoading(false);
         return;
       }
@@ -250,7 +262,7 @@ export default function RimbaQuest() {
       if (saved?.user?.id && saved.accessToken) {
         setCurrentUser(saved.user);
         setAccessToken(saved.accessToken);
-        setGalleryPhotos(loadGallery(saved.user.id));
+        setGalleryPhotos({});
         setIsLoggedIn(true);
         setScreen('home');
       } else {
@@ -399,6 +411,10 @@ export default function RimbaQuest() {
       body: form,
     });
     const data = await response.json().catch(() => ({}));
+    if (response.status === 401 || response.status === 403) {
+      await expireSession();
+      throw new Error(SESSION_EXPIRED_ERROR);
+    }
     if (!response.ok) throw new Error(apiMessage(data, "Your photo couldn't be uploaded. Please try again."));
     return data as { photo_path: string; photo_url?: string | null };
   };
@@ -424,6 +440,10 @@ export default function RimbaQuest() {
         }),
       });
       const responseData = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        await expireSession();
+        throw new Error(SESSION_EXPIRED_ERROR);
+      }
       if (!response.ok) throw new Error(apiMessage(responseData, 'Unable to save'));
       const result = responseData as { first_discovery?: boolean; total_xp?: number; photo_url?: string | null };
       setFirstDiscovery(Boolean(result.first_discovery));
@@ -436,12 +456,12 @@ export default function RimbaQuest() {
           ...current,
           [selected.id]: [{ photo_url: result.photo_url || storedPhoto.photo_url || photoUri, location_label: locationLabel }, ...(current[selected.id] ?? [])],
         };
-        saveGallery(currentUser.id, next);
         return next;
       });
       await refresh(currentUser.id, accessToken);
       open('success');
     } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
       setSaveError(error instanceof Error ? error.message : "Your discovery wasn't saved. Please try again.");
     } finally {
       setSaving(false);
@@ -694,26 +714,16 @@ export default function RimbaQuest() {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`, {
         headers: authenticatedHeaders(),
       });
+      if (res.status === 401 || res.status === 403) {
+        await expireSession();
+        return;
+      }
       if (!res.ok) return;
       const data = await res.json();
       const remote = ((data.items || []) as GalleryItem[]).filter((item) => isHttpPhotoUrl(item.photo_url));
-      if (!remote.length) return;
-      setGalleryPhotos((current) => {
-        const local = current[speciesId] ?? [];
-        const seen = new Set(local.map((item) => `${item.photo_url}|${item.location_label}`));
-        const merged = [...local];
-        for (const item of remote) {
-          const key = `${item.photo_url}|${item.location_label}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          merged.push(item);
-        }
-        const next = { ...current, [speciesId]: merged };
-        saveGallery(currentUser.id, next);
-        return next;
-      });
+      setGalleryPhotos((current) => ({ ...current, [speciesId]: remote }));
     } catch {
-      // keep local gallery
+      // Keep the current in-memory gallery if the remote request is temporarily unavailable.
     }
   };
 
