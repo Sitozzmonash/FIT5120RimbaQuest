@@ -12,16 +12,18 @@ export function BattleSelectScreen({
   onSelectCard,
   onStartBattle,
   onStartDiscovery,
+  onBack,
 }: {
   unlockedSpecies: Species[];
   selectedCard: Species | null;
   onSelectCard: (card: Species) => void;
   onStartBattle: () => void;
   onStartDiscovery: () => void;
+  onBack: () => void;
 }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Header title="Wildlife Card Battles" back={false} />
+      <Header title="Wildlife Card Battles" onBack={onBack} />
       <View style={styles.battleHero}>
         <Text style={styles.battleHeroTitle}>Card Battle</Text>
         <Text style={styles.battleHeroCopy}>

@@ -17,6 +17,7 @@ export function LocationsScreen({
   emptyMessage,
   onRetry,
   onSelectLocation,
+  onBack,
 }: {
   locations: LocationItem[];
   search: string;
@@ -28,10 +29,11 @@ export function LocationsScreen({
   emptyMessage: string | null;
   onRetry: () => void;
   onSelectLocation: (loc: LocationItem) => void;
+  onBack: () => void;
 }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Header title="Wildlife Locations" back={false} />
+      <Header title="Wildlife Locations" onBack={onBack} />
 
       <View style={styles.disclaimerBox}>
         <Text style={styles.disclaimerTitle}>Wildlife you may encounter</Text>

@@ -10,6 +10,16 @@ export const IMAGES = {
   recent: require('../../assets/wildlife/recent-marmoset.jpg'),
 };
 
+export const HOME_IMAGES = {
+  brandLogo: require('../../assets/home/brand-logo.png'),
+  leafDecor: require('../../assets/home/image-decor.png'),
+  pandaDecor: require('../../assets/home/red-panda-bush-deco.png'),
+  collectionBook: require('../../assets/home/collection-book.png'),
+  tileDiscover: require('../../assets/home/tile-discover.png'),
+  tileCapture: require('../../assets/home/tile-capture.png'),
+  tileBattle: require('../../assets/home/tile-battle.png'),
+};
+
 export const AVATAR_ICONS: Record<string, string> = {
   tapir: '🦛',
   tiger: '🐯',
