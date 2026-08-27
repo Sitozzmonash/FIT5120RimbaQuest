@@ -20,18 +20,18 @@ import {
   SpeciesScreen,
   SuccessScreen,
 } from '../components/screens/DiscoveryScreens';
-import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/CollectionScreens';
+import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/BattleScreens';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/LoginScreen';
-import { AccountCreationScreen } from '../components/screens/AccountCreationScreen';
+import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/ProfileScreens';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GUEST_USER: UserProfile = {
   id: 0,
@@ -969,6 +969,13 @@ export default function RimbaQuest() {
               setSelected(item);
               open('locked');
             }}
+            onStartDiscovery={() => {
+              setPhotoUri(null);
+              setPhotoError(null);
+              setSaveError(null);
+              setLocationNotice(null);
+              open('photo');
+            }}
             onBack={goBack}
           />
         )}
@@ -980,15 +987,14 @@ export default function RimbaQuest() {
             photos={galleryPhotos[selected.id] ?? []}
             onTabChange={(tab) => open(tab)}
             onStartBattle={() => initBattle(selected)}
-            onBack={goBack}
+            onBack={() => resetTo('collection')}
           />
         )}
 
         {screen === 'locked' && (
           <LockedScreen
             species={selected}
-            onStartDiscovery={() => startDiscovery()}
-            onBack={goBack}
+            onBack={() => resetTo('collection')}
           />
         )}
 

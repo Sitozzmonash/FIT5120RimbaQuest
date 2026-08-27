@@ -8,7 +8,6 @@ import { locationsStyles } from './screens/locations.styles';
 import { profileStyles } from './screens/profile.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
 import { loginStyles } from './screens/login.styles';
-import { accountCreationStyles } from './screens/accountCreation.styles';
 import { forgotPasswordStyles } from './screens/forgotPassword.styles';
 import { resetPasswordStyles } from './screens/resetPassword.styles';
 import { commonUiStyles } from './common-ui.styles';
@@ -87,7 +86,6 @@ export const styles: any = {
   ...profileStyles,
   ...accountEntryStyles,
   ...loginStyles,
-  ...accountCreationStyles,
   ...forgotPasswordStyles,
   ...resetPasswordStyles,
   ...discoveryStyles,
