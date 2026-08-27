@@ -1,9 +1,10 @@
 import React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { RecentCapture, UserProfile } from '../../types';
-import { AVATAR_ICONS, IMAGES, imageFor } from '../../constants/images';
+import { AVATAR_ICONS, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
 import { Tap } from '../common/Tap';
-import { Quest, Section, Stat } from '../common/CommonUI';
 import { styles } from '../../styles/theme';
 
 export function HomeScreen({
@@ -12,6 +13,7 @@ export function HomeScreen({
   recentCaptures,
   notice,
   onOpenProfile,
+  onOpenCollection,
   onOpenLocations,
   onStartDiscovery,
   onOpenBattle,
@@ -21,75 +23,156 @@ export function HomeScreen({
   recentCaptures: RecentCapture[];
   notice: string | null;
   onOpenProfile: () => void;
+  onOpenCollection: () => void;
   onOpenLocations: () => void;
   onStartDiscovery: () => void;
   onOpenBattle: () => void;
 }) {
+  const insets = useSafeAreaInsets();
+  const collectedPercent = displayProgress.total
+    ? Math.round((displayProgress.found / displayProgress.total) * 100)
+    : 0;
+
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <View style={styles.topBrandRow}>
-        <Text style={styles.brand}>RimbaQuest</Text>
-        <Tap label="View Profile" style={styles.avatarPill} onPress={onOpenProfile}>
-          <Text style={styles.avatarEmoji}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
-          <Text style={styles.avatarName}>{currentUser.display_name}</Text>
-        </Tap>
-      </View>
-
-      {notice && <Text style={styles.notice}>{notice}</Text>}
-
-      <View style={styles.hero}>
-        <Text style={styles.level}>LV. {currentUser.level} JUNGLE SCOUT</Text>
-        <Text style={styles.heroTitle}>Welcome, {currentUser.display_name}!</Text>
-        <Text style={styles.heroCopy}>
-          Every discovery helps protect{'\n'}Malaysia’s precious rainforest wildlife!
-        </Text>
-        <Text style={styles.mascot}>🌿</Text>
-      </View>
-
-      <View style={styles.stats}>
-        <Stat value={`${displayProgress.found} / ${displayProgress.total}`} label="Wildlife Discovered" />
-        <Stat value={`${displayProgress.xp}`} label="Explorer Points" />
-      </View>
-
-      <Section title="Begin Your Adventure" />
-      <Quest
-        number="1"
-        title="Explore Wildlife Places"
-        detail="Find KL and Klang Valley places where wildlife may be encountered."
-        onPress={onOpenLocations}
+    <View style={styles.homeRoot}>
+      <LinearGradient
+        colors={['#C8F0D8', '#E0F5E9', '#F0FAF4', '#E8F6EE']}
+        locations={[0, 0.3, 0.6, 1]}
+        style={styles.homeBackground}
       />
-      <Quest
-        number="2"
-        title="Record a Discovery"
-        detail="Take a photo and log your sighting!"
-        onPress={onStartDiscovery}
-      />
-      <Quest
-        number="3"
-        title="Wildlife Card Battles"
-        detail="Battle with your unlocked cards!"
-        onPress={onOpenBattle}
-      />
+      <View style={[styles.decoCircle1, { pointerEvents: 'none' }]} />
+      <View style={[styles.decoCircle2, { pointerEvents: 'none' }]} />
+      <View style={[styles.decoCircle3, { pointerEvents: 'none' }]} />
+      <View style={[styles.decoCircle4, { pointerEvents: 'none' }]} />
 
-      <Section title="Recent Captures" />
-      {recentCaptures.length ? (
-        <View style={styles.recentGrid}>
-          {recentCaptures.map((capture) => (
-            <View key={`${capture.id}-${capture.recorded_at}`} style={styles.recentItem}>
-              <Image source={imageFor(capture) ?? IMAGES.recent} style={styles.recentImage} />
-              <View style={styles.recentCopy}>
-                <Text style={styles.cardTitle}>{capture.common_name}</Text>
-                <Text style={styles.muted}>{capture.location_label || 'Kuala Lumpur, Malaysia'}</Text>
-                <Text style={styles.categoryPill}>{capture.category}</Text>
+      <ScrollView
+        contentContainerStyle={[
+          styles.homeScroll,
+          { paddingTop: 16 + insets.top, paddingBottom: 40 + insets.bottom },
+        ]}
+      >
+        <View style={styles.brandHeader}>
+          <Image source={HOME_IMAGES.brandLogo} style={styles.brandLogo} resizeMode="contain" />
+        </View>
+
+        {notice && <Text style={styles.notice}>{notice}</Text>}
+
+        <View style={styles.profileCardWrap}>
+          <Tap label="View Profile" style={styles.profileCard} onPress={onOpenProfile}>
+            <LinearGradient colors={['#FFFFFF', '#F4FCF6']} style={styles.profileCardGradient} />
+            <View style={styles.profileRow}>
+              <View style={styles.avatarFrame}>
+                <View style={styles.avatarInner}>
+                  <Text style={styles.avatarEmojiLarge}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
+                </View>
+              </View>
+              <View style={styles.profileInfo}>
+                <View style={styles.levelBadge}>
+                  <LinearGradient colors={['#FFD940', '#FFC314']} style={styles.levelBadgeGradient}>
+                    <Text style={styles.levelBadgeText}>⭐ Level {currentUser.level}</Text>
+                  </LinearGradient>
+                </View>
+                <Text style={styles.profileName}>{currentUser.display_name}</Text>
+                <Text style={styles.profileSubtitle}>Age {currentUser.age} Explorer</Text>
               </View>
             </View>
-          ))}
+          </Tap>
+          <Image
+            source={HOME_IMAGES.leafDecor}
+            style={[styles.leafDecorFloat, { pointerEvents: 'none' }]}
+            resizeMode="contain"
+          />
         </View>
-      ) : (
-        <View style={styles.recentEmpty}>
-          <Text style={styles.muted}>Your latest confirmed discoveries will appear here.</Text>
+
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionHeading}>Explore Nature</Text>
+
+          <View style={styles.collectionTileWrap}>
+            <Tap label="Open your collection" style={styles.collectionTile} onPress={onOpenCollection}>
+              <LinearGradient colors={['#FFFBE8', '#FFF2C0']} style={styles.collectionTileGradient} />
+              <Image source={HOME_IMAGES.collectionBook} style={styles.collectionBookImage} resizeMode="cover" />
+              <View style={styles.collectionContent}>
+                <View style={styles.collectionHeader}>
+                  <Text style={styles.collectionTitle}>Collection</Text>
+                  <Text style={styles.collectionSubtitle}>Your animal album</Text>
+                </View>
+                <View style={styles.collectionProgress}>
+                  <View style={styles.collectionProgressRow}>
+                    <Text style={styles.collectionProgressText}>
+                      {displayProgress.found}/{displayProgress.total} discovered
+                    </Text>
+                    <Text style={styles.collectionProgressPercent}>{collectedPercent}%</Text>
+                  </View>
+                  <View style={styles.progressTrackSm}>
+                    <View style={[styles.progressFillSm, { width: `${collectedPercent}%` }]} />
+                  </View>
+                </View>
+              </View>
+            </Tap>
+            <Image
+              source={HOME_IMAGES.pandaDecor}
+              style={[styles.pandaDecorFloat, { pointerEvents: 'none' }]}
+              resizeMode="contain"
+            />
+          </View>
+
+          <View style={styles.tileRow}>
+            <Tap label="Discover wildlife locations" style={styles.actionTile} onPress={onOpenLocations}>
+              <LinearGradient colors={['#FFF5EE', '#FFE4D0']} style={styles.actionTileGradient} />
+              <Image source={HOME_IMAGES.tileDiscover} style={styles.actionTileIcon} resizeMode="contain" />
+              <Text style={styles.actionTileLabel}>Discover</Text>
+            </Tap>
+            <Tap label="Capture a wildlife sighting" style={styles.actionTile} onPress={onStartDiscovery}>
+              <LinearGradient colors={['#EDFAD0', '#D8F0A8']} style={styles.actionTileGradient} />
+              <Image source={HOME_IMAGES.tileCapture} style={styles.actionTileIcon} resizeMode="contain" />
+              <Text style={styles.actionTileLabel}>Capture</Text>
+            </Tap>
+            <Tap label="Wildlife card battles" style={styles.actionTile} onPress={onOpenBattle}>
+              <LinearGradient colors={['#EEF5FF', '#D8E8F8']} style={styles.actionTileGradient} />
+              <Image source={HOME_IMAGES.tileBattle} style={styles.actionTileIcon} resizeMode="contain" />
+              <Text style={styles.actionTileLabel}>Battle</Text>
+            </Tap>
+          </View>
         </View>
-      )}
-    </ScrollView>
+
+        <View style={styles.continueSection}>
+          <View style={styles.continueHeaderRow}>
+            <Text style={styles.sectionHeading}>Continue Learning</Text>
+            <Tap label="See all discoveries" style={styles.seeAllTap} onPress={onOpenCollection}>
+              <Text style={styles.seeAllOrange}>See all</Text>
+            </Tap>
+          </View>
+
+          {recentCaptures.length ? (
+            recentCaptures.map((capture) => (
+              <View key={`${capture.id}-${capture.recorded_at}`} style={styles.learnCard}>
+                <LinearGradient colors={['#FFFFFF', '#F4FCF6']} style={styles.learnCardGradient} />
+                <Image source={imageFor(capture) ?? IMAGES.recent} style={styles.learnThumb} />
+                <View style={styles.learnInfo}>
+                  <Text style={styles.learnName}>{capture.common_name}</Text>
+                  <View style={styles.learnMetaRow}>
+                    <View style={styles.learnCategoryPill}>
+                      <LinearGradient colors={['#E8FADC', '#D4F0B8']} style={styles.learnCategoryPillGradient}>
+                        <Text style={styles.learnCategoryText}>{capture.category}</Text>
+                      </LinearGradient>
+                    </View>
+                    <Text style={styles.learnLocationText} numberOfLines={1}>
+                      • {capture.location_label || 'Kuala Lumpur, Malaysia'}
+                    </Text>
+                  </View>
+                  <View style={styles.learnProgressTrack}>
+                    <View style={[styles.learnProgressFill, { width: '100%' }]} />
+                  </View>
+                </View>
+              </View>
+            ))
+          ) : (
+            <View style={styles.learnEmpty}>
+              <Text style={styles.muted}>Your latest confirmed discoveries will appear here.</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }

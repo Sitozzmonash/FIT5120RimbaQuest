@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { FlatList, Image, ScrollView, Text, View } from 'react-native';
 import { GalleryItem, Screen, Species } from '../../types';
 import { WILDLIFE_FILTERS } from '../../constants/seed';
 import { imageFor } from '../../constants/images';
@@ -15,6 +15,7 @@ export function CollectionScreen({
   displayProgress,
   onSelectSpecies,
   onSelectLocked,
+  onBack,
 }: {
   speciesList: Species[];
   discoveredIds: string[];
@@ -23,60 +24,70 @@ export function CollectionScreen({
   displayProgress: { found: number; total: number; xp: number; level?: number };
   onSelectSpecies: (s: Species) => void;
   onSelectLocked: (s: Species) => void;
+  onBack: () => void;
 }) {
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Header title="My Collection" back={false} />
-      <ProgressCard progress={displayProgress} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {WILDLIFE_FILTERS.map((item) => (
+    <FlatList
+      data={speciesList}
+      keyExtractor={(item) => item.id}
+      numColumns={2}
+      columnWrapperStyle={styles.collectionGridRow}
+      contentContainerStyle={[styles.content, styles.collectionGridContent]}
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={5}
+      removeClippedSubviews
+      ListHeaderComponent={
+        <>
+          <Header title="My Collection" onBack={onBack} />
+          <ProgressCard progress={displayProgress} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {WILDLIFE_FILTERS.map((item) => (
+              <Tap
+                key={item.id}
+                label={`Filter ${item.label}`}
+                style={[styles.chip, filter === item.id && styles.chipActive]}
+                onPress={() => setFilter(item.id)}
+              >
+                <Text style={[styles.chipText, filter === item.id && styles.chipTextActive]}>
+                  {item.label}
+                </Text>
+              </Tap>
+            ))}
+          </ScrollView>
+        </>
+      }
+      renderItem={({ item }) =>
+        discoveredIds.includes(item.id) ? (
           <Tap
-            key={item.id}
-            label={`Filter ${item.label}`}
-            style={[styles.chip, filter === item.id && styles.chipActive]}
-            onPress={() => setFilter(item.id)}
+            label={`View ${item.common_name}`}
+            style={styles.collectionCard}
+            onPress={() => onSelectSpecies(item)}
           >
-            <Text style={[styles.chipText, filter === item.id && styles.chipTextActive]}>
-              {item.label}
-            </Text>
+            <Image source={imageFor(item)!} style={styles.speciesImage} />
+            <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
+            <View style={styles.cardBottomRow}>
+              <Text style={styles.categoryText}>Discovered</Text>
+              <Text style={styles.hpBadgeMini}>❤️ {item.hp || 120}</Text>
+            </View>
           </Tap>
-        ))}
-      </ScrollView>
-      <View style={styles.grid}>
-        {speciesList.map((item) =>
-          discoveredIds.includes(item.id) ? (
-            <Tap
-              key={item.id}
-              label={`View ${item.common_name}`}
-              style={styles.speciesCard}
-              onPress={() => onSelectSpecies(item)}
-            >
-              <Image source={imageFor(item)!} style={styles.speciesImage} />
-              <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
-              <View style={styles.cardBottomRow}>
-                <Text style={styles.categoryText}>Discovered</Text>
-                <Text style={styles.hpBadgeMini}>❤️ {item.hp || 120}</Text>
-              </View>
-            </Tap>
-          ) : (
-            <Tap
-              key={item.id}
-              label={`Preview undiscovered ${item.common_name}`}
-              style={styles.speciesCard}
-              onPress={() => onSelectLocked(item)}
-            >
-              <Image source={imageFor(item)!} style={[styles.speciesImage, styles.lockedSpeciesImage]} />
-              <View style={styles.lockedOverlay}>
-                <Text style={styles.lockIcon}>🔒</Text>
-                <Text style={styles.lockedLabel}>UNDISCOVERED</Text>
-              </View>
-              <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
-              <Text style={styles.muted}>{item.category}</Text>
-            </Tap>
-          )
-        )}
-      </View>
-    </ScrollView>
+        ) : (
+          <Tap
+            label={`Preview undiscovered ${item.common_name}`}
+            style={styles.collectionCard}
+            onPress={() => onSelectLocked(item)}
+          >
+            <Image source={imageFor(item)!} style={[styles.speciesImage, styles.lockedSpeciesImage]} />
+            <View style={styles.lockedOverlay}>
+              <Text style={styles.lockIcon}>🔒</Text>
+              <Text style={styles.lockedLabel}>UNDISCOVERED</Text>
+            </View>
+            <Text numberOfLines={1} style={styles.cardTitle}>{item.common_name}</Text>
+            <Text style={styles.muted}>{item.category}</Text>
+          </Tap>
+        )
+      }
+    />
   );
 }
 

@@ -11,7 +11,6 @@ import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
 import { clearSession, loadGallery, loadSession, saveGallery, saveSession } from '../constants/session';
 import { styles } from '../styles/theme';
 
-import { BottomNav } from '../components/common/BottomNav';
 import { HomeScreen } from '../components/screens/HomeScreen';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/LocationsScreen';
 import {
@@ -779,10 +778,15 @@ export default function RimbaQuest() {
     );
   }
 
+  const onHome = screen === 'home' && isLoggedIn;
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, onHome && styles.safeTransparent]}
+      edges={onHome ? [] : undefined}
+    >
       <StatusBar barStyle="dark-content" />
-      <View style={styles.page}>
+      <View style={[styles.page, onHome && styles.pageTransparent]}>
         {screen === 'home' && isLoggedIn && (
           <HomeScreen
             currentUser={currentUser}
@@ -790,9 +794,10 @@ export default function RimbaQuest() {
             recentCaptures={recentCaptures}
             notice={notice}
             onOpenProfile={() => open('progress')}
-            onOpenLocations={() => resetTo('locations')}
+            onOpenCollection={() => open('collection')}
+            onOpenLocations={() => open('locations')}
             onStartDiscovery={() => startDiscovery()}
-            onOpenBattle={() => resetTo('battle_select')}
+            onOpenBattle={() => open('battle_select')}
           />
         )}
 
@@ -811,6 +816,7 @@ export default function RimbaQuest() {
               open('location_detail');
               void loadLocationDetail(loc);
             }}
+            onBack={goBack}
           />
         )}
 
@@ -916,6 +922,7 @@ export default function RimbaQuest() {
               setSelected(item);
               open('locked');
             }}
+            onBack={goBack}
           />
         )}
 
@@ -945,6 +952,7 @@ export default function RimbaQuest() {
             onSelectCard={setBattlePlayerCard}
             onStartBattle={() => battlePlayerCard && initBattle(battlePlayerCard)}
             onStartDiscovery={() => startDiscovery()}
+            onBack={goBack}
           />
         )}
 
@@ -1085,13 +1093,10 @@ export default function RimbaQuest() {
               open('profile_edit');
             }}
             onLogout={handleLogout}
+            onBack={goBack}
           />
         )}
       </View>
-
-      {isLoggedIn && ['home', 'locations', 'collection', 'battle_select', 'progress'].includes(screen) && (
-        <BottomNav screen={screen} onNavigate={(s) => resetTo(s)} onStartDiscovery={() => startDiscovery()} />
-      )}
     </SafeAreaView>
   );
 }

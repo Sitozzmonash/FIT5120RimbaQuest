@@ -18,16 +18,18 @@ export function ProfileScreen({
   discoveredSpeciesCount,
   onOpenEdit,
   onLogout,
+  onBack,
 }: {
   currentUser: UserProfile;
   displayProgress: { found: number; total: number; xp: number; level?: number };
   discoveredSpeciesCount: (cat: string) => { found: number; total: number };
   onOpenEdit: () => void;
   onLogout: () => void;
+  onBack: () => void;
 }) {
   return (
     <ScrollView contentContainerStyle={styles.content}>
-      <Header title="My Explorer Profile" back={false} />
+      <Header title="My Explorer Profile" onBack={onBack} />
 
       <View style={styles.profileHero}>
         <Text style={styles.profileHeroAvatar}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
