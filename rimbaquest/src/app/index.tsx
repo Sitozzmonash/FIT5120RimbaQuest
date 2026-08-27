@@ -22,14 +22,16 @@ import {
 } from '../components/screens/DiscoveryScreens';
 import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/CollectionScreens';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/BattleScreens';
-import {
-  AuthScreen,
-  ForgotPasswordScreen,
-  ProfileEditScreen,
-  ProfileScreen,
-} from '../components/screens/AuthScreens';
+import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
+import { LoginScreen } from '../components/screens/LoginScreen';
+import { AccountCreationScreen } from '../components/screens/AccountCreationScreen';
+import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
+import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
+import { ProfileEditScreen, ProfileScreen } from '../components/screens/ProfileScreens';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GUEST_USER: UserProfile = {
   id: 0,
@@ -108,7 +110,7 @@ async function readCurrentLocationLabel(): Promise<string | null> {
 }
 
 export default function RimbaQuest() {
-  const [screen, setScreen] = useState<Screen>('auth');
+  const [screen, setScreen] = useState<Screen>('account_entry');
   const [history, setHistory] = useState<Screen[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
@@ -143,13 +145,12 @@ export default function RimbaQuest() {
   const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authUsername, setAuthUsername] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authAge, setAuthAge] = useState('');
-  const [authAvatar, setAuthAvatar] = useState('tapir');
+  const [authAge, setAuthAge] = useState('10');
+  const [authAvatar, setAuthAvatar] = useState('hornbill');
   const [authError, setAuthError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -157,7 +158,7 @@ export default function RimbaQuest() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotToken, setForgotToken] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
   const [forgotFieldError, setForgotFieldError] = useState<string | null>(null);
   const [forgotFormError, setForgotFormError] = useState<string | null>(null);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
@@ -252,7 +253,7 @@ export default function RimbaQuest() {
       setIsLoggedIn(true);
       setScreen('home');
     } else {
-      setScreen('auth');
+      setScreen('account_entry');
       setLoading(false);
     }
   }, []);
@@ -323,7 +324,7 @@ export default function RimbaQuest() {
   const goBack = () => {
     setHistory((cur) => {
       const prev = cur[cur.length - 1];
-      setScreen(prev ?? (isLoggedIn ? 'home' : 'auth'));
+      setScreen(prev ?? (isLoggedIn ? 'home' : 'account_entry'));
       return cur.slice(0, -1);
     });
   };
@@ -508,6 +509,57 @@ export default function RimbaQuest() {
     }
   };
 
+  const validateUsernameBlur = () => {
+    const name = authUsername.trim();
+    if (!name) return;
+    if (name.length < 3 || name.length > 20) {
+      setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
+    } else {
+      setFieldErrors((cur) => {
+        const next = { ...cur };
+        delete next.username;
+        return next;
+      });
+    }
+  };
+
+  const validateEmailBlur = () => {
+    const email = authEmail.trim();
+    if (!email) return;
+    if (!EMAIL_RE.test(email)) {
+      setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
+    } else {
+      setFieldErrors((cur) => {
+        const next = { ...cur };
+        delete next.email;
+        return next;
+      });
+    }
+  };
+
+  // Gates step 1 -> 2 of the Create Account wizard: unlike the blur handlers
+  // above, this checks both fields synchronously (e.g. a field the user never
+  // focused) and reports whether it's safe to advance.
+  const validateStep1 = (): boolean => {
+    const name = authUsername.trim();
+    const email = authEmail.trim();
+    const errors: { username?: string; email?: string } = {};
+    if (!name) errors.username = 'Please enter a username.';
+    else if (name.length < 3 || name.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
+    if (!email) errors.email = 'Please enter an email address.';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Please enter a valid email address.';
+
+    setFieldErrors((cur) => {
+      const next = { ...cur };
+      if (errors.username) next.username = errors.username;
+      else delete next.username;
+      if (errors.email) next.email = errors.email;
+      else delete next.email;
+      return next;
+    });
+    return !errors.username && !errors.email;
+  };
+
   const handleForgotRequest = async () => {
     if (forgotSubmitting) return;
     setForgotFormError(null);
@@ -533,7 +585,7 @@ export default function RimbaQuest() {
         return;
       }
       setForgotToken(String(data.simulated_token || ''));
-      setForgotStep(2);
+      open('reset_password');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
@@ -543,12 +595,13 @@ export default function RimbaQuest() {
 
   const handleResetPassword = async () => {
     if (forgotSubmitting) return;
-    if (!forgotToken.trim()) {
-      setForgotFieldError('Please enter your recovery code.');
-      return;
-    }
+    setForgotFieldError(null);
     if (!forgotNewPassword) {
       setForgotFormError('Please create a password.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotFieldError('Passwords do not match.');
       return;
     }
     setForgotSubmitting(true);
@@ -565,20 +618,14 @@ export default function RimbaQuest() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message = apiMessage(data, 'Invalid or expired recovery code.');
-        if (/expired/i.test(message)) {
-          setForgotFormError(message);
-          setForgotFieldError(message);
-        } else {
-          setForgotFieldError(message);
-        }
+        setForgotFormError(apiMessage(data, 'Invalid or expired recovery code. Please request a new one.'));
         return;
       }
       Alert.alert('Success', 'Password successfully updated!');
-      setForgotStep(1);
       setForgotToken('');
       setForgotNewPassword('');
-      setScreen('auth');
+      setForgotConfirmPassword('');
+      resetTo('login');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
@@ -632,7 +679,7 @@ export default function RimbaQuest() {
     setAuthConfirmPassword('');
     setFieldErrors({});
     setAuthError(null);
-    resetTo('auth');
+    resetTo('account_entry');
   };
 
   const loadLocationDetail = async (loc: LocationItem) => {
@@ -778,15 +825,15 @@ export default function RimbaQuest() {
     );
   }
 
-  const onHome = screen === 'home' && isLoggedIn;
+  const fullBleed = (screen === 'home' && isLoggedIn) || GRADIENT_SCREENS.includes(screen);
 
   return (
     <SafeAreaView
-      style={[styles.safe, onHome && styles.safeTransparent]}
-      edges={onHome ? [] : undefined}
+      style={[styles.safe, fullBleed && styles.safeTransparent]}
+      edges={fullBleed ? [] : undefined}
     >
       <StatusBar barStyle="dark-content" />
-      <View style={[styles.page, onHome && styles.pageTransparent]}>
+      <View style={[styles.page, fullBleed && styles.pageTransparent]}>
         {screen === 'home' && isLoggedIn && (
           <HomeScreen
             currentUser={currentUser}
@@ -977,89 +1024,78 @@ export default function RimbaQuest() {
           />
         )}
 
-        {screen === 'auth' && (
-          <AuthScreen
-            authMode={authMode}
-            setAuthMode={(mode) => {
-              setAuthMode(mode);
-              setAuthError(null);
-              setFieldErrors({});
-            }}
-            authError={authError}
-            fieldErrors={fieldErrors}
-            submitting={authSubmitting}
+        {screen === 'account_entry' && (
+          <AccountEntryScreen onLogin={() => open('login')} onCreateAccount={() => open('create_account')} />
+        )}
+
+        {screen === 'login' && (
+          <LoginScreen
             username={authUsername}
             setUsername={setAuthUsername}
+            password={authPassword}
+            setPassword={setAuthPassword}
+            fieldErrors={fieldErrors}
+            authError={authError}
+            submitting={authSubmitting}
+            onLogin={() => void handleLogin()}
+            onForgotPassword={() => {
+              setForgotFieldError(null);
+              setForgotFormError(null);
+              open('forgot_password');
+            }}
+            onCreateAccount={() => open('create_account')}
+          />
+        )}
+
+        {screen === 'create_account' && (
+          <AccountCreationScreen
+            username={authUsername}
+            setUsername={setAuthUsername}
+            age={authAge}
+            setAge={setAuthAge}
             email={authEmail}
             setEmail={setAuthEmail}
             password={authPassword}
             setPassword={setAuthPassword}
             confirmPassword={authConfirmPassword}
             setConfirmPassword={setAuthConfirmPassword}
-            age={authAge}
-            setAge={setAuthAge}
             avatar={authAvatar}
             setAvatar={setAuthAvatar}
-            onLogin={() => void handleLogin()}
+            fieldErrors={fieldErrors}
+            authError={authError}
+            submitting={authSubmitting}
             onRegister={() => void handleRegister()}
-            onForgotPassword={() => {
-              setForgotStep(1);
-              setForgotFieldError(null);
-              setForgotFormError(null);
-              open('forgot_password');
-            }}
-            onBlurUsername={() => {
-              const name = authUsername.trim();
-              if (!name) return;
-              if (name.length < 3 || name.length > 20) {
-                setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
-              } else {
-                setFieldErrors((cur) => {
-                  const next = { ...cur };
-                  delete next.username;
-                  return next;
-                });
-              }
-            }}
-            onBlurEmail={() => {
-              const email = authEmail.trim();
-              if (!email) return;
-              if (!EMAIL_RE.test(email)) {
-                setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
-              } else {
-                setFieldErrors((cur) => {
-                  const next = { ...cur };
-                  delete next.email;
-                  return next;
-                });
-              }
-            }}
-            showBack={isLoggedIn}
+            onLogin={() => open('login')}
             onBack={goBack}
+            onValidateStep1={validateStep1}
+            onBlurUsername={validateUsernameBlur}
+            onBlurEmail={validateEmailBlur}
           />
         )}
 
         {screen === 'forgot_password' && (
           <ForgotPasswordScreen
-            step={forgotStep}
             email={forgotEmail}
             setEmail={setForgotEmail}
-            token={forgotToken}
-            setToken={setForgotToken}
-            newPassword={forgotNewPassword}
-            setNewPassword={setForgotNewPassword}
             fieldError={forgotFieldError}
             formError={forgotFormError}
             submitting={forgotSubmitting}
-            onRequestCode={() => void handleForgotRequest()}
+            onSendRecoveryLink={() => void handleForgotRequest()}
+            onBackToLogin={() => resetTo('login')}
+          />
+        )}
+
+        {screen === 'reset_password' && (
+          <ResetPasswordScreen
+            newPassword={forgotNewPassword}
+            setNewPassword={setForgotNewPassword}
+            confirmPassword={forgotConfirmPassword}
+            setConfirmPassword={setForgotConfirmPassword}
+            fieldError={forgotFieldError}
+            formError={forgotFormError}
+            submitting={forgotSubmitting}
             onResetPassword={() => void handleResetPassword()}
-            onRequestNewCode={() => {
-              setForgotStep(1);
-              setForgotFieldError(null);
-              setForgotFormError(null);
-              setForgotToken('');
-            }}
-            onBack={goBack}
+            onBackToLogin={() => resetTo('login')}
           />
         )}
 

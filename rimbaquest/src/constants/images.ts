@@ -20,6 +20,16 @@ export const HOME_IMAGES = {
   tileBattle: require('../../assets/home/tile-battle.png'),
 };
 
+export const AUTH_IMAGES = {
+  mascotWelcome: require('../../assets/auth/mascot-id-card.png'),
+  mascotLogin: require('../../assets/auth/mascot-wave.png'),
+  mascotForgot: require('../../assets/auth/mascot-key.png'),
+  mascotReset: require('../../assets/auth/mascot-shield.png'),
+  avatarBird: require('../../assets/auth/avatar-bird.png'),
+  avatarTiger: require('../../assets/auth/avatar-tiger.png'),
+  avatarPanda: require('../../assets/auth/avatar-panda.png'),
+};
+
 export const AVATAR_ICONS: Record<string, string> = {
   tapir: '🦛',
   tiger: '🐯',
@@ -27,6 +37,7 @@ export const AVATAR_ICONS: Record<string, string> = {
   elephant: '🐘',
   pangolin: '🦔',
   butterfly: '🦋',
+  panda: '🐼',
 };
 
 export const SPECIES_IMAGES: Record<string, number> = {
