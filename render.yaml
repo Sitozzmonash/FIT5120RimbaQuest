@@ -3,20 +3,20 @@ services:
     name: rimbaquest-api
     runtime: docker
     region: singapore
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        value: sqlite:////var/data/RimbaQuest.db
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
       - key: CORS_ALLOWED_ORIGINS
         value: "*"
       - key: DEEPSEEK_API_KEY
         sync: false
       - key: ZHIPU_API_KEY
         sync: false
-    disk:
-      name: rimbaquest-sqlite-data
-      mountPath: /var/data
-      sizeGB: 1

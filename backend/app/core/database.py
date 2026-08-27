@@ -1,206 +1,80 @@
 from __future__ import annotations
 
-import sqlite3
 from pathlib import Path
 from typing import Any
-from sqlalchemy import create_engine, event
 
-from app.core.config import (
-    DATABASE_URL,
-    IMAGE_METADATA_END,
-    IMAGE_METADATA_START,
-    LEARNING_DATA_END,
-    LEARNING_DATA_START,
-    SEED_SQL,
-)
-from app.core.security import hash_password
+from sqlalchemy import create_engine, event, inspect, text
+from sqlalchemy.engine import Engine
+
+from app.core.config import DATABASE_URL
+from app.core.schema import metadata
+from app.core.seed import seed_iteration_one
 
 
-def database_path() -> Path:
+def _engine() -> Engine:
+    kwargs: dict[str, Any] = {"pool_pre_ping": True}
     if DATABASE_URL.startswith("sqlite:///"):
-        return Path(DATABASE_URL.removeprefix("sqlite:///"))
-    raise RuntimeError("Iteration 1 only supports SQLite DATABASE_URL values")
+        path = Path(DATABASE_URL.removeprefix("sqlite:///"))
+        path.parent.mkdir(parents=True, exist_ok=True)
+        kwargs["connect_args"] = {"check_same_thread": False}
+    return create_engine(DATABASE_URL, **kwargs)
+
+
+engine = _engine()
+
+
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "connect")
+    def enable_sqlite_foreign_keys(dbapi_connection: Any, _connection_record: Any) -> None:
+        """Mirror PostgreSQL foreign-key enforcement in local/test SQLite."""
+        dbapi_connection.execute("PRAGMA foreign_keys = ON")
+
+
+def _add_legacy_columns() -> None:
+    """Non-destructively upgrade existing local SQLite databases from Iteration 1."""
+    if engine.dialect.name != "sqlite":
+        return
+    additions = {
+        "users": {
+            "username": "VARCHAR",
+            "email": "VARCHAR",
+            "password_hash": "VARCHAR",
+            "age": "INTEGER",
+            "avatar": "VARCHAR DEFAULT 'tapir'",
+            "recovery_token": "VARCHAR",
+        },
+        "child_profiles": {
+            "avatar": "VARCHAR DEFAULT 'tapir'",
+            "age": "INTEGER DEFAULT 10",
+        },
+        "sightings": {
+            "recorded_at": "DATETIME",
+            "location_label": "VARCHAR",
+            "photo_path": "VARCHAR",
+            "photo_url": "VARCHAR",
+            "notes": "TEXT",
+        },
+        "locations": {"area": "VARCHAR", "typical_wildlife": "VARCHAR"},
+    }
+    inspector = inspect(engine)
+    with engine.begin() as connection:
+        for table_name, columns in additions.items():
+            if not inspector.has_table(table_name):
+                continue
+            existing = {column["name"] for column in inspector.get_columns(table_name)}
+            for name, sql_type in columns.items():
+                if name not in existing:
+                    connection.execute(text(f'ALTER TABLE "{table_name}" ADD COLUMN "{name}" {sql_type}'))
 
 
 def initialise_database() -> None:
-    path = database_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not path.exists():
-        with sqlite3.connect(path) as connection:
-            # The legacy seed inserts child rows before every parent table exists.
-            # Enable foreign keys only after the full seed has been imported.
-            connection.executescript(SEED_SQL.read_text(encoding="utf-8"))
-            connection.execute("PRAGMA foreign_keys = ON")
-
-
-def apply_seed_block(start_marker: str, end_marker: str) -> None:
-    seed = SEED_SQL.read_text(encoding="utf-8")
-    if start_marker not in seed or end_marker not in seed:
-        return
-    start = seed.index(start_marker)
-    end = seed.index(end_marker, start) + len(end_marker)
-    try:
-        with sqlite3.connect(database_path()) as connection:
-            connection.execute("PRAGMA foreign_keys = ON")
-            connection.executescript(seed[start:end])
-    except sqlite3.OperationalError as error:
-        if "readonly" not in str(error).lower():
-            raise
-
-
-def migrate_schema() -> None:
-    """Ensure all required columns and default data exist across restarts/persistent disks."""
-    try:
-        with sqlite3.connect(database_path()) as connection:
-            connection.execute("PRAGMA foreign_keys = ON")
-            # Check users table
-            user_cols = {row[1] for row in connection.execute("PRAGMA table_info(users)")}
-            if "username" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN username VARCHAR")
-            if "email" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN email VARCHAR")
-            if "password_hash" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN password_hash VARCHAR")
-            if "age" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN age INTEGER")
-            if "avatar" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN avatar VARCHAR DEFAULT 'tapir'")
-            if "recovery_token" not in user_cols:
-                connection.execute("ALTER TABLE users ADD COLUMN recovery_token VARCHAR")
-
-            # Check child_profiles table
-            child_cols = {row[1] for row in connection.execute("PRAGMA table_info(child_profiles)")}
-            if "avatar" not in child_cols:
-                connection.execute("ALTER TABLE child_profiles ADD COLUMN avatar VARCHAR DEFAULT 'tapir'")
-            if "age" not in child_cols:
-                connection.execute("ALTER TABLE child_profiles ADD COLUMN age INTEGER DEFAULT 10")
-
-            # Check sightings table
-            sighting_cols = {row[1] for row in connection.execute("PRAGMA table_info(sightings)")}
-            if "recorded_at" not in sighting_cols:
-                connection.execute("ALTER TABLE sightings ADD COLUMN recorded_at DATETIME")
-            if "location_label" not in sighting_cols:
-                connection.execute("ALTER TABLE sightings ADD COLUMN location_label VARCHAR")
-            if "photo_url" not in sighting_cols:
-                connection.execute("ALTER TABLE sightings ADD COLUMN photo_url VARCHAR")
-            if "notes" not in sighting_cols:
-                connection.execute("ALTER TABLE sightings ADD COLUMN notes TEXT")
-            connection.execute("UPDATE sightings SET recorded_at = COALESCE(recorded_at, CURRENT_TIMESTAMP)")
-
-            # Check locations table
-            loc_cols = {row[1] for row in connection.execute("PRAGMA table_info(locations)")}
-            if "area" not in loc_cols:
-                connection.execute("ALTER TABLE locations ADD COLUMN area VARCHAR")
-            if "typical_wildlife" not in loc_cols:
-                connection.execute("ALTER TABLE locations ADD COLUMN typical_wildlife VARCHAR")
-
-            # Ensure default user & child profile exist for guest play
-            user_exists = connection.execute("SELECT id FROM users WHERE id = 1").fetchone()
-            if not user_exists:
-                connection.execute(
-                    "INSERT INTO users (id, role, created_at, username, email, password_hash, age, avatar) "
-                    "VALUES (1, 'child', CURRENT_TIMESTAMP, 'aisyah', 'aisyah@rimbaquest.my', :pwd, 10, 'tapir')",
-                    {"pwd": hash_password("adventure123")}
-                )
-            else:
-                connection.execute(
-                    "UPDATE users SET username = COALESCE(username, 'aisyah'), "
-                    "email = COALESCE(email, 'aisyah@rimbaquest.my'), "
-                    "password_hash = COALESCE(password_hash, :pwd), "
-                    "avatar = COALESCE(avatar, 'tapir'), age = COALESCE(age, 10) WHERE id = 1",
-                    {"pwd": hash_password("adventure123")}
-                )
-
-            child_exists = connection.execute("SELECT id FROM child_profiles WHERE id = 1").fetchone()
-            if not child_exists:
-                connection.execute(
-                    "INSERT INTO child_profiles (id, parent_user_id, display_name, age_band, xp, level, avatar, age) "
-                    "VALUES (1, 1, 'Aisyah', '8-11', 200, 1, 'tapir', 10)"
-                )
-            else:
-                connection.execute(
-                    "UPDATE child_profiles SET display_name = COALESCE(display_name, 'Aisyah'), "
-                    "avatar = COALESCE(avatar, 'tapir'), age = COALESCE(age, 10) WHERE id = 1"
-                )
-
-            # Update XP calculation
-            connection.execute("""UPDATE child_profiles SET xp = (
-                SELECT COUNT(*) * 100 FROM collection_entries
-                WHERE collection_entries.child_id = child_profiles.id
-            ) WHERE xp IS NULL OR xp = 0""")
-
-            # Retain one existing row before applying the database-level rules.
-            connection.execute("""DELETE FROM collection_entries
-                WHERE id NOT IN (
-                    SELECT MIN(id) FROM collection_entries
-                    GROUP BY child_id, species_id
-                )""")
-            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
-                uq_collection_entries_child_species
-                ON collection_entries(child_id, species_id)""")
-
-            connection.execute("""DELETE FROM child_badges
-                WHERE id NOT IN (
-                    SELECT MIN(id) FROM child_badges
-                    GROUP BY child_id, badge_id
-                )""")
-            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
-                uq_child_badges_child_badge
-                ON child_badges(child_id, badge_id)""")
-
-            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
-                uq_users_username_ci
-                ON users(lower(username))
-                WHERE username IS NOT NULL""")
-            connection.execute("""CREATE UNIQUE INDEX IF NOT EXISTS
-                uq_users_email_ci
-                ON users(lower(email))
-                WHERE email IS NOT NULL""")
-
-            # Enrich locations with area and typical wildlife tags
-            location_enrichments = [
-                ("loc_bukit_gasing", "Petaling Jaya, Selangor", "Butterflies, Birds, Small Mammals"),
-                ("loc_frim", "Kepong, Kuala Lumpur", "Rainforest Canopy Birds, Mammals, Butterflies"),
-                ("loc_kuala_selangor", "Kuala Selangor, Selangor", "Mangrove Birds, Reptiles, Fireflies"),
-                ("loc_per_paya_indah", "Dengkil, Selangor", "Wetland Birds, Sun Bears, Crocodiles, Reptiles"),
-                ("loc_kl_forest_eco_park", "Kuala Lumpur", "Birds, Small Mammals, Butterflies"),
-                ("loc_perdana_botanical", "Kuala Lumpur", "Butterflies, Birds"),
-            ]
-            connection.execute(
-                """INSERT OR IGNORE INTO locations
-                   (id, name, type, lat, lng, verified, description, facilities, best_time, distance_km, why_recommended)
-                   VALUES
-                   ('loc_kl_forest_eco_park', 'KL Forest Eco Park', 'Forest park', 3.151, 101.703, 1,
-                    'A pocket of lowland rainforest in the heart of Kuala Lumpur, beside the KL Tower.',
-                    '["Trails", "Boardwalk", "Rest area"]', '7:00–10:00 AM', 3.5,
-                    'Easy city-centre forest paths where birds and small mammals have previously been observed.'),
-                   ('loc_perdana_botanical', 'Perdana Botanical Gardens', 'Botanical garden', 3.143, 101.685, 1,
-                    'Kuala Lumpur''s main botanical gardens with lakes, lawns and planted forest edges.',
-                    '["Paths", "Parking", "Restroom", "Playground"]', '8:00–11:00 AM', 2.0,
-                    'Open garden paths where butterflies and garden birds may be encountered.')"""
-            )
-            for loc_id, area, typical in location_enrichments:
-                connection.execute(
-                    "UPDATE locations SET area = :area, typical_wildlife = :typical WHERE id = :id",
-                    {"area": area, "typical": typical, "id": loc_id}
-                )
-
-    except sqlite3.OperationalError as error:
-        if "readonly" not in str(error).lower():
-            raise
+    _add_legacy_columns()
+    metadata.create_all(engine)
+    with engine.begin() as connection:
+        seed_iteration_one(connection)
 
 
 initialise_database()
-apply_seed_block(IMAGE_METADATA_START, IMAGE_METADATA_END)
-apply_seed_block(LEARNING_DATA_START, LEARNING_DATA_END)
-migrate_schema()
-
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-
-
-@event.listens_for(engine, "connect")
-def enable_sqlite_foreign_keys(dbapi_connection: Any, _connection_record: Any) -> None:
-    dbapi_connection.execute("PRAGMA foreign_keys = ON")
 
 
 def rows(result: Any) -> list[dict[str, Any]]:
