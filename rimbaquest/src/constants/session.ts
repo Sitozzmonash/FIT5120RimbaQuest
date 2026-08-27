@@ -1,11 +1,11 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-import { GalleryItem, UserProfile } from '../types';
+import { UserProfile } from '../types';
 
 
 const SESSION_KEY = 'rimbaquest.session.v2';
-const GALLERY_KEY_PREFIX = 'rimbaquest.gallery.v1.';
+const LEGACY_GALLERY_KEY_PREFIX = 'rimbaquest.gallery.v1.';
 
 export type StoredSession = {
   user: UserProfile;
@@ -23,8 +23,10 @@ function webStorage(): Storage | null {
   return null;
 }
 
-function galleryKey(childId: number): string {
-  return `${GALLERY_KEY_PREFIX}${childId}`;
+function clearLegacyGallery(childId: number): void {
+  if (Platform.OS === 'web' && childId) {
+    webStorage()?.removeItem(`${LEGACY_GALLERY_KEY_PREFIX}${childId}`);
+  }
 }
 
 export async function loadSession(): Promise<StoredSession | null> {
@@ -35,6 +37,7 @@ export async function loadSession(): Promise<StoredSession | null> {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredSession;
     if (!parsed?.user?.id || !parsed.accessToken) return null;
+    clearLegacyGallery(parsed.user.id);
     return parsed;
   } catch {
     return null;
@@ -44,6 +47,7 @@ export async function loadSession(): Promise<StoredSession | null> {
 export async function saveSession(session: StoredSession): Promise<void> {
   const value = JSON.stringify(session);
   try {
+    clearLegacyGallery(session.user.id);
     if (Platform.OS === 'web') webStorage()?.setItem(SESSION_KEY, value);
     else await SecureStore.setItemAsync(SESSION_KEY, value);
   } catch {
@@ -57,26 +61,5 @@ export async function clearSession(): Promise<void> {
     else await SecureStore.deleteItemAsync(SESSION_KEY);
   } catch {
     // Ignore platform storage cleanup failures during logout.
-  }
-}
-
-export function loadGallery(childId: number): Record<string, GalleryItem[]> {
-  if (!childId) return {};
-  try {
-    const raw = webStorage()?.getItem(galleryKey(childId));
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, GalleryItem[]>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-export function saveGallery(childId: number, photos: Record<string, GalleryItem[]>): void {
-  if (!childId) return;
-  try {
-    webStorage()?.setItem(galleryKey(childId), JSON.stringify(photos));
-  } catch {
-    // Remote private Storage is authoritative; this is only a web cache.
   }
 }
