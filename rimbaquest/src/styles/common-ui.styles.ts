@@ -15,10 +15,4 @@ export const commonUiStyles = StyleSheet.create({
   backSpacer: { width: 38 },
   backText: { fontSize: 30, color: '#1B211C', lineHeight: 32 },
   infoValue: { color: '#1B211C', fontSize: 12, lineHeight: 18, fontWeight: '700', marginTop: 4 },
-  progressCard: { borderColor: '#DFE7E1', borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 12, backgroundColor: '#FFFFFF' },
-  progressTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
-  progressValue: { fontSize: 22, color: '#1B211C', fontWeight: '900', marginTop: 3 },
-  unlocked: { color: '#0BA84A', fontSize: 12, fontWeight: '800' },
-  track: { height: 8, backgroundColor: '#E8EEEA', borderRadius: 4, overflow: 'hidden', marginTop: 12 },
-  fill: { height: '100%', backgroundColor: '#0BA84A', borderRadius: 4 },
 });
