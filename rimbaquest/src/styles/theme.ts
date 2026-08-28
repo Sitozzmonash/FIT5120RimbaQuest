@@ -4,7 +4,6 @@ import { battleStyles } from './screens/battle.styles';
 import { collectionStyles } from './screens/collection.styles';
 import { homeStyles } from './screens/home.styles';
 import { locationsStyles } from './screens/locations.styles';
-import { profileStyles } from './screens/profile.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
 import { loginStyles } from './screens/login.styles';
 import { forgotPasswordStyles } from './screens/forgotPassword.styles';
@@ -45,7 +44,6 @@ const general = StyleSheet.create({
   secondary: { minHeight: 46, marginTop: 9, borderRadius: 23, backgroundColor: '#FFFFFF', borderColor: '#C8D1CA', borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
   secondaryText: { color: '#1B211C', fontSize: 13, fontWeight: '700' },
   scientific: { color: '#68716C', fontStyle: 'italic', fontSize: 12, marginTop: 3 },
-  infoPair: { flexDirection: 'row', alignSelf: 'stretch', gap: 8, marginTop: 6 },
   textButton: { paddingVertical: 12, alignItems: 'center' },
   textButtonText: { color: '#0BA84A', fontWeight: '800', fontSize: 13 },
   chips: { gap: 8, paddingBottom: 12 },
@@ -82,7 +80,6 @@ export const styles: any = {
   ...locationsStyles,
   ...collectionStyles,
   ...battleStyles,
-  ...profileStyles,
   ...accountEntryStyles,
   ...loginStyles,
   ...forgotPasswordStyles,

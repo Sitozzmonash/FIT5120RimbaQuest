@@ -77,33 +77,3 @@ export function Info({ label, value }: { label: string; value: string }) {
     </View>
   );
 }
-
-export function ProgressCard({
-  progress,
-}: {
-  progress: { found: number; total: number; xp: number; level?: number };
-}) {
-  const percentage = progress.total
-    ? Math.min(100, Math.round((progress.found / progress.total) * 100))
-    : 0;
-  return (
-    <View style={styles.progressCard}>
-      <View style={styles.progressTop}>
-        <View>
-          <Text style={styles.infoLabel}>OVERALL COLLECTION PROGRESS</Text>
-          <Text style={styles.progressValue}>
-            {progress.found} / {progress.total} Wildlife Discovered
-          </Text>
-        </View>
-        <Text style={styles.unlocked}>{percentage}% Complete</Text>
-      </View>
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${percentage}%` }]} />
-      </View>
-      <View style={styles.infoPair}>
-        <Info label="EXPLORER POINTS" value={`${progress.xp} XP`} />
-        <Info label="SCOUT RANK" value={`Level ${progress.level || 1}`} />
-      </View>
-    </View>
-  );
-}
