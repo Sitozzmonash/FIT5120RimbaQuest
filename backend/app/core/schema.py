@@ -37,7 +37,7 @@ users = Table(
     Column("email", String(120), nullable=False),
     Column("password_hash", String(255), nullable=False),
     Column("age", Integer, nullable=False),
-    Column("avatar", String(30), nullable=False, default="tapir"),
+    Column("avatar", String(30), nullable=False, default="hornbill"),
     Column("recovery_token", String(255)),
 )
 Index("uq_users_username_ci", func.lower(users.c.username), unique=True)
@@ -54,7 +54,7 @@ child_profiles = Table(
     Column("level", Integer, nullable=False, default=1),
     Column("safety_briefing_done", Boolean, nullable=False, default=False),
     Column("learning_streak", Integer, nullable=False, default=0),
-    Column("avatar", String(30), nullable=False, default="tapir"),
+    Column("avatar", String(30), nullable=False, default="hornbill"),
     Column("age", Integer, nullable=False, default=10),
 )
 

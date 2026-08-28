@@ -17,7 +17,7 @@ export const homeStyles = StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   avatarFrame: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   avatarInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#D8EDD8', alignItems: 'center', justifyContent: 'center' },
-  avatarEmojiLarge: { fontSize: 28 },
+  avatarImageLarge: { width: 56, height: 56, borderRadius: 28 },
   profileInfo: { flex: 1, gap: 6 },
   levelBadge: { alignSelf: 'flex-start', borderRadius: 12, overflow: 'hidden' },
   levelBadgeGradient: { paddingHorizontal: 10, paddingVertical: 4 },

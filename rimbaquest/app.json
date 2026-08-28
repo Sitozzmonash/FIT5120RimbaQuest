@@ -2,7 +2,7 @@
   "expo": {
     "name": "RimbaQuest",
     "slug": "rimbaquest",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "rimbaquest",
@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -19,8 +20,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.CAMERA"
       ],
       "package": "com.sitozzmonashsteam.rimbaquest"
     },
@@ -33,7 +33,16 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow RimbaQuest to take a personal wildlife discovery photo."
+          "cameraPermission": "Allow RimbaQuest to take a personal wildlife discovery photo.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Allow RimbaQuest to take a personal wildlife discovery photo.",
+          "photosPermission": "Allow RimbaQuest to select a personal wildlife discovery photo.",
+          "microphonePermission": false
         }
       ],
       [

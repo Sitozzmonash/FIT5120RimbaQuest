@@ -4,12 +4,25 @@ import re
 from pydantic import BaseModel, Field, field_validator
 
 
+ALLOWED_AVATARS = frozenset({"hornbill", "tiger", "panda"})
+
+
+def _validate_username_value(value: str) -> str:
+    if len(value) < 3 or len(value) > 20:
+        raise ValueError("Username must be between 3 and 20 characters.")
+    if " " in value:
+        raise ValueError("Username cannot contain spaces")
+    if not re.match(r"^[a-zA-Z0-9_-]+$", value):
+        raise ValueError("Username can only contain letters, numbers, hyphens and underscores")
+    return value
+
+
 class RegisterIn(BaseModel):
     username: str = Field(min_length=3, max_length=20)
     age: int = Field(ge=5, le=18)
     email: str = Field(min_length=5, max_length=120)
     password: str = Field(min_length=6, max_length=100)
-    avatar: str = Field(default="tapir", max_length=30)
+    avatar: str = Field(default="hornbill", max_length=30)
 
     @field_validator("username", mode="before")
     @classmethod
@@ -19,13 +32,15 @@ class RegisterIn(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
-        if len(v) < 3 or len(v) > 20:
-            raise ValueError("Username must be between 3 and 20 characters.")
-        if " " in v:
-            raise ValueError("Username cannot contain spaces")
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError("Username can only contain letters, numbers, hyphens and underscores")
-        return v
+        return _validate_username_value(v)
+
+    @field_validator("avatar")
+    @classmethod
+    def validate_avatar(cls, v: str) -> str:
+        avatar = v.strip().lower()
+        if avatar not in ALLOWED_AVATARS:
+            raise ValueError("Choose one of the available avatars.")
+        return avatar
 
     @field_validator("email")
     @classmethod
@@ -51,6 +66,26 @@ class ResetPasswordIn(BaseModel):
 
 
 class ProfileUpdateIn(BaseModel):
-    display_name: str | None = Field(default=None, min_length=2, max_length=30)
+    username: str | None = Field(default=None, min_length=3, max_length=20)
     avatar: str | None = Field(default=None, max_length=30)
     age: int | None = Field(default=None, ge=5, le=18)
+
+    @field_validator("username", mode="before")
+    @classmethod
+    def strip_username(cls, v: str | None) -> str | None:
+        return v.strip() if isinstance(v, str) else v
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str | None) -> str | None:
+        return _validate_username_value(v) if v is not None else v
+
+    @field_validator("avatar")
+    @classmethod
+    def validate_avatar(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        avatar = v.strip().lower()
+        if avatar not in ALLOWED_AVATARS:
+            raise ValueError("Choose one of the available avatars.")
+        return avatar

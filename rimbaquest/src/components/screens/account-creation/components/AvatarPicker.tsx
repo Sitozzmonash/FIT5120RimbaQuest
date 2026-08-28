@@ -1,14 +1,8 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { AUTH_IMAGES } from "../../../../constants/images";
+import { AVATAR_CHOICES } from "../../../../constants/images";
 import { Tap } from "../../../common/Tap";
-
-const AVATAR_CHOICES = [
-  { key: "hornbill", image: AUTH_IMAGES.avatarBird },
-  { key: "tiger", image: AUTH_IMAGES.avatarTiger },
-  { key: "panda", image: AUTH_IMAGES.avatarPanda },
-];
 
 // Optional avatar selector shown on step 1 of account creation.
 export function AvatarPicker({

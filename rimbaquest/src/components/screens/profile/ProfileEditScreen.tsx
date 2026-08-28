@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Alert,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -8,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { AVATAR_ICONS } from "../../../constants/images";
+import { AVATAR_CHOICES } from "../../../constants/images";
 import { Tap } from "../../common/Tap";
 import { Header } from "../../common/CommonUI";
 import { styles as globalStyles } from "../../../styles/theme";
@@ -23,6 +24,7 @@ export function ProfileEditScreen({
   onSave,
   onBack,
   isDirty,
+  error,
 }: {
   displayName: string;
   setDisplayName: (s: string) => void;
@@ -33,6 +35,7 @@ export function ProfileEditScreen({
   onSave: () => void;
   onBack: () => void;
   isDirty: boolean;
+  error: string | null;
 }) {
   const leave = () => {
     if (!isDirty) {
@@ -55,12 +58,15 @@ export function ProfileEditScreen({
       <Header title="Edit Profile" onBack={leave} />
       <View style={styles.form}>
         <View style={globalStyles.inputGroup}>
-          <Text style={globalStyles.inputLabel}>DISPLAY NAME</Text>
+          <Text style={globalStyles.inputLabel}>USERNAME</Text>
           <TextInput
             style={globalStyles.textInput}
             value={displayName}
             onChangeText={setDisplayName}
+            autoCapitalize="none"
+            autoCorrect={false}
           />
+          <Text style={styles.helpText}>This is also the name you use to sign in.</Text>
         </View>
         <View style={globalStyles.inputGroup}>
           <Text style={globalStyles.inputLabel}>AGE</Text>
@@ -71,9 +77,9 @@ export function ProfileEditScreen({
             keyboardType="numeric"
           />
         </View>
-        <Text style={styles.optionalLabel}>AVATAR (optional)</Text>
+        <Text style={styles.optionalLabel}>CHOOSE AN AVATAR</Text>
         <View style={styles.avatarPicker}>
-          {Object.entries(AVATAR_ICONS).map(([key, emoji]) => (
+          {AVATAR_CHOICES.map(({ key, label, image }) => (
             <Tap
               key={key}
               label={key}
@@ -83,11 +89,12 @@ export function ProfileEditScreen({
               ]}
               onPress={() => setAvatar(key)}
             >
-              <Text style={styles.avatarChoiceEmoji}>{emoji}</Text>
-              <Text style={styles.avatarChoiceName}>{key}</Text>
+              <Image source={image} style={styles.avatarChoiceImage} resizeMode="cover" />
+              <Text style={styles.avatarChoiceName}>{label}</Text>
             </Tap>
           ))}
         </View>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <Tap label="Save Changes" style={globalStyles.primary} onPress={onSave}>
           <Text style={globalStyles.primaryText}>Save Profile Changes</Text>
         </Tap>
@@ -105,6 +112,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
   },
+  helpText: { color: "#66756D", fontSize: 11, marginTop: -4 },
+  errorText: { color: "#C43C3C", fontSize: 12, fontWeight: "700" },
   avatarPicker: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -125,7 +134,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     backgroundColor: "#EDF5EF",
   },
-  avatarChoiceEmoji: { fontSize: 24 },
+  avatarChoiceImage: { width: 44, height: 44, borderRadius: 22 },
   avatarChoiceName: {
     fontSize: 10,
     fontWeight: "800",

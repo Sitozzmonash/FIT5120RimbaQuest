@@ -1,12 +1,12 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 export function ProfileHero({
-  avatarEmoji,
+  avatarImage,
   name,
   subtitle,
 }: {
-  avatarEmoji: string;
+  avatarImage: number;
   name: string;
   subtitle: string;
 }) {
@@ -14,7 +14,7 @@ export function ProfileHero({
     <View style={styles.wrap}>
       <View style={styles.avatarWrap}>
         <View style={styles.avatarFrame}>
-          <Text style={styles.avatarEmoji}>{avatarEmoji}</Text>
+          <Image source={avatarImage} style={styles.avatarImage} resizeMode="cover" />
         </View>
       </View>
       <Text style={styles.name}>{name}</Text>
@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarEmoji: { fontSize: 42 },
+  avatarImage: { width: 82, height: 82, borderRadius: 41 },
   cameraBadge: {
     position: "absolute",
     right: 0,

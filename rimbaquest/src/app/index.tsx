@@ -29,6 +29,7 @@ import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
 import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
+import { DEFAULT_AVATAR } from '../constants/images';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
@@ -39,7 +40,7 @@ const GUEST_USER: UserProfile = {
   id: 0,
   username: '',
   display_name: 'Explorer',
-  avatar: 'tapir',
+  avatar: DEFAULT_AVATAR,
   age: 10,
   age_band: '8-11',
   xp: 0,
@@ -72,7 +73,7 @@ function profileFromAuth(data: Record<string, unknown>): UserProfile {
     id: Number(data.child_id || data.id || 0),
     username: String(data.username || ''),
     display_name: String(data.display_name || data.username || 'Explorer'),
-    avatar: String(data.avatar || 'tapir'),
+    avatar: String(data.avatar || DEFAULT_AVATAR),
     age: Number(data.age || 10),
     age_band: '8-11',
     xp: Number(data.xp || 0),
@@ -152,8 +153,9 @@ export default function RimbaQuest() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
 
   const [editDisplayName, setEditDisplayName] = useState('');
-  const [editAvatar, setEditAvatar] = useState('tapir');
+  const [editAvatar, setEditAvatar] = useState(DEFAULT_AVATAR);
   const [editAge, setEditAge] = useState('10');
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
 
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
@@ -239,7 +241,7 @@ export default function RimbaQuest() {
       if (profileRes.ok) {
         const data = await profileRes.json();
         setCurrentUser((prev) => {
-          const next = { ...prev, ...data, username: prev.username };
+          const next = { ...prev, ...data, username: String(data.username || prev.username) };
           void saveSession({ user: next, accessToken: token });
           return next;
         });
@@ -709,35 +711,36 @@ export default function RimbaQuest() {
   };
 
   const handleSaveProfile = async () => {
+    const username = editDisplayName.trim() || currentUser.username;
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+      setProfileSaveError('Username must be 3–20 letters, numbers, hyphens, or underscores, with no spaces.');
+      return;
+    }
+    setProfileSaveError(null);
     try {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
-          display_name: editDisplayName.trim() || currentUser.display_name,
+          username,
           avatar: editAvatar,
           age: parseInt(editAge, 10) || currentUser.age,
         }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setCurrentUser((prev) => {
-          const next = { ...prev, ...data };
-          void saveSession({ user: next, accessToken });
-          return next;
-        });
+      const data = await res.json();
+      if (!res.ok) {
+        setProfileSaveError(apiMessage(data, 'We could not save your profile changes.'));
+        return;
       }
-    } catch {
       setCurrentUser((prev) => {
-        const next = {
-          ...prev,
-          display_name: editDisplayName.trim() || prev.display_name,
-          avatar: editAvatar,
-          age: parseInt(editAge, 10) || prev.age,
-        };
+        const updatedUsername = String(data.username || username || prev.username);
+        const next = { ...prev, ...data, username: updatedUsername, display_name: String(data.display_name || updatedUsername) };
         void saveSession({ user: next, accessToken });
         return next;
       });
+    } catch {
+      setProfileSaveError("We couldn't reach RimbaQuest. Your profile was not changed.");
+      return;
     }
     goBack();
   };
@@ -879,7 +882,7 @@ export default function RimbaQuest() {
 
   const discoveryPhoto = photoUri ? { uri: photoUri } : null;
   const profileDirty =
-    editDisplayName !== currentUser.display_name ||
+    editDisplayName !== currentUser.username ||
     editAvatar !== currentUser.avatar ||
     editAge !== String(currentUser.age);
 
@@ -1208,6 +1211,7 @@ export default function RimbaQuest() {
             onSave={() => void handleSaveProfile()}
             onBack={goBack}
             isDirty={profileDirty}
+            error={profileSaveError}
           />
         )}
 
@@ -1221,9 +1225,10 @@ export default function RimbaQuest() {
               return { found, total: items.length };
             }}
             onOpenEdit={() => {
-              setEditDisplayName(currentUser.display_name);
-              setEditAvatar(currentUser.avatar);
-              setEditAge(String(currentUser.age));
+            setEditDisplayName(currentUser.username);
+            setEditAvatar(currentUser.avatar);
+            setEditAge(String(currentUser.age));
+            setProfileSaveError(null);
               open('profile_edit');
             }}
             onLogout={handleLogout}

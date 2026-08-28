@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { UserProfile } from "../../../types";
 import { WILDLIFE_FILTERS } from "../../../constants/seed";
-import { AVATAR_ICONS } from "../../../constants/images";
+import { avatarImageFor } from "../../../constants/images";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { OverallProgressCard } from "./components/OverallProgressCard";
@@ -55,7 +55,7 @@ export function ProfileScreen({
         <ProfileHeader title="My Profile" onBack={onBack} onEdit={onOpenEdit} />
 
         <ProfileHero
-          avatarEmoji={AVATAR_ICONS[currentUser.avatar] || "🦛"}
+          avatarImage={avatarImageFor(currentUser.avatar)}
           name={currentUser.display_name}
           subtitle={`Age ${currentUser.age} · Level ${currentUser.level} Jungle Scout`}
         />

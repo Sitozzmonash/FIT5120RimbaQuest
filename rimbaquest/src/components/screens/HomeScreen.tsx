@@ -3,7 +3,7 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RecentCapture, UserProfile } from '../../types';
-import { AVATAR_ICONS, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
+import { avatarImageFor, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
 import { Tap } from '../common/Tap';
 import { styles } from '../../styles/theme';
 
@@ -63,7 +63,11 @@ export function HomeScreen({
             <View style={styles.profileRow}>
               <View style={styles.avatarFrame}>
                 <View style={styles.avatarInner}>
-                  <Text style={styles.avatarEmojiLarge}>{AVATAR_ICONS[currentUser.avatar] || '🦛'}</Text>
+                  <Image
+                    source={avatarImageFor(currentUser.avatar)}
+                    style={styles.avatarImageLarge}
+                    resizeMode="cover"
+                  />
                 </View>
               </View>
               <View style={styles.profileInfo}>

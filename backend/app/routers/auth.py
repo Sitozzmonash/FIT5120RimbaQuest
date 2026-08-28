@@ -40,7 +40,7 @@ def _auth_response(user: Any, child: Any) -> dict[str, Any]:
         "child_id": child["id"],
         "username": user["username"],
         "display_name": child["display_name"] or user["username"],
-        "avatar": child["avatar"] or user["avatar"] or "tapir",
+        "avatar": child["avatar"] or user["avatar"] or "hornbill",
         "age": child["age"] or user["age"] or 10,
         "xp": child["xp"] or 0,
         "level": child["level"] or 1,
@@ -176,8 +176,12 @@ def reset_password(payload: ResetPasswordIn):
 def _profile(child_id: int) -> dict[str, Any]:
     with engine.connect() as connection:
         child = connection.execute(
-            text("""SELECT id, parent_user_id, display_name, age, age_band, xp, level, avatar
-                    FROM child_profiles WHERE id=:id"""),
+            text("""SELECT child_profiles.id, child_profiles.parent_user_id,
+                           users.username, child_profiles.display_name, child_profiles.age,
+                           child_profiles.age_band, child_profiles.xp, child_profiles.level,
+                           child_profiles.avatar
+                    FROM child_profiles JOIN users ON users.id=child_profiles.parent_user_id
+                    WHERE child_profiles.id=:id"""),
             {"id": child_id},
         ).mappings().first()
         if not child:
@@ -192,8 +196,9 @@ def _profile(child_id: int) -> dict[str, Any]:
         ).scalar() or 0
     return {
         "id": child["id"],
-        "display_name": child["display_name"] or "Explorer",
-        "avatar": child["avatar"] or "tapir",
+        "username": child["username"],
+        "display_name": child["display_name"] or child["username"],
+        "avatar": child["avatar"] or "hornbill",
         "age": child["age"] or 10,
         "age_band": child["age_band"] or "8-11",
         "xp": child["xp"] or 0,
@@ -225,9 +230,15 @@ def update_child_profile(
             raise HTTPException(404, "Child profile not found")
         updates: list[str] = []
         params: dict[str, Any] = {"id": child_id}
-        if payload.display_name is not None:
+        if payload.username is not None:
+            duplicate = connection.execute(
+                text("SELECT id FROM users WHERE lower(username)=lower(:username) AND id!=:user_id"),
+                {"username": payload.username, "user_id": child["parent_user_id"]},
+            ).first()
+            if duplicate:
+                raise HTTPException(400, "That username is already taken. Try another one.")
             updates.append("display_name=:display_name")
-            params["display_name"] = payload.display_name.strip()
+            params["display_name"] = payload.username
         if payload.avatar is not None:
             updates.append("avatar=:avatar")
             params["avatar"] = payload.avatar.strip()
@@ -237,6 +248,8 @@ def update_child_profile(
         if updates:
             connection.execute(text(f"UPDATE child_profiles SET {', '.join(updates)} WHERE id=:id"), params)
             user_updates = {key: params[key] for key in ("avatar", "age") if key in params}
+            if payload.username is not None:
+                user_updates["username"] = payload.username
             if user_updates:
                 assignments = ", ".join(f"{key}=:{key}" for key in user_updates)
                 connection.execute(

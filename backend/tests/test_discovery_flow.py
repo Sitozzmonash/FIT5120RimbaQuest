@@ -163,11 +163,47 @@ def test_child_routes_require_auth_and_enforce_ownership():
     profile = client.put(
         f"/api/v1/children/{first_id}/profile",
         headers=headers(first_token),
-        json={"display_name": "Ranger Aisyah", "avatar": "hornbill", "age": 11},
+        json={"username": "ranger_aisyah", "avatar": "panda", "age": 11},
     )
     assert profile.status_code == 200
-    assert profile.json()["display_name"] == "Ranger Aisyah"
+    assert profile.json()["username"] == "ranger_aisyah"
+    assert profile.json()["display_name"] == "ranger_aisyah"
+    assert profile.json()["avatar"] == "panda"
     assert first_id != second_id
+
+
+def test_profile_username_change_updates_login_and_avatar_everywhere():
+    child_id, token, old_username = register("rename")
+    new_username = f"renamed_{uuid4().hex[:8]}"
+
+    response = client.put(
+        f"/api/v1/children/{child_id}/profile",
+        headers=headers(token),
+        json={"username": new_username, "avatar": "panda"},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["username"] == new_username
+    assert response.json()["display_name"] == new_username
+    assert response.json()["avatar"] == "panda"
+
+    assert client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": old_username, "password": "junglePassword123"},
+    ).status_code == 401
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": new_username, "password": "junglePassword123"},
+    )
+    assert login.status_code == 200
+    assert login.json()["username"] == new_username
+    assert login.json()["avatar"] == "panda"
+
+    invalid_avatar = client.put(
+        f"/api/v1/children/{child_id}/profile",
+        headers=headers(token),
+        json={"avatar": "tapir"},
+    )
+    assert invalid_avatar.status_code == 422
 
 
 def test_locations_search_and_iteration_one_scope():

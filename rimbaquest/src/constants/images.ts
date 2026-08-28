@@ -43,15 +43,21 @@ export const AUTH_IMAGES = {
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
 };
 
-export const AVATAR_ICONS: Record<string, string> = {
-  tapir: '🦛',
-  tiger: '🐯',
-  hornbill: '🦜',
-  elephant: '🐘',
-  pangolin: '🦔',
-  butterfly: '🦋',
-  panda: '🐼',
-};
+export const DEFAULT_AVATAR = 'hornbill';
+
+export const AVATAR_CHOICES = [
+  { key: 'hornbill', label: 'Hornbill', image: AUTH_IMAGES.avatarBird },
+  { key: 'tiger', label: 'Tiger', image: AUTH_IMAGES.avatarTiger },
+  { key: 'panda', label: 'Panda', image: AUTH_IMAGES.avatarPanda },
+] as const;
+
+export const AVATAR_IMAGES: Record<string, number> = Object.fromEntries(
+  AVATAR_CHOICES.map((choice) => [choice.key, choice.image]),
+);
+
+export function avatarImageFor(avatar: string): number {
+  return AVATAR_IMAGES[avatar] || AUTH_IMAGES.avatarBird;
+}
 
 export const SPECIES_IMAGES: Record<string, number> = {
   sp_asian_elephant: require('../../assets/species/sp_asian_elephant.jpg'),

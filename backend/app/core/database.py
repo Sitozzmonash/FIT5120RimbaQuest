@@ -40,11 +40,11 @@ def _add_legacy_columns() -> None:
             "email": "VARCHAR",
             "password_hash": "VARCHAR",
             "age": "INTEGER",
-            "avatar": "VARCHAR DEFAULT 'tapir'",
+            "avatar": "VARCHAR DEFAULT 'hornbill'",
             "recovery_token": "VARCHAR",
         },
         "child_profiles": {
-            "avatar": "VARCHAR DEFAULT 'tapir'",
+            "avatar": "VARCHAR DEFAULT 'hornbill'",
             "age": "INTEGER DEFAULT 10",
         },
         "sightings": {
@@ -71,6 +71,15 @@ def initialise_database() -> None:
     _add_legacy_columns()
     metadata.create_all(engine)
     with engine.begin() as connection:
+        # The app now has one shared set of image avatars. Existing emoji-era
+        # values are safely moved to the default new avatar on startup.
+        for table_name in ("users", "child_profiles"):
+            connection.execute(
+                text(
+                    f"UPDATE {table_name} SET avatar='hornbill' "
+                    "WHERE avatar IS NULL OR avatar NOT IN ('hornbill', 'tiger', 'panda')"
+                )
+            )
         seed_iteration_one(connection)
 
 
