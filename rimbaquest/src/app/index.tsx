@@ -30,7 +30,18 @@ import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen
 import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 
-const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+const RETIRED_SPECIES_IDS = new Set([
+  'sp_black_crowned_pitta_2',
+  'sp_collared_mongoose_2',
+  'sp_short_tailed_mongoose_2',
+]);
+const OFFLINE_SPECIES = Array.from(
+  new Map(
+    SEED_SPECIES
+      .filter((item) => !RETIRED_SPECIES_IDS.has(item.id))
+      .map((item) => [item.id, item]),
+  ).values(),
+);
 
 const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

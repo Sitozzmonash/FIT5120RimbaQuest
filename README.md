@@ -38,7 +38,7 @@ Implemented Iteration 1 behaviour includes:
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Manual category and species selection across 155 supported species.
+- Manual category and species selection across 152 supported species.
 - Case-insensitive, partial species-name search with clear and no-result states.
 - Confirmation of the selected species and human-readable location.
 - A confirmed first discovery unlocks one Wildlife Card and awards 100 Explorer Points.
@@ -68,7 +68,7 @@ flowchart LR
     P -->|Accounts, profiles, sightings, cards, progress| A
     S -->|One-hour signed photo URL| A
     A -->|JSON response| C
-    C -->|Bundled reference images| B[155 local species assets]
+    C -->|Bundled reference images| B[152 active local species assets]
 ```
 
 ### Component responsibilities
@@ -79,7 +79,7 @@ flowchart LR
 | FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
 | Supabase PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
 | Supabase Storage | Private storage for child discovery photos under child-scoped object paths |
-| Seed SQL | Reproducible source catalogue for 155 species, learning fields, quizzes, locations, and image metadata |
+| Seed SQL | Reproducible source catalogue for 152 active species, learning fields, quizzes, locations, and image metadata |
 | Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
 
 ### Discovery data flow
@@ -122,7 +122,7 @@ FIT5120RimbaQuest/
 │   ├── .env.example
 │   └── requirements.txt
 ├── rimbaquest/
-│   ├── assets/species/         # 155 species images plus attribution metadata
+│   ├── assets/species/         # Reference images plus attribution metadata
 │   ├── src/app/                # Expo Router application entry and screens
 │   ├── src/components/         # Reusable UI components
 │   ├── src/constants/          # API, asset, and session configuration
@@ -336,7 +336,7 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 ## Database and security behaviour
 
 - PostgreSQL is the production source of truth; SQLite is a local/test fallback.
-- The static seed contains 155 supported species and one quiz per species.
+- The static seed contains 152 supported species and one quiz per species.
 - New passwords are hashed with Argon2.
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.
@@ -405,7 +405,7 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
-- The Expo client bundles 155 species reference images.
+- The Expo client uses 152 active species reference images.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
 - Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence and should be reviewed before public redistribution.
 - Discovery location data is currently a human-readable label; it is not presented as precise GPS evidence.

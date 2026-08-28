@@ -75,7 +75,7 @@ def test_system_health_and_static_catalogue():
 
     all_species = client.get("/api/v1/species")
     assert all_species.status_code == 200
-    assert len(all_species.json()) == 155
+    assert len(all_species.json()) == 152
     assert all(item["habitat"] and item["diet"] and item["fun_fact"] for item in all_species.json())
 
     quiz = client.get(f"/api/v1/species/{all_species.json()[0]['id']}/quiz")
