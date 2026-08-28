@@ -113,8 +113,8 @@ def _migrate_retired_catalogue() -> None:
         # Keep incorrect historical data referentially intact, but do not let
         # new users select, unlock, search, or count this record.
         connection.execute(
-            text("UPDATE species SET is_active=0 WHERE id=:id"),
-            {"id": RETIRED_CATALOGUE_SPECIES_ID},
+            text("UPDATE species SET is_active=:is_active WHERE id=:id"),
+            {"id": RETIRED_CATALOGUE_SPECIES_ID, "is_active": False},
         )
 
 
