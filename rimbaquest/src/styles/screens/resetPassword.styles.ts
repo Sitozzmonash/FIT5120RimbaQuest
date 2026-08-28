@@ -1,0 +1,31 @@
+import { StyleSheet } from 'react-native';
+
+// Reset Password screen (Figma node 309:32).
+export const resetPasswordStyles = StyleSheet.create({
+  resetRoot: { flex: 1 },
+  resetBackground: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  resetDecoCircle1: { position: 'absolute', left: -50, top: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: '#78B833', opacity: 0.15 },
+  resetDecoCircle2: { position: 'absolute', left: '70%', top: '80%', width: 140, height: 140, borderRadius: 70, backgroundColor: '#78B833', opacity: 0.12 },
+  resetScroll: { flexGrow: 1 },
+  resetCenterWrap: { flex: 1, justifyContent: 'center' },
+  resetMascotContainer: { alignItems: 'center', justifyContent: 'center', paddingTop: 16, paddingBottom: 8 },
+  resetMascotBlob: { width: 282, height: 255, borderRadius: 80, backgroundColor: 'rgba(216,240,224,0.4)', alignItems: 'center', justifyContent: 'center' },
+  resetMascotImage: { width: 250, height: 258 },
+  resetForm: { gap: 28, paddingHorizontal: 24, paddingBottom: 48 },
+  resetTextGroup: { gap: 8 },
+  resetTitle: { color: '#0A4D26', fontSize: 24, fontWeight: '800' },
+  resetSubtitle: { color: '#2D5A3E', fontSize: 15 },
+  resetErrorBanner: { color: '#D9383A', backgroundColor: '#FCE8E8', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  resetFields: { gap: 16 },
+  resetField: { gap: 6 },
+  resetFieldLabel: { color: '#0A4D26', fontSize: 13, fontWeight: '700' },
+  resetInputBox: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: '#D1E8D5', backgroundColor: '#FFFFFF', paddingHorizontal: 16 },
+  resetInputBoxError: { borderColor: '#D9383A', backgroundColor: '#FFF6F6' },
+  resetInput: { flex: 1, color: '#0A4D26', fontSize: 15, paddingVertical: 0 },
+  resetEyeToggle: { padding: 2 },
+  resetFieldError: { color: '#D9383A', fontSize: 11, fontWeight: '700' },
+  resetActions: { gap: 16, alignItems: 'center' },
+  resetSubmitBtn: { height: 52, width: '100%', borderRadius: 100, backgroundColor: '#0A4D26', alignItems: 'center', justifyContent: 'center' },
+  resetSubmitBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  resetLinkBack: { color: '#0A4D26', fontSize: 15, fontWeight: '700', textDecorationLine: 'underline' },
+});

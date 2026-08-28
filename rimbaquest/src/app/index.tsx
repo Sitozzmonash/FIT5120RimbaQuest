@@ -11,26 +11,28 @@ import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
 import { clearSession, loadSession, saveSession } from '../constants/session';
 import { styles } from '../styles/theme';
 
-import { BottomNav } from '../components/common/BottomNav';
 import { HomeScreen } from '../components/screens/HomeScreen';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/LocationsScreen';
 import {
   CameraScreen,
+  PhotoPreviewScreen,
   CategoryScreen,
   ConfirmScreen,
   SpeciesScreen,
   SuccessScreen,
-} from '../components/screens/DiscoveryScreens';
-import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/CollectionScreens';
+} from '../components/screens/discovery';
+import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/BattleScreens';
-import {
-  AuthScreen,
-  ForgotPasswordScreen,
-  ProfileEditScreen,
-  ProfileScreen,
-} from '../components/screens/AuthScreens';
+import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
+import { LoginScreen } from '../components/screens/LoginScreen';
+import { AccountCreationScreen } from '../components/screens/account-creation';
+import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
+import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
+import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
 const GUEST_USER: UserProfile = {
@@ -92,7 +94,7 @@ async function readCurrentLocationLabel(): Promise<string | null> {
 }
 
 export default function RimbaQuest() {
-  const [screen, setScreen] = useState<Screen>('auth');
+  const [screen, setScreen] = useState<Screen>('account_entry');
   const [history, setHistory] = useState<Screen[]>([]);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
@@ -117,6 +119,8 @@ export default function RimbaQuest() {
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [firstDiscovery, setFirstDiscovery] = useState(true);
+  const [discoveryXpAwarded, setDiscoveryXpAwarded] = useState(0);
+  const [discoveryRecordedAt, setDiscoveryRecordedAt] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
@@ -129,13 +133,12 @@ export default function RimbaQuest() {
   const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [authUsername, setAuthUsername] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authAge, setAuthAge] = useState('');
-  const [authAvatar, setAuthAvatar] = useState('tapir');
+  const [authAge, setAuthAge] = useState('10');
+  const [authAvatar, setAuthAvatar] = useState('hornbill');
   const [authError, setAuthError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -143,7 +146,7 @@ export default function RimbaQuest() {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotToken, setForgotToken] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
   const [forgotFieldError, setForgotFieldError] = useState<string | null>(null);
   const [forgotFormError, setForgotFormError] = useState<string | null>(null);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
@@ -185,11 +188,10 @@ export default function RimbaQuest() {
     setDiscovered([]);
     setRecentCaptures([]);
     setGalleryPhotos({});
-    setAuthMode('login');
     setAuthPassword('');
     setAuthError('Your session is no longer valid. Please sign in again.');
     setHistory([]);
-    setScreen('auth');
+    setScreen('login');
   };
 
   const loadLocations = async () => {
@@ -266,7 +268,7 @@ export default function RimbaQuest() {
         setIsLoggedIn(true);
         setScreen('home');
       } else {
-        setScreen('auth');
+        setScreen('account_entry');
         setLoading(false);
       }
     })();
@@ -338,7 +340,7 @@ export default function RimbaQuest() {
   const goBack = () => {
     setHistory((cur) => {
       const prev = cur[cur.length - 1];
-      setScreen(prev ?? (isLoggedIn ? 'home' : 'auth'));
+      setScreen(prev ?? (isLoggedIn ? 'home' : 'account_entry'));
       return cur.slice(0, -1);
     });
   };
@@ -356,17 +358,28 @@ export default function RimbaQuest() {
     resetTo('photo');
   };
 
-  const retakePhoto = () => {
-    setPhotoUri(null);
-    setPhotoError(null);
-    setScreen('photo');
-  };
-
   const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
     setPhotoUri(uri);
     setPhotoMimeType(mimeType);
     setPhotoError(null);
-    open('category');
+    open('photo_preview');
+  };
+
+  // Confirmed from the discard-photo dialog: abandon the in-progress
+  // discovery entirely and land back on Home, rather than stepping back
+  // one screen at a time.
+  const discardDiscovery = () => {
+    setPhotoUri(null);
+    setPhotoError(null);
+    setSaveError(null);
+    setLocationNotice(null);
+    resetTo('home');
+  };
+
+  const retakePhoto = () => {
+    setPhotoUri(null);
+    setPhotoError(null);
+    setScreen('photo');
   };
 
   const takePhoto = async () => {
@@ -445,19 +458,27 @@ export default function RimbaQuest() {
         throw new Error(SESSION_EXPIRED_ERROR);
       }
       if (!response.ok) throw new Error(apiMessage(responseData, 'Unable to save'));
-      const result = responseData as { first_discovery?: boolean; total_xp?: number; photo_url?: string | null };
+      const result = responseData as {
+        first_discovery?: boolean;
+        total_xp?: number;
+        xp_awarded?: number;
+        recorded_at?: string;
+        photo_url?: string | null;
+      };
       setFirstDiscovery(Boolean(result.first_discovery));
+      setDiscoveryXpAwarded(Number(result.xp_awarded ?? 0));
+      setDiscoveryRecordedAt(result.recorded_at ?? new Date().toISOString());
       if (result.first_discovery && !discovered.includes(selected.id)) {
         setDiscovered((current) => [...current, selected.id]);
         setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
       }
-      setGalleryPhotos((current) => {
-        const next = {
-          ...current,
-          [selected.id]: [{ photo_url: result.photo_url || storedPhoto.photo_url || photoUri, location_label: locationLabel }, ...(current[selected.id] ?? [])],
-        };
-        return next;
-      });
+      setGalleryPhotos((current) => ({
+        ...current,
+        [selected.id]: [
+          { photo_url: result.photo_url || storedPhoto.photo_url || photoUri, location_label: locationLabel },
+          ...(current[selected.id] ?? []),
+        ],
+      }));
       await refresh(currentUser.id, accessToken);
       open('success');
     } catch (error) {
@@ -562,6 +583,57 @@ export default function RimbaQuest() {
     }
   };
 
+  const validateUsernameBlur = () => {
+    const name = authUsername.trim();
+    if (!name) return;
+    if (name.length < 3 || name.length > 20) {
+      setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
+    } else {
+      setFieldErrors((cur) => {
+        const next = { ...cur };
+        delete next.username;
+        return next;
+      });
+    }
+  };
+
+  const validateEmailBlur = () => {
+    const email = authEmail.trim();
+    if (!email) return;
+    if (!EMAIL_RE.test(email)) {
+      setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
+    } else {
+      setFieldErrors((cur) => {
+        const next = { ...cur };
+        delete next.email;
+        return next;
+      });
+    }
+  };
+
+  // Gates step 1 -> 2 of the Create Account wizard: unlike the blur handlers
+  // above, this checks both fields synchronously (e.g. a field the user never
+  // focused) and reports whether it's safe to advance.
+  const validateStep1 = (): boolean => {
+    const name = authUsername.trim();
+    const email = authEmail.trim();
+    const errors: { username?: string; email?: string } = {};
+    if (!name) errors.username = 'Please enter a username.';
+    else if (name.length < 3 || name.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
+    if (!email) errors.email = 'Please enter an email address.';
+    else if (!EMAIL_RE.test(email)) errors.email = 'Please enter a valid email address.';
+
+    setFieldErrors((cur) => {
+      const next = { ...cur };
+      if (errors.username) next.username = errors.username;
+      else delete next.username;
+      if (errors.email) next.email = errors.email;
+      else delete next.email;
+      return next;
+    });
+    return !errors.username && !errors.email;
+  };
+
   const handleForgotRequest = async () => {
     if (forgotSubmitting) return;
     setForgotFormError(null);
@@ -587,7 +659,7 @@ export default function RimbaQuest() {
         return;
       }
       setForgotToken(String(data.simulated_token || ''));
-      setForgotStep(2);
+      open('reset_password');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
@@ -597,12 +669,13 @@ export default function RimbaQuest() {
 
   const handleResetPassword = async () => {
     if (forgotSubmitting) return;
-    if (!forgotToken.trim()) {
-      setForgotFieldError('Please enter your recovery code.');
-      return;
-    }
+    setForgotFieldError(null);
     if (!forgotNewPassword) {
       setForgotFormError('Please create a password.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotFieldError('Passwords do not match.');
       return;
     }
     setForgotSubmitting(true);
@@ -620,19 +693,14 @@ export default function RimbaQuest() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const message = apiMessage(data, 'Invalid or expired recovery code.');
-        if (/expired/i.test(message)) {
-          setForgotFormError(message);
-          setForgotFieldError(message);
-        } else {
-          setForgotFieldError(message);
-        }
+        setForgotFormError(/expired/i.test(message) ? `${message} Please request a new code.` : message);
         return;
       }
       Alert.alert('Success', 'Password successfully updated!');
-      setForgotStep(1);
       setForgotToken('');
       setForgotNewPassword('');
-      setScreen('auth');
+      setForgotConfirmPassword('');
+      resetTo('login');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
@@ -687,7 +755,7 @@ export default function RimbaQuest() {
     setAuthConfirmPassword('');
     setFieldErrors({});
     setAuthError(null);
-    resetTo('auth');
+    resetTo('account_entry');
   };
 
   const loadLocationDetail = async (loc: LocationItem) => {
@@ -825,10 +893,15 @@ export default function RimbaQuest() {
     );
   }
 
+  const fullBleed = (screen === 'home' && isLoggedIn) || GRADIENT_SCREENS.includes(screen);
+
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={[styles.safe, fullBleed && styles.safeTransparent]}
+      edges={fullBleed ? [] : undefined}
+    >
       <StatusBar barStyle="dark-content" />
-      <View style={styles.page}>
+      <View style={[styles.page, fullBleed && styles.pageTransparent]}>
         {screen === 'home' && isLoggedIn && (
           <HomeScreen
             currentUser={currentUser}
@@ -836,9 +909,10 @@ export default function RimbaQuest() {
             recentCaptures={recentCaptures}
             notice={notice}
             onOpenProfile={() => open('progress')}
-            onOpenLocations={() => resetTo('locations')}
+            onOpenCollection={() => open('collection')}
+            onOpenLocations={() => open('locations')}
             onStartDiscovery={() => startDiscovery()}
-            onOpenBattle={() => resetTo('battle_select')}
+            onOpenBattle={() => open('battle_select')}
           />
         )}
 
@@ -857,6 +931,7 @@ export default function RimbaQuest() {
               open('location_detail');
               void loadLocationDetail(loc);
             }}
+            onBack={goBack}
           />
         )}
 
@@ -875,6 +950,7 @@ export default function RimbaQuest() {
             cameraRef={cameraRef}
             cameraPermission={cameraPermission}
             photoError={photoError}
+            lastCaptureUri={recentCaptures[0]?.photo_url ?? null}
             onRequestPermission={requestCameraPermission}
             onTakePhoto={() => void takePhoto()}
             onPickFromGallery={() => void pickFromGallery()}
@@ -882,17 +958,22 @@ export default function RimbaQuest() {
           />
         )}
 
+        {screen === 'photo_preview' && discoveryPhoto && (
+          <PhotoPreviewScreen photo={discoveryPhoto} onRetake={retakePhoto} onUpload={() => open('category')} />
+        )}
+
         {screen === 'category' && discoveryPhoto && (
           <CategoryScreen
             photo={discoveryPhoto}
             categories={CATEGORIES}
+            category={category}
             onSelectCategory={(cat) => {
               setCategory(cat);
               setSpeciesSearch('');
               open('species');
             }}
-            onRetake={retakePhoto}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -908,6 +989,7 @@ export default function RimbaQuest() {
               open('confirm');
             }}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -927,9 +1009,8 @@ export default function RimbaQuest() {
             saveError={saveError}
             saving={saving}
             onConfirm={() => void recordDiscovery()}
-            onChangeSpecies={() => open('species')}
-            onRetake={retakePhoto}
             onBack={goBack}
+            onDiscard={discardDiscovery}
           />
         )}
 
@@ -938,11 +1019,10 @@ export default function RimbaQuest() {
             selected={selected}
             discoveryLocation={discoveryLocation}
             firstDiscovery={firstDiscovery}
+            xpAwarded={discoveryXpAwarded}
+            recordedAt={discoveryRecordedAt}
             onViewCard={() => open('about')}
-            onEnterBattle={() => initBattle(selected)}
-            onViewCollection={() => resetTo('collection')}
             onRecordAnother={() => startDiscovery()}
-            onBack={goBack}
           />
         )}
 
@@ -962,6 +1042,14 @@ export default function RimbaQuest() {
               setSelected(item);
               open('locked');
             }}
+            onStartDiscovery={() => {
+              setPhotoUri(null);
+              setPhotoError(null);
+              setSaveError(null);
+              setLocationNotice(null);
+              open('photo');
+            }}
+            onBack={goBack}
           />
         )}
 
@@ -972,15 +1060,14 @@ export default function RimbaQuest() {
             photos={galleryPhotos[selected.id] ?? []}
             onTabChange={(tab) => open(tab)}
             onStartBattle={() => initBattle(selected)}
-            onBack={goBack}
+            onBack={() => resetTo('collection')}
           />
         )}
 
         {screen === 'locked' && (
           <LockedScreen
             species={selected}
-            onStartDiscovery={() => startDiscovery()}
-            onBack={goBack}
+            onBack={() => resetTo('collection')}
           />
         )}
 
@@ -991,6 +1078,7 @@ export default function RimbaQuest() {
             onSelectCard={setBattlePlayerCard}
             onStartBattle={() => battlePlayerCard && initBattle(battlePlayerCard)}
             onStartDiscovery={() => startDiscovery()}
+            onBack={goBack}
           />
         )}
 
@@ -1015,89 +1103,97 @@ export default function RimbaQuest() {
           />
         )}
 
-        {screen === 'auth' && (
-          <AuthScreen
-            authMode={authMode}
-            setAuthMode={(mode) => {
-              setAuthMode(mode);
+        {screen === 'account_entry' && (
+          <AccountEntryScreen
+            onLogin={() => {
               setAuthError(null);
               setFieldErrors({});
+              open('login');
             }}
-            authError={authError}
-            fieldErrors={fieldErrors}
-            submitting={authSubmitting}
+            onCreateAccount={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('create_account');
+            }}
+          />
+        )}
+
+        {screen === 'login' && (
+          <LoginScreen
             username={authUsername}
             setUsername={setAuthUsername}
+            password={authPassword}
+            setPassword={setAuthPassword}
+            fieldErrors={fieldErrors}
+            authError={authError}
+            submitting={authSubmitting}
+            onLogin={() => void handleLogin()}
+            onForgotPassword={() => {
+              setForgotFieldError(null);
+              setForgotFormError(null);
+              open('forgot_password');
+            }}
+            onCreateAccount={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('create_account');
+            }}
+          />
+        )}
+
+        {screen === 'create_account' && (
+          <AccountCreationScreen
+            username={authUsername}
+            setUsername={setAuthUsername}
+            age={authAge}
+            setAge={setAuthAge}
             email={authEmail}
             setEmail={setAuthEmail}
             password={authPassword}
             setPassword={setAuthPassword}
             confirmPassword={authConfirmPassword}
             setConfirmPassword={setAuthConfirmPassword}
-            age={authAge}
-            setAge={setAuthAge}
             avatar={authAvatar}
             setAvatar={setAuthAvatar}
-            onLogin={() => void handleLogin()}
+            fieldErrors={fieldErrors}
+            authError={authError}
+            submitting={authSubmitting}
             onRegister={() => void handleRegister()}
-            onForgotPassword={() => {
-              setForgotStep(1);
-              setForgotFieldError(null);
-              setForgotFormError(null);
-              open('forgot_password');
+            onLogin={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('login');
             }}
-            onBlurUsername={() => {
-              const name = authUsername.trim();
-              if (!name) return;
-              if (name.length < 3 || name.length > 20) {
-                setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
-              } else {
-                setFieldErrors((cur) => {
-                  const next = { ...cur };
-                  delete next.username;
-                  return next;
-                });
-              }
-            }}
-            onBlurEmail={() => {
-              const email = authEmail.trim();
-              if (!email) return;
-              if (!EMAIL_RE.test(email)) {
-                setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
-              } else {
-                setFieldErrors((cur) => {
-                  const next = { ...cur };
-                  delete next.email;
-                  return next;
-                });
-              }
-            }}
-            showBack={isLoggedIn}
             onBack={goBack}
+            onValidateStep1={validateStep1}
+            onBlurUsername={validateUsernameBlur}
+            onBlurEmail={validateEmailBlur}
           />
         )}
 
         {screen === 'forgot_password' && (
           <ForgotPasswordScreen
-            step={forgotStep}
             email={forgotEmail}
             setEmail={setForgotEmail}
-            token={forgotToken}
-            setToken={setForgotToken}
-            newPassword={forgotNewPassword}
-            setNewPassword={setForgotNewPassword}
             fieldError={forgotFieldError}
             formError={forgotFormError}
             submitting={forgotSubmitting}
-            onRequestCode={() => void handleForgotRequest()}
+            onSendRecoveryLink={() => void handleForgotRequest()}
+            onBackToLogin={() => resetTo('login')}
+          />
+        )}
+
+        {screen === 'reset_password' && (
+          <ResetPasswordScreen
+            newPassword={forgotNewPassword}
+            setNewPassword={setForgotNewPassword}
+            confirmPassword={forgotConfirmPassword}
+            setConfirmPassword={setForgotConfirmPassword}
+            fieldError={forgotFieldError}
+            formError={forgotFormError}
+            submitting={forgotSubmitting}
             onResetPassword={() => void handleResetPassword()}
-            onRequestNewCode={() => {
-              setForgotStep(1);
-              setForgotFieldError(null);
-              setForgotFormError(null);
-              setForgotToken('');
-            }}
-            onBack={goBack}
+            onBackToLogin={() => resetTo('login')}
           />
         )}
 
@@ -1131,13 +1227,10 @@ export default function RimbaQuest() {
               open('profile_edit');
             }}
             onLogout={handleLogout}
+            onBack={goBack}
           />
         )}
       </View>
-
-      {isLoggedIn && ['home', 'locations', 'collection', 'battle_select', 'progress'].includes(screen) && (
-        <BottomNav screen={screen} onNavigate={(s) => resetTo(s)} onStartDiscovery={() => startDiscovery()} />
-      )}
     </SafeAreaView>
   );
 }

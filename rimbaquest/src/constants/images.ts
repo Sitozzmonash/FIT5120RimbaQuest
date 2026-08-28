@@ -10,6 +10,39 @@ export const IMAGES = {
   recent: require('../../assets/wildlife/recent-marmoset.jpg'),
 };
 
+export const DISCOVERY_CATEGORY_IMAGES = {
+  Mammal: require('../../assets/discovery/mammals.png'),
+  Bird: require('../../assets/discovery/birds.png'),
+  Butterfly: require('../../assets/discovery/butterflies.png'),
+  Reptile: require('../../assets/discovery/reptiles.png'),
+};
+
+export const HOME_IMAGES = {
+  brandLogo: require('../../assets/home/brand-logo.png'),
+  leafDecor: require('../../assets/home/image-decor.png'),
+  pandaDecor: require('../../assets/home/red-panda-bush-deco.png'),
+  collectionBook: require('../../assets/home/collection-book.png'),
+  tileDiscover: require('../../assets/home/tile-discover.png'),
+  tileCapture: require('../../assets/home/tile-capture.png'),
+  tileBattle: require('../../assets/home/tile-battle.png'),
+};
+
+export const COLLECTION_IMAGES = {
+  vineBottomLeft: require('../../assets/collection/vine-bottom-left.png'),
+  tigerTopRight: require('../../assets/collection/tiger-top-right.png'),
+  vineBottomRight: require('../../assets/collection/vine-bottom-right.png'),
+};
+
+export const AUTH_IMAGES = {
+  mascotWelcome: require('../../assets/auth/mascot-id-card.png'),
+  mascotLogin: require('../../assets/auth/mascot-wave.png'),
+  mascotForgot: require('../../assets/auth/mascot-key.png'),
+  mascotReset: require('../../assets/auth/mascot-shield.png'),
+  avatarBird: require('../../assets/auth/avatar-bird.png'),
+  avatarTiger: require('../../assets/auth/avatar-tiger.png'),
+  avatarPanda: require('../../assets/auth/avatar-panda.png'),
+};
+
 export const AVATAR_ICONS: Record<string, string> = {
   tapir: '🦛',
   tiger: '🐯',
@@ -17,6 +50,7 @@ export const AVATAR_ICONS: Record<string, string> = {
   elephant: '🐘',
   pangolin: '🦔',
   butterfly: '🦋',
+  panda: '🐼',
 };
 
 export const SPECIES_IMAGES: Record<string, number> = {
