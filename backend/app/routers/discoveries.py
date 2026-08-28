@@ -60,7 +60,7 @@ def create_discovery(
 
     with engine.begin() as connection:
         species = connection.execute(
-            text("SELECT id, sensitive, common_name, category FROM species WHERE id=:id"),
+            text("SELECT id, sensitive, common_name, category FROM species WHERE id=:id AND is_active=1"),
             {"id": payload.species_id},
         ).mappings().first()
         if not species:
@@ -174,6 +174,7 @@ def collection(
             FROM species
             LEFT JOIN collection_entries collection
               ON collection.species_id=species.id AND collection.child_id=:child
+            WHERE species.is_active=1
             ORDER BY discovered DESC, species.category, species.common_name"""), {"child": child_id}))
     for item in entries:
         item.update(calculate_battle_stats(item["id"], item["category"]))
@@ -197,6 +198,7 @@ def progress(
             FROM species
             LEFT JOIN collection_entries collection
               ON collection.species_id=species.id AND collection.child_id=:child
+            WHERE species.is_active=1
             GROUP BY species.category ORDER BY species.category"""), {"child": child_id}))
     found = sum(int(row["discovered"] or 0) for row in categories)
     total = sum(int(row["total"]) for row in categories)

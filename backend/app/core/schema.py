@@ -85,6 +85,9 @@ species = Table(
     Column("responsible_zh", Text),
     Column("act716_schedule", String),
     Column("act716_status", String),
+    # Retired records are retained for historical sightings but hidden from
+    # the child-facing discovery catalogue.
+    Column("is_active", Boolean, nullable=False, default=True),
 )
 
 species_images = Table(
