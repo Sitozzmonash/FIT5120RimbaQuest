@@ -19,3 +19,9 @@ tmp/
 
 /rimbaquest/tools/generated_seed.txt
 /rimbaquest/tools/generated_spec_images.txt
+
+# Agent instruction files and local preview artifacts (never commit)
+.claude/
+AGENTS.md
+CLAUDE.md
+rimbaquest-preview-qr.png

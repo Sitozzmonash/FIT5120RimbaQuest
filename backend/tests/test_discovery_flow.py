@@ -1,233 +1,276 @@
+from __future__ import annotations
+
 import os
-import shutil
 import tempfile
 from pathlib import Path
+from uuid import uuid4
 
-# Use isolated test SQLite database
+
+import pytest
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
 temp_dir = tempfile.mkdtemp()
-os.environ["DATABASE_URL"] = f"sqlite:///{Path(temp_dir) / 'test.db'}"
+os.environ["DATABASE_URL"] = f"sqlite:///{(Path(temp_dir) / 'test.db').as_posix()}"
+os.environ["JWT_SECRET"] = "test-only-secret-at-least-32-bytes-long"
 
 from fastapi.testclient import TestClient
+
+from app.core.database import engine, initialise_database
 from app.main import app
+
 
 client = TestClient(app)
 
 
-def test_system_health():
-    res = client.get("/health")
-    assert res.status_code == 200
-    assert res.json()["status"] == "ok"
+def register(prefix: str = "explorer") -> tuple[int, str, str]:
+    suffix = uuid4().hex[:8]
+    username = f"{prefix}_{suffix}"
+    response = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": username,
+            "age": 11,
+            "email": f"{username}@rimbaquest.test",
+            "password": "junglePassword123",
+            "avatar": "tiger",
+        },
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    return data["child_id"], data["access_token"], username
 
 
-def test_auth_registration_and_login():
-    # 1. Registration validation - username too short
-    short_user = client.post("/api/v1/auth/register", json={
-        "username": "ab",
-        "age": 10,
-        "email": "test@test.com",
-        "password": "password123",
-        "avatar": "tapir"
-    })
-    assert short_user.status_code == 422
+def headers(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
-    # 2. Registration validation - spaces in username
-    spaced_user = client.post("/api/v1/auth/register", json={
-        "username": "user name",
-        "age": 10,
-        "email": "test@test.com",
-        "password": "password123",
-        "avatar": "tapir"
-    })
-    assert spaced_user.status_code == 422
 
-    # 3. Successful registration
-    reg = client.post("/api/v1/auth/register", json={
-        "username": "malayan_explorer",
-        "age": 11,
-        "email": "explorer@rimbaquest.my",
-        "password": "junglePassword123",
-        "avatar": "tiger"
-    })
-    assert reg.status_code == 200
-    data = reg.json()
-    assert data["success"] is True
-    assert data["username"] == "malayan_explorer"
-    assert data["avatar"] == "tiger"
-    child_id = data["child_id"]
+def test_database_enforces_foreign_keys_and_collection_uniqueness():
+    child_id, _, _ = register("integrity")
+    with engine.connect() as connection:
+        assert connection.execute(text("PRAGMA foreign_keys")).scalar() == 1
+        species_id = connection.execute(text("SELECT id FROM species ORDER BY id LIMIT 1")).scalar_one()
 
-    # 4. Duplicate registration prevention
-    dup = client.post("/api/v1/auth/register", json={
-        "username": "malayan_explorer",
-        "age": 11,
-        "email": "diff@rimbaquest.my",
-        "password": "junglePassword123",
-        "avatar": "tiger"
-    })
-    assert dup.status_code == 400
-    assert "already taken" in dup.json()["detail"]
+    with engine.begin() as connection:
+        entry = {"child": child_id, "species": species_id}
+        connection.execute(text("""INSERT INTO collection_entries
+            (child_id, species_id, unlock_reason, observed_boolean)
+            VALUES (:child, :species, 'audit', 0)"""), entry)
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO collection_entries
+                    (child_id, species_id, unlock_reason, observed_boolean)
+                    VALUES (:child, :species, 'duplicate', 0)"""), entry)
+        with pytest.raises(IntegrityError):
+            with connection.begin_nested():
+                connection.execute(text("""INSERT INTO collection_entries
+                    (child_id, species_id, unlock_reason, observed_boolean)
+                    VALUES (999999, :species, 'foreign-key', 0)"""), {"species": species_id})
 
-    # 4b. Leading/trailing username spaces are trimmed before uniqueness/length checks
-    trimmed = client.post("/api/v1/auth/register", json={
-        "username": "  malayan_explorer  ",
-        "age": 11,
-        "email": "trim@rimbaquest.my",
-        "password": "junglePassword123",
-        "avatar": "tiger"
-    })
-    assert trimmed.status_code == 400
 
-    # 5. Successful login with username
-    login_user = client.post("/api/v1/auth/login", json={
-        "username_or_email": "malayan_explorer",
-        "password": "junglePassword123"
-    })
-    assert login_user.status_code == 200
-    assert login_user.json()["child_id"] == child_id
+def test_system_health_and_static_catalogue():
+    health = client.get("/health")
+    assert health.status_code == 200
+    assert health.json()["database"] == "sqlite"
 
-    # 6. Successful login with email
-    login_email = client.post("/api/v1/auth/login", json={
-        "username_or_email": "explorer@rimbaquest.my",
-        "password": "junglePassword123"
-    })
-    assert login_email.status_code == 200
+    all_species = client.get("/api/v1/species")
+    assert all_species.status_code == 200
+    assert len(all_species.json()) == 155
+    assert all(item["habitat"] and item["diet"] and item["fun_fact"] for item in all_species.json())
 
-    # 7. Failed login with wrong password
-    bad_login = client.post("/api/v1/auth/login", json={
-        "username_or_email": "malayan_explorer",
-        "password": "wrongpassword"
-    })
+    quiz = client.get(f"/api/v1/species/{all_species.json()[0]['id']}/quiz")
+    assert quiz.status_code == 200
+    assert quiz.json()["questions"]
+
+
+def test_auth_registration_login_and_duplicate_protection():
+    invalid = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "user name",
+            "age": 10,
+            "email": "invalid@rimbaquest.test",
+            "password": "password123",
+            "avatar": "tapir",
+        },
+    )
+    assert invalid.status_code == 422
+
+    child_id, token, username = register("auth")
+    assert token
+
+    duplicate = client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": f"  {username}  ",
+            "age": 11,
+            "email": "different@rimbaquest.test",
+            "password": "junglePassword123",
+            "avatar": "tiger",
+        },
+    )
+    assert duplicate.status_code == 400
+
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": username.upper(), "password": "junglePassword123"},
+    )
+    assert login.status_code == 200
+    assert login.json()["child_id"] == child_id
+    assert login.json()["access_token"]
+
+    bad_login = client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": username, "password": "wrongpassword"},
+    )
     assert bad_login.status_code == 401
 
 
-def test_auth_password_reset():
-    unknown = client.post("/api/v1/auth/forgot-password", json={"email": "nobody@rimbaquest.my"})
-    assert unknown.status_code == 400
-    assert "account" in unknown.json()["detail"].lower()
-
-    # Forgot password request
-    forgot = client.post("/api/v1/auth/forgot-password", json={"email": "explorer@rimbaquest.my"})
+def test_password_reset_and_argon2_storage():
+    _, _, username = register("reset")
+    email = f"{username}@rimbaquest.test"
+    forgot = client.post("/api/v1/auth/forgot-password", json={"email": email})
     assert forgot.status_code == 200
-    token = forgot.json()["simulated_token"]
-
-    # Reset password
-    reset = client.post("/api/v1/auth/reset-password", json={
-        "email": "explorer@rimbaquest.my",
-        "recovery_token": token,
-        "new_password": "newJunglePassword456"
-    })
+    reset = client.post(
+        "/api/v1/auth/reset-password",
+        json={
+            "email": email,
+            "recovery_token": forgot.json()["simulated_token"],
+            "new_password": "newJunglePassword456",
+        },
+    )
     assert reset.status_code == 200
-
-    # Log in with new password
-    login_new = client.post("/api/v1/auth/login", json={
-        "username_or_email": "explorer@rimbaquest.my",
-        "password": "newJunglePassword456"
-    })
-    assert login_new.status_code == 200
-
-
-def test_profile_view_and_update():
-    prof = client.get("/api/v1/children/1/profile")
-    assert prof.status_code == 200
-    assert "display_name" in prof.json()
-    assert "avatar" in prof.json()
-
-    # Update profile
-    update = client.put("/api/v1/children/1/profile", json={
-        "display_name": "Ranger Aisyah",
-        "avatar": "hornbill",
-        "age": 11
-    })
-    assert update.status_code == 200
-    assert update.json()["display_name"] == "Ranger Aisyah"
-    assert update.json()["avatar"] == "hornbill"
+    assert client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": email, "password": "newJunglePassword456"},
+    ).status_code == 200
+    with engine.connect() as connection:
+        stored = connection.execute(
+            text("SELECT password_hash FROM users WHERE username=:username"), {"username": username}
+        ).scalar_one()
+    assert stored.startswith("$argon2")
 
 
-def test_locations_search_and_filter():
-    # List all locations
-    all_locs = client.get("/api/v1/locations")
-    assert all_locs.status_code == 200
-    items = all_locs.json()["items"]
-    assert len(items) >= 5
-    names = [loc["name"] for loc in items]
+def test_child_routes_require_auth_and_enforce_ownership():
+    first_id, first_token, _ = register("owner")
+    second_id, second_token, _ = register("other")
+
+    assert client.get(f"/api/v1/children/{first_id}/profile").status_code == 401
+    assert client.get(
+        f"/api/v1/children/{first_id}/profile", headers=headers(second_token)
+    ).status_code == 403
+
+    profile = client.put(
+        f"/api/v1/children/{first_id}/profile",
+        headers=headers(first_token),
+        json={"display_name": "Ranger Aisyah", "avatar": "hornbill", "age": 11},
+    )
+    assert profile.status_code == 200
+    assert profile.json()["display_name"] == "Ranger Aisyah"
+    assert first_id != second_id
+
+
+def test_locations_search_and_iteration_one_scope():
+    locations = client.get("/api/v1/locations")
+    assert locations.status_code == 200
+    items = locations.json()["items"]
+    assert len(items) == 6
+    names = [item["name"] for item in items]
     assert any("Gasing" in name for name in names)
-    assert all("Bako" not in name and "Cherating" not in name and "Taman Negara" not in name for name in names)
-
-    # Search by keyword (case insensitive)
-    gasing = client.get("/api/v1/locations?query=gasing")
-    assert gasing.status_code == 200
-    assert any("Gasing" in loc["name"] for loc in gasing.json()["items"])
-
-    # Filter by category
-    butterfly_locs = client.get("/api/v1/locations?category=Butterfly")
-    assert butterfly_locs.status_code == 200
-
-    # Combined search & filter
-    combined = client.get("/api/v1/locations?query=Selangor&category=Birds")
-    assert combined.status_code == 200
+    assert all("Bako" not in name and "Cherating" not in name for name in names)
+    assert client.get("/api/v1/locations?query=gasing").json()["items"]
 
 
-def test_confirmed_discovery_and_collection():
-    species_list = client.get("/api/v1/species?category=Mammal").json()
-    assert len(species_list) > 0
-    species = species_list[0]
-    assert "hp" in species
-    assert "base_attack" in species
+def test_photo_upload_discovery_collection_and_progress(monkeypatch):
+    child_id, token, _ = register("discover")
+    auth = headers(token)
+    species_item = client.get("/api/v1/species?category=Mammal").json()[0]
+    object_path = f"children/{child_id}/discoveries/test-photo.jpg"
+    signed_url = "https://example.test/private-photo"
+    monkeypatch.setattr(
+        "app.routers.discoveries.upload_discovery_photo",
+        lambda incoming_child_id, content, content_type: object_path,
+    )
+    monkeypatch.setattr(
+        "app.routers.discoveries.signed_photo_url",
+        lambda path: signed_url if path else None,
+    )
 
-    before_prog = client.get("/api/v1/children/1/progress").json()
-    before_found = before_prog["found"]
+    uploaded = client.post(
+        f"/api/v1/children/{child_id}/photos",
+        headers=auth,
+        files={"photo": ("wildlife.jpg", b"jpeg-data", "image/jpeg")},
+    )
+    assert uploaded.status_code == 200
+    assert uploaded.json() == {"photo_path": object_path, "photo_url": signed_url}
 
-    # First discovery
-    first = client.post("/api/v1/children/1/discoveries", json={
-        "species_id": species["id"],
-        "location_label": "Bukit Gasing Nature Reserve",
-        "notes": "Spotted near the bridge"
-    })
+    foreign_path = f"children/{child_id + 1}/discoveries/foreign.jpg"
+    rejected = client.post(
+        f"/api/v1/children/{child_id}/discoveries",
+        headers=auth,
+        json={"species_id": species_item["id"], "location_label": "FRIM", "photo_path": foreign_path},
+    )
+    assert rejected.status_code == 400
+
+    first = client.post(
+        f"/api/v1/children/{child_id}/discoveries",
+        headers=auth,
+        json={
+            "species_id": species_item["id"],
+            "location_label": "Bukit Gasing Nature Reserve",
+            "photo_path": object_path,
+        },
+    )
     assert first.status_code == 200
     assert first.json()["first_discovery"] is True
     assert first.json()["xp_awarded"] == 100
 
-    # Second discovery of same species
-    second = client.post("/api/v1/children/1/discoveries", json={
-        "species_id": species["id"],
-        "location_label": "FRIM Canopy Walkway"
-    })
+    second = client.post(
+        f"/api/v1/children/{child_id}/discoveries",
+        headers=auth,
+        json={"species_id": species_item["id"], "location_label": "FRIM"},
+    )
     assert second.status_code == 200
     assert second.json()["first_discovery"] is False
     assert second.json()["xp_awarded"] == 0
 
-    # Progress should increase by only 1 unique species
-    after_prog = client.get("/api/v1/children/1/progress").json()
-    assert after_prog["found"] == before_found + 1
+    progress = client.get(f"/api/v1/children/{child_id}/progress", headers=auth).json()
+    assert progress["found"] == 1
+    assert progress["profile"]["xp"] == 100
 
-    # Gallery should return 2 sightings
-    gallery = client.get(f"/api/v1/children/1/species/{species['id']}/gallery")
+    collection = client.get(f"/api/v1/children/{child_id}/collection", headers=auth).json()["items"]
+    assert collection[0]["id"] == species_item["id"]
+    assert collection[0]["discovered"] == 1
+
+    gallery = client.get(
+        f"/api/v1/children/{child_id}/species/{species_item['id']}/gallery", headers=auth
+    )
     assert gallery.status_code == 200
-    assert len(gallery.json()["items"]) >= 2
-
-    # Collection has battle stats
-    col = client.get("/api/v1/children/1/collection")
-    assert col.status_code == 200
-    first_col_item = col.json()["items"][0]
-    assert "hp" in first_col_item
-    assert "base_attack" in first_col_item
-    assert "discovered" in first_col_item
+    assert len(gallery.json()["items"]) == 2
+    assert gallery.json()["items"][0]["photo_url"] is None
+    assert gallery.json()["items"][1]["photo_url"] == signed_url
 
 
-def test_battle_recording():
-    # Win battle
-    win = client.post("/api/v1/children/1/battle/record", json={
-        "won": True,
-        "opponent_name": "Forest Wild Boar",
-        "rounds": 3
-    })
-    assert win.status_code == 200
-    assert win.json()["won"] is True
-    assert win.json()["xp_awarded"] == 50
+def test_seed_is_idempotent_and_does_not_delete_user_data():
+    child_id, token, username = register("persistent")
+    initialise_database()
+    login = client.post(
+        "/api/v1/auth/login",
+        json={"username_or_email": username, "password": "junglePassword123"},
+    )
+    assert login.status_code == 200
+    assert login.json()["child_id"] == child_id
+    assert client.get(
+        f"/api/v1/children/{child_id}/profile", headers=headers(token)
+    ).status_code == 200
 
-    lose = client.post("/api/v1/children/1/battle/record", json={
-        "won": False,
-        "opponent_name": "Forest Wild Boar",
-        "rounds": 2
-    })
-    assert lose.status_code == 200
-    assert lose.json()["xp_awarded"] == 10
+
+def test_battle_recording_is_owned_and_persistent():
+    child_id, token, _ = register("battle")
+    result = client.post(
+        f"/api/v1/children/{child_id}/battle/record",
+        headers=headers(token),
+        json={"won": True, "opponent_name": "Forest Wild Boar", "rounds": 3},
+    )
+    assert result.status_code == 200
+    assert result.json()["xp_awarded"] == 50

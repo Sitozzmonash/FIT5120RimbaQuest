@@ -1,106 +1,170 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery app built for FIT5120. It uses one Expo/React Native codebase for iOS, Android and the web, backed by a Python FastAPI API and SQLite.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Supabase PostgreSQL plus private Supabase Storage for durable production data.
 
-Iteration 1 is intentionally a **manual wildlife-recording experience**. A child takes a personal photo, chooses a category and species from reference cards, confirms the discovery, unlocks a Wildlife Card, learns about the species, and tracks progress. The photo is **not** sent to AI for automatic identification in this iteration.
+Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal.
 
-## Iteration 1 experience
+## Current deployments
+
+| Service | Address |
+|---|---|
+| Web application | [rimbaquest-preview--latest.expo.app](https://rimbaquest-preview--latest.expo.app/) |
+| Backend API base URL | `https://fit5120rimbaquest.onrender.com` |
+| API health | [fit5120rimbaquest.onrender.com/health](https://fit5120rimbaquest.onrender.com/health) |
+| Interactive API documentation | [fit5120rimbaquest.onrender.com/docs](https://fit5120rimbaquest.onrender.com/docs) |
+
+Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
+
+> **Deployment status (verified 27 August 2026):** the production API reports `"database": "postgresql"` and `"version": "1.2.0"`. Supabase PostgreSQL and the private `discovery-photos` Storage bucket are live, and the EAS Hosting `latest` alias has been redeployed from commit `65c6a52` with JWT session recovery and server-authoritative Gallery loading. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
+
+## Iteration 1 scope
+
+The primary discovery flow is:
 
 ```text
-See wildlife
-  -> Take a photo
-  -> Choose category
-  -> Select species
-  -> Confirm discovery
-  -> Unlock Wildlife Card
-  -> View collection and learn
-  -> Track progress
+Home
+  → Take a photo
+  → Choose Mammals / Birds / Butterflies / Reptiles
+  → Search and manually select a supported species
+  → Confirm species, location, date, and time
+  → Record discovery
+  → Unlock Wildlife Card on the first discovery
+  → View Collection and learn about the species
+  → Complete species quiz and track progress
 ```
 
-The app includes:
+Implemented Iteration 1 behaviour includes:
 
-- Home dashboard with total cards, Explorer Points, and dynamic recent captures.
-- Device camera capture through Expo Camera.
-- Four wildlife categories: Mammals, Birds, Butterflies, and Reptiles.
-- Manual image-led species selection across 155 seeded species.
-- Confirmation screen with species, category, location label, and time.
-- A confirmed discovery awards 100 Explorer Points and unlocks the species card on first discovery.
-- Collection with unlocked cards sorted first and locked/undiscovered cards after them.
-- Species Detail pages with About, Fun Facts, Gallery, and a stored species-specific quiz.
-- Progress summary by category and overall collection count.
+- Account registration, login, prototype recovery-code password reset, and editable child profile.
+- Home dashboard with unique discoveries, Explorer Points, and recent captures.
+- Device-camera capture and photo-library selection.
+- Manual category and species selection across 155 supported species.
+- Case-insensitive, partial species-name search with clear and no-result states.
+- Confirmation of the selected species and human-readable location.
+- A confirmed first discovery unlocks one Wildlife Card and awards 100 Explorer Points.
+- Repeat sightings are retained in the species gallery without duplicating the card or its first-discovery reward.
+- Collection ordering with unlocked species before undiscovered species.
+- Species About, Fun Facts, Gallery, and species-specific Quiz content.
+- Overall and per-category progress based on the authenticated child's records.
+
+Not active in Iteration 1:
+
+- AI photo identification.
+- Automatic species confirmation.
+- BM25/RAG-generated learning content.
+- Runtime calls to DeepSeek, GLM vision models, or GBIF.
+- Iteration 2 or Iteration 3 gameplay and social features.
+
+DeepSeek V4 Flash, GLM-4.6V-Flash, BM25, and GBIF remain possible future architecture components only. They must not be described as active Iteration 1 functionality.
+
+## Repository and target production architecture
+
+```mermaid
+flowchart LR
+    U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
+    C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
+    A -->|SQLAlchemy + psycopg| P[(Supabase PostgreSQL)]
+    A -->|Service-side Storage API| S[(Private Supabase Storage)]
+    P -->|Accounts, profiles, sightings, cards, progress| A
+    S -->|One-hour signed photo URL| A
+    A -->|JSON response| C
+    C -->|Bundled reference images| B[155 local species assets]
+```
+
+### Component responsibilities
+
+| Component | Responsibility |
+|---|---|
+| Expo client | Screens, navigation, camera/gallery access, validation, search, and presentation across Web/Android/iOS |
+| FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
+| Supabase PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
+| Supabase Storage | Private storage for child discovery photos under child-scoped object paths |
+| Seed SQL | Reproducible source catalogue for 155 species, learning fields, quizzes, locations, and image metadata |
+| Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
+
+### Discovery data flow
+
+1. The client captures or selects a photo.
+2. The child manually chooses a category and supported species.
+3. The client uploads the photo to the authenticated child's photo endpoint.
+4. FastAPI validates the JWT and child ownership, then stores the file in the private `discovery-photos` bucket.
+5. FastAPI writes the sighting to PostgreSQL using the private object path, not a permanent public URL.
+6. The first sighting of a species creates one collection entry and awards 100 XP.
+7. Gallery and recent-capture responses contain short-lived signed photo URLs.
 
 ## Technology stack
 
-| Area | Technology |
+| Layer | Technologies |
 |---|---|
-| Cross-platform client | React 19, React Native 0.81, TypeScript, Expo SDK 54 |
-| Navigation/runtime | Expo Router, React Native Web, Expo Camera |
-| Backend | Python 3.12, FastAPI, Uvicorn |
-| Persistence | SQLAlchemy 2.0 and SQLite |
-| Data and assets | Seed SQL, local species JPEG assets, image attribution metadata |
-| Container/deployment | Docker, Render web service, Render persistent disk |
-| Build/distribution | Expo Go for compatible development testing; EAS Build/Update for installable builds and updates |
-
-### Planned, but not active in Iteration 1
-
-The target architecture includes BM25 retrieval, DeepSeek V4 Flash for constrained learning content, GLM-4.6V-Flash for optional wildlife-image suggestions, and GBIF Species API enrichment. None of these decides the child's species selection in the current Iteration 1 flow. Any future AI feature must preserve manual confirmation, show uncertainty, use reviewed wildlife sources, and obtain suitable consent before analysing a photo.
+| Client | TypeScript, React 19, React Native 0.81, Expo SDK 54, Expo Router |
+| Client capabilities | Expo Camera, Expo Image Picker, Expo SecureStore, React Native Web |
+| API | Python 3.12, FastAPI 0.115, Uvicorn, Pydantic |
+| Data access | SQLAlchemy 2.0, psycopg 3 |
+| Production database | Supabase PostgreSQL through the Session pooler |
+| Local/test database | SQLite |
+| Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
+| Photo storage | Private Supabase Storage, 5 MB server-side upload limit, one-hour signed URLs |
+| Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
+| Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
 ## Repository layout
 
 ```text
-RimbaQuest构建/
-├── rimbaquest/                  # Expo client
-│   ├── src/app/                 # Expo Router screens
-│   └── assets/species/          # Bundled wildlife reference assets
-├── backend/                     # FastAPI application, tests, seed data
-│   ├── app/main.py
-│   ├── data/seed.sql
-│   └── tests/
-├── Dockerfile                   # Root-level Render Docker image
-├── render.yaml                  # Render Blueprint configuration
+FIT5120RimbaQuest/
+├── backend/
+│   ├── app/
+│   │   ├── core/               # Configuration, schema, seeding, JWT ownership
+│   │   ├── routers/            # Auth, species, locations, discoveries, progress
+│   │   ├── schemas/            # Request models
+│   │   └── services/           # Private Storage and domain services
+│   ├── data/seed.sql           # Versioned static source catalogue
+│   ├── tests/                  # Backend regression tests
+│   ├── .env.example
+│   └── requirements.txt
+├── rimbaquest/
+│   ├── assets/species/         # 155 species images plus attribution metadata
+│   ├── src/app/                # Expo Router application entry and screens
+│   ├── src/components/         # Reusable UI components
+│   ├── src/constants/          # API, asset, and session configuration
+│   ├── app.json                # Expo native/web configuration
+│   ├── eas.json                # EAS build profiles
+│   └── package.json
+├── Dockerfile                  # Render-compatible backend image
+├── render.yaml                 # Render Blueprint
 └── README.md
 ```
 
-`doc/` and `docs/` are intentionally local-only directories. They are ignored by Git and are not part of the repository deliverable.
+`doc/`, `docs/`, local databases, `.env` files, editor settings, QR images, and agent instruction files are intentionally excluded from Git.
 
-## Run locally
+## Local development
 
 ### Prerequisites
 
-- Node.js LTS and npm
-- Python 3.11+ (Python 3.12 is used in Docker)
-- An iOS simulator/macOS setup, Android emulator, or Expo Go-compatible physical device for native testing
+- Node.js LTS and npm.
+- Python 3.11 or newer; the Docker image uses Python 3.12.
+- Expo Go on a compatible physical device, or Android Studio for an Android emulator.
+- macOS and Xcode only when performing local iOS builds or using the iOS Simulator.
 
-### 1. Start the API
+### Option A: run the client against the deployed API
 
-```powershell
-cd backend
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-The API documentation is available at `http://127.0.0.1:8000/docs`.
-
-### 2. Configure the Expo client
-
-Create `rimbaquest/.env` locally (this file is ignored by Git):
-
-```dotenv
-# Browser on the same computer
-EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-
-# Or use the deployed HTTPS API for a phone/remote preview
-# EXPO_PUBLIC_API_BASE_URL=https://fit5120rimbaquest.onrender.com
-```
-
-For a physical phone, do not use `localhost`: it refers to the phone itself. Use the deployed Render URL, or a reachable LAN/tunnel address during local development.
-
-### 3. Start Expo
+This is the simplest way to run the client without starting Python locally. Check the API health response first: while it reports SQLite/version 1.1, the hosted service is suitable for UI testing but not for validating durable Supabase persistence or the new private-photo flow. Redeploy the backend as described below before using it for those checks.
 
 ```powershell
 cd rimbaquest
+Copy-Item .env.example .env
+```
+
+Set `rimbaquest/.env` to:
+
+```dotenv
+EXPO_PUBLIC_API_BASE_URL=https://fit5120rimbaquest.onrender.com
+```
+
+Then install and start the client:
+
+```powershell
 npm install
-npx expo start
+npx expo start --clear
 ```
 
 Useful variants:
@@ -110,72 +174,253 @@ npx expo start --web
 npx expo start --tunnel --clear
 ```
 
-## Test and build checks
+For Expo Go on iPhone, scan the Metro QR code with the iPhone Camera app. A physical phone must not use `localhost` for a backend running on the computer.
 
-Run the backend tests:
+### Option B: run both backend and client locally
+
+Start the API in one PowerShell window:
 
 ```powershell
 cd backend
-python -m pytest
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --env-file .env
 ```
 
-Run the client type check and web export:
+The default example uses SQLite at `backend/data/RimbaQuest.db`. To exercise discovery-photo upload with a local API, also provide a server-side Supabase Secret Key and use a private development bucket. Without private Storage configuration, catalogue and authentication routes work, but the photo-upload endpoint returns `503`.
+
+Configure the client according to where it runs:
+
+```dotenv
+# Web or iOS Simulator
+EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+
+# Android emulator
+EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:8000
+
+# Physical phone on the same Wi-Fi
+EXPO_PUBLIC_API_BASE_URL=http://YOUR_COMPUTER_LAN_IP:8000
+```
+
+Start the client from a second PowerShell window:
 
 ```powershell
 cd rimbaquest
-node .\node_modules\typescript\bin\tsc --noEmit
-node .\node_modules\expo\bin\cli export --platform web
+npx expo start --clear
 ```
 
-Before a release, manually test the complete chain on both a mobile device and web: photo, category, species, confirmation, success, collection, Wildlife Card, quiz, recent captures, and progress.
+## Environment variables
 
-## Render deployment
+### Expo client
 
-The repository includes a root `Dockerfile` and `render.yaml` for the FastAPI service. Render must attach a persistent disk at `/var/data` and use:
+Only one public client variable is required:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `EXPO_PUBLIC_API_BASE_URL` | `https://fit5120rimbaquest.onrender.com` | Base URL of the FastAPI service |
+
+Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must never contain a secret.
+
+### FastAPI backend
+
+| Variable | Required in production | Purpose |
+|---|---:|---|
+| `DATABASE_URL` | Yes | Supabase PostgreSQL Session-pooler connection string |
+| `SUPABASE_SECRET_KEY` | Yes | Server-only key used for private Storage operations |
+| `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
+| `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
+| `SUPABASE_URL` | No | Overrides the configured project URL |
+| `SUPABASE_STORAGE_BUCKET` | No | Overrides the default `discovery-photos` bucket |
+| `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
+| `DEEPSEEK_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
+| `ZHIPU_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
+
+Never place `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
+
+## Production backend deployment
+
+### Supabase preparation
+
+1. Create or select the Supabase project.
+2. Create a **private** Storage bucket named `discovery-photos`.
+3. Copy the PostgreSQL **Session pooler** connection string on port `5432`.
+4. Create a server-side Supabase Secret Key.
+5. Rotate any password or key that has appeared in a chat, screenshot, terminal recording, or commit.
+
+No manual schema SQL is required for an empty database. On startup, FastAPI uses SQLAlchemy to create the current Iteration 1 tables and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, sightings, cards, or progress.
+
+### Render configuration
+
+Create a Docker Web Service from the repository root, or apply `render.yaml`. The service uses the root `Dockerfile`; no Render persistent disk is required.
+
+Configure:
 
 ```text
-DATABASE_URL=sqlite:////var/data/RimbaQuest.db
+DATABASE_URL=postgresql://postgres.ekwbvjikckuvvfkakhff:URL_ENCODED_DATABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+SUPABASE_SECRET_KEY=<paste the current rotated server-side key from Supabase API settings>
+JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
+CORS_ALLOWED_ORIGINS=*
 ```
 
-This prevents the SQLite database from being lost when the container is redeployed. The current deployed API URL is:
+The project URL and bucket already have non-secret defaults:
 
 ```text
-https://fit5120rimbaquest.onrender.com
+SUPABASE_URL=https://ekwbvjikckuvvfkakhff.supabase.co
+SUPABASE_STORAGE_BUCKET=discovery-photos
 ```
 
-Set deployment secrets only in Render environment variables, never in source control:
-
-```text
-DEEPSEEK_API_KEY=...
-ZHIPU_API_KEY=...
-```
-
-The current Iteration 1 app does not make runtime language-model or vision-model calls, so these keys are reserved for later work. Restrict `CORS_ALLOWED_ORIGINS` to known deployed web origins before a public launch.
-
-## EAS and device distribution
-
-Expo Go is useful for compatible development testing. For stable iOS/Android installs, create a development or preview build with EAS:
+After saving the variables, deploy the latest `master` commit and verify:
 
 ```powershell
-npx eas-cli@latest build --profile development
+Invoke-RestMethod https://fit5120rimbaquest.onrender.com/health
 ```
 
-EAS Update can deliver compatible JavaScript and asset updates to an installed build. A new native build is still required after changing native dependencies or native configuration.
+Expected fields:
 
-## Data and content notes
+```json
+{
+  "status": "ok",
+  "database": "postgresql",
+  "version": "1.2.0"
+}
+```
 
-- The seed database contains 155 species, learning fields, image mappings, and one quiz per species.
-- Species visual assets are bundled into the Expo client and source/attribution metadata is retained in `rimbaquest/assets/species/commons-attribution.json`.
-- Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence; they require source/accuracy review before public release.
-- A discovery records a human-readable location label and timestamp. It does not promise GPS precision.
-- A local SQLite file and local `.env` are intentionally ignored; the versioned `backend/data/seed.sql` is the reproducible baseline.
+If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database. Existing data from an earlier ephemeral Render SQLite container is not automatically transferred to Supabase.
 
-## Security and privacy
+## Web deployment with EAS Hosting
 
-Do not commit API keys, `.env` files, local databases, personal photos, `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, or local documentation folders. Rotate any credential that has been shared in a terminal, screenshot, chat, or commit history.
+Run all Expo/EAS commands from the `rimbaquest` directory:
 
-This is an educational prototype. Public child-facing use requires authentication/ownership controls, parent or guardian consent, clear photo retention/deletion policies, rate limiting, backups, monitoring, explicit production CORS rules, and reviewed/cited species content.
+```powershell
+cd rimbaquest
+npx eas-cli@latest init --id 38bbcfcf-87f3-4003-8ec5-5bcccc181bbb
+npx expo export --platform web
+npx eas-cli@latest deploy --alias latest
+```
+
+`eas init` is only needed when the checkout is not already connected to the RimbaQuest EAS project. Review the resulting `app.json` change before committing it.
+
+The deployment command produces an immutable deployment URL and updates the reusable alias:
+
+```text
+https://rimbaquest-preview--latest.expo.app
+```
+
+If a previous immutable URL still shows old code, open the `latest` alias or the new URL printed by EAS.
+
+## Android and iOS builds
+
+### Android preview APK
+
+The existing `preview` profile creates an installable APK:
+
+```powershell
+cd rimbaquest
+npx eas-cli@latest build --platform android --profile preview
+```
+
+View previous Android builds and download links:
+
+```powershell
+npx eas-cli@latest build:list --platform android --build-profile preview
+```
+
+### iOS
+
+Expo Go can preview compatible JavaScript during development. Installing an independently built iOS app on physical devices normally requires Apple signing and an Apple Developer Program account. EAS can perform the cloud build, but it does not remove Apple's signing and distribution requirements.
+
+### EAS Update
+
+EAS Update can deliver JavaScript and bundled-asset changes only to an already installed build with compatible runtime and channel configuration. Changes to native dependencies, permissions, app identifiers, native plugins, or runtime version require a new native build. Confirm the channel in `eas.json` before treating OTA updates as part of the release workflow.
+
+## Database and security behaviour
+
+- PostgreSQL is the production source of truth; SQLite is a local/test fallback.
+- The static seed contains 155 supported species and one quiz per species.
+- New passwords are hashed with Argon2.
+- A valid login using a legacy SHA-256 password upgrades that password hash once.
+- Registration and login issue a 30-day bearer JWT.
+- Protected routes validate that the token owns the requested child profile.
+- Cross-child profile, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
+- Collection uniqueness and foreign-key constraints prevent duplicate unlock rows and orphaned child/species records.
+- Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
+- The client never receives the Supabase Secret Key.
+- Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
+
+This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.
+
+## Verification
+
+Backend regression suite:
+
+```powershell
+cd backend
+$env:PYTEST_DISABLE_PLUGIN_AUTOLOAD='1'
+python -m pytest -q -p no:cacheprovider
+```
+
+The cache provider is disabled because some Windows environments have a cache-path issue when the checkout directory contains Chinese characters.
+
+Client type check and static export:
+
+```powershell
+cd rimbaquest
+npx tsc --noEmit
+npx expo export --platform web
+```
+
+Before release, manually verify this complete chain on Web and a physical phone:
+
+```text
+Register/Login → Take Photo → Category → Search Species → Confirm
+→ Success → Collection → Wildlife Card → Quiz → Recent Captures → Progress
+```
+
+## Troubleshooting
+
+### `package.json does not exist`
+
+Expo was started from the repository root. Change to the Expo project first:
+
+```powershell
+cd rimbaquest
+```
+
+### Local works but hosted Web registration does not
+
+Check the `EXPO_PUBLIC_API_BASE_URL` used when the Web bundle was exported, Render CORS settings, and whether the Render API has woken successfully. Expo public environment variables are embedded at export time, so rebuild and redeploy Web after changing them.
+
+### Data disappears after a restart
+
+Check `/health`. Production must report `"database": "postgresql"`. Render's local filesystem is ephemeral on the free plan and must not be used for account or discovery persistence.
+
+### Photo upload returns `503`
+
+Verify that `SUPABASE_SECRET_KEY` is present on Render and that the private bucket is named `discovery-photos`.
+
+### Expo Go reports an incompatible SDK
+
+Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer supports the project's SDK, use an EAS development/preview build or upgrade the SDK as a separate, tested change.
+
+## Data and attribution
+
+- The source catalogue is versioned in `backend/data/seed.sql`.
+- The Expo client bundles 155 species reference images.
+- Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
+- Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence and should be reviewed before public redistribution.
+- Discovery location data is currently a human-readable label; it is not presented as precise GPS evidence.
+
+## Secret and repository hygiene
+
+Never commit:
+
+- `.env` files or database connection strings.
+- Supabase Secret Keys, JWT secrets, or AI-provider keys.
+- Local SQLite databases or personal discovery photos.
+- `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, QR-code images, `doc/`, or `docs/`.
+
+If a credential is pasted into chat or included in a screenshot, rotate it even if it was never committed to Git.
 
 ## Licence
 
-This repository is an academic project. Confirm the attribution and licence requirements of each bundled species image before any redistribution outside the assessment context.
+RimbaQuest is an academic project. Confirm each image's attribution and licence requirements before redistributing the asset set outside the assessment context.
