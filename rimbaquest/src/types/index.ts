@@ -1,6 +1,7 @@
 export type Screen =
   | 'home'
   | 'photo'
+  | 'photo_preview'
   | 'category'
   | 'species'
   | 'confirm'
@@ -16,9 +17,12 @@ export type Screen =
   | 'location_detail'
   | 'battle_select'
   | 'battle_arena'
-  | 'auth'
+  | 'account_entry'
+  | 'login'
+  | 'create_account'
   | 'profile_edit'
-  | 'forgot_password';
+  | 'forgot_password'
+  | 'reset_password';
 
 export type Species = {
   id: string;

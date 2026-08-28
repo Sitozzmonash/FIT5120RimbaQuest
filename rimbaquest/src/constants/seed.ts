@@ -29,6 +29,13 @@ export const OFFLINE_LOCATIONS: LocationItem[] = [
 
 export const CATEGORIES = ['Mammal', 'Bird', 'Butterfly', 'Reptile'];
 
+export const CATEGORY_APPEARANCE: Record<string, string> = {
+  Mammal: 'Fur or hair on the body, visible ears and nose, and four limbs with a tail.',
+  Bird: 'Feathers, a hard beak, two wings, two legs, and tail feathers at the back.',
+  Butterfly: 'A thin body, six legs, two antennae, and four broad, patterned wings.',
+  Reptile: 'Dry, scaly skin or a hard shell, a long low body, and a long tail.',
+};
+
 export const WILDLIFE_FILTERS = [
   { id: 'All', label: 'All Wildlife' },
   { id: 'Mammal', label: 'Mammals' },
