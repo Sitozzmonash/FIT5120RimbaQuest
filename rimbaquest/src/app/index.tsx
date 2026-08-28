@@ -1104,7 +1104,18 @@ export default function RimbaQuest() {
         )}
 
         {screen === 'account_entry' && (
-          <AccountEntryScreen onLogin={() => open('login')} onCreateAccount={() => open('create_account')} />
+          <AccountEntryScreen
+            onLogin={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('login');
+            }}
+            onCreateAccount={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('create_account');
+            }}
+          />
         )}
 
         {screen === 'login' && (
@@ -1122,7 +1133,11 @@ export default function RimbaQuest() {
               setForgotFormError(null);
               open('forgot_password');
             }}
-            onCreateAccount={() => open('create_account')}
+            onCreateAccount={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('create_account');
+            }}
           />
         )}
 
@@ -1144,7 +1159,11 @@ export default function RimbaQuest() {
             authError={authError}
             submitting={authSubmitting}
             onRegister={() => void handleRegister()}
-            onLogin={() => open('login')}
+            onLogin={() => {
+              setAuthError(null);
+              setFieldErrors({});
+              open('login');
+            }}
             onBack={goBack}
             onValidateStep1={validateStep1}
             onBlurUsername={validateUsernameBlur}
