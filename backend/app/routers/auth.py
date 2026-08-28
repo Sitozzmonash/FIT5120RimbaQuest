@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import time
 from datetime import datetime, timezone
-from typing import Any
-from fastapi import APIRouter, HTTPException
-from sqlalchemy import text
+from typing import Annotated, Any
 
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
+
+from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.database import engine
-from app.core.security import hash_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import (
     ForgotPasswordIn,
     LoginIn,
@@ -16,129 +19,128 @@ from app.schemas.auth import (
     ResetPasswordIn,
 )
 
+
 router = APIRouter(tags=["Auth & Profile"])
+
+
+def _age_band(age: int) -> str:
+    if age <= 7:
+        return "5-7"
+    if age <= 11:
+        return "8-11"
+    if age <= 15:
+        return "12-15"
+    return "16-18"
+
+
+def _auth_response(user: Any, child: Any) -> dict[str, Any]:
+    return {
+        "success": True,
+        "user_id": user["id"],
+        "child_id": child["id"],
+        "username": user["username"],
+        "display_name": child["display_name"] or user["username"],
+        "avatar": child["avatar"] or user["avatar"] or "tapir",
+        "age": child["age"] or user["age"] or 10,
+        "xp": child["xp"] or 0,
+        "level": child["level"] or 1,
+        "access_token": create_access_token(user["id"], child["id"]),
+        "token_type": "bearer",
+    }
 
 
 @router.post("/api/v1/auth/register")
 def register(payload: RegisterIn):
-    username_clean = payload.username.strip()
-    email_clean = payload.email.strip().lower()
+    username = payload.username.strip()
+    email = payload.email.strip().lower()
+    try:
+        with engine.begin() as connection:
+            if connection.execute(
+                text("SELECT id FROM users WHERE lower(username)=lower(:value)"), {"value": username}
+            ).first():
+                raise HTTPException(400, "That username is already taken. Try another one.")
+            if connection.execute(
+                text("SELECT id FROM users WHERE lower(email)=lower(:value)"), {"value": email}
+            ).first():
+                raise HTTPException(400, "An account with this email address already exists.")
 
-    with engine.begin() as connection:
-        existing_username = connection.execute(
-            text("SELECT id FROM users WHERE lower(username) = lower(:u)"),
-            {"u": username_clean}
-        ).first()
-        if existing_username:
-            raise HTTPException(400, "That username is already taken. Try another one.")
+            user = connection.execute(
+                text("""INSERT INTO users
+                    (role, created_at, username, email, password_hash, age, avatar)
+                    VALUES ('child', :created_at, :username, :email, :password_hash, :age, :avatar)
+                    RETURNING id, username, email, age, avatar"""),
+                {
+                    "created_at": datetime.now(timezone.utc),
+                    "username": username,
+                    "email": email,
+                    "password_hash": hash_password(payload.password),
+                    "age": payload.age,
+                    "avatar": payload.avatar,
+                },
+            ).mappings().one()
+            child = connection.execute(
+                text("""INSERT INTO child_profiles
+                    (parent_user_id, display_name, age_band, xp, level, safety_briefing_done,
+                     learning_streak, avatar, age)
+                    VALUES (:user_id, :display_name, :age_band, 0, 1, :safety, 0, :avatar, :age)
+                    RETURNING id, display_name, xp, level, avatar, age"""),
+                {
+                    "user_id": user["id"],
+                    "display_name": username,
+                    "age_band": _age_band(payload.age),
+                    "safety": False,
+                    "avatar": payload.avatar,
+                    "age": payload.age,
+                },
+            ).mappings().one()
+    except IntegrityError as error:
+        raise HTTPException(400, "That username or email is already registered.") from error
 
-        existing_email = connection.execute(
-            text("SELECT id FROM users WHERE lower(email) = lower(:e)"),
-            {"e": email_clean}
-        ).first()
-        if existing_email:
-            raise HTTPException(400, "An account with this email address already exists.")
-
-        pwd_hash = hash_password(payload.password)
-        user_result = connection.execute(
-            text("""INSERT INTO users (role, created_at, username, email, password_hash, age, avatar)
-                    VALUES ('child', :created_at, :username, :email, :pwd, :age, :avatar)"""),
-            {
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "username": username_clean,
-                "email": email_clean,
-                "pwd": pwd_hash,
-                "age": payload.age,
-                "avatar": payload.avatar,
-            }
-        )
-        user_id = user_result.lastrowid
-
-        child_result = connection.execute(
-            text("""INSERT INTO child_profiles (parent_user_id, display_name, age_band, xp, level, avatar, age)
-                    VALUES (:parent_id, :display_name, '8-11', 0, 1, :avatar, :age)"""),
-            {
-                "parent_id": user_id,
-                "display_name": username_clean,
-                "avatar": payload.avatar,
-                "age": payload.age,
-            }
-        )
-        child_id = child_result.lastrowid
-
-    return {
-        "success": True,
-        "message": "Account created successfully!",
-        "user_id": user_id,
-        "child_id": child_id,
-        "username": username_clean,
-        "display_name": username_clean,
-        "avatar": payload.avatar,
-        "age": payload.age,
-        "xp": 0,
-        "level": 1,
-    }
+    return {**_auth_response(user, child), "message": "Account created successfully!"}
 
 
 @router.post("/api/v1/auth/login")
 def login(payload: LoginIn):
-    query_str = payload.username_or_email.strip()
-    pwd_hash = hash_password(payload.password)
-
-    with engine.connect() as connection:
+    query = payload.username_or_email.strip()
+    with engine.begin() as connection:
         user = connection.execute(
-            text("""SELECT id, username, email, password_hash, age, avatar 
-                    FROM users 
-                    WHERE (lower(username) = lower(:q) OR lower(email) = lower(:q))"""),
-            {"q": query_str}
+            text("""SELECT id, username, email, password_hash, age, avatar
+                    FROM users WHERE lower(username)=lower(:query) OR lower(email)=lower(:query)"""),
+            {"query": query},
         ).mappings().first()
-
-        if not user or user["password_hash"] != pwd_hash:
+        valid, needs_upgrade = verify_password(payload.password, (user or {}).get("password_hash") or "")
+        if not user or not valid:
             raise HTTPException(401, "Invalid username or password. Please try again.")
-
+        if needs_upgrade:
+            connection.execute(
+                text("UPDATE users SET password_hash=:password_hash WHERE id=:id"),
+                {"password_hash": hash_password(payload.password), "id": user["id"]},
+            )
         child = connection.execute(
-            text("SELECT id, display_name, xp, level, avatar, age FROM child_profiles WHERE parent_user_id = :uid OR id = :uid LIMIT 1"),
-            {"uid": user["id"]}
+            text("""SELECT id, display_name, xp, level, avatar, age
+                    FROM child_profiles WHERE parent_user_id=:user_id LIMIT 1"""),
+            {"user_id": user["id"]},
         ).mappings().first()
+        if not child:
+            raise HTTPException(401, "This account does not have an explorer profile.")
 
-        child_id = child["id"] if child else user["id"]
-        display_name = child["display_name"] if child and child["display_name"] else user["username"]
-        avatar = (child["avatar"] if child and child["avatar"] else user["avatar"]) or "tapir"
-        xp = child["xp"] if child and child["xp"] is not None else 0
-        level = child["level"] if child and child["level"] is not None else 1
-        age = child["age"] if child and child["age"] else user["age"] or 10
-
-    return {
-        "success": True,
-        "message": "Login successful!",
-        "user_id": user["id"],
-        "child_id": child_id,
-        "username": user["username"],
-        "display_name": display_name,
-        "avatar": avatar,
-        "age": age,
-        "xp": xp,
-        "level": level,
-    }
+    return {**_auth_response(user, child), "message": "Login successful!"}
 
 
 @router.post("/api/v1/auth/forgot-password")
 def forgot_password(payload: ForgotPasswordIn):
-    email_clean = payload.email.strip().lower()
+    email = payload.email.strip().lower()
     with engine.begin() as connection:
         user = connection.execute(
-            text("SELECT id, username FROM users WHERE lower(email) = lower(:e)"),
-            {"e": email_clean}
+            text("SELECT id FROM users WHERE lower(email)=lower(:email)"), {"email": email}
         ).mappings().first()
         if not user:
             raise HTTPException(400, "No RimbaQuest account was found for this email.")
-
         token = f"RESET-{user['id']}-{int(time.time()) + 15 * 60}"
         connection.execute(
-            text("UPDATE users SET recovery_token = :tok WHERE id = :id"),
-            {"tok": token, "id": user["id"]}
+            text("UPDATE users SET recovery_token=:token WHERE id=:id"),
+            {"token": token, "id": user["id"]},
         )
-
     return {
         "success": True,
         "message": "Password recovery instructions generated.",
@@ -148,61 +150,46 @@ def forgot_password(payload: ForgotPasswordIn):
 
 @router.post("/api/v1/auth/reset-password")
 def reset_password(payload: ResetPasswordIn):
-    email_clean = payload.email.strip().lower()
-    token_clean = payload.recovery_token.strip()
-
+    email = payload.email.strip().lower()
+    token = payload.recovery_token.strip()
     with engine.begin() as connection:
         user = connection.execute(
-            text("SELECT id, recovery_token FROM users WHERE lower(email) = lower(:e)"),
-            {"e": email_clean}
+            text("SELECT id, recovery_token FROM users WHERE lower(email)=lower(:email)"),
+            {"email": email},
         ).mappings().first()
-
         if not user:
             raise HTTPException(404, "No account found with this email.")
-
         stored = user["recovery_token"] or ""
-        expired = False
         try:
-            expiry = int(str(stored).rsplit("-", 1)[-1])
-            expired = time.time() > expiry
+            expired = time.time() > int(stored.rsplit("-", 1)[-1])
         except ValueError:
             expired = True
-
-        if not stored or stored != token_clean:
+        if not stored or stored != token or expired:
             raise HTTPException(400, "Invalid or expired recovery code.")
-        if expired:
-            raise HTTPException(400, "This recovery code has expired. Please request a new one.")
-
-        new_hash = hash_password(payload.new_password)
         connection.execute(
-            text("UPDATE users SET password_hash = :pwd, recovery_token = NULL WHERE id = :id"),
-            {"pwd": new_hash, "id": user["id"]}
+            text("UPDATE users SET password_hash=:password_hash, recovery_token=NULL WHERE id=:id"),
+            {"password_hash": hash_password(payload.new_password), "id": user["id"]},
         )
-
     return {"success": True, "message": "Your password has been successfully reset! You can now log in."}
 
 
-@router.get("/api/v1/children/{child_id}/profile")
-def get_child_profile(child_id: int):
+def _profile(child_id: int) -> dict[str, Any]:
     with engine.connect() as connection:
         child = connection.execute(
-            text("SELECT id, parent_user_id, display_name, age, age_band, xp, level, avatar FROM child_profiles WHERE id = :id"),
-            {"id": child_id}
+            text("""SELECT id, parent_user_id, display_name, age, age_band, xp, level, avatar
+                    FROM child_profiles WHERE id=:id"""),
+            {"id": child_id},
         ).mappings().first()
-
         if not child:
             raise HTTPException(404, "Child profile not found")
-
         unique_cards = connection.execute(
-            text("SELECT COUNT(DISTINCT species_id) FROM collection_entries WHERE child_id = :id"),
-            {"id": child_id}
+            text("SELECT COUNT(DISTINCT species_id) FROM collection_entries WHERE child_id=:id"),
+            {"id": child_id},
         ).scalar() or 0
-
         total_sightings = connection.execute(
-            text("SELECT COUNT(*) FROM sightings WHERE child_id = :id AND status = 'confirmed'"),
-            {"id": child_id}
+            text("SELECT COUNT(*) FROM sightings WHERE child_id=:id AND status='confirmed'"),
+            {"id": child_id},
         ).scalar() or 0
-
     return {
         "id": child["id"],
         "display_name": child["display_name"] or "Explorer",
@@ -216,44 +203,44 @@ def get_child_profile(child_id: int):
     }
 
 
+@router.get("/api/v1/children/{child_id}/profile")
+def get_child_profile(
+    child_id: int,
+    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
+):
+    return _profile(child_id)
+
+
 @router.put("/api/v1/children/{child_id}/profile")
-def update_child_profile(child_id: int, payload: ProfileUpdateIn):
+def update_child_profile(
+    child_id: int,
+    payload: ProfileUpdateIn,
+    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
+):
     with engine.begin() as connection:
         child = connection.execute(
-            text("SELECT id, parent_user_id FROM child_profiles WHERE id = :id"),
-            {"id": child_id}
+            text("SELECT id, parent_user_id FROM child_profiles WHERE id=:id"), {"id": child_id}
         ).mappings().first()
-
         if not child:
             raise HTTPException(404, "Child profile not found")
-
-        updates = []
+        updates: list[str] = []
         params: dict[str, Any] = {"id": child_id}
-
         if payload.display_name is not None:
-            updates.append("display_name = :display_name")
+            updates.append("display_name=:display_name")
             params["display_name"] = payload.display_name.strip()
         if payload.avatar is not None:
-            updates.append("avatar = :avatar")
+            updates.append("avatar=:avatar")
             params["avatar"] = payload.avatar.strip()
         if payload.age is not None:
-            updates.append("age = :age")
-            params["age"] = payload.age
-
+            updates.extend(["age=:age", "age_band=:age_band"])
+            params.update({"age": payload.age, "age_band": _age_band(payload.age)})
         if updates:
-            statement = f"UPDATE child_profiles SET {', '.join(updates)} WHERE id = :id"
-            connection.execute(text(statement), params)
-
-            if child["parent_user_id"]:
-                user_updates = []
-                user_params: dict[str, Any] = {"uid": child["parent_user_id"]}
-                if payload.avatar is not None:
-                    user_updates.append("avatar = :avatar")
-                    user_params["avatar"] = payload.avatar.strip()
-                if payload.age is not None:
-                    user_updates.append("age = :age")
-                    user_params["age"] = payload.age
-                if user_updates:
-                    connection.execute(text(f"UPDATE users SET {', '.join(user_updates)} WHERE id = :uid"), user_params)
-
-    return get_child_profile(child_id)
+            connection.execute(text(f"UPDATE child_profiles SET {', '.join(updates)} WHERE id=:id"), params)
+            user_updates = {key: params[key] for key in ("avatar", "age") if key in params}
+            if user_updates:
+                assignments = ", ".join(f"{key}=:{key}" for key in user_updates)
+                connection.execute(
+                    text(f"UPDATE users SET {assignments} WHERE id=:user_id"),
+                    {**user_updates, "user_id": child["parent_user_id"]},
+                )
+    return _profile(child_id)

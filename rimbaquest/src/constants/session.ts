@@ -1,11 +1,20 @@
-import { GalleryItem, UserProfile } from '../types';
+import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
-const SESSION_KEY = 'rimbaquest.session.v1';
-const GALLERY_KEY_PREFIX = 'rimbaquest.gallery.v1.';
+import { UserProfile } from '../types';
 
-function storage(): Storage | null {
+
+const SESSION_KEY = 'rimbaquest.session.v2';
+const LEGACY_GALLERY_KEY_PREFIX = 'rimbaquest.gallery.v1.';
+
+export type StoredSession = {
+  user: UserProfile;
+  accessToken: string;
+};
+
+function webStorage(): Storage | null {
   try {
-    if (typeof globalThis !== 'undefined' && 'localStorage' in globalThis && globalThis.localStorage) {
+    if (Platform.OS === 'web' && typeof globalThis !== 'undefined' && globalThis.localStorage) {
       return globalThis.localStorage;
     }
   } catch {
@@ -14,55 +23,43 @@ function storage(): Storage | null {
   return null;
 }
 
-function galleryKey(childId: number): string {
-  return `${GALLERY_KEY_PREFIX}${childId}`;
+function clearLegacyGallery(childId: number): void {
+  if (Platform.OS === 'web' && childId) {
+    webStorage()?.removeItem(`${LEGACY_GALLERY_KEY_PREFIX}${childId}`);
+  }
 }
 
-export function loadSession(): UserProfile | null {
+export async function loadSession(): Promise<StoredSession | null> {
   try {
-    const raw = storage()?.getItem(SESSION_KEY);
+    const raw = Platform.OS === 'web'
+      ? webStorage()?.getItem(SESSION_KEY)
+      : await SecureStore.getItemAsync(SESSION_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as UserProfile;
-    if (!parsed?.id) return null;
+    const parsed = JSON.parse(raw) as StoredSession;
+    if (!parsed?.user?.id || !parsed.accessToken) return null;
+    clearLegacyGallery(parsed.user.id);
     return parsed;
   } catch {
     return null;
   }
 }
 
-export function saveSession(user: UserProfile): void {
+export async function saveSession(session: StoredSession): Promise<void> {
+  const value = JSON.stringify(session);
   try {
-    storage()?.setItem(SESSION_KEY, JSON.stringify(user));
+    clearLegacyGallery(session.user.id);
+    if (Platform.OS === 'web') webStorage()?.setItem(SESSION_KEY, value);
+    else await SecureStore.setItemAsync(SESSION_KEY, value);
   } catch {
-    // Session persistence is best-effort for Iteration 1.
+    // The server remains the source of truth; users can sign in again.
   }
 }
 
-export function clearSession(): void {
+export async function clearSession(): Promise<void> {
   try {
-    storage()?.removeItem(SESSION_KEY);
+    if (Platform.OS === 'web') webStorage()?.removeItem(SESSION_KEY);
+    else await SecureStore.deleteItemAsync(SESSION_KEY);
   } catch {
-    // ignore
-  }
-}
-
-export function loadGallery(childId: number): Record<string, GalleryItem[]> {
-  if (!childId) return {};
-  try {
-    const raw = storage()?.getItem(galleryKey(childId));
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, GalleryItem[]>;
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-export function saveGallery(childId: number, photos: Record<string, GalleryItem[]>): void {
-  if (!childId) return;
-  try {
-    storage()?.setItem(galleryKey(childId), JSON.stringify(photos));
-  } catch {
-    // Gallery persistence is best-effort; private mode and quota can both fail.
+    // Ignore platform storage cleanup failures during logout.
   }
 }
