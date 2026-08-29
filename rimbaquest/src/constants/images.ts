@@ -38,15 +38,15 @@ export const AUTH_IMAGES = {
   mascotLogin: require('../../assets/auth/mascot-wave.png'),
   mascotForgot: require('../../assets/auth/mascot-key.png'),
   mascotReset: require('../../assets/auth/mascot-shield.png'),
-  avatarBird: require('../../assets/auth/avatar-bird.png'),
   avatarTiger: require('../../assets/auth/avatar-tiger.png'),
+  avatarTapir: require('../../assets/auth/avatar-tapir.png'),
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
 };
 
 export const DEFAULT_AVATAR = 'hornbill';
 
 export const AVATAR_CHOICES = [
-  { key: 'hornbill', label: 'Hornbill', image: AUTH_IMAGES.avatarBird },
+  { key: 'hornbill', label: 'Tapir', image: AUTH_IMAGES.avatarTapir },
   { key: 'tiger', label: 'Tiger', image: AUTH_IMAGES.avatarTiger },
   { key: 'panda', label: 'Panda', image: AUTH_IMAGES.avatarPanda },
 ] as const;
@@ -56,7 +56,7 @@ export const AVATAR_IMAGES: Record<string, number> = Object.fromEntries(
 );
 
 export function avatarImageFor(avatar: string): number {
-  return AVATAR_IMAGES[avatar] || AUTH_IMAGES.avatarBird;
+  return AVATAR_IMAGES[avatar] || AUTH_IMAGES.avatarTiger;
 }
 
 export const SPECIES_IMAGES: Record<string, number> = {
