@@ -15,7 +15,7 @@ Iteration 1 is a **manual wildlife recording and learning experience**. A photo 
 
 Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
 
-> **Deployment status (verified 27 August 2026):** the production API reports `"database": "postgresql"` and `"version": "1.2.0"`. Supabase PostgreSQL and the private `discovery-photos` Storage bucket are live, and the EAS Hosting `latest` alias has been redeployed from commit `65c6a52` with JWT session recovery and server-authoritative Gallery loading. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
+The configured production API reports `"database": "postgresql"` and `"version": "1.2.0"` from `/health`. Production persistence uses Supabase PostgreSQL and the private `discovery-photos` Storage bucket. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
 
 ## Iteration 1 scope
 
@@ -38,7 +38,7 @@ Implemented Iteration 1 behaviour includes:
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Manual category and species selection across 155 supported species.
+- Manual category and species selection across 152 supported species.
 - Case-insensitive, partial species-name search with clear and no-result states.
 - Confirmation of the selected species and human-readable location.
 - A confirmed first discovery unlocks one Wildlife Card and awards 100 Explorer Points.
@@ -68,7 +68,7 @@ flowchart LR
     P -->|Accounts, profiles, sightings, cards, progress| A
     S -->|One-hour signed photo URL| A
     A -->|JSON response| C
-    C -->|Bundled reference images| B[155 local species assets]
+    C -->|Bundled reference images| B[151 verified species images]
 ```
 
 ### Component responsibilities
@@ -79,7 +79,7 @@ flowchart LR
 | FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
 | Supabase PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
 | Supabase Storage | Private storage for child discovery photos under child-scoped object paths |
-| Seed SQL | Reproducible source catalogue for 155 species, learning fields, quizzes, locations, and image metadata |
+| Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
 | Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
 
 ### Discovery data flow
@@ -122,7 +122,7 @@ FIT5120RimbaQuest/
 │   ├── .env.example
 │   └── requirements.txt
 ├── rimbaquest/
-│   ├── assets/species/         # 155 species images plus attribution metadata
+│   ├── assets/species/         # 151 verified images plus attribution metadata
 │   ├── src/app/                # Expo Router application entry and screens
 │   ├── src/components/         # Reusable UI components
 │   ├── src/constants/          # API, asset, and session configuration
@@ -133,6 +133,8 @@ FIT5120RimbaQuest/
 ├── render.yaml                 # Render Blueprint
 └── README.md
 ```
+
+The repository-root `Dockerfile` is the only backend container definition and is the production Render build. It does not hard-code a database URL; Render supplies the Supabase PostgreSQL `DATABASE_URL` at runtime.
 
 `doc/`, `docs/`, local databases, `.env` files, editor settings, QR images, and agent instruction files are intentionally excluded from Git.
 
@@ -147,7 +149,7 @@ FIT5120RimbaQuest/
 
 ### Option A: run the client against the deployed API
 
-This is the simplest way to run the client without starting Python locally. Check the API health response first: while it reports SQLite/version 1.1, the hosted service is suitable for UI testing but not for validating durable Supabase persistence or the new private-photo flow. Redeploy the backend as described below before using it for those checks.
+This is the simplest way to run the client without starting Python locally. Check the API health response first; production persistence and private-photo testing require `/health` to report `"database": "postgresql"`.
 
 ```powershell
 cd rimbaquest
@@ -336,7 +338,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 ## Database and security behaviour
 
 - PostgreSQL is the production source of truth; SQLite is a local/test fallback.
-- The static seed contains 155 supported species and one quiz per species.
+- The static seed contains 152 supported species and one quiz per species.
+- The runtime catalogue exposes six supported wildlife locations.
 - New passwords are hashed with Argon2.
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.
@@ -405,7 +408,8 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
-- The Expo client bundles 155 species reference images.
+- The Expo client bundles 151 verified species reference images for the 152-species catalogue.
+- Malaysian Mole currently has no verified reference image, so the interface must not invent or substitute an unrelated photograph.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
 - Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence and should be reviewed before public redistribution.
 - Discovery location data is currently a human-readable label; it is not presented as precise GPS evidence.
@@ -423,4 +427,4 @@ If a credential is pasted into chat or included in a screenshot, rotate it even 
 
 ## Licence
 
-RimbaQuest is an academic project. Confirm each image's attribution and licence requirements before redistributing the asset set outside the assessment context.
+RimbaQuest is an academic project and does not currently declare a project-wide open-source licence. `rimbaquest/LICENSE` is inherited from the Expo starter template and names Expo/650 Industries; it must not be interpreted as licensing the RimbaQuest application or its wildlife assets. Confirm each image's attribution and licence requirements before redistributing the asset set outside the assessment context.
