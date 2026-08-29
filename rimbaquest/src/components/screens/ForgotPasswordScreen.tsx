@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AUTH_IMAGES } from '../../constants/images';
 import { Tap } from '../common/Tap';
+import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function ForgotPasswordScreen({
@@ -72,14 +73,13 @@ export function ForgotPasswordScreen({
                 {fieldError && <Text style={styles.forgotFieldError}>{fieldError}</Text>}
               </View>
 
-              <Tap
+              <PrimaryButton
                 label="Send Recovery Link"
-                style={[styles.forgotSubmitBtn, submitting && styles.buttonDisabled]}
-                disabled={submitting}
+                displayText={submitting ? 'Sending...' : 'Send Recovery Link'}
+                loading={submitting}
+                style={styles.forgotSubmitBtn}
                 onPress={onSendRecoveryLink}
-              >
-                <Text style={styles.forgotSubmitBtnText}>{submitting ? 'Sending...' : 'Send Recovery Link'}</Text>
-              </Tap>
+              />
             </View>
 
             <Tap label="Back to Log In" style={{}} onPress={onBackToLogin}>

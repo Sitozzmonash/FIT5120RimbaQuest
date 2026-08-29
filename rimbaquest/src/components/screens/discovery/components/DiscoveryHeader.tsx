@@ -9,11 +9,13 @@ export function DiscoveryHeader({
   onBack,
   confirmDiscard = false,
   onDiscard,
+  disabled = false,
 }: {
   title: string;
   onBack: () => void;
   confirmDiscard?: boolean;
   onDiscard?: () => void;
+  disabled?: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
 
@@ -22,7 +24,8 @@ export function DiscoveryHeader({
       <View style={styles.row}>
         <Tap
           label="Go back"
-          style={styles.backBtn}
+          style={[styles.backBtn, disabled && styles.backBtnDisabled]}
+          disabled={disabled}
           onPress={() => (confirmDiscard ? setConfirming(true) : onBack())}
         >
           <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
@@ -64,5 +67,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  backBtnDisabled: { opacity: 0.4 },
   title: { color: "#1A1A1A", fontSize: 22, fontWeight: "900", flexShrink: 1 },
 });

@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AUTH_IMAGES } from '../../constants/images';
 import { Tap } from '../common/Tap';
+import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function LoginScreen({
@@ -102,14 +103,13 @@ export function LoginScreen({
             </View>
 
             <View style={styles.loginActions}>
-              <Tap
+              <PrimaryButton
                 label="Log In"
-                style={[styles.loginSubmitBtn, submitting && styles.buttonDisabled]}
-                disabled={submitting}
+                displayText={submitting ? 'Logging in...' : 'Log In'}
+                loading={submitting}
+                style={styles.loginSubmitBtn}
                 onPress={onLogin}
-              >
-                <Text style={styles.loginSubmitBtnText}>{submitting ? 'Logging in...' : 'Log In'}</Text>
-              </Tap>
+              />
 
               <View style={styles.loginSignupRow}>
                 <Text style={styles.loginSignupText}>New to RimbaQuest?</Text>

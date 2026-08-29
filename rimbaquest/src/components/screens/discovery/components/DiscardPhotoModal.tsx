@@ -2,6 +2,7 @@ import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tap } from "../../../common/Tap";
+import { PrimaryButton } from "../../../common/PrimaryButton";
 
 export function DiscardPhotoModal({
   visible,
@@ -30,9 +31,7 @@ export function DiscardPhotoModal({
             take or choose it again.
           </Text>
           <View style={styles.actions}>
-            <Tap label="Keep editing" style={styles.keepBtn} onPress={onCancel}>
-              <Text style={styles.keepText}>Keep Editing</Text>
-            </Tap>
+            <PrimaryButton label="Keep Editing" onPress={onCancel} />
             <Tap
               label="Discard and go back"
               style={styles.discardBtn}
@@ -87,14 +86,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   actions: { width: "100%", gap: 10 },
-  keepBtn: {
-    height: 48,
-    borderRadius: 999,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  keepText: { color: "#FFFFFF", fontSize: 15, fontWeight: "800" },
   discardBtn: {
     height: 48,
     borderRadius: 999,

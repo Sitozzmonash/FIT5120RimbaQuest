@@ -3,6 +3,7 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 import { CameraView } from "expo-camera";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tap } from "../../common/Tap";
+import { PrimaryButton } from "../../common/PrimaryButton";
 import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 
 // Step 1 of the discovery flow: a full-bleed camera viewfinder with a
@@ -38,7 +39,7 @@ export function CameraScreen({
       ) : !cameraPermission.granted ? (
         <View style={styles.permissionWrap}>
           <Tap label="Go back" style={styles.permissionBack} onPress={onBack}>
-            <MaterialIcons name="arrow-back" size={20} color="#FFFFFF" />
+            <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
           </Tap>
           <Text style={styles.permissionTitle}>
             Point your camera at the wildlife, then take a photo or choose one
@@ -47,13 +48,11 @@ export function CameraScreen({
           {photoError ? (
             <Text style={styles.errorBanner}>{photoError}</Text>
           ) : null}
-          <Tap
-            label="Allow camera"
+          <PrimaryButton
+            label="Allow Camera"
             style={styles.primaryBtn}
             onPress={onRequestPermission}
-          >
-            <Text style={styles.primaryText}>Allow Camera</Text>
-          </Tap>
+          />
           <Tap
             label="Choose from device gallery"
             style={styles.secondaryBtn}
@@ -75,7 +74,7 @@ export function CameraScreen({
           <View style={styles.headerBar}>
             <View style={styles.navRow}>
               <Tap label="Go back" style={styles.navBackBtn} onPress={onBack}>
-                <MaterialIcons name="arrow-back" size={20} color="#FFFFFF" />
+                <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
               </Tap>
               <Text style={styles.brand}>
                 Rimba<Text style={styles.brandAccent}>Quest</Text>
@@ -185,16 +184,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
-  primaryBtn: {
-    minHeight: 48,
-    borderRadius: 24,
-    backgroundColor: "#78B833",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-    width: "100%",
-  },
-  primaryText: { color: "#0B0F0B", fontSize: 15, fontWeight: "900" },
+  primaryBtn: { width: "100%" },
   secondaryBtn: {
     flexDirection: "row",
     gap: 8,

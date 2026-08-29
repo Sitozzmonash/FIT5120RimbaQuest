@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tap } from "../../../common/Tap";
 import { AvatarPicker } from "./AvatarPicker";
 import { StepNav } from "./StepNav";
 
-// Step 1 of account creation: username, email, optional avatar, and the
-// "already have an account?" login hand-off.
+// Step 1 of account creation: username, email, avatar, and password, plus
+// the "already have an account?" login hand-off.
 export function AccountStep({
   username,
   setUsername,
@@ -14,6 +14,10 @@ export function AccountStep({
   email,
   setEmail,
   onBlurEmail,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
   avatar,
   setAvatar,
   fieldErrors,
@@ -27,6 +31,10 @@ export function AccountStep({
   email: string;
   setEmail: (s: string) => void;
   onBlurEmail: () => void;
+  password: string;
+  setPassword: (s: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (s: string) => void;
   avatar: string;
   setAvatar: (s: string) => void;
   fieldErrors: Record<string, string>;
@@ -34,6 +42,9 @@ export function AccountStep({
   onNext: () => void;
   onLogin: () => void;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   return (
     <View style={styles.createStepBody}>
       <View style={styles.createField}>
@@ -85,6 +96,78 @@ export function AccountStep({
         )}
       </View>
 
+      <View style={styles.createField}>
+        <Text style={styles.createFieldLabel}>Password *</Text>
+        <View
+          style={[
+            styles.createInputBox,
+            fieldErrors.password && styles.createInputBoxError,
+          ]}
+        >
+          <MaterialIcons name="lock-outline" size={18} color="#0A4D26" />
+          <TextInput
+            style={styles.createInput}
+            placeholder="Create a password"
+            placeholderTextColor="#6A9B7D"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+          />
+          <Tap
+            label={showPassword ? "Hide password" : "Show password"}
+            style={styles.createEyeToggle}
+            onPress={() => setShowPassword((v) => !v)}
+          >
+            <MaterialIcons
+              name={showPassword ? "visibility-off" : "visibility"}
+              size={18}
+              color="#0A4D26"
+            />
+          </Tap>
+        </View>
+        {fieldErrors.password && (
+          <Text style={styles.createFieldError}>{fieldErrors.password}</Text>
+        )}
+      </View>
+
+      <View style={styles.createField}>
+        <Text style={styles.createFieldLabel}>Confirm Password *</Text>
+        <View
+          style={[
+            styles.createInputBox,
+            fieldErrors.confirmPassword && styles.createInputBoxError,
+          ]}
+        >
+          <MaterialIcons name="lock-outline" size={18} color="#0A4D26" />
+          <TextInput
+            style={styles.createInput}
+            placeholder="Confirm password"
+            placeholderTextColor="#6A9B7D"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry={!showConfirm}
+          />
+          <Tap
+            label={
+              showConfirm ? "Hide confirm password" : "Show confirm password"
+            }
+            style={styles.createEyeToggle}
+            onPress={() => setShowConfirm((v) => !v)}
+          >
+            <MaterialIcons
+              name={showConfirm ? "visibility-off" : "visibility"}
+              size={18}
+              color="#0A4D26"
+            />
+          </Tap>
+        </View>
+        {fieldErrors.confirmPassword && (
+          <Text style={styles.createFieldError}>
+            {fieldErrors.confirmPassword}
+          </Text>
+        )}
+      </View>
+
       <AvatarPicker avatar={avatar} setAvatar={setAvatar} />
 
       <View style={styles.createActions}>
@@ -123,6 +206,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     paddingVertical: 0,
   },
+  createEyeToggle: { padding: 2 },
   createFieldError: { color: "#D9383A", fontSize: 11, fontWeight: "700" },
   createActions: {
     gap: 12,

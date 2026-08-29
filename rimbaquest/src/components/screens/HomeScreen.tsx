@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { RecentCapture, UserProfile } from '../../types';
 import { avatarImageFor, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
 import { Tap } from '../common/Tap';
@@ -19,7 +20,7 @@ export function HomeScreen({
   onOpenBattle,
 }: {
   currentUser: UserProfile;
-  displayProgress: { found: number; total: number; xp: number };
+  displayProgress: { found: number; total: number; xp: number; level?: number };
   recentCaptures: RecentCapture[];
   notice: string | null;
   onOpenProfile: () => void;
@@ -30,7 +31,7 @@ export function HomeScreen({
 }) {
   const insets = useSafeAreaInsets();
   const collectedPercent = displayProgress.total
-    ? Math.round((displayProgress.found / displayProgress.total) * 100)
+    ? Math.round((displayProgress.found / displayProgress.total) * 1000) / 10
     : 0;
 
   return (
@@ -73,11 +74,14 @@ export function HomeScreen({
               <View style={styles.profileInfo}>
                 <View style={styles.levelBadge}>
                   <LinearGradient colors={['#FFD940', '#FFC314']} style={styles.levelBadgeGradient}>
-                    <Text style={styles.levelBadgeText}>⭐ Level {currentUser.level}</Text>
+                    <MaterialIcons name="star" size={12} color="#0A4D26" />
+                    <Text style={styles.levelBadgeText}>
+                      Level {displayProgress.level || currentUser.level}
+                    </Text>
                   </LinearGradient>
                 </View>
                 <Text style={styles.profileName}>{currentUser.display_name}</Text>
-                <Text style={styles.profileSubtitle}>Age {currentUser.age} Explorer</Text>
+                {/* <Text style={styles.profileSubtitle}>Age {currentUser.age} Explorer</Text> */}
               </View>
             </View>
           </Tap>

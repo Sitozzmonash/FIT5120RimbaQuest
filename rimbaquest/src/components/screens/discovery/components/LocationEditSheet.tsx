@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StyleSheet,
@@ -10,6 +11,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { LocationItem, LocationMode } from "../../../../types";
 import { Tap } from "../../../common/Tap";
+import { PrimaryButton } from "../../../common/PrimaryButton";
 
 export function LocationEditSheet({
   visible,
@@ -18,6 +20,7 @@ export function LocationEditSheet({
   setDiscoveryLocation,
   locationMode,
   setLocationMode,
+  resolvingLocation,
   locationOptions,
   locationNotice,
 }: {
@@ -27,6 +30,7 @@ export function LocationEditSheet({
   setDiscoveryLocation: (s: string) => void;
   locationMode: LocationMode;
   setLocationMode: (m: LocationMode) => void;
+  resolvingLocation?: boolean;
   locationOptions: LocationItem[];
   locationNotice: string | null;
 }) {
@@ -97,10 +101,24 @@ export function LocationEditSheet({
           ) : null}
 
           {locationMode === "auto" ? (
-            <Text style={styles.muted}>
-              RimbaQuest will use this device's current location when you save
-              the discovery.
-            </Text>
+            resolvingLocation ? (
+              <View style={styles.detectingRow}>
+                <ActivityIndicator size="small" color="#087B35" />
+                <Text style={styles.muted}>Detecting your location...</Text>
+              </View>
+            ) : discoveryLocation ? (
+              <View style={styles.detectedRow}>
+                <MaterialIcons name="my-location" size={16} color="#087B35" />
+                <Text style={styles.detectedText} numberOfLines={2}>
+                  {discoveryLocation}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.muted}>
+                RimbaQuest will use this device's current location when you
+                save the discovery.
+              </Text>
+            )
           ) : (
             <>
               <ScrollView
@@ -139,9 +157,7 @@ export function LocationEditSheet({
             </>
           )}
 
-          <Tap label="Done" style={styles.doneBtn} onPress={onClose}>
-            <Text style={styles.doneText}>Done</Text>
-          </Tap>
+          <PrimaryButton label="Done" style={styles.doneBtn} onPress={onClose} />
         </View>
       </View>
     </Modal>
@@ -194,6 +210,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   muted: { color: "#707872", fontSize: 12, lineHeight: 18 },
+  detectingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  detectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#EDF5EF",
+    borderRadius: 12,
+    padding: 10,
+  },
+  detectedText: {
+    flex: 1,
+    color: "#0A4D26",
+    fontSize: 13,
+    fontWeight: "700",
+  },
   chips: { gap: 8, paddingVertical: 4 },
   chip: {
     borderRadius: 16,
@@ -213,13 +244,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1B211C",
   },
-  doneBtn: {
-    marginTop: 4,
-    height: 50,
-    borderRadius: 999,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  doneText: { color: "#FFFFFF", fontSize: 15, fontWeight: "900" },
+  doneBtn: { marginTop: 4 },
 });

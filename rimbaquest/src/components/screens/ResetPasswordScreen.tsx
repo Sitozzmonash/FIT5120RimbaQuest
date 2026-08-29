@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { AUTH_IMAGES } from '../../constants/images';
 import { Tap } from '../common/Tap';
+import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function ResetPasswordScreen({
@@ -106,14 +107,13 @@ export function ResetPasswordScreen({
             </View>
 
             <View style={styles.resetActions}>
-              <Tap
+              <PrimaryButton
                 label="Reset Password"
-                style={[styles.resetSubmitBtn, submitting && styles.buttonDisabled]}
-                disabled={submitting}
+                displayText={submitting ? 'Updating...' : 'Reset Password'}
+                loading={submitting}
+                style={styles.resetSubmitBtn}
                 onPress={onResetPassword}
-              >
-                <Text style={styles.resetSubmitBtnText}>{submitting ? 'Updating...' : 'Reset Password'}</Text>
-              </Tap>
+              />
               <Tap label="Back to Log In" style={{}} onPress={onBackToLogin}>
                 <Text style={styles.resetLinkBack}>Back to Log In</Text>
               </Tap>

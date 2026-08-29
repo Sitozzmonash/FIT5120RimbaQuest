@@ -9,12 +9,17 @@ import {
 } from "react-native";
 
 const AGE_MIN = 5;
-const AGE_MAX = 17;
+const AGE_MAX = 18;
 const AGE_ITEM_HEIGHT = 44;
 const AGE_WHEEL_HEIGHT = 220;
 const AGE_PADDING = (AGE_WHEEL_HEIGHT - AGE_ITEM_HEIGHT) / 2;
 
-// Scrollable, snap-to-item age picker (5-17) for step 2 of account creation.
+function labelFor(n: number): string {
+  return n === AGE_MAX ? `${n}+` : String(n);
+}
+
+// Scrollable, snap-to-item age picker (5-17, plus an "18+" bucket for
+// step 2 of account creation).
 export function AgeWheelPicker({
   value,
   onChange,
@@ -72,7 +77,7 @@ export function AgeWheelPicker({
                     selected && styles.createAgeWheelTextActive,
                   ]}
                 >
-                  {n}
+                  {labelFor(n)}
                 </Text>
               </View>
             );

@@ -3,19 +3,22 @@ import { StyleSheet, Text, View } from "react-native";
 import { AgeWheelPicker } from "./AgeWheelPicker";
 import { StepNav } from "./StepNav";
 
-// Step 2 of account creation: pick an age via the scrollable wheel.
+// Step 2 (final step) of account creation: pick an age via the scrollable
+// wheel, then submit to create the account.
 export function AgeStep({
   value,
   onChange,
   error,
+  submitting,
   onBack,
-  onNext,
+  onRegister,
 }: {
   value: number;
   onChange: (n: number) => void;
   error?: string;
+  submitting: boolean;
   onBack: () => void;
-  onNext: () => void;
+  onRegister: () => void;
 }) {
   return (
     <View style={styles.createStepBody}>
@@ -25,7 +28,12 @@ export function AgeStep({
       {error && <Text style={styles.createFieldError}>{error}</Text>}
 
       <View style={styles.createActions}>
-        <StepNav onBack={onBack} nextLabel="Next" onNext={onNext} />
+        <StepNav
+          onBack={onBack}
+          nextLabel={submitting ? "Creating..." : "Create Account"}
+          nextDisabled={submitting}
+          onNext={onRegister}
+        />
       </View>
     </View>
   );

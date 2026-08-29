@@ -75,15 +75,15 @@ export function LockedScreen({
           <View style={styles.lockedCardDivider} />
 
           <View style={styles.lockedFieldTight}>
-            <Text style={styles.lockedFieldLabel}>Habitat:</Text>
+            <Text style={styles.lockedFieldLabel}>Discovery Hint:</Text>
             <Text style={styles.lockedFieldValue}>{species.habitat}</Text>
           </View>
-          <View style={styles.lockedField}>
+          {/* <View style={styles.lockedField}>
             <Text style={styles.lockedFieldLabelLg}>Discovery Hint:</Text>
             <Text style={styles.lockedFieldValue}>
               &#8220;{GENERIC_DISCOVERY_HINT}&#8221;
             </Text>
-          </View>
+          </View> */}
         </View>
       </View>
 
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   lockedBody: {
     paddingHorizontal: 24,
     paddingTop: 8,
-    paddingBottom: 32,
+    paddingBottom: 8,
     gap: 20,
     alignItems: "center",
   },
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: "#E8F5E9",
     borderRadius: 20,
-    padding: 16,
+    padding: 16
   },
   lockedMotivationText: {
     flex: 1,

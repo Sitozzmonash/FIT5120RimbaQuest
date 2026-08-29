@@ -1,14 +1,25 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+export type CategoryProgress = {
+  id: string;
+  label: string;
+  found: number;
+  total: number;
+};
+
+function percentOf(found: number, total: number): number {
+  return total ? Math.min(100, Math.round((found / total) * 100)) : 0;
+}
+
 export function OverallProgressCard({
   progress,
+  categories,
 }: {
   progress: { found: number; total: number; xp: number; level?: number };
+  categories: CategoryProgress[];
 }) {
-  const percentage = progress.total
-    ? Math.min(100, Math.round((progress.found / progress.total) * 100))
-    : 0;
+  const percentage = percentOf(progress.found, progress.total);
 
   return (
     <View style={styles.card}>
@@ -27,23 +38,34 @@ export function OverallProgressCard({
         <View style={[styles.fill, { width: `${percentage}%` }]} />
       </View>
 
-      <View style={styles.infoPair}>
-        <InfoBox label="EXPLORER POINTS" value={`${progress.xp} XP`} />
-        <InfoBox label="SCOUT RANK" value={`Level ${progress.level || 1}`} />
-      </View>
-    </View>
-  );
-}
+      <Text style={styles.categoryHeading}>CATEGORY COLLECTION PROGRESS</Text>
 
-function InfoBox({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.infoBox}>
-      <Text style={styles.infoLabel} numberOfLines={1}>
-        {label}
-      </Text>
-      <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-        {value}
-      </Text>
+      {categories.map((item, index) => {
+        const categoryPercent = percentOf(item.found, item.total);
+        return (
+          <View
+            key={item.id}
+            style={[
+              styles.categoryRow,
+              index === categories.length - 1 && styles.categoryRowLast,
+            ]}
+          >
+            <View style={styles.categoryTopRow}>
+              <Text style={styles.categoryLabel} numberOfLines={1}>
+                {item.label}
+              </Text>
+              <Text style={styles.categoryValue}>
+                {item.found} / {item.total}
+              </Text>
+            </View>
+            <View style={styles.categoryTrack}>
+              <View
+                style={[styles.categoryFill, { width: `${categoryPercent}%` }]}
+              />
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -96,28 +118,39 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   fill: { height: "100%", backgroundColor: "#0BA84A", borderRadius: 4 },
-  infoPair: { flexDirection: "row", gap: 8, marginTop: 6 },
-  infoBox: {
-    flex: 1,
-    minWidth: 0,
-    borderWidth: 1,
-    borderColor: "#DFE7E1",
-    borderRadius: 14,
-    padding: 12,
-    marginTop: 10,
-    backgroundColor: "#FFFFFF",
-  },
-  infoLabel: {
+  categoryHeading: {
     color: "#78817B",
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 0.4,
+    marginTop: 18,
   },
-  infoValue: {
+  categoryRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF2EF",
+    paddingVertical: 12,
+  },
+  categoryRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
+  categoryTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  categoryLabel: {
+    flex: 1,
+    minWidth: 0,
     color: "#1B211C",
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: "700",
-    marginTop: 4,
+    fontSize: 13,
+    fontWeight: "800",
   },
+  categoryValue: { color: "#637D6E", fontSize: 12, fontWeight: "700" },
+  categoryTrack: {
+    height: 6,
+    backgroundColor: "#E8EEEA",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginTop: 8,
+  },
+  categoryFill: { height: "100%", backgroundColor: "#0BA84A", borderRadius: 3 },
 });

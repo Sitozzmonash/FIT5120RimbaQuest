@@ -14,7 +14,7 @@ export function AvatarPicker({
 }) {
   return (
     <View style={styles.createAvatarSection}>
-      <Text style={styles.createAvatarLabel}>Choose an Avatar - Optional</Text>
+      <Text style={styles.createAvatarLabel}>Choose an Avatar</Text>
       <View style={styles.createAvatarRow}>
         {AVATAR_CHOICES.map((choice) => {
           const active = avatar === choice.key;
@@ -22,20 +22,24 @@ export function AvatarPicker({
             <Tap
               key={choice.key}
               label={`Choose ${choice.key} avatar`}
-              style={[
-                styles.createAvatarChoice,
-                active && styles.createAvatarChoiceActive,
-              ]}
+              style={styles.createAvatarChoice}
               onPress={() => setAvatar(choice.key)}
             >
-              <Image
-                source={choice.image}
-                style={styles.createAvatarImage}
-                resizeMode="cover"
-              />
+              <View
+                style={[
+                  styles.createAvatarCircle,
+                  active && styles.createAvatarChoiceActive,
+                ]}
+              >
+                <Image
+                  source={choice.image}
+                  style={styles.createAvatarImage}
+                  resizeMode="cover"
+                />
+              </View>
               {active && (
                 <View style={styles.createAvatarBadge}>
-                  <MaterialIcons name="check" size={12} color="#FFFFFF" />
+                  <MaterialIcons name="check" size={14} color="#FFFFFF" />
                 </View>
               )}
             </Tap>
@@ -49,24 +53,27 @@ export function AvatarPicker({
 const styles = StyleSheet.create({
   createAvatarSection: { gap: 8 },
   createAvatarLabel: { color: "#2D7A4E", fontSize: 13, fontWeight: "700" },
-  createAvatarRow: { flexDirection: "row", gap: 12 },
-  createAvatarChoice: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  createAvatarRow: { flexDirection: "row", gap: 16 },
+  createAvatarChoice: { flex: 1, aspectRatio: 1 },
+  createAvatarCircle: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
     borderWidth: 1.5,
     borderColor: "#D8EDD8",
     overflow: "hidden",
   },
-  createAvatarChoiceActive: { borderWidth: 2, borderColor: "#0A4D26" },
+  createAvatarChoiceActive: { borderWidth: 3, borderColor: "#0A4D26" },
   createAvatarImage: { width: "100%", height: "100%" },
   createAvatarBadge: {
     position: "absolute",
-    bottom: -6,
-    right: -6,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    bottom: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
     backgroundColor: "#0A4D26",
     alignItems: "center",
     justifyContent: "center",

@@ -1,5 +1,7 @@
-import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Modal, StyleSheet, Text, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Tap } from "../../common/Tap";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
 import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
@@ -15,6 +17,8 @@ export function PhotoPreviewScreen({
   onRetake: () => void;
   onUpload: () => void;
 }) {
+  const [enlarged, setEnlarged] = useState(false);
+
   return (
     <View style={styles.page}>
       <DiscoveryHeader title="Record a Discovery" onBack={onRetake} />
@@ -29,9 +33,16 @@ export function PhotoPreviewScreen({
           </Text>
         </View>
 
-        <View style={styles.imageWrap}>
+        <Tap
+          label="Enlarge photo"
+          style={styles.imageWrap}
+          onPress={() => setEnlarged(true)}
+        >
           <Image source={photo} style={styles.image} resizeMode="contain" />
-        </View>
+          <View style={styles.zoomHint}>
+            <MaterialIcons name="zoom-in" size={20} color="#FFFFFF" />
+          </View>
+        </Tap>
       </View>
 
       <DiscoveryBottomNav
@@ -40,6 +51,32 @@ export function PhotoPreviewScreen({
         nextLabel="Upload Photo"
         onNext={onUpload}
       />
+
+      <Modal
+        visible={enlarged}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEnlarged(false)}
+      >
+        <Tap
+          label="Close enlarged photo"
+          style={styles.lightboxBackdrop}
+          onPress={() => setEnlarged(false)}
+        >
+          <Image
+            source={photo}
+            style={styles.lightboxImage}
+            resizeMode="contain"
+          />
+        </Tap>
+        <Tap
+          label="Close"
+          style={styles.lightboxCloseBtn}
+          onPress={() => setEnlarged(false)}
+        >
+          <MaterialIcons name="close" size={22} color="#FFFFFF" />
+        </Tap>
+      </Modal>
     </View>
   );
 }
@@ -62,4 +99,33 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F4F1",
   },
   image: { width: "100%", height: "100%" },
+  zoomHint: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lightboxImage: { width: "100%", height: "100%" },
+  lightboxCloseBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

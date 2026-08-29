@@ -1,18 +1,21 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Tap } from "../../../common/Tap";
+import { PrimaryButton } from "../../../common/PrimaryButton";
 
 // Shared Back / Next (or Confirm) footer used by every step of the
 // discovery flow.
 export function DiscoveryBottomNav({
   onBack,
   backLabel = "Back",
+  backDisabled,
   nextLabel,
   onNext,
   nextDisabled,
 }: {
   onBack: () => void;
   backLabel?: string;
+  backDisabled?: boolean;
   nextLabel: string;
   onNext: () => void;
   nextDisabled?: boolean;
@@ -20,17 +23,20 @@ export function DiscoveryBottomNav({
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
-        <Tap label={backLabel} style={styles.backBtn} onPress={onBack}>
+        <Tap
+          label={backLabel}
+          style={[styles.backBtn, backDisabled && styles.disabled]}
+          disabled={backDisabled}
+          onPress={onBack}
+        >
           <Text style={styles.backText}>{backLabel}</Text>
         </Tap>
-        <Tap
+        <PrimaryButton
           label={nextLabel}
-          style={[styles.nextBtn, nextDisabled && styles.disabled]}
           disabled={nextDisabled}
+          style={styles.nextBtn}
           onPress={onNext}
-        >
-          <Text style={styles.nextText}>{nextLabel}</Text>
-        </Tap>
+        />
       </View>
     </View>
   );
@@ -54,14 +60,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   backText: { color: "#0A4D26", fontSize: 16, fontWeight: "800" },
-  nextBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 999,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nextText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
+  nextBtn: { flex: 1 },
   disabled: { opacity: 0.45 },
 });

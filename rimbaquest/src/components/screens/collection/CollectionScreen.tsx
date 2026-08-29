@@ -133,12 +133,19 @@ export function CollectionScreen({
                   />
                   <View style={styles.collectionProgressTopRow}>
                     <Text style={styles.collectionProgressCount}>
+                      {/* {displayProgress.found} / {displayProgress.total} - {((displayProgress.found / displayProgress.total) * 100).toFixed(1)}% */}
                       {displayProgress.found} / {displayProgress.total}
                     </Text>
                     <View style={styles.collectionLevelPill}>
-                      <Text style={styles.collectionLevelPillText}>
-                        LV. {displayProgress.level || 1} TRACKER
-                      </Text>
+                      <LinearGradient
+                        colors={["#FFD940", "#FFC314"]}
+                        style={styles.collectionLevelPillGradient}
+                      >
+                        <MaterialIcons name="star" size={12} color="#0A4D26" />
+                        <Text style={styles.collectionLevelPillText}>
+                          Level {displayProgress.level || 1}
+                        </Text>
+                      </LinearGradient>
                     </View>
                   </View>
                   <Text style={styles.collectionProgressLabel}>
@@ -343,16 +350,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "900",
   },
-  collectionLevelPill: {
-    backgroundColor: "#E8541A",
-    borderRadius: 12,
+  collectionLevelPill: { borderRadius: 12, overflow: "hidden" },
+  collectionLevelPillGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   collectionLevelPillText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
+    color: "#0A4D26",
+    fontSize: 11,
+    fontWeight: "800",
   },
   collectionProgressLabel: {
     color: "#173F6B",

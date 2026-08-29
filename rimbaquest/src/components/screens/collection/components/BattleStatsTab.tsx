@@ -38,9 +38,9 @@ export function BattleStatsTab({
         </View>
       ))}
 
-      <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
+      {/* <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
         <Text style={styles.primaryText}>Enter Card Battle</Text>
-      </Tap>
+      </Tap> */}
     </View>
   );
 }

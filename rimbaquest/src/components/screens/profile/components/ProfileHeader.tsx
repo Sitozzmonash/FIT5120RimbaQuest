@@ -10,19 +10,23 @@ export function ProfileHeader({
 }: {
   title: string;
   onBack: () => void;
-  onEdit: () => void;
+  onEdit?: () => void;
 }) {
   return (
     <View style={styles.wrap}>
       <Tap label="Go back" style={styles.navBtn} onPress={onBack}>
-        <MaterialIcons name="arrow-back" size={20} color="#0A4D26" />
+        <MaterialIcons name="chevron-left" size={20} color="#0A4D26" />
       </Tap>
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
-      <Tap label="Edit Profile" style={styles.navBtn} onPress={onEdit}>
-        <MaterialIcons name="edit" size={18} color="#0A4D26" />
-      </Tap>
+      {onEdit ? (
+        <Tap label="Edit Profile" style={styles.navBtn} onPress={onEdit}>
+          <MaterialIcons name="edit" size={18} color="#0A4D26" />
+        </Tap>
+      ) : (
+        <View style={styles.navBtnSpacer} />
+      )}
     </View>
   );
 }
@@ -48,6 +52,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  navBtnSpacer: { width: 40, height: 40 },
   title: {
     flex: 1,
     textAlign: "center",
