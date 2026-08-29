@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tap } from "../../../common/Tap";
+import { PrimaryButton } from "../../../common/PrimaryButton";
 
 // Shared Back / Next button row for a step's footer actions.
 export function StepNav({
@@ -25,18 +26,12 @@ export function StepNav({
         <MaterialIcons name="chevron-left" size={20} color="#0A4D26" />
         <Text style={styles.createSecondaryBtnText}>Back</Text>
       </Tap>
-      <Tap
+      <PrimaryButton
         label={nextLabel}
-        style={[
-          styles.createCtaBtn,
-          styles.createNavButtonFlex,
-          nextDisabled && styles.buttonDisabled,
-        ]}
         disabled={nextDisabled}
+        style={styles.createNavButtonFlex}
         onPress={onNext}
-      >
-        <Text style={styles.createCtaBtnText}>{nextLabel}</Text>
-      </Tap>
+      />
     </View>
   );
 }
@@ -44,19 +39,6 @@ export function StepNav({
 const styles = StyleSheet.create({
   createNavButtonsRow: { flexDirection: "row", gap: 12, width: "100%" },
   createNavButtonFlex: { flex: 1 },
-  createCtaBtn: {
-    borderRadius: 20,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    shadowColor: "#0A4D26",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  createCtaBtnText: { color: "#FFFFFF", fontSize: 18, fontWeight: "900" },
   createSecondaryBtn: {
     flexDirection: "row",
     gap: 4,
@@ -69,5 +51,4 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   createSecondaryBtnText: { color: "#0A4D26", fontSize: 16, fontWeight: "800" },
-  buttonDisabled: { opacity: 0.5 },
 });

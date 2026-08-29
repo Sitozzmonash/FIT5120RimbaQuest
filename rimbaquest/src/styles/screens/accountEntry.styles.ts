@@ -17,8 +17,6 @@ export const accountEntryStyles = StyleSheet.create({
   entryTitle: { color: '#0A4D26', fontSize: 24, lineHeight: 32, fontWeight: '800', textAlign: 'center' },
   entrySubtitle: { color: '#2D5A3E', fontSize: 15, lineHeight: 22, textAlign: 'center' },
   entryButtons: { gap: 12 },
-  entryLoginBtn: { height: 52, borderRadius: 100, backgroundColor: '#0A4D26', alignItems: 'center', justifyContent: 'center' },
-  entryLoginBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   entryCreateBtn: { height: 52, borderRadius: 100, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#0A4D26', alignItems: 'center', justifyContent: 'center' },
   entryCreateBtnText: { color: '#0A4D26', fontSize: 16, fontWeight: '700' },
 });

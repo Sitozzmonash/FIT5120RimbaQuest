@@ -11,7 +11,7 @@ router = APIRouter(tags=["Species & Quizzes"])
 
 @router.get("/api/v1/species")
 def list_species(category: str | None = None):
-    statement = "SELECT id, common_name, scientific_name, category, habitat, diet, fun_fact, image_url, act716_schedule, act716_status FROM species WHERE is_active = 1"
+    statement = "SELECT id, common_name, scientific_name, category, habitat, diet, fun_fact, image_url, act716_schedule, act716_status FROM species WHERE is_active = TRUE"
     params = {}
     if category and category.lower() != "all":
         statement += " AND lower(category) = lower(:category)"

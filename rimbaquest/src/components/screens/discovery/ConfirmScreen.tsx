@@ -31,6 +31,7 @@ export function ConfirmScreen({
   setDiscoveryLocation,
   locationMode,
   setLocationMode,
+  resolvingLocation,
   locationOptions,
   locationNotice,
   saveError,
@@ -45,6 +46,7 @@ export function ConfirmScreen({
   setDiscoveryLocation: (s: string) => void;
   locationMode: LocationMode;
   setLocationMode: (m: LocationMode) => void;
+  resolvingLocation?: boolean;
   locationOptions: LocationItem[];
   locationNotice: string | null;
   saveError: string | null;
@@ -58,7 +60,8 @@ export function ConfirmScreen({
 
   const locationValue =
     locationMode === "auto"
-      ? "Using current device location"
+      ? discoveryLocation ||
+        (resolvingLocation ? "Detecting location..." : "Using current device location")
       : discoveryLocation || "Tap to set location";
 
   return (
@@ -68,6 +71,7 @@ export function ConfirmScreen({
         onBack={onBack}
         confirmDiscard
         onDiscard={onDiscard}
+        disabled={saving}
       />
       <ScrollView contentContainerStyle={styles.content}>
         <DiscoveryStepIndicator step={4} />
@@ -88,11 +92,11 @@ export function ConfirmScreen({
             value={locationValue}
             onPress={() => setEditingLocation(true)}
           />
-          <InfoCard
+          {/* <InfoCard
             icon="schedule"
             label="DATE & TIME"
             value={formatDateTime(now)}
-          />
+          /> */}
         </View>
 
         {saveError ? (
@@ -111,6 +115,7 @@ export function ConfirmScreen({
 
       <DiscoveryBottomNav
         onBack={onBack}
+        backDisabled={saving}
         nextLabel={saving ? "Saving..." : "Confirm & Save"}
         nextDisabled={saving}
         onNext={onConfirm}
@@ -123,6 +128,7 @@ export function ConfirmScreen({
         setDiscoveryLocation={setDiscoveryLocation}
         locationMode={locationMode}
         setLocationMode={setLocationMode}
+        resolvingLocation={resolvingLocation}
         locationOptions={locationOptions}
         locationNotice={locationNotice}
       />

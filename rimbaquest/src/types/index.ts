@@ -66,6 +66,7 @@ export type LocationItem = {
 export type UserProfile = {
   id: number;
   username: string;
+  email: string;
   display_name: string;
   avatar: string;
   age: number;

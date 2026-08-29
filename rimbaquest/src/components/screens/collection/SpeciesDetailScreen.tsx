@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Image,
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
@@ -19,8 +20,8 @@ import { GalleryTab } from "./components/GalleryTab";
 
 const DETAIL_TABS: [Screen, string][] = [
   ["about", "About"],
-  ["battle_stats", "Battle Stats"],
   ["facts", "Fun Facts"],
+  ["battle_stats", "Battle Stats"],
   ["gallery", "Gallery"],
 ];
 
@@ -42,6 +43,7 @@ export function SpeciesDetailScreen({
   // Tab content lives in a horizontal, paging ScrollView so the user can swipe
   // left/right between tabs, in sync with tapping the tab labels above it.
   const [pageWidth, setPageWidth] = useState(0);
+  const [heroEnlarged, setHeroEnlarged] = useState(false);
   const pagerRef = useRef<ScrollView>(null);
   const activeIndex = DETAIL_TABS.findIndex(([key]) => key === screen);
 
@@ -75,11 +77,43 @@ export function SpeciesDetailScreen({
         </Text>
       </View>
 
-      <Image
-        source={imageFor(species)!}
-        style={styles.detailHeroImage}
-        resizeMode="cover"
-      />
+      <Tap
+        label={`Enlarge ${species.common_name} illustration`}
+        style={styles.detailHeroTap}
+        onPress={() => setHeroEnlarged(true)}
+      >
+        <Image
+          source={imageFor(species)!}
+          style={styles.detailHeroImage}
+          resizeMode="cover"
+        />
+      </Tap>
+
+      <Modal
+        visible={heroEnlarged}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setHeroEnlarged(false)}
+      >
+        <Tap
+          label="Close enlarged illustration"
+          style={styles.lightboxBackdrop}
+          onPress={() => setHeroEnlarged(false)}
+        >
+          <Image
+            source={imageFor(species)!}
+            style={styles.lightboxImage}
+            resizeMode="contain"
+          />
+        </Tap>
+        <Tap
+          label="Close"
+          style={styles.lightboxCloseBtn}
+          onPress={() => setHeroEnlarged(false)}
+        >
+          <MaterialIcons name="close" size={22} color="#FFFFFF" />
+        </Tap>
+      </Modal>
 
       <View style={styles.detailTabsRow}>
         {DETAIL_TABS.map(([key, label]) => {
@@ -169,7 +203,26 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
   },
+  detailHeroTap: { width: "100%" },
   detailHeroImage: { width: "100%", height: 200 },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  lightboxImage: { width: "100%", height: "100%" },
+  lightboxCloseBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   detailTabsRow: {
     flexDirection: "row",
     gap: 24,

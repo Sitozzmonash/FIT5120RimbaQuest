@@ -39,6 +39,7 @@ def _auth_response(user: Any, child: Any) -> dict[str, Any]:
         "user_id": user["id"],
         "child_id": child["id"],
         "username": user["username"],
+        "email": user["email"],
         "display_name": child["display_name"] or user["username"],
         "avatar": child["avatar"] or user["avatar"] or "hornbill",
         "age": child["age"] or user["age"] or 10,
@@ -177,7 +178,7 @@ def _profile(child_id: int) -> dict[str, Any]:
     with engine.connect() as connection:
         child = connection.execute(
             text("""SELECT child_profiles.id, child_profiles.parent_user_id,
-                           users.username, child_profiles.display_name, child_profiles.age,
+                           users.username, users.email, child_profiles.display_name, child_profiles.age,
                            child_profiles.age_band, child_profiles.xp, child_profiles.level,
                            child_profiles.avatar
                     FROM child_profiles JOIN users ON users.id=child_profiles.parent_user_id
@@ -197,6 +198,7 @@ def _profile(child_id: int) -> dict[str, Any]:
     return {
         "id": child["id"],
         "username": child["username"],
+        "email": child["email"],
         "display_name": child["display_name"] or child["username"],
         "avatar": child["avatar"] or "hornbill",
         "age": child["age"] or 10,

@@ -29,6 +29,7 @@ export function SpeciesScreen({
   speciesList,
   search,
   setSearch,
+  selectedId,
   onChooseSpecies,
   onBack,
   onDiscard,
@@ -38,11 +39,14 @@ export function SpeciesScreen({
   speciesList: Species[];
   search: string;
   setSearch: (s: string) => void;
+  selectedId?: string | null;
   onChooseSpecies: (item: Species) => void;
   onBack: () => void;
   onDiscard: () => void;
 }) {
-  const [pending, setPending] = useState<Species | null>(null);
+  const [pending, setPending] = useState<Species | null>(
+    () => speciesList.find((item) => item.id === selectedId) ?? null
+  );
   const [searchTop, setSearchTop] = useState(0);
   const [stuck, setStuck] = useState(false);
 
@@ -204,7 +208,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   grid: { gap: 12, width: "100%" },
-  row: { flexDirection: "row", gap: 12, width: "100%" },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    width: "100%",
+  },
   spacer: { flex: 1, opacity: 0 },
   empty: {
     borderWidth: 1,

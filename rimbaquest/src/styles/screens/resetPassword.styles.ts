@@ -25,7 +25,6 @@ export const resetPasswordStyles = StyleSheet.create({
   resetEyeToggle: { padding: 2 },
   resetFieldError: { color: '#D9383A', fontSize: 11, fontWeight: '700' },
   resetActions: { gap: 16, alignItems: 'center' },
-  resetSubmitBtn: { height: 52, width: '100%', borderRadius: 100, backgroundColor: '#0A4D26', alignItems: 'center', justifyContent: 'center' },
-  resetSubmitBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
+  resetSubmitBtn: { width: '100%' },
   resetLinkBack: { color: '#0A4D26', fontSize: 15, fontWeight: '700', textDecorationLine: 'underline' },
 });

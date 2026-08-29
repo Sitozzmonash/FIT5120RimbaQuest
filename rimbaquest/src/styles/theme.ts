@@ -1,9 +1,7 @@
 import { StyleSheet } from 'react-native';
 
-import { battleStyles } from './screens/battle.styles';
 import { collectionStyles } from './screens/collection.styles';
 import { homeStyles } from './screens/home.styles';
-import { locationsStyles } from './screens/locations.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
 import { loginStyles } from './screens/login.styles';
 import { forgotPasswordStyles } from './screens/forgotPassword.styles';
@@ -39,7 +37,7 @@ const general = StyleSheet.create({
   inputGroup: { marginTop: 12 },
   inputLabel: { color: '#566159', fontSize: 10, fontWeight: '800', marginBottom: 5 },
   textInput: { borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, minHeight: 44, fontSize: 14, color: '#1B211C', backgroundColor: '#FFFFFF' },
-  primary: { minHeight: 48, marginTop: 14, borderRadius: 24, backgroundColor: '#0BA84A', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  primary: { minHeight: 48, marginTop: 14, borderRadius: 24, backgroundColor: '#0BA84A', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingHorizontal: 16 },
   primaryText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
   secondary: { minHeight: 46, marginTop: 9, borderRadius: 23, backgroundColor: '#FFFFFF', borderColor: '#C8D1CA', borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 },
   secondaryText: { color: '#1B211C', fontSize: 13, fontWeight: '700' },
@@ -77,9 +75,7 @@ export const styles: any = {
   ...general,
   ...commonUiStyles,
   ...homeStyles,
-  ...locationsStyles,
   ...collectionStyles,
-  ...battleStyles,
   ...accountEntryStyles,
   ...loginStyles,
   ...forgotPasswordStyles,

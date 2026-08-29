@@ -4,6 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { Tap } from "../../common/Tap";
+import { PrimaryButton } from "../../common/PrimaryButton";
 
 function formatDate(iso: string | null): string {
   const d = iso ? new Date(iso) : new Date();
@@ -81,23 +82,21 @@ export function SuccessScreen({
           ) : null}
         </View>
 
-        {xpAwarded > 0 ? (
+        {/* {xpAwarded > 0 ? (
           <View style={styles.xpCard}>
             <MaterialIcons name="military-tech" size={20} color="#0A4D26" />
             <Text style={styles.xpText}>
               +{xpAwarded} Explorer Experience Points
             </Text>
           </View>
-        ) : null}
+        ) : null} */}
 
         <View style={styles.actions}>
-          <Tap
-            label="View new wildlife card"
+          <PrimaryButton
+            label="View New Card"
             style={styles.primaryBtn}
             onPress={onViewCard}
-          >
-            <Text style={styles.primaryText}>View New Card</Text>
-          </Tap>
+          />
           <Tap
             label="Record another discovery"
             style={styles.secondaryBtn}
@@ -196,15 +195,7 @@ const styles = StyleSheet.create({
   },
   xpText: { color: "#1A1A1A", fontSize: 14, fontWeight: "800" },
   actions: { width: "100%", gap: 12, marginTop: 4 },
-  primaryBtn: {
-    height: 52,
-    borderRadius: 999,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
+  primaryBtn: { width: "100%" },
   secondaryBtn: {
     height: 52,
     borderRadius: 999,

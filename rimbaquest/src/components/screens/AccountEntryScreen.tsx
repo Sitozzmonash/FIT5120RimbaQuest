@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { AUTH_IMAGES } from '../../constants/images';
 import { HOME_IMAGES } from '../../constants/images';
 import { Tap } from '../common/Tap';
+import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function AccountEntryScreen({
@@ -45,9 +46,7 @@ export function AccountEntryScreen({
           </View>
 
           <View style={styles.entryButtons}>
-            <Tap label="Log In" style={styles.entryLoginBtn} onPress={onLogin}>
-              <Text style={styles.entryLoginBtnText}>Log In</Text>
-            </Tap>
+            <PrimaryButton label="Log In" onPress={onLogin} />
             <Tap label="Create Account" style={styles.entryCreateBtn} onPress={onCreateAccount}>
               <Text style={styles.entryCreateBtnText}>Create Account</Text>
             </Tap>

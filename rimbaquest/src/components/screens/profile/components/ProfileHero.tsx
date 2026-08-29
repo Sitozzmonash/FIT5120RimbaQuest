@@ -1,14 +1,16 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { MaterialIcons } from "@expo/vector-icons";
 
 export function ProfileHero({
   avatarImage,
   name,
-  subtitle,
+  level,
 }: {
   avatarImage: number;
   name: string;
-  subtitle: string;
+  level: number;
 }) {
   return (
     <View style={styles.wrap}>
@@ -17,8 +19,13 @@ export function ProfileHero({
           <Image source={avatarImage} style={styles.avatarImage} resizeMode="cover" />
         </View>
       </View>
+      <View style={styles.levelBadge}>
+        <LinearGradient colors={["#FFD940", "#FFC314"]} style={styles.levelBadgeGradient}>
+          <MaterialIcons name="star" size={12} color="#0A4D26" />
+          <Text style={styles.levelBadgeText}>Level {level}</Text>
+        </LinearGradient>
+      </View>
       <Text style={styles.name}>{name}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
     </View>
   );
 }
@@ -50,6 +57,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  levelBadge: { borderRadius: 12, overflow: "hidden" },
+  levelBadgeGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  levelBadgeText: { color: "#0A4D26", fontSize: 11, fontWeight: "800" },
   name: { color: "#0A4D26", fontSize: 24, fontWeight: "900" },
-  subtitle: { color: "#2D5A3E", fontSize: 13, fontWeight: "600" },
 });

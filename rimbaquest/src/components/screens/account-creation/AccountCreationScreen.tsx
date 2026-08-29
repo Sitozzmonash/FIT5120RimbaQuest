@@ -5,8 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { HOME_IMAGES } from '../../../constants/images';
 import { AccountStep } from './components/AccountStep';
 import { AgeStep } from './components/AgeStep';
-import { PasswordStep } from './components/PasswordStep';
-import { StepIndicator } from './components/StepIndicator';
 
 // TODO:: Use State Management Library (Redux, Zustand, etc.) to manage
 // the state of the account creation process across steps. This will
@@ -57,13 +55,17 @@ export function AccountCreationScreen({
   onBlurUsername: () => void;
   onBlurEmail: () => void;
 }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2>(1);
 
   // If the server rejects a field that lives on an earlier step (e.g. "username
-  // already taken" surfacing only after the final submit on step 3), jump back
+  // already taken" surfacing only after the final submit on step 2), jump back
   // to the step where the user can see and fix it.
   useEffect(() => {
-    if ((fieldErrors.username || fieldErrors.email) && step !== 1) setStep(1);
+    if (
+      (fieldErrors.username || fieldErrors.email || fieldErrors.password || fieldErrors.confirmPassword) &&
+      step !== 1
+    )
+      setStep(1);
     else if (fieldErrors.age && step !== 2) setStep(2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fieldErrors]);
@@ -95,11 +97,9 @@ export function AccountCreationScreen({
         ]}
       >
         <View style={styles.createBrandIntro}>
-          <Image source={HOME_IMAGES.brandLogo} style={styles.createBrandLogo} resizeMode="contain" />
+          {/* <Image source={HOME_IMAGES.brandLogo} style={styles.createBrandLogo} resizeMode="contain" /> */}
           <Text style={styles.createTitle}>Create Your Explorer Account</Text>
         </View>
-
-        <StepIndicator step={step} />
 
         <View style={styles.createCenterWrap}>
           {authError && <Text style={styles.createErrorBanner}>{authError}</Text>}
@@ -112,6 +112,10 @@ export function AccountCreationScreen({
               email={email}
               setEmail={setEmail}
               onBlurEmail={onBlurEmail}
+              password={password}
+              setPassword={setPassword}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={setConfirmPassword}
               avatar={avatar}
               setAvatar={setAvatar}
               fieldErrors={fieldErrors}
@@ -126,20 +130,8 @@ export function AccountCreationScreen({
               value={ageValue}
               onChange={(n) => setAge(String(n))}
               error={fieldErrors.age}
-              onBack={() => setStep(1)}
-              onNext={() => setStep(3)}
-            />
-          )}
-
-          {step === 3 && (
-            <PasswordStep
-              password={password}
-              setPassword={setPassword}
-              confirmPassword={confirmPassword}
-              setConfirmPassword={setConfirmPassword}
-              fieldErrors={fieldErrors}
               submitting={submitting}
-              onBack={() => setStep(2)}
+              onBack={() => setStep(1)}
               onRegister={onRegister}
             />
           )}
@@ -158,7 +150,7 @@ const styles = StyleSheet.create({
   createDecoCircle4: { position: 'absolute', left: '80%', top: '63%', width: 90, height: 100, borderRadius: 50, backgroundColor: '#78B833', opacity: 0.07 },
   createScroll: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, gap: 16 },
   createBrandIntro: { alignItems: 'center', gap: 4, paddingVertical: 6 },
-  createBrandLogo: { width: 120, height: 27 },
+  createBrandLogo: { width: 176, height: 40 },
   createTitle: { color: '#0A4D26', fontSize: 24, lineHeight: 29, fontWeight: '900', textAlign: 'center' },
   createErrorBanner: { color: '#D9383A', backgroundColor: '#FCE8E8', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   createCenterWrap: { flex: 1, justifyContent: 'flex-start' },

@@ -3,16 +3,18 @@ import { ActivityIndicator, Alert, Platform, StatusBar, View } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 
 import { GalleryItem, LocationItem, LocationMode, RecentCapture, Screen, Species, UserProfile } from '../types';
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
 import { clearSession, loadSession, saveSession } from '../constants/session';
+import { levelForFound } from '../constants/progression';
 import { styles } from '../styles/theme';
 
 import { HomeScreen } from '../components/screens/HomeScreen';
-import { LocationDetailScreen, LocationsScreen } from '../components/screens/LocationsScreen';
+import { LocationDetailScreen, LocationsScreen } from '../components/screens/locations';
 import {
   CameraScreen,
   PhotoPreviewScreen,
@@ -22,7 +24,7 @@ import {
   SuccessScreen,
 } from '../components/screens/discovery';
 import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
-import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/BattleScreens';
+import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/LoginScreen';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -33,12 +35,13 @@ import { DEFAULT_AVATAR } from '../constants/images';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
 const GUEST_USER: UserProfile = {
   id: 0,
   username: '',
+  email: '',
   display_name: 'Explorer',
   avatar: DEFAULT_AVATAR,
   age: 10,
@@ -72,6 +75,7 @@ function profileFromAuth(data: Record<string, unknown>): UserProfile {
   return {
     id: Number(data.child_id || data.id || 0),
     username: String(data.username || ''),
+    email: String(data.email || ''),
     display_name: String(data.display_name || data.username || 'Explorer'),
     avatar: String(data.avatar || DEFAULT_AVATAR),
     age: Number(data.age || 10),
@@ -82,13 +86,31 @@ function profileFromAuth(data: Record<string, unknown>): UserProfile {
 }
 
 async function readCurrentLocationLabel(): Promise<string | null> {
-  const geo = typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
-  if (!geo) return null;
   try {
-    const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-      geo.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
-    });
-    return `Current location (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (!servicesEnabled) return null;
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return null;
+
+    const position = await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
+    ]);
+
+    const { latitude, longitude } = position.coords;
+    try {
+      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const label = [place?.city || place?.subregion, place?.region || place?.country]
+        .filter(Boolean)
+        .join(', ');
+      if (label) return label;
+    } catch {
+      // Reverse geocoding can fail independently of the GPS fix (e.g. offline);
+      // fall back to coordinates rather than failing the whole lookup.
+    }
+
+    return `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
   } catch {
     return null;
   }
@@ -104,6 +126,7 @@ export default function RimbaQuest() {
 
   const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
+  const [chosenSpeciesId, setChosenSpeciesId] = useState<string | null>(null);
   const [category, setCategory] = useState('Mammal');
   const [speciesSearch, setSpeciesSearch] = useState('');
   const [discovered, setDiscovered] = useState<string[]>([]);
@@ -116,6 +139,7 @@ export default function RimbaQuest() {
   const [discoveryLocation, setDiscoveryLocation] = useState('');
   const [locationMode, setLocationMode] = useState<LocationMode>('manual');
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
+  const [resolvingLocation, setResolvingLocation] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -169,12 +193,24 @@ export default function RimbaQuest() {
   const [isAttacking, setIsAttacking] = useState(false);
   const battleRecordedRef = useRef(false);
 
+  const resetAuthForm = () => {
+    setAuthUsername('');
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthConfirmPassword('');
+    setAuthAge('10');
+    setAuthAvatar('hornbill');
+    setFieldErrors({});
+    setAuthError(null);
+  };
+
   const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
     setCurrentUser(user);
     setAccessToken(token);
     setGalleryPhotos({});
     setIsLoggedIn(true);
     void saveSession({ user, accessToken: token });
+    resetAuthForm();
     setHistory([]);
     setScreen(nextScreen);
   };
@@ -190,7 +226,7 @@ export default function RimbaQuest() {
     setDiscovered([]);
     setRecentCaptures([]);
     setGalleryPhotos({});
-    setAuthPassword('');
+    resetAuthForm();
     setAuthError('Your session is no longer valid. Please sign in again.');
     setHistory([]);
     setScreen('login');
@@ -321,15 +357,15 @@ export default function RimbaQuest() {
       ? 'No locations found for this wildlife category.'
       : null;
 
-  const displayProgress = useMemo(
-    () => ({
-      found: discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length,
+  const displayProgress = useMemo(() => {
+    const found = discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length;
+    return {
+      found,
       total: supportedSpecies.length,
       xp: currentUser.xp,
-      level: currentUser.level,
-    }),
-    [discovered, supportedSpecies, currentUser]
-  );
+      level: levelForFound(found),
+    };
+  }, [discovered, supportedSpecies, currentUser]);
 
   const open = (next: Screen) => {
     setHistory((cur) => [...cur, screen]);
@@ -347,7 +383,17 @@ export default function RimbaQuest() {
     });
   };
 
+  const resetDiscoverySelections = () => {
+    setCategory('Mammal');
+    setSpeciesSearch('');
+    setSelected(OFFLINE_SPECIES[0]);
+    setChosenSpeciesId(null);
+    setDiscoveryLocation('');
+    setLocationMode('manual');
+  };
+
   const startDiscovery = (presetLocation?: string) => {
+    resetDiscoverySelections();
     if (presetLocation) {
       setDiscoveryLocation(presetLocation);
       setLocationMode('manual');
@@ -375,6 +421,7 @@ export default function RimbaQuest() {
     setPhotoError(null);
     setSaveError(null);
     setLocationNotice(null);
+    resetDiscoverySelections();
     resetTo('home');
   };
 
@@ -491,10 +538,27 @@ export default function RimbaQuest() {
     }
   };
 
+  const useAutomaticLocation = async () => {
+    setLocationMode('auto');
+    setLocationNotice(null);
+    setResolvingLocation(true);
+    try {
+      const label = await readCurrentLocationLabel();
+      if (!label) {
+        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
+        setLocationMode('manual');
+        return;
+      }
+      setDiscoveryLocation(label);
+    } finally {
+      setResolvingLocation(false);
+    }
+  };
+
   const recordDiscovery = async () => {
     if (saving) return;
     if (locationMode === 'auto') {
-      const label = await readCurrentLocationLabel();
+      const label = discoveryLocation.trim() || (await readCurrentLocationLabel());
       if (!label) {
         setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
         setLocationMode('manual');
@@ -619,11 +683,14 @@ export default function RimbaQuest() {
   const validateStep1 = (): boolean => {
     const name = authUsername.trim();
     const email = authEmail.trim();
-    const errors: { username?: string; email?: string } = {};
+    const errors: { username?: string; email?: string; password?: string; confirmPassword?: string } = {};
     if (!name) errors.username = 'Please enter a username.';
     else if (name.length < 3 || name.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
     if (!email) errors.email = 'Please enter an email address.';
     else if (!EMAIL_RE.test(email)) errors.email = 'Please enter a valid email address.';
+    if (!authPassword) errors.password = 'Please create a password.';
+    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
+    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
 
     setFieldErrors((cur) => {
       const next = { ...cur };
@@ -631,9 +698,13 @@ export default function RimbaQuest() {
       else delete next.username;
       if (errors.email) next.email = errors.email;
       else delete next.email;
+      if (errors.password) next.password = errors.password;
+      else delete next.password;
+      if (errors.confirmPassword) next.confirmPassword = errors.confirmPassword;
+      else delete next.confirmPassword;
       return next;
     });
-    return !errors.username && !errors.email;
+    return !errors.username && !errors.email && !errors.password && !errors.confirmPassword;
   };
 
   const handleForgotRequest = async () => {
@@ -754,10 +825,7 @@ export default function RimbaQuest() {
     setRecentCaptures([]);
     setGalleryPhotos({});
     setNotice(null);
-    setAuthPassword('');
-    setAuthConfirmPassword('');
-    setFieldErrors({});
-    setAuthError(null);
+    resetAuthForm();
     resetTo('account_entry');
   };
 
@@ -922,6 +990,7 @@ export default function RimbaQuest() {
         {screen === 'locations' && (
           <LocationsScreen
             locations={filteredLocations}
+            hasLocations={locations.length > 0}
             search={locationSearch}
             setSearch={setLocationSearch}
             categoryFilter={locationCategoryFilter}
@@ -987,8 +1056,10 @@ export default function RimbaQuest() {
             speciesList={filteredCategorySpecies}
             search={speciesSearch}
             setSearch={setSpeciesSearch}
+            selectedId={chosenSpeciesId}
             onChooseSpecies={(item) => {
               setSelected(item);
+              setChosenSpeciesId(item.id);
               open('confirm');
             }}
             onBack={goBack}
@@ -1004,9 +1075,14 @@ export default function RimbaQuest() {
             setDiscoveryLocation={setDiscoveryLocation}
             locationMode={locationMode}
             setLocationMode={(mode) => {
+              if (mode === 'auto') {
+                void useAutomaticLocation();
+                return;
+              }
               setLocationMode(mode);
               setLocationNotice(null);
             }}
+            resolvingLocation={resolvingLocation}
             locationOptions={locations}
             locationNotice={locationNotice}
             saveError={saveError}
@@ -1046,6 +1122,7 @@ export default function RimbaQuest() {
               open('locked');
             }}
             onStartDiscovery={() => {
+              resetDiscoverySelections();
               setPhotoUri(null);
               setPhotoError(null);
               setSaveError(null);
@@ -1109,13 +1186,11 @@ export default function RimbaQuest() {
         {screen === 'account_entry' && (
           <AccountEntryScreen
             onLogin={() => {
-              setAuthError(null);
-              setFieldErrors({});
+              resetAuthForm();
               open('login');
             }}
             onCreateAccount={() => {
-              setAuthError(null);
-              setFieldErrors({});
+              resetAuthForm();
               open('create_account');
             }}
           />
@@ -1137,8 +1212,7 @@ export default function RimbaQuest() {
               open('forgot_password');
             }}
             onCreateAccount={() => {
-              setAuthError(null);
-              setFieldErrors({});
+              resetAuthForm();
               open('create_account');
             }}
           />
@@ -1163,8 +1237,7 @@ export default function RimbaQuest() {
             submitting={authSubmitting}
             onRegister={() => void handleRegister()}
             onLogin={() => {
-              setAuthError(null);
-              setFieldErrors({});
+              resetAuthForm();
               open('login');
             }}
             onBack={goBack}
@@ -1204,6 +1277,7 @@ export default function RimbaQuest() {
           <ProfileEditScreen
             displayName={editDisplayName}
             setDisplayName={setEditDisplayName}
+            email={currentUser.email}
             age={editAge}
             setAge={setEditAge}
             avatar={editAvatar}

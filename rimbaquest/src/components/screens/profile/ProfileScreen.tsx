@@ -8,7 +8,6 @@ import { avatarImageFor } from "../../../constants/images";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { OverallProgressCard } from "./components/OverallProgressCard";
-import { CategoryProgressList } from "./components/CategoryProgressList";
 import { LogoutButton } from "./components/LogoutButton";
 
 export function ProfileScreen({
@@ -57,12 +56,10 @@ export function ProfileScreen({
         <ProfileHero
           avatarImage={avatarImageFor(currentUser.avatar)}
           name={currentUser.display_name}
-          subtitle={`Age ${currentUser.age} · Level ${currentUser.level} Jungle Scout`}
+          level={displayProgress.level || currentUser.level}
         />
 
-        <OverallProgressCard progress={displayProgress} />
-
-        <CategoryProgressList categories={categories} />
+        <OverallProgressCard progress={displayProgress} categories={categories} />
 
         <LogoutButton onPress={onLogout} />
       </ScrollView>
