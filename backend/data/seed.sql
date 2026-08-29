@@ -732,7 +732,6 @@ UPDATE species SET image_url = '/assets/species/sp_malayan_porcupine.jpg' WHERE 
 UPDATE species SET image_url = '/assets/species/sp_malayan_tapir.jpg' WHERE id = 'sp_malayan_tapir';
 UPDATE species SET image_url = '/assets/species/sp_malayan_tiger.jpg' WHERE id = 'sp_malayan_tiger';
 UPDATE species SET image_url = '/assets/species/sp_malaysian_field_rat.jpg' WHERE id = 'sp_malaysian_field_rat';
-UPDATE species SET image_url = '/assets/species/sp_malaysian_mole.jpg' WHERE id = 'sp_malaysian_mole';
 UPDATE species SET image_url = '/assets/species/sp_malaysian_rail_babbler.jpg' WHERE id = 'sp_malaysian_rail_babbler';
 UPDATE species SET image_url = '/assets/species/sp_marbled_cat.jpg' WHERE id = 'sp_marbled_cat';
 UPDATE species SET image_url = '/assets/species/sp_maroon_sureli.jpg' WHERE id = 'sp_maroon_sureli';
@@ -1254,3 +1253,34 @@ INSERT INTO quizzes (id, species_id, version, questions_json) VALUES (153, 'sp_y
 INSERT INTO quizzes (id, species_id, version, questions_json) VALUES (154, 'sp_yellow_rumped_flycatcher', 1, '[{"question": "Which statement about Yellow-rumped Flycatcher is true?", "options": ["Males have a bright yellow rump.", "Wild animals are safest when people feed and touch them.", "Every Malaysian wildlife species lives in the ocean."], "correct_index": 0, "explanation": "Wildlife is best observed calmly and respectfully from a distance."}]');
 INSERT INTO quizzes (id, species_id, version, questions_json) VALUES (155, 'sp_yellow_throated_marten', 1, '[{"question": "Which statement about Yellow-throated Marten is true?", "options": ["It has a striking yellow-orange throat.", "Wild animals are safest when people feed and touch them.", "Every Malaysian wildlife species lives in the ocean."], "correct_index": 0, "explanation": "Wildlife is best observed calmly and respectfully from a distance."}]');
 -- END complete Iteration 1 learning data
+
+-- Verified child-facing image corrections (Wikimedia Commons, 2026-08-29).
+-- Malaysian Mole intentionally has no image: Commons and GBIF contain no
+-- verifiable photo, so the client does not present an unverified generated one.
+BEGIN TRANSACTION;
+DELETE FROM species_images WHERE species_id IN (
+  'sp_banded_civet', 'sp_brown_rat', 'sp_chestnut_capped_thrush',
+  'sp_common_palm_civet', 'sp_noisy_rat', 'sp_orange_headed_thrush',
+  'sp_otter_civet', 'sp_rufous_browed_babbler', 'sp_sunda_stink_badger',
+  'sp_thick_spined_porcupine'
+);
+INSERT INTO species_images (species_id, uri, licence, attribution) VALUES
+('sp_banded_civet', 'https://commons.wikimedia.org/wiki/File:Banded_palm_civet_10.jpg', 'CC BY-SA 4.0', 'Greg Hume'),
+('sp_brown_rat', 'https://commons.wikimedia.org/wiki/File:Brown_Rat_(Rattus_norvegicus)_also_called_Norway_Rat_or_Common_Rat_-_Mathias_Baldwin_Park,_Philadelphia,_Pennsylvania,_USA.jpg', 'CC BY-SA 4.0', 'Chuck Homler d/b/a Focus On Wildlife'),
+('sp_chestnut_capped_thrush', 'https://commons.wikimedia.org/wiki/File:Geokichla_interpres_1838.jpg', 'Public domain', 'Nicolas Huet / Jean Gabriel Pretre'),
+('sp_chestnut_necklaced_partridge', 'https://commons.wikimedia.org/wiki/File:Perdix_charltoni_-_1820-1863_-_Print_-_Iconographia_Zoologica_-_Special_Collections_University_of_Amsterdam_-_UBA01_IZ17100103_(cropped).png', 'Public domain', 'Special Collections, University of Amsterdam'),
+('sp_common_palm_civet', 'https://commons.wikimedia.org/wiki/File:Asian_Palm_Civet_Over_A_Tree.jpg', 'CC BY-SA 3.0', 'Praveenp'),
+('sp_horse_tailed_squirrel', 'https://commons.wikimedia.org/wiki/File:Pferdeschwanzh%C3%B6rnchen.jpg', 'CC BY-SA 4.0', 'GreatSkua'),
+('sp_noisy_rat', 'https://commons.wikimedia.org/wiki/File:Leopoldamys_sabanus_86903769.jpg', 'CC BY 4.0', 'ian_dugdale'),
+('sp_orange_headed_thrush', 'https://commons.wikimedia.org/wiki/File:Zoothera_citrina_-_Khao_Yai.jpg', 'CC BY-SA 3.0', 'JJ Harrison'),
+('sp_otter_civet', 'https://commons.wikimedia.org/wiki/File:Stavenn_Otter_Civet_(Cynogale_bennettii).jpg', 'CC BY-SA 4.0', 'Stavenn'),
+('sp_rhinoceros_hornbill', 'https://commons.wikimedia.org/wiki/File:Buceros_rhinoceros_rhinoceros_215483344.jpg', 'CC BY 4.0', 'Wich''yanan L'),
+('sp_rufous_browed_babbler', 'https://commons.wikimedia.org/wiki/File:Pellorneum_capistratum_1838.jpg', 'Public domain', 'Nicolas Huet / Jean Gabriel Pretre'),
+('sp_saltwater_crocodile', 'https://commons.wikimedia.org/wiki/File:Saltwater_Crocodile_(Crocodylus_porosus)_(10106331165).jpg', 'CC BY-SA 2.0', 'Bernard DUPONT'),
+('sp_shrew_faced_squirrel', 'https://commons.wikimedia.org/wiki/File:Rhinosciurus_laticaudatus_544847871.jpg', 'CC BY 4.0', 'Ian Dugdale'),
+('sp_sun_bear', 'https://commons.wikimedia.org/wiki/File:Sun_bear_(Helarctos_malayanus).jpg', 'CC BY-SA 4.0', 'Theo Kruse, Burgers'' Zoo'),
+('sp_sunda_colugo', 'https://commons.wikimedia.org/wiki/File:Galeopterus_variegatus_132071386.jpg', 'CC BY 4.0', 'Samuel Lee'),
+('sp_sunda_stink_badger', 'https://commons.wikimedia.org/wiki/File:Brehms_Het_Leven_der_Dieren_Zoogdieren_Orde_4_Stinkdas_(Mydaus_meliceps).jpg', 'Public domain', 'Alfred Brehm'),
+('sp_tailed_jay', 'https://commons.wikimedia.org/wiki/File:Open_wing_Basking_posture_of_Graphium_agamemnon_(Linnaeus,_1758)_%E2%80%93_Tailed_Jay_(Male)_WLB-NEI_DSC_4982.jpg', 'CC BY-SA 4.0', 'Rahulbiswas29'),
+('sp_thick_spined_porcupine', 'https://commons.wikimedia.org/wiki/File:HystrixCrassispinisBerjeau.jpg', 'Public domain', 'C Berjeau');
+COMMIT;

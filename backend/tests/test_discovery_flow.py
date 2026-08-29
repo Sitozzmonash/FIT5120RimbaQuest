@@ -84,6 +84,12 @@ def test_system_health_and_static_catalogue():
     } for item in all_species.json())
     assert all(item["habitat"] and item["diet"] and item["fun_fact"] for item in all_species.json())
 
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT COUNT(*) FROM species_images")).scalar_one() == 151
+        assert connection.execute(
+            text("SELECT image_url FROM species WHERE id='sp_malaysian_mole'")
+        ).scalar_one() in (None, "")
+
     quiz = client.get(f"/api/v1/species/{all_species.json()[0]['id']}/quiz")
     assert quiz.status_code == 200
     assert quiz.json()["questions"]

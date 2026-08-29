@@ -123,7 +123,15 @@ def seed_iteration_one(connection: Connection) -> None:
 
     _upsert_rows(connection, species, species_rows)
     _upsert_rows(connection, quizzes, quiz_rows)
-    _upsert_rows(connection, species_images, image_rows)
+    # Reference-image metadata is entirely seed-owned. Replacing it as a set
+    # prevents stale roadkill/specimen attribution rows from surviving in an
+    # existing Supabase database after image corrections.
+    connection.execute(species_images.delete())
+    if image_rows:
+        connection.execute(
+            species_images.insert(),
+            [{key: value for key, value in row.items() if key != "id"} for row in image_rows],
+        )
     _upsert_rows(connection, locations, [*location_rows, *EXTRA_LOCATIONS])
     existing_version = connection.execute(
         select(app_metadata.c.key).where(app_metadata.c.key == "iteration_1_seed_sha256")

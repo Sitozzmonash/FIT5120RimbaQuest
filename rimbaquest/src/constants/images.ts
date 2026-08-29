@@ -92,7 +92,6 @@ Object.assign(SPECIES_IMAGES, {
   sp_bearded_pig: require('../../assets/species/sp_bearded_pig.jpg'),
   sp_binturong: require('../../assets/species/sp_binturong.jpg'),
   sp_black_crowned_pitta: require('../../assets/species/sp_black_crowned_pitta.jpg'),
-  sp_black_crowned_pitta_2: require('../../assets/species/sp_black_crowned_pitta_2.jpg'),
   sp_black_giant_squirrel: require('../../assets/species/sp_black_giant_squirrel.jpg'),
   sp_blue_breasted_quail: require('../../assets/species/sp_blue_breasted_quail.jpg'),
   sp_blue_headed_pitta: require('../../assets/species/sp_blue_headed_pitta.jpg'),
@@ -181,7 +180,6 @@ Object.assign(SPECIES_IMAGES, {
   sp_serow: require('../../assets/species/sp_serow.jpg'),
   sp_short_tailed_babbler: require('../../assets/species/sp_short_tailed_babbler.jpg'),
   sp_short_tailed_mongoose: require('../../assets/species/sp_short_tailed_mongoose.jpg'),
-  sp_short_tailed_mongoose_2: require('../../assets/species/sp_short_tailed_mongoose_2.jpg'),
   sp_small_indian_mongoose: require('../../assets/species/sp_small_indian_mongoose.jpg'),
   sp_small_toothed_palm_civet: require('../../assets/species/sp_small_toothed_palm_civet.jpg'),
   sp_smooth_coated_otter: require('../../assets/species/sp_smooth_coated_otter.jpg'),
@@ -214,9 +212,7 @@ Object.assign(SPECIES_IMAGES, {
   sp_yellow_rumped_flycatcher: require('../../assets/species/sp_yellow_rumped_flycatcher.jpg'),
   sp_yellow_throated_marten: require('../../assets/species/sp_yellow_throated_marten.jpg'),
   sp_chestnut_necklaced_partridge: require('../../assets/species/sp_chestnut_necklaced_partridge.jpg'),
-  sp_collared_mongoose_2: require('../../assets/species/sp_collared_mongoose_2.jpg'),
   sp_horse_tailed_squirrel: require('../../assets/species/sp_horse_tailed_squirrel.jpg'),
-  sp_malaysian_mole: require('../../assets/species/sp_malaysian_mole.jpg'),
   sp_shrew_faced_squirrel: require('../../assets/species/sp_shrew_faced_squirrel.jpg'),
 });
 
