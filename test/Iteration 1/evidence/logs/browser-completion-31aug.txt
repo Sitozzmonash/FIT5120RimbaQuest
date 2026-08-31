@@ -1,0 +1,45 @@
+RimbaQuest Iteration 1 - 31 August 2026 browser completion notes
+================================================================
+Web: https://rimbaquest-preview--latest.expo.app/
+API: https://fit5120rimbaquest.onrender.com
+No credentials recorded.
+
+AC1.1.1  Pass  Registration shows Username, Email, Password, Confirm Password,
+               Age wheel and Avatar. Team confirmed Age is optional, so the
+               missing * on Age/Avatar is accepted.
+               Evidence: UI-01-registration-blank-validation.png;
+               SUP-AC1-1-1-Fail.png (capture retained; final status Pass).
+
+AC2.1.3  Pass  Delayed GET /api/v1/locations showed spinner text
+               "Loading wildlife locations..." and then the six-location
+               list. "No locations found" did not appear.
+               Evidence: AC2-1-3-loading-state.png
+
+AC3.1.3  Pass  Take photo opened Review Your Photo with exactly one image.
+               Live webcam frame was not retained in the evidence folder.
+
+AC3.1.5  Pass  Enlarge photo opened a closable enlarged view.
+
+AC3.1.8  Pass  Retake returned to camera; a new capture replaced the previous
+               in-progress photo.
+
+AC3.1.9  Pass  Failed POST /photos at confirm displayed
+               "Your photo couldn't be uploaded. Please try again."
+               Photo, Asian Elephant, Mammal and KL Forest Eco Park retained.
+               Retry control was Confirm & Save.
+
+AC3.3.7  Pass  Back from Confirm Discovery returned to species selection and
+               retained the wildlife photo and Mammal category. Team accepted
+               Back as the Choose Another Species path.
+               Evidence: SUP-AC3-3-7-Fail.png (capture retained; final
+               status Pass).
+
+AC3.3.10 Fail  Failed POST /discoveries displayed "Unable to save"
+               rather than "Your discovery wasn't saved. Please try again."
+               Inputs were retained. Confirm & Save remained available.
+               Evidence: SUP-AC3-3-10-Fail.png. Defect: DEF-I1-007.
+
+AC8.1.7  Fail  Victory is reachable. Defeat is not reachable with opponent
+               HP 110 / attack 20 against the current catalogue (minimum
+               species attack 22, so every card reduces opponent HP to 0
+               first).

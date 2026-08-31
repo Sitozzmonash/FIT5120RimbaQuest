@@ -1,0 +1,417 @@
+{
+  "schema_version": 1,
+  "started_at_utc": "2026-08-31T04:54:18.101Z",
+  "finished_at_utc": "2026-08-31T05:07:28.454Z",
+  "targets": {
+    "web": "https://rimbaquest-preview--latest.expo.app/",
+    "api": "https://fit5120rimbaquest.onrender.com"
+  },
+  "secrets_recorded": false,
+  "summary": {
+    "expected_ac_count": 36,
+    "executed_ac_count": 36,
+    "passed": 23,
+    "failed": 13,
+    "harness_status": "failed"
+  },
+  "checks": [
+    {
+      "ac_id": "AC1.1.1",
+      "title": "registration exposes every required field and marker",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 13674,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-5dc58-y-required-field-and-marker-chromium-mobile/attachments/AC1-1-1-final-screenshot-54d0a7a15c366cd272550a7cf5222aec881111d0.png",
+        "results/artifacts/epic1-Epic-1---Account-and-5dc58-y-required-field-and-marker-chromium-mobile/error-context.md",
+        "results/artifacts/epic1-Epic-1---Account-and-5dc58-y-required-field-and-marker-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic1-Epic-1---Account-and-5dc58-y-required-field-and-marker-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC1.1.9",
+      "title": "valid registration creates one account and enters the experience",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 29549,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-6a81e-t-and-enters-the-experience-chromium-mobile/attachments/AC1-1-9-final-screenshot-1498a495d3925a303fbbc5fad67b7486d49a2cd1.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.1.10",
+      "title": "rapid repeated submission creates only one account",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 29803,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-e7d32-on-creates-only-one-account-chromium-mobile/attachments/AC1-1-10-final-screenshot-ecdb606fce3feac1253098abc24d17ca6c93a585.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.1.11",
+      "title": "registration network failure is clear and recoverable",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1651,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-c4906-re-is-clear-and-recoverable-chromium-mobile/attachments/AC1-1-11-final-screenshot-0eb58441554fc07c65b0f6e4ad6b4483449583c0.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.2.3",
+      "title": "empty login fields are blocked and identified",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1275,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-8ca9a--are-blocked-and-identified-chromium-mobile/attachments/AC1-2-3-final-screenshot-caa57f0a1b5cfb695f56f753dcb858c025a18bdd.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.2.5",
+      "title": "login server failure is not reported as invalid credentials",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 41614,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-0e8dd-rted-as-invalid-credentials-chromium-mobile/attachments/AC1-2-5-final-screenshot-afe070dcc7ddb85fc66d68a42a6456a0328bc88f.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.3.1",
+      "title": "forgot-password action opens the recovery form",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1317,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-10537-ion-opens-the-recovery-form-chromium-mobile/attachments/AC1-3-1-final-screenshot-9268d2c26f57abcc5b8e06fc923430920f551c51.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.3.3",
+      "title": "invalid recovery email variants show inline feedback",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1566,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-0002b-riants-show-inline-feedback-chromium-mobile/attachments/AC1-3-3-final-screenshot-96ac15163a6055fe98256c9b08a4970fd93aa025.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.4.2",
+      "title": "profile edit opens with permitted username and avatar controls",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1433,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-e4ac1-sername-and-avatar-controls-chromium-mobile/attachments/AC1-4-2-final-screenshot-8bf234f24eddba9011561d01985b9994d99d2b7f.png"
+      ]
+    },
+    {
+      "ac_id": "AC1.4.5",
+      "title": "unsaved profile changes offer remain and discard choices",
+      "epic_file": "specs/epic1.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 1850,
+      "evidence_files": [
+        "results/artifacts/epic1-Epic-1---Account-and-9e20a--remain-and-discard-choices-chromium-mobile/attachments/AC1-4-5-final-screenshot-9ab2ef7a2a3a585ace9507d3fa50c3ac0036455a.png"
+      ]
+    },
+    {
+      "ac_id": "AC2.1.3",
+      "title": "controlled loading and empty location states remain usable",
+      "epic_file": "specs/epic2.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 75027,
+      "evidence_files": [
+        "results/artifacts/epic2-Epic-2---Wildlife-Lo-b86cb-cation-states-remain-usable-chromium-mobile/error-context.md",
+        "results/artifacts/epic2-Epic-2---Wildlife-Lo-b86cb-cation-states-remain-usable-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic2-Epic-2---Wildlife-Lo-b86cb-cation-states-remain-usable-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC3.1.3",
+      "title": "fake camera captures exactly one photo for review",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 9089,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-11327-xactly-one-photo-for-review-chromium-mobile/attachments/AC3-1-3-final-screenshot-27c0133ff83d25266fcb98408bd1ec383b84446b.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-11327-xactly-one-photo-for-review-chromium-mobile/error-context.md",
+        "results/artifacts/epic3-Epic-3---Record-Wild-11327-xactly-one-photo-for-review-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-11327-xactly-one-photo-for-review-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC3.1.5",
+      "title": "selected photo is clear and supports enlargement",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 3448,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-998fa-ar-and-supports-enlargement-chromium-mobile/attachments/AC3-1-5-final-screenshot-942255042029f32de417571fd3b8198901ce12e8.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.1.7",
+      "title": "API refuses confirmed discovery without a valid photo",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 75851,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-baafa-overy-without-a-valid-photo-chromium-mobile/attachments/AC3-1-7-final-screenshot-23a124e877bde20509ce5bc2c003d58614f33132.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-baafa-overy-without-a-valid-photo-chromium-mobile/error-context.md",
+        "results/artifacts/epic3-Epic-3---Record-Wild-baafa-overy-without-a-valid-photo-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-baafa-overy-without-a-valid-photo-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC3.1.8",
+      "title": "retake replaces the original in-progress photo",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 3440,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-b71c7--original-in-progress-photo-chromium-mobile/attachments/AC3-1-8-final-screenshot-819d3db0bf41486792197e7df168c93bd38036f6.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.1.9",
+      "title": "photo service failure uses approved message and retry",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 31325,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-86ed5--approved-message-and-retry-chromium-mobile/attachments/AC3-1-9-final-screenshot-b91eeccdc784ccc0ad1f53f84bd35e62c68c6fba.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-86ed5--approved-message-and-retry-chromium-mobile/error-context.md",
+        "results/artifacts/epic3-Epic-3---Record-Wild-86ed5--approved-message-and-retry-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-86ed5--approved-message-and-retry-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC3.2.6",
+      "title": "back navigation changes category without losing the photo",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 3718,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-bf362-ry-without-losing-the-photo-chromium-mobile/attachments/AC3-2-6-final-screenshot-a912de69567301f8bdd1a7ec4d8b4362b6c328b8.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.1",
+      "title": "confirm photo enlargement preserves selected discovery state",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 24951,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-f32e0-es-selected-discovery-state-chromium-mobile/attachments/AC3-3-1-final-screenshot-4315c0d4fbd63c447db6a9be6f1026ee5455c34a.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.3",
+      "title": "granted geolocation supplies the current discovery location",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 48736,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-4502d--current-discovery-location-chromium-mobile/attachments/AC3-3-3-final-screenshot-ab7fb22898745e24abca0d00788af9e961f711d8.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.5",
+      "title": "denied geolocation explains fallback and permits manual entry",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 49240,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-b0172-ck-and-permits-manual-entry-chromium-mobile/attachments/AC3-3-5-final-screenshot-51c8d9a6d2cb7ccbf95257a3623ff771906d973b.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.7",
+      "title": "choose-another-species control retains photo and category",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 27477,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-97aa9--retains-photo-and-category-chromium-mobile/attachments/AC3-3-7-final-screenshot-62a83e2a60e5b4484ebd18572a3bfe317e755f0f.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-97aa9--retains-photo-and-category-chromium-mobile/error-context.md",
+        "results/artifacts/epic3-Epic-3---Record-Wild-97aa9--retains-photo-and-category-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-97aa9--retains-photo-and-category-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.8",
+      "title": "no discovery is saved before explicit confirmation",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 33327,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-0eb36-efore-explicit-confirmation-chromium-mobile/attachments/AC3-3-8-final-screenshot-ff683840c244a9218acc6c9cb351cabb978ae24c.png"
+      ]
+    },
+    {
+      "ac_id": "AC3.3.10",
+      "title": "save failure retains inputs and provides approved retry",
+      "epic_file": "specs/epic3.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 37549,
+      "evidence_files": [
+        "results/artifacts/epic3-Epic-3---Record-Wild-d6a90-and-provides-approved-retry-chromium-mobile/attachments/AC3-3-10-final-screenshot-bc4813d618fb956b55d1084b37fcbf9c190f24af.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-d6a90-and-provides-approved-retry-chromium-mobile/error-context.md",
+        "results/artifacts/epic3-Epic-3---Record-Wild-d6a90-and-provides-approved-retry-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic3-Epic-3---Record-Wild-d6a90-and-provides-approved-retry-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC4.1.2",
+      "title": "card and progress remain locked before a successful save",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 10363,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-7bdd3-ed-before-a-successful-save-chromium-mobile/attachments/AC4-1-2-final-screenshot-83b65e2c875154456967b13fcb2472dabd3f0891.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.1.9",
+      "title": "undiscovered page shows only approved preview information",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 18620,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-27599-pproved-preview-information-chromium-mobile/attachments/AC4-1-9-final-screenshot-444ff5c369e64aba27c75cc86e9d5ed6338d2513.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.1.10",
+      "title": "undiscovered page blocks discovered-only capabilities",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 18507,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-468f1-iscovered-only-capabilities-chromium-mobile/attachments/AC4-1-10-final-screenshot-56cbf91ed906f6b210ca632644355e36f36f873b.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.1.12",
+      "title": "gallery displays every repeated observation separately",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 16824,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-9c0cb-ated-observation-separately-chromium-mobile/attachments/AC4-1-12-final-screenshot-63b9200418c0088dd8b0ecd7627ffe2769fc389d.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-9c0cb-ated-observation-separately-chromium-mobile/error-context.md",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-9c0cb-ated-observation-separately-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-9c0cb-ated-observation-separately-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC4.1.13",
+      "title": "each gallery observation exposes its photo and location",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 31308,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-2529e-oses-its-photo-and-location-chromium-mobile/attachments/AC4-1-13-final-screenshot-1addb8ccf5674038d2b7ed32764bf9458d45df23.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-2529e-oses-its-photo-and-location-chromium-mobile/error-context.md",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-2529e-oses-its-photo-and-location-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-2529e-oses-its-photo-and-location-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.2",
+      "title": "collection renders one entry per deployed catalogue species",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 5948,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-37014--deployed-catalogue-species-chromium-mobile/attachments/AC4-2-2-final-screenshot-c2b809eacb91fb67b200e2ff7ae421dfb76de561.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-37014--deployed-catalogue-species-chromium-mobile/error-context.md",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-37014--deployed-catalogue-species-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-37014--deployed-catalogue-species-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.4",
+      "title": "overall progress denominator and percentage match the catalogue",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 9765,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-5d306-centage-match-the-catalogue-chromium-mobile/attachments/AC4-2-4-final-screenshot-32feaa376f15b745af6f5a8121a553a216da6b2d.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-5d306-centage-match-the-catalogue-chromium-mobile/error-context.md",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-5d306-centage-match-the-catalogue-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-5d306-centage-match-the-catalogue-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.6",
+      "title": "category chips show only species from the selected category",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 21809,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-f830b--from-the-selected-category-chromium-mobile/attachments/AC4-2-6-final-screenshot-7e88003fa23d9d596fd9f70f1f8509e7078d738c.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.7",
+      "title": "All restores the same collection shown before filtering",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 23739,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-82a49-tion-shown-before-filtering-chromium-mobile/attachments/AC4-2-7-final-screenshot-2b96c78e363dd12b45804f8ec0568a0a405daa3d.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.8",
+      "title": "first saved species updates card and progress by exactly one",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 25884,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-36f13-and-progress-by-exactly-one-chromium-mobile/attachments/AC4-2-8-final-screenshot-ab69d8ec9494e2b4b85e4b1dc157a2659b4a15b0.png"
+      ]
+    },
+    {
+      "ac_id": "AC4.2.9",
+      "title": "category progress totals match the deployed catalogue",
+      "epic_file": "specs/epic4.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 24509,
+      "evidence_files": [
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-f91fc-atch-the-deployed-catalogue-chromium-mobile/attachments/AC4-2-9-final-screenshot-f192b5eb771a4fd6174e3a5b37d283dd96ed7527.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-f91fc-atch-the-deployed-catalogue-chromium-mobile/error-context.md",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-f91fc-atch-the-deployed-catalogue-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic4-Epic-4---Wildlife-Ca-f91fc-atch-the-deployed-catalogue-chromium-mobile/trace.zip"
+      ]
+    },
+    {
+      "ac_id": "AC8.1.5",
+      "title": "selecting a second battle card replaces the first",
+      "epic_file": "specs/epic8.spec.ts",
+      "outcome": "Pass",
+      "duration_ms": 3317,
+      "evidence_files": [
+        "results/artifacts/epic8-Epic-8---Wildlife-Ca-8b582-tle-card-replaces-the-first-chromium-mobile/attachments/AC8-1-5-final-screenshot-b0c26da16077b60049ed079d6c0a723a3939637f.png"
+      ]
+    },
+    {
+      "ac_id": "AC8.1.7",
+      "title": "frontend exposes both victory and defeat outcomes",
+      "epic_file": "specs/epic8.spec.ts",
+      "outcome": "Fail",
+      "duration_ms": 11716,
+      "evidence_files": [
+        "results/artifacts/epic8-Epic-8---Wildlife-Ca-72fff-victory-and-defeat-outcomes-chromium-mobile/attachments/AC8-1-7-final-screenshot-2bf9e8d8375a640db71d29f0b6a16881e5814b1f.png",
+        "results/artifacts/epic8-Epic-8---Wildlife-Ca-72fff-victory-and-defeat-outcomes-chromium-mobile/error-context.md",
+        "results/artifacts/epic8-Epic-8---Wildlife-Ca-72fff-victory-and-defeat-outcomes-chromium-mobile/test-failed-1.png",
+        "results/artifacts/epic8-Epic-8---Wildlife-Ca-72fff-victory-and-defeat-outcomes-chromium-mobile/trace.zip"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/app/index.tsx
+    11:51  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                              import/no-duplicates
+    34:32  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                              import/no-duplicates
+   121:10  warning  'history' is assigned a value but never used                                                                                                                    @typescript-eslint/no-unused-vars
+   319:6   warning  React Hook useEffect has a missing dependency: 'refresh'. Either include it or remove the dependency array                                                      react-hooks/exhaustive-deps
+  1079:22  error    React Hook "useAutomaticLocation" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/AccountEntryScreen.tsx
+  5:29  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
+  6:29  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/ForgotPasswordScreen.tsx
+  52:73  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/AccountCreationScreen.tsx
+  2:10  warning  'Image' is defined but never used        @typescript-eslint/no-unused-vars
+  5:10  warning  'HOME_IMAGES' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/components/AgeWheelPicker.tsx
+  45:6  warning  React Hook useEffect has a missing dependency: 'initialIndex'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/LockedScreen.tsx
+  13:7  warning  'GENERIC_DISCOVERY_HINT' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/components/BattleStatsTab.tsx
+  4:10  warning  'Tap' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/ConfirmScreen.tsx
+  11:10  warning  'formatDateTime' is defined but never used  @typescript-eslint/no-unused-vars
+  59:10  warning  'now' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/SuccessScreen.tsx
+  3:10  warning  'MaterialIcons' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/DiscardPhotoModal.tsx
+  30:67  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/LocationEditSheet.tsx
+  118:48  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/locations/components/LocationsListHero.tsx
+  2:10  warning  'ScrollView' is defined but never used        @typescript-eslint/no-unused-vars
+  5:10  warning  'WILDLIFE_FILTERS' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 20 problems (4 errors, 16 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
