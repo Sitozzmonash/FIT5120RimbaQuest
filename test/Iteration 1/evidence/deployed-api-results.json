@@ -1,0 +1,164 @@
+{
+  "executed_at_utc": "2026-08-30T10:30:37.879165+00:00",
+  "base_url": "https://fit5120rimbaquest.onrender.com",
+  "synthetic_test_account": {
+    "username_after_profile_update": "edit_576794e4",
+    "child_id": 24,
+    "credentials_recorded": false,
+    "deletion_available": false
+  },
+  "summary": {
+    "total": 21,
+    "passed": 21,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "id": "DEP-API-01",
+      "title": "Production health, PostgreSQL and version",
+      "http_status": 200,
+      "result": "Pass",
+      "note": "database=postgresql; version=1.2.0"
+    },
+    {
+      "id": "DEP-API-02",
+      "title": "Supported species catalogue",
+      "http_status": 200,
+      "result": "Pass",
+      "note": "count=152"
+    },
+    {
+      "id": "DEP-API-03",
+      "title": "Iteration 1 location scope",
+      "http_status": 200,
+      "result": "Pass",
+      "note": "count=6"
+    },
+    {
+      "id": "DEP-API-04",
+      "title": "Case-insensitive partial location search",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-05",
+      "title": "Synthetic account registration",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-06",
+      "title": "Duplicate username protection",
+      "http_status": 400,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-07",
+      "title": "Invalid login rejected",
+      "http_status": 401,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-08",
+      "title": "Valid case-insensitive login",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-09",
+      "title": "Profile requires authentication",
+      "http_status": 401,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-10",
+      "title": "Second ownership-test account registration",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-11",
+      "title": "Cross-child profile access forbidden",
+      "http_status": 403,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-12",
+      "title": "Profile username/avatar update",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-13",
+      "title": "Prototype recovery code generation",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-14",
+      "title": "Password reset",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-15",
+      "title": "Login after username and password change",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-16",
+      "title": "Initial collection progress",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-17",
+      "title": "First discovery unlock and XP",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-18",
+      "title": "Repeat discovery creates no duplicate reward",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-19",
+      "title": "Unique progress remains one after repeat",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-20",
+      "title": "Repeat observations retained in gallery",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    },
+    {
+      "id": "DEP-API-21",
+      "title": "Battle outcome is authenticated and recorded",
+      "http_status": 200,
+      "result": "Pass",
+      "note": ""
+    }
+  ]
+}

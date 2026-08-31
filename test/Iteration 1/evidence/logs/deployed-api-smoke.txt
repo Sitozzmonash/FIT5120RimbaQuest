@@ -1,0 +1,21 @@
+PASS DEP-API-01 [200] Production health, PostgreSQL and version
+PASS DEP-API-02 [200] Supported species catalogue
+PASS DEP-API-03 [200] Iteration 1 location scope
+PASS DEP-API-04 [200] Case-insensitive partial location search
+PASS DEP-API-05 [200] Synthetic account registration
+PASS DEP-API-06 [400] Duplicate username protection
+PASS DEP-API-07 [401] Invalid login rejected
+PASS DEP-API-08 [200] Valid case-insensitive login
+PASS DEP-API-09 [401] Profile requires authentication
+PASS DEP-API-10 [200] Second ownership-test account registration
+PASS DEP-API-11 [403] Cross-child profile access forbidden
+PASS DEP-API-12 [200] Profile username/avatar update
+PASS DEP-API-13 [200] Prototype recovery code generation
+PASS DEP-API-14 [200] Password reset
+PASS DEP-API-15 [200] Login after username and password change
+PASS DEP-API-16 [200] Initial collection progress
+PASS DEP-API-17 [200] First discovery unlock and XP
+PASS DEP-API-18 [200] Repeat discovery creates no duplicate reward
+PASS DEP-API-19 [200] Unique progress remains one after repeat
+PASS DEP-API-20 [200] Repeat observations retained in gallery
+PASS DEP-API-21 [200] Battle outcome is authenticated and recorded
