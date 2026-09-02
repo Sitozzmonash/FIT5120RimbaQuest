@@ -55,7 +55,9 @@ def create_discovery(
     payload: DiscoveryIn,
     _: Annotated[AuthenticatedUser, Depends(require_child_access)],
 ):
-    if payload.photo_path and not payload.photo_path.startswith(f"children/{child_id}/discoveries/"):
+    if not payload.photo_path:
+        raise HTTPException(400, "A photo is required to confirm a discovery.")
+    if not payload.photo_path.startswith(f"children/{child_id}/discoveries/"):
         raise HTTPException(400, "The uploaded photo does not belong to this explorer.")
 
     with engine.begin() as connection:

@@ -18,7 +18,7 @@ export const forgotPasswordStyles = StyleSheet.create({
   forgotInputBox: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: '#D1E8D5', backgroundColor: 'rgba(255,255,255,0.93)', paddingHorizontal: 16 },
   forgotInputBoxError: { borderColor: '#D9383A', backgroundColor: '#FFF6F6' },
   forgotInput: { flex: 1, color: '#0A4D26', fontSize: 15, fontWeight: '500', paddingVertical: 0 },
-  forgotFieldError: { color: '#D9383A', fontSize: 11, fontWeight: '700', marginTop: -8, marginLeft: 4 },
+  forgotFieldError: { color: '#D9383A', fontSize: 11, fontWeight: '700', marginTop: 4, marginLeft: 4 },
   forgotSubmitBtn: { width: '100%' },
   forgotBackToLogin: { color: '#0A4D26', fontSize: 14, fontWeight: '700' },
   forgotErrorBanner: { color: '#D9383A', backgroundColor: '#FCE8E8', borderRadius: 10, padding: 10, fontSize: 12, fontWeight: '700', width: '100%', textAlign: 'center' },

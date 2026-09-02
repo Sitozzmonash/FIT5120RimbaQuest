@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef } from "react";
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -32,6 +33,7 @@ export function AgeWheelPicker({
     [],
   );
   const scrollRef = useRef<ScrollView>(null);
+  const settleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialIndex = Math.max(0, numbers.indexOf(value));
 
   useEffect(() => {
@@ -44,8 +46,14 @@ export function AgeWheelPicker({
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(e.nativeEvent.contentOffset.y / AGE_ITEM_HEIGHT);
+  useEffect(() => {
+    return () => {
+      if (settleTimeout.current) clearTimeout(settleTimeout.current);
+    };
+  }, []);
+
+  const settleToOffset = (offsetY: number) => {
+    const index = Math.round(offsetY / AGE_ITEM_HEIGHT);
     const clamped = Math.min(numbers.length - 1, Math.max(0, index));
     const next = numbers[clamped];
     if (next !== value) onChange(next);
@@ -53,6 +61,16 @@ export function AgeWheelPicker({
       y: clamped * AGE_ITEM_HEIGHT,
       animated: true,
     });
+  };
+
+  const handleMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    settleToOffset(e.nativeEvent.contentOffset.y);
+  };
+
+  const handleScrollWeb = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = e.nativeEvent.contentOffset.y;
+    if (settleTimeout.current) clearTimeout(settleTimeout.current);
+    settleTimeout.current = setTimeout(() => settleToOffset(offsetY), 100);
   };
 
   return (
@@ -65,7 +83,9 @@ export function AgeWheelPicker({
           snapToInterval={AGE_ITEM_HEIGHT}
           decelerationRate="fast"
           contentContainerStyle={{ paddingVertical: AGE_PADDING }}
-          onMomentumScrollEnd={handleMomentumEnd}
+          {...(Platform.OS === "web"
+            ? { scrollEventThrottle: 16, onScroll: handleScrollWeb }
+            : { onMomentumScrollEnd: handleMomentumEnd })}
         >
           {numbers.map((n) => {
             const selected = n === value;
