@@ -286,7 +286,7 @@ Expected fields:
 }
 ```
 
-If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database. Existing data from the former Supabase database was intentionally discarded in the Neon migration and is not transferred automatically.
+If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database.
 
 ## Web deployment with EAS Hosting
 
