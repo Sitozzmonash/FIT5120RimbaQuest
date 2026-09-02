@@ -125,7 +125,7 @@ def seed_iteration_one(connection: Connection) -> None:
     _upsert_rows(connection, quizzes, quiz_rows)
     # Reference-image metadata is entirely seed-owned. Replacing it as a set
     # prevents stale roadkill/specimen attribution rows from surviving in an
-    # existing Supabase database after image corrections.
+    # existing production database after image corrections.
     connection.execute(species_images.delete())
     if image_rows:
         connection.execute(

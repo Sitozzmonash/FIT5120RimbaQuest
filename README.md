@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Supabase PostgreSQL plus private Supabase Storage for durable production data.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable production data.
 
 Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal.
 
@@ -15,7 +15,7 @@ Iteration 1 is a **manual wildlife recording and learning experience**. A photo 
 
 Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
 
-The configured production API reports `"database": "postgresql"` and `"version": "1.2.0"` from `/health`. Production persistence uses Supabase PostgreSQL and the private `discovery-photos` Storage bucket. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
+The configured production API reports `"database": "postgresql"` and `"version": "1.2.0"` from `/health`. Production persistence uses Neon PostgreSQL and the private `image` storage bucket. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
 
 ## Iteration 1 scope
 
@@ -63,8 +63,8 @@ DeepSeek V4 Flash, GLM-4.6V-Flash, BM25, and GBIF remain possible future archite
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
-    A -->|SQLAlchemy + psycopg| P[(Supabase PostgreSQL)]
-    A -->|Service-side Storage API| S[(Private Supabase Storage)]
+    A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
+    A -->|S3 API with signed URLs| S[(Private Neon Storage)]
     P -->|Accounts, profiles, sightings, cards, progress| A
     S -->|One-hour signed photo URL| A
     A -->|JSON response| C
@@ -77,8 +77,8 @@ flowchart LR
 |---|---|
 | Expo client | Screens, navigation, camera/gallery access, validation, search, and presentation across Web/Android/iOS |
 | FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
-| Supabase PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
-| Supabase Storage | Private storage for child discovery photos under child-scoped object paths |
+| Neon PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
+| Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
 | Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
 
@@ -100,10 +100,10 @@ flowchart LR
 | Client capabilities | Expo Camera, Expo Image Picker, Expo SecureStore, React Native Web |
 | API | Python 3.12, FastAPI 0.115, Uvicorn, Pydantic |
 | Data access | SQLAlchemy 2.0, psycopg 3 |
-| Production database | Supabase PostgreSQL through the Session pooler |
+| Production database | Neon PostgreSQL through the pooled connection |
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
-| Photo storage | Private Supabase Storage, 5 MB server-side upload limit, one-hour signed URLs |
+| Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -134,7 +134,7 @@ FIT5120RimbaQuest/
 └── README.md
 ```
 
-The repository-root `Dockerfile` is the only backend container definition and is the production Render build. It does not hard-code a database URL; Render supplies the Supabase PostgreSQL `DATABASE_URL` at runtime.
+The repository-root `Dockerfile` is the only backend container definition and is the production Render build. It does not hard-code a database URL; Render supplies the Neon PostgreSQL `DATABASE_URL` at runtime.
 
 `doc/`, `docs/`, local databases, `.env` files, editor settings, QR images, and agent instruction files are intentionally excluded from Git.
 
@@ -189,7 +189,7 @@ Copy-Item .env.example .env
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --env-file .env
 ```
 
-The default example uses SQLite at `backend/data/RimbaQuest.db`. To exercise discovery-photo upload with a local API, also provide a server-side Supabase Secret Key and use a private development bucket. Without private Storage configuration, catalogue and authentication routes work, but the photo-upload endpoint returns `503`.
+The default example uses SQLite at `backend/data/RimbaQuest.db`. To exercise discovery-photo upload with a local API, also provide the Neon storage credentials (`AWS_ENDPOINT_URL_S3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) and use a private development bucket. Without private Storage configuration, catalogue and authentication routes work, but the photo-upload endpoint returns `503`.
 
 Configure the client according to where it runs:
 
@@ -227,26 +227,26 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 
 | Variable | Required in production | Purpose |
 |---|---:|---|
-| `DATABASE_URL` | Yes | Supabase PostgreSQL Session-pooler connection string |
-| `SUPABASE_SECRET_KEY` | Yes | Server-only key used for private Storage operations |
+| `DATABASE_URL` | Yes | Neon PostgreSQL pooled connection string |
+| `AWS_ENDPOINT_URL_S3` | Yes | Neon S3-compatible storage endpoint |
+| `AWS_ACCESS_KEY_ID` | Yes | Storage access key ID |
+| `AWS_SECRET_ACCESS_KEY` | Yes | Storage secret access key |
+| `AWS_REGION` | No | Storage region; defaults to `us-east-2` |
+| `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `SUPABASE_URL` | No | Overrides the configured project URL |
-| `SUPABASE_STORAGE_BUCKET` | No | Overrides the default `discovery-photos` bucket |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
-| `DEEPSEEK_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
-| `ZHIPU_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
 
-Never place `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
+Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
 ## Production backend deployment
 
-### Supabase preparation
+### Neon preparation
 
-1. Create or select the Supabase project.
-2. Create a **private** Storage bucket named `discovery-photos`.
-3. Copy the PostgreSQL **Session pooler** connection string on port `5432`.
-4. Create a server-side Supabase Secret Key.
+1. Create or select the Neon project.
+2. Create a **private** Storage bucket named `image`.
+3. Copy the PostgreSQL **pooled** connection string.
+4. Create the S3-compatible storage access key pair (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
 5. Rotate any password or key that has appeared in a chat, screenshot, terminal recording, or commit.
 
 No manual schema SQL is required for an empty database. On startup, FastAPI uses SQLAlchemy to create the current Iteration 1 tables and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, sightings, cards, or progress.
@@ -258,18 +258,17 @@ Create a Docker Web Service from the repository root, or apply `render.yaml`. Th
 Configure:
 
 ```text
-DATABASE_URL=postgresql://postgres.ekwbvjikckuvvfkakhff:URL_ENCODED_DATABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
-SUPABASE_SECRET_KEY=<paste the current rotated server-side key from Supabase API settings>
+DATABASE_URL=postgresql://user:URL_ENCODED_PASSWORD@ep-XXXX-pooler.REGION.aws.neon.tech/neondb
+AWS_ENDPOINT_URL_S3=https://XXXX.storage.c-2.us-east-2.aws.neon.tech
+AWS_ACCESS_KEY_ID=<storage access key id>
+AWS_SECRET_ACCESS_KEY=<storage secret access key>
+AWS_REGION=us-east-2
+DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 CORS_ALLOWED_ORIGINS=*
 ```
 
-The project URL and bucket already have non-secret defaults:
-
-```text
-SUPABASE_URL=https://ekwbvjikckuvvfkakhff.supabase.co
-SUPABASE_STORAGE_BUCKET=discovery-photos
-```
+The bucket name and region have non-secret defaults and may be omitted (`image`, `us-east-2`).
 
 After saving the variables, deploy the latest `master` commit and verify:
 
@@ -287,7 +286,7 @@ Expected fields:
 }
 ```
 
-If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database. Existing data from an earlier ephemeral Render SQLite container is not automatically transferred to Supabase.
+If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database. Existing data from the former Supabase database was intentionally discarded in the Neon migration and is not transferred automatically.
 
 ## Web deployment with EAS Hosting
 
@@ -347,7 +346,7 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Cross-child profile, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
 - Collection uniqueness and foreign-key constraints prevent duplicate unlock rows and orphaned child/species records.
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
-- The client never receives the Supabase Secret Key.
+- The client never receives the storage secret access key.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.
@@ -399,7 +398,7 @@ Check `/health`. Production must report `"database": "postgresql"`. Render's loc
 
 ### Photo upload returns `503`
 
-Verify that `SUPABASE_SECRET_KEY` is present on Render and that the private bucket is named `discovery-photos`.
+Verify that `AWS_ENDPOINT_URL_S3` and `AWS_SECRET_ACCESS_KEY` are present on Render and that the private bucket is named `image`.
 
 ### Expo Go reports an incompatible SDK
 
@@ -430,7 +429,7 @@ Wikimedia Commons remains the source for the bundled species reference images; e
 Never commit:
 
 - `.env` files or database connection strings.
-- Supabase Secret Keys, JWT secrets, or AI-provider keys.
+- Storage secret access keys, JWT secrets, or AI-provider keys.
 - Local SQLite databases or personal discovery photos.
 - `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, QR-code images, `doc/`, or `docs/`.
 

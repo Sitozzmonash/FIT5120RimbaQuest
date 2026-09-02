@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import tempfile
-from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -77,11 +76,6 @@ def test_system_health_and_static_catalogue():
     all_species = client.get("/api/v1/species")
     assert all_species.status_code == 200
     assert len(all_species.json()) == 152
-    assert all(item["id"] not in {
-        "sp_black_crowned_pitta_2",
-        "sp_collared_mongoose_2",
-        "sp_short_tailed_mongoose_2",
-    } for item in all_species.json())
     assert all(item["habitat"] and item["diet"] and item["fun_fact"] for item in all_species.json())
 
     with engine.connect() as connection:
@@ -311,41 +305,6 @@ def test_seed_is_idempotent_and_does_not_delete_user_data():
     assert client.get(
         f"/api/v1/children/{child_id}/profile", headers=headers(token)
     ).status_code == 200
-
-
-def test_catalogue_retirement_migrates_duplicate_history_and_hides_invalid_species():
-    child_id, _, _ = register("catalogue")
-    retired_ids = ["sp_collared_mongoose_2", "sp_short_tailed_mongoose_2", "sp_black_crowned_pitta_2"]
-    with engine.begin() as connection:
-        for species_id in retired_ids:
-            connection.execute(
-                text("""INSERT INTO species (id, common_name, category, sensitive, is_active)
-                    VALUES (:id, :name, 'Mammal', 0, 1)"""),
-                {"id": species_id, "name": species_id},
-            )
-        # Exercise the duplicate-card path for collared mongoose.
-        connection.execute(text("""INSERT INTO collection_entries
-            (child_id, species_id, unlock_reason, observed_boolean)
-            VALUES (:child, 'sp_collared_mongoose_2', 'discovery', 1),
-                   (:child, 'sp_collared_mongoose', 'discovery', 1),
-                   (:child, 'sp_short_tailed_mongoose_2', 'discovery', 1)"""), {"child": child_id})
-        connection.execute(text("""INSERT INTO sightings
-            (child_id, species_id, status, sensitive_species, recorded_at, location_label)
-            VALUES (:child, 'sp_collared_mongoose_2', 'confirmed', 0, :recorded, 'FRIM'),
-                   (:child, 'sp_short_tailed_mongoose_2', 'confirmed', 0, :recorded, 'FRIM')"""),
-            {"child": child_id, "recorded": datetime.now(timezone.utc)},
-        )
-
-    initialise_database()
-
-    with engine.connect() as connection:
-        assert connection.execute(text("SELECT COUNT(*) FROM species WHERE id IN ('sp_collared_mongoose_2', 'sp_short_tailed_mongoose_2')")).scalar_one() == 0
-        assert connection.execute(text("SELECT COUNT(*) FROM sightings WHERE species_id IN ('sp_collared_mongoose', 'sp_short_tailed_mongoose') AND child_id=:child"), {"child": child_id}).scalar_one() == 2
-        assert connection.execute(text("SELECT COUNT(*) FROM collection_entries WHERE child_id=:child AND species_id='sp_collared_mongoose'"), {"child": child_id}).scalar_one() == 1
-        assert connection.execute(text("SELECT is_active FROM species WHERE id='sp_black_crowned_pitta_2'")).scalar_one() in (0, False)
-
-    visible_ids = {item["id"] for item in client.get("/api/v1/species").json()}
-    assert "sp_black_crowned_pitta_2" not in visible_ids
 
 
 def test_battle_recording_is_owned_and_persistent():

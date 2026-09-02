@@ -24,12 +24,11 @@ def _database_url() -> str:
 DATABASE_URL = _database_url()
 IS_POSTGRES = DATABASE_URL.startswith("postgresql+")
 
-SUPABASE_URL = os.getenv(
-    "SUPABASE_URL",
-    "https://ekwbvjikckuvvfkakhff.supabase.co",
-).rstrip("/")
-SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY", "").strip()
-SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "discovery-photos").strip()
+STORAGE_ENDPOINT = os.getenv("AWS_ENDPOINT_URL_S3", "").strip().rstrip("/")
+STORAGE_ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "").strip()
+STORAGE_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "").strip()
+STORAGE_REGION = os.getenv("AWS_REGION", "us-east-2").strip()
+STORAGE_BUCKET = os.getenv("DATABASE_STORAGE_BUCKET", "image").strip()
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
 SIGNED_PHOTO_TTL_SECONDS = 60 * 60
 
