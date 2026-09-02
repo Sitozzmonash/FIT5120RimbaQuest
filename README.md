@@ -408,11 +408,22 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
+- Iteration 1 uses curated local seed data rather than making live third-party data requests at runtime.
 - The Expo client bundles 151 verified species reference images for the 152-species catalogue.
 - Malaysian Mole currently has no verified reference image, so the interface must not invent or substitute an unrelated photograph.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
 - Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence and should be reviewed before public redistribution.
 - Discovery location data is currently a human-readable label; it is not presented as precise GPS evidence.
+
+### Open data sources
+
+Iteration 1 uses the following open datasets to prepare the local species catalogue and conservation context:
+
+- **GBIF — Asian Camera Trap Vertebrate Data**: used for species catalogue preparation, scientific names, categories, and wildlife occurrence/reference context. [Dataset page](https://cloud.gbif.org/asia/resource?r=bifa5_006) · [raw archive](https://cloud.gbif.org/asia/archive.do?r=bifa5_006&v=1.9)
+- **PERHILITAN — Wildlife Conservation Act 2010 (Act 716)**: used for Malaysian legal protection information, including Protected and Totally Protected status. [Dataset page](https://archive.data.gov.my/data/dataset/bilangan-spesies-hidupan-liar-yang-tersenarai-di-bawah-akta-pemuliharaan-hidupan-liar-2010-akta-716) · [raw XLSX](https://archive.data.gov.my/data/dataset/a02803c6-fdae-488b-b191-9380c1d3ace6/resource/27ad4e98-d875-445e-b02e-8e7c8889e32a/download/spesies-dalam-akta.xlsx)
+- **Area of Permanent Forest Reserves by State**: used as supporting habitat and conservation context. [Dataset page](https://data.gov.my/data-catalogue/forest_reserve_state) · [CSV](https://storage.data.gov.my/environment/forest_reserve_state.csv)
+
+Wikimedia Commons remains the source for the bundled species reference images; each image's author, source page, and licence are recorded in the attribution metadata above.
 
 ## Secret and repository hygiene
 
