@@ -110,6 +110,8 @@ async function readCurrentLocationLabel(): Promise<string | null> {
       // fall back to coordinates rather than failing the whole lookup.
     }
 
+    if (Platform.OS === 'web') return null;
+
     return `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
   } catch {
     return null;
@@ -506,7 +508,7 @@ export default function RimbaQuest() {
         await expireSession();
         throw new Error(SESSION_EXPIRED_ERROR);
       }
-      if (!response.ok) throw new Error(apiMessage(responseData, 'Unable to save'));
+      if (!response.ok) throw new Error(apiMessage(responseData, "Your discovery wasn't saved. Please try again."));
       const result = responseData as {
         first_discovery?: boolean;
         total_xp?: number;
@@ -602,7 +604,8 @@ export default function RimbaQuest() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
+        let message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
+        message = message.replace(/^String should have at least (\d+) characters?$/i, 'Password should have at least $1 characters');
         if (/already taken/i.test(message)) setFieldErrors({ username: 'That username is already taken. Try another one.' });
         else setAuthError(message);
         return;
@@ -918,9 +921,15 @@ export default function RimbaQuest() {
   const performAttack = () => {
     if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
     setIsAttacking(true);
-    const playerDmg = battlePlayerCard.base_attack || 25;
+    const missed = Math.random() < 0.5;
+    const playerDmg = missed ? 0 : battlePlayerCard.base_attack || 25;
     const nextOpponentHp = Math.max(0, battleOpponentHp - playerDmg);
-    const newLogs = [...battleLog, `${battlePlayerCard.common_name} used Basic Attack for ${playerDmg} damage.`];
+    const newLogs = [
+      ...battleLog,
+      missed
+        ? `${battlePlayerCard.common_name}'s Basic Attack missed!`
+        : `${battlePlayerCard.common_name} used Basic Attack for ${playerDmg} damage.`,
+    ];
     if (nextOpponentHp <= 0) {
       setBattleOpponentHp(0);
       newLogs.push(`${BATTLE_OPPONENT.name} fainted. You won!`);
@@ -946,6 +955,14 @@ export default function RimbaQuest() {
       setBattleRound((r) => r + 1);
       setIsAttacking(false);
     }, 500);
+  };
+
+  const performGiveUp = () => {
+    if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
+    setBattlePlayerHp(0);
+    setBattleLog((current) => [...current, `You gave up. ${battlePlayerCard.common_name} retreated from the battle.`]);
+    setBattleOutcome('lose');
+    void recordBattleResult(false, battleRound);
   };
 
   const discoveryPhoto = photoUri ? { uri: photoUri } : null;
@@ -1177,6 +1194,7 @@ export default function RimbaQuest() {
             xpAwarded={battleXpAwarded}
             isAttacking={isAttacking}
             onAttack={performAttack}
+            onGiveUp={performGiveUp}
             onBattleAgain={() => initBattle(battlePlayerCard)}
             onSelectAnotherCard={() => resetTo('battle_select')}
             onBack={goBack}

@@ -267,10 +267,17 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     assert first.json()["first_discovery"] is True
     assert first.json()["xp_awarded"] == 100
 
-    second = client.post(
+    missing_photo = client.post(
         f"/api/v1/children/{child_id}/discoveries",
         headers=auth,
         json={"species_id": species_item["id"], "location_label": "FRIM"},
+    )
+    assert missing_photo.status_code == 400
+
+    second = client.post(
+        f"/api/v1/children/{child_id}/discoveries",
+        headers=auth,
+        json={"species_id": species_item["id"], "location_label": "FRIM", "photo_path": object_path},
     )
     assert second.status_code == 200
     assert second.json()["first_discovery"] is False
@@ -289,7 +296,7 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     )
     assert gallery.status_code == 200
     assert len(gallery.json()["items"]) == 2
-    assert gallery.json()["items"][0]["photo_url"] is None
+    assert gallery.json()["items"][0]["photo_url"] == signed_url
     assert gallery.json()["items"][1]["photo_url"] == signed_url
 
 

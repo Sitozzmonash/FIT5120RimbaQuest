@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
@@ -8,6 +8,7 @@ import { BattleVsBadge } from "./components/BattleVsBadge";
 import { BattleLogPanel } from "./components/BattleLogPanel";
 import { BattleActionBar } from "./components/BattleActionBar";
 import { BattleOutcomePanel } from "./components/BattleOutcomePanel";
+import { GiveUpConfirmModal } from "./components/GiveUpConfirmModal";
 
 export function BattleArenaScreen({
   card,
@@ -23,6 +24,7 @@ export function BattleArenaScreen({
   xpAwarded,
   isAttacking,
   onAttack,
+  onGiveUp,
   onBattleAgain,
   onSelectAnotherCard,
   onBack,
@@ -40,10 +42,12 @@ export function BattleArenaScreen({
   xpAwarded?: number | null;
   isAttacking: boolean;
   onAttack: () => void;
+  onGiveUp: () => void;
   onBattleAgain: () => void;
   onSelectAnotherCard: () => void;
   onBack: () => void;
 }) {
+  const [giveUpConfirmVisible, setGiveUpConfirmVisible] = useState(false);
   const title =
     battleOutcome === "win" ? "Victory" : battleOutcome === "lose" ? "Defeat" : "Battle Arena";
 
@@ -72,9 +76,22 @@ export function BattleArenaScreen({
         <BattleLogPanel round={battleRound} log={battleLog} />
 
         {battleOutcome === "playing" && (
-          <BattleActionBar isAttacking={isAttacking} onAttack={onAttack} />
+          <BattleActionBar
+            isAttacking={isAttacking}
+            onAttack={onAttack}
+            onGiveUp={() => setGiveUpConfirmVisible(true)}
+          />
         )}
       </ScrollView>
+
+      <GiveUpConfirmModal
+        visible={giveUpConfirmVisible}
+        onCancel={() => setGiveUpConfirmVisible(false)}
+        onConfirm={() => {
+          setGiveUpConfirmVisible(false);
+          onGiveUp();
+        }}
+      />
 
       <BattleOutcomePanel
         visible={battleOutcome === "win" || battleOutcome === "lose"}
