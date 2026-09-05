@@ -22,6 +22,36 @@ from pathlib import Path
 BASE_URL = "https://fit5120rimbaquest.onrender.com"
 
 
+def _upload_photo(child_id: int, token: str, jpeg: bytes):
+    boundary = "----RimbaQuestQA" + uuid.uuid4().hex
+    body = (
+        f"--{boundary}\r\n"
+        'Content-Disposition: form-data; name="photo"; filename="qa.jpg"\r\n'
+        "Content-Type: image/jpeg\r\n\r\n"
+    ).encode() + jpeg + f"\r\n--{boundary}--\r\n".encode()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+    }
+    req = urllib.request.Request(
+        f"{BASE_URL}/api/v1/children/{child_id}/photos",
+        data=body,
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=90) as response:
+            raw = response.read().decode()
+            return response.status, json.loads(raw) if raw else {}
+    except urllib.error.HTTPError as error:
+        raw = error.read().decode()
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            payload = {"detail": raw[:500]}
+        return error.code, payload
+
+
 def request(method: str, path: str, body=None, token: str | None = None):
     headers = {"Content-Type": "application/json"}
     if token:
@@ -237,9 +267,45 @@ def main(output_path: str) -> int:
         status == 200 and before.get("found") == 0 and before.get("total") == 152,
     )
 
+    status, missing_photo = request(
+        "POST",
+        f"/api/v1/children/{child_id}/discoveries",
+        {
+            "species_id": species_id,
+            "location_label": "QA Test Location - not real child data",
+        },
+        token,
+    )
+    check(
+        "DEP-API-17",
+        "Confirmed discovery without a photo is rejected",
+        status,
+        status == 400 and "photo" in str(missing_photo).lower(),
+        f"detail={missing_photo}",
+    )
+
+    jpeg = (
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00"
+        b"\xff\xdb\x00C\x00" + (b"\x08" * 64)
+        + b"\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00"
+        + b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00"
+        + b"\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        + b"\xff\xda\x00\x08\x01\x01\x00\x00\x3f\x00\x7f\xff\xd9"
+    )
+    photo_status, photo = _upload_photo(child_id, token, jpeg)
+    photo_path = photo.get("photo_path") if isinstance(photo, dict) else None
+    check(
+        "DEP-API-18",
+        "Synthetic JPEG photo upload",
+        photo_status,
+        photo_status == 200 and bool(photo_path),
+        f"photo_path_recorded={bool(photo_path)}",
+    )
+
     discovery_payload = {
         "species_id": species_id,
         "location_label": "QA Test Location - not real child data",
+        "photo_path": photo_path,
     }
     status, first = request(
         "POST",
@@ -248,12 +314,13 @@ def main(output_path: str) -> int:
         token,
     )
     check(
-        "DEP-API-17",
-        "First discovery unlock and XP",
+        "DEP-API-19",
+        "First photo-backed discovery unlock and XP",
         status,
         status == 200
         and first.get("first_discovery") is True
         and first.get("xp_awarded") == 100,
+        f"detail={first}",
     )
 
     status, repeat = request(
@@ -263,34 +330,34 @@ def main(output_path: str) -> int:
         token,
     )
     check(
-        "DEP-API-18",
-        "Repeat discovery creates no duplicate reward",
+        "DEP-API-20",
+        "Repeat photo-backed discovery creates no duplicate reward",
         status,
         status == 200
         and repeat.get("first_discovery") is False
         and repeat.get("xp_awarded") == 0,
+        f"detail={repeat}",
     )
 
     status, after = request(
         "GET", f"/api/v1/children/{child_id}/progress", token=token
     )
-    check(
-        "DEP-API-19",
-        "Unique progress remains one after repeat",
-        status,
-        status == 200 and after.get("found") == 1 and after.get("profile", {}).get("xp") == 100,
+    progress_ok = (
+        status == 200
+        and after.get("found") == 1
+        and after.get("profile", {}).get("xp") == 100
     )
-
-    status, gallery = request(
+    status_gallery, gallery = request(
         "GET",
         f"/api/v1/children/{child_id}/species/{species_id}/gallery",
         token=token,
     )
     check(
-        "DEP-API-20",
-        "Repeat observations retained in gallery",
-        status,
-        status == 200 and gallery.get("total") == 2,
+        "DEP-API-21",
+        "Unique progress and photo-backed gallery after repeat",
+        status_gallery,
+        progress_ok and status_gallery == 200 and gallery.get("total") == 2,
+        f"found={after.get('found')}; gallery={gallery.get('total')}",
     )
 
     status, battle = request(
@@ -300,7 +367,7 @@ def main(output_path: str) -> int:
         token,
     )
     check(
-        "DEP-API-21",
+        "DEP-API-22",
         "Battle outcome is authenticated and recorded",
         status,
         status == 200 and battle.get("xp_awarded") == 50,

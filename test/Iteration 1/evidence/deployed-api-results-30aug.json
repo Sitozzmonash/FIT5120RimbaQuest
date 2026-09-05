@@ -1,15 +1,15 @@
 {
-  "executed_at_utc": "2026-09-03T13:00:35.365999+00:00",
+  "executed_at_utc": "2026-08-30T10:30:37.879165+00:00",
   "base_url": "https://fit5120rimbaquest.onrender.com",
   "synthetic_test_account": {
-    "username_after_profile_update": "edit_1b441b46",
-    "child_id": 14,
+    "username_after_profile_update": "edit_576794e4",
+    "child_id": 24,
     "credentials_recorded": false,
     "deletion_available": false
   },
   "summary": {
-    "total": 22,
-    "passed": 22,
+    "total": 21,
+    "passed": 21,
     "failed": 0
   },
   "checks": [
@@ -127,41 +127,34 @@
     },
     {
       "id": "DEP-API-17",
-      "title": "Confirmed discovery without a photo is rejected",
-      "http_status": 400,
+      "title": "First discovery unlock and XP",
+      "http_status": 200,
       "result": "Pass",
-      "note": "detail={'detail': 'A photo is required to confirm a discovery.'}"
+      "note": ""
     },
     {
       "id": "DEP-API-18",
-      "title": "Synthetic JPEG photo upload",
+      "title": "Repeat discovery creates no duplicate reward",
       "http_status": 200,
       "result": "Pass",
-      "note": "photo_path_recorded=True"
+      "note": ""
     },
     {
       "id": "DEP-API-19",
-      "title": "First photo-backed discovery unlock and XP",
+      "title": "Unique progress remains one after repeat",
       "http_status": 200,
       "result": "Pass",
-      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:31.419197+00:00', 'first_discovery': True, 'xp_awarded': 100, 'total_xp': 100, 'photo_url': 'https://br-curly-voice-aei9xgmj.storage.c-2.us-east-2.aws.neon.tech/images/children/14/discoveries/33bf6c07-3812-4b2b-bfab-ae2ea3e63c7a.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=nak_live_8103b418feba4e309835c23a53f78350%2F20260903%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260903T130031Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1209cb55927fe1c45a10cc82629d81e8a4bddcba271f6973712a74b40a33c47c'}"
+      "note": ""
     },
     {
       "id": "DEP-API-20",
-      "title": "Repeat photo-backed discovery creates no duplicate reward",
+      "title": "Repeat observations retained in gallery",
       "http_status": 200,
       "result": "Pass",
-      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:32.593442+00:00', 'first_discovery': False, 'xp_awarded': 0, 'total_xp': 100, 'photo_url': 'https://br-curly-voice-aei9xgmj.storage.c-2.us-east-2.aws.neon.tech/images/children/14/discoveries/33bf6c07-3812-4b2b-bfab-ae2ea3e63c7a.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=nak_live_8103b418feba4e309835c23a53f78350%2F20260903%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260903T130032Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=eb48cb382dfa55a6b3aadc8d506b6f32b69808b97d3bc5a5fdcbfbd19d8ee79d'}"
+      "note": ""
     },
     {
       "id": "DEP-API-21",
-      "title": "Unique progress and photo-backed gallery after repeat",
-      "http_status": 200,
-      "result": "Pass",
-      "note": "found=1; gallery=2"
-    },
-    {
-      "id": "DEP-API-22",
       "title": "Battle outcome is authenticated and recorded",
       "http_status": 200,
       "result": "Pass",

@@ -1,0 +1,17 @@
+.............                                                            [100%]
+=============================== warnings summary ===============================
+../../../../../../.cache/uv/archive-v0/wquuAXoRhSbVxor-/lib/python3.14/site-packages/fastapi/routing.py:233: 37 warnings
+  /Users/lilia/.cache/uv/archive-v0/wquuAXoRhSbVxor-/lib/python3.14/site-packages/fastapi/routing.py:233: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    is_coroutine = asyncio.iscoroutinefunction(dependant.call)
+
+../../../../../../.cache/uv/archive-v0/wquuAXoRhSbVxor-/lib/python3.14/site-packages/starlette/_utils.py:39: 43 warnings
+week5/Testing/Iteration 1/automated/test_iteration1_acceptance.py: 15 warnings
+  /Users/lilia/.cache/uv/archive-v0/wquuAXoRhSbVxor-/lib/python3.14/site-packages/starlette/_utils.py:39: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    return asyncio.iscoroutinefunction(obj) or (callable(obj) and asyncio.iscoroutinefunction(obj.__call__))
+
+week5/Testing/Iteration 1/automated/test_iteration1_acceptance.py: 13 warnings
+  /Users/lilia/.cache/uv/archive-v0/wquuAXoRhSbVxor-/lib/python3.14/site-packages/sqlalchemy/engine/default.py:941: DeprecationWarning: The default datetime adapter is deprecated as of Python 3.12; see the sqlite3 documentation for suggested replacement recipes
+    cursor.execute(statement, parameters)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+13 passed, 108 warnings in 1.63s

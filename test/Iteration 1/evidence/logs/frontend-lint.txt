@@ -1,47 +1,85 @@
+Rerun: 3 September 2026
+Commit: 93c3a03e6ad429c345f9199b29b2e33ac72637c8
+Command: npx eslint --config testing-folder automated/eslint.config.js src/**/*.{ts,tsx}
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/app/index.tsx
-    11:51  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                              import/no-duplicates
-    34:32  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                              import/no-duplicates
-   121:10  warning  'history' is assigned a value but never used                                                                                                                    @typescript-eslint/no-unused-vars
-   319:6   warning  React Hook useEffect has a missing dependency: 'refresh'. Either include it or remove the dependency array                                                      react-hooks/exhaustive-deps
-  1079:22  error    React Hook "useAutomaticLocation" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/AccountEntryScreen.tsx
-  5:29  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
-  6:29  warning  '/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/app/index.tsx
+    11:51  warning  '/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             import/no-duplicates
+    34:32  warning  '/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             import/no-duplicates
+   123:10  warning  'history' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+   319:12  error    Error: Calling setState synchronously within an effect can trigger cascading renders
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/ForgotPasswordScreen.tsx
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/app/index.tsx:319:12
+  317 |   useEffect(() => {
+  318 |     if (isLoggedIn && currentUser.id && accessToken) {
+> 319 |       void refresh(currentUser.id, accessToken);
+      |            ^^^^^^^ Avoid calling setState() directly within an effect
+  320 |     }
+  321 |   }, [isLoggedIn, currentUser.id, accessToken]);
+  322 |  react-hooks/set-state-in-effect
+   321:6   warning  React Hook useEffect has a missing dependency: 'refresh'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+  1096:22  error    React Hook "useAutomaticLocation" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/rules-of-hooks
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/AccountEntryScreen.tsx
+  5:29  warning  '/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
+  6:29  warning  '/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/constants/images.ts' imported multiple times  import/no-duplicates
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/ForgotPasswordScreen.tsx
   52:73  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/AccountCreationScreen.tsx
-  2:10  warning  'Image' is defined but never used        @typescript-eslint/no-unused-vars
-  5:10  warning  'HOME_IMAGES' is defined but never used  @typescript-eslint/no-unused-vars
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/AccountCreationScreen.tsx
+   2:10  warning  'Image' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   5:10  warning  'HOME_IMAGES' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  68:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/components/AgeWheelPicker.tsx
-  45:6  warning  React Hook useEffect has a missing dependency: 'initialIndex'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/LockedScreen.tsx
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/AccountCreationScreen.tsx:68:7
+  66 |       step !== 1
+  67 |     )
+> 68 |       setStep(1);
+     |       ^^^^^^^ Avoid calling setState() directly within an effect
+  69 |     else if (fieldErrors.age && step !== 2) setStep(2);
+  70 |     // eslint-disable-next-line react-hooks/exhaustive-deps
+  71 |   }, [fieldErrors]);  react-hooks/set-state-in-effect
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/account-creation/components/AgeWheelPicker.tsx
+  47:6  warning  React Hook useEffect has a missing dependency: 'initialIndex'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/LockedScreen.tsx
   13:7  warning  'GENERIC_DISCOVERY_HINT' is assigned a value but never used  @typescript-eslint/no-unused-vars
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/components/BattleStatsTab.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/collection/components/BattleStatsTab.tsx
   4:10  warning  'Tap' is defined but never used  @typescript-eslint/no-unused-vars
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/ConfirmScreen.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/ConfirmScreen.tsx
   11:10  warning  'formatDateTime' is defined but never used  @typescript-eslint/no-unused-vars
   59:10  warning  'now' is assigned a value but never used    @typescript-eslint/no-unused-vars
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/SuccessScreen.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/SuccessScreen.tsx
   3:10  warning  'MaterialIcons' is defined but never used  @typescript-eslint/no-unused-vars
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/DiscardPhotoModal.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/DiscardPhotoModal.tsx
   30:67  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/LocationEditSheet.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/discovery/components/LocationEditSheet.tsx
   118:48  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
 
-/Users/lilia/Downloads/5120上课用到的/week3/testing-work/FIT5120RimbaQuest/rimbaquest/src/components/screens/locations/components/LocationsListHero.tsx
+/Users/lilia/Downloads/5120上课用到的/week5/FIT5120RimbaQuest/rimbaquest/src/components/screens/locations/components/LocationsListHero.tsx
   2:10  warning  'ScrollView' is defined but never used        @typescript-eslint/no-unused-vars
   5:10  warning  'WILDLIFE_FILTERS' is defined but never used  @typescript-eslint/no-unused-vars
 
-✖ 20 problems (4 errors, 16 warnings)
+✖ 22 problems (6 errors, 16 warnings)
   0 errors and 2 warnings potentially fixable with the `--fix` option.
+
+Exit code: 1
