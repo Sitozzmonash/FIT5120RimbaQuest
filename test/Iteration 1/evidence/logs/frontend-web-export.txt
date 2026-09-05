@@ -1,38 +1,43 @@
+Rerun: 3 September 2026
+Commit: 93c3a03e6ad429c345f9199b29b2e33ac72637c8
+Command: npx expo export --platform web
+
 Using src/app as the root directory for Expo Router.
 React Compiler enabled
 Starting Metro Bundler
 Static rendering is enabled. Learn more: https://docs.expo.dev/router/reference/static-rendering/
-| (node:81810) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23465) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-| (node:81809) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23466) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-| (node:81811) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23468) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-| (node:81813) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23469) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-| (node:81814) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23470) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-| (node:81812) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (node:23467) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
 | (Use `node --trace-warnings ...` to show where the warning was created)
-Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% (5/7)
-λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 15.3% ( 81/207)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% ( 84/227)
-λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.6% (377/729)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 36.0% (179/332)
-λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 74.0% (751/873)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 76.9% (526/605)
-λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 97.0% (979/996)
-Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.7% (933/969)
-λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.9% (1082/1088)
-λ Bundled 16790ms node_modules/expo-router/node/render.js (1094 modules)
-Web Bundled 18247ms node_modules/expo-router/entry.js (1087 modules)
+Web node_modules/expo-router/entry.js ▓▓░░░░░░░░░░░░░░ 13.2% ( 4/11)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 17.7% (103/254)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 27.3% (187/358)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓░░░░░░░░░░ 42.6% (316/484)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.0% (371/679)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.2% (483/773)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.0% (491/766)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.4% (767/873)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 83.9% (861/940)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.1% (923/978)
+λ Bundled 18764ms node_modules/expo-router/node/render.js (1096 modules)
+Web Bundled 19732ms node_modules/expo-router/entry.js (1089 modules)
 
 › web bundles (1):
-_expo/static/js/web/entry-4756f38abf207326ec6f6111e454e2e8.js (1.9 MB)
+_expo/static/js/web/entry-fdae3c1205dfdbc84fcc50ffd75c966c.js (1.91 MB)
 
 › Static routes (3):
-/ (index) (40 kB)
-/_sitemap (38.8 kB)
-/+not-found (38.8 kB)
+/ (index) (40.1 kB)
+/_sitemap (39 kB)
+/+not-found (39 kB)
 
-Exported: /Users/lilia/Downloads/5120上课用到的/week5/Testing/Iteration 1/evidence/web-export
+Exported: /tmp/rimbaquest-web-export-03sep
+Exit code: 0

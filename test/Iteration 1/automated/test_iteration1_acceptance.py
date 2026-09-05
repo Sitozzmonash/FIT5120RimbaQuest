@@ -211,7 +211,11 @@ def test_auto_i1_07_valid_recovery_changes_password_and_preserves_data() -> None
     discovery = client.post(
         f"/api/v1/children/{account['child_id']}/discoveries",
         headers=_headers(account),
-        json={"species_id": species["id"], "location_label": "FRIM"},
+        json={
+            "species_id": species["id"],
+            "location_label": "FRIM",
+            "photo_path": f"children/{account['child_id']}/discoveries/qa-recovery.jpg",
+        },
     )
     assert discovery.status_code == 200, discovery.text
 
@@ -342,7 +346,20 @@ def test_auto_i1_12_repeat_discovery_is_card_and_progress_idempotent() -> None:
     account = _account("repeat")
     species = _first_species()
     endpoint = f"/api/v1/children/{account['child_id']}/discoveries"
-    payload = {"species_id": species["id"], "location_label": "Bukit Gasing"}
+    photo_path = f"children/{account['child_id']}/discoveries/qa-iteration1.jpg"
+    payload = {
+        "species_id": species["id"],
+        "location_label": "Bukit Gasing",
+        "photo_path": photo_path,
+    }
+
+    missing_photo = client.post(
+        endpoint,
+        headers=_headers(account),
+        json={"species_id": species["id"], "location_label": "Bukit Gasing"},
+    )
+    assert missing_photo.status_code == 400
+    assert "photo" in str(missing_photo.json()).lower()
 
     first = client.post(endpoint, headers=_headers(account), json=payload)
     second = client.post(endpoint, headers=_headers(account), json=payload)

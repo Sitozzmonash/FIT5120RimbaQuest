@@ -1,7 +1,8 @@
-Captured: 2026-08-30 19:32:59 +08
-OS: Darwin 25.5.0 Darwin Kernel Version 25.5.0: Tue Jun  9 22:26:46 PDT 2026; root:xnu-12377.121.10~1/RELEASE_ARM64_T8103 arm64 arm
+Captured: 2026-09-03 21:00:00 +08
+OS: Darwin 25.6.0 arm64
 Python: Python 3.14.3
 Node: v26.8.1
 npm: 11.19.0
-Repository commit: f1ce06eebb9041af42441e821cad605760d60d5f
-Repository branch: master
+Repository commit: 93c3a03e6ad429c345f9199b29b2e33ac72637c8
+Repository branch: master (detached at 93c3a03 for this rerun)
+Note: Automated rerun used photo-backed discovery requests. Original 30 August 2026 capture remains in environment-and-build-30aug.txt (commit f1ce06e).

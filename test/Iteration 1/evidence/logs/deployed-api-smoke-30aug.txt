@@ -1,8 +1,3 @@
-Rerun: 3 September 2026
-Commit under test: 93c3a03e6ad429c345f9199b29b2e33ac72637c8
-Note: discovery checks upload a synthetic JPEG then confirm with photo_path.
-Target: https://fit5120rimbaquest.onrender.com
-
 PASS DEP-API-01 [200] Production health, PostgreSQL and version
 PASS DEP-API-02 [200] Supported species catalogue
 PASS DEP-API-03 [200] Iteration 1 location scope
@@ -19,9 +14,8 @@ PASS DEP-API-13 [200] Prototype recovery code generation
 PASS DEP-API-14 [200] Password reset
 PASS DEP-API-15 [200] Login after username and password change
 PASS DEP-API-16 [200] Initial collection progress
-PASS DEP-API-17 [400] Confirmed discovery without a photo is rejected
-PASS DEP-API-18 [200] Synthetic JPEG photo upload
-PASS DEP-API-19 [200] First photo-backed discovery unlock and XP
-PASS DEP-API-20 [200] Repeat photo-backed discovery creates no duplicate reward
-PASS DEP-API-21 [200] Unique progress and photo-backed gallery after repeat
-PASS DEP-API-22 [200] Battle outcome is authenticated and recorded
+PASS DEP-API-17 [200] First discovery unlock and XP
+PASS DEP-API-18 [200] Repeat discovery creates no duplicate reward
+PASS DEP-API-19 [200] Unique progress remains one after repeat
+PASS DEP-API-20 [200] Repeat observations retained in gallery
+PASS DEP-API-21 [200] Battle outcome is authenticated and recorded
