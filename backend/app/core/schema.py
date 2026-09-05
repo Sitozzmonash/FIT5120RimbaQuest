@@ -100,6 +100,41 @@ species_images = Table(
     Column("attribution", Text),
 )
 
+# Iteration 2 keeps additional learning facts separate from the single
+# Iteration 1 ``species.fun_fact`` field so existing catalogue views remain
+# backwards compatible.  Each fact is source-linked and can be reviewed by
+# the team before it is shown in the child-facing app.
+species_fun_facts = Table(
+    "species_fun_facts",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("display_order", Integer, nullable=False),
+    Column("fact_text", Text, nullable=False),
+    Column("source_name", String(200), nullable=False),
+    Column("source_url", Text, nullable=False),
+    Column("source_license", String(100), nullable=False),
+    Column("retrieved_at", DateTime(timezone=True), nullable=False),
+    Column("verification_status", String(40), nullable=False, default="source-linked-draft"),
+    Column("uncertainty_note", Text),
+    Column("verified_by", String(100)),
+    Column("verified_at", DateTime(timezone=True)),
+    UniqueConstraint("species_id", "display_order", name="uq_species_fun_facts_species_order"),
+)
+Index("ix_species_fun_facts_species_order", species_fun_facts.c.species_id, species_fun_facts.c.display_order)
+
+species_fun_fact_sources = Table(
+    "species_fun_fact_sources",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("fact_id", Integer, ForeignKey("species_fun_facts.id", ondelete="CASCADE"), nullable=False),
+    Column("source_role", String(30), nullable=False),
+    Column("source_name", String(200), nullable=False),
+    Column("source_url", Text, nullable=False),
+    Column("source_license", String(100), nullable=False),
+    UniqueConstraint("fact_id", "source_url", name="uq_species_fun_fact_sources_fact_url"),
+)
+
 locations = Table(
     "locations",
     metadata,
