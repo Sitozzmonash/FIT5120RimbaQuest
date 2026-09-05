@@ -10,6 +10,9 @@ from pathlib import Path
 ROOT = Path(".")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
+ITERATION_2_FUN_FACTS_PILOT = Path(
+    os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
+)
 
 
 def _database_url() -> str:

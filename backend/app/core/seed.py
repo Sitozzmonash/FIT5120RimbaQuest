@@ -3,13 +3,22 @@ from __future__ import annotations
 import json
 import hashlib
 import sqlite3
+from datetime import datetime
 from functools import lru_cache
 from typing import Any
 
 from sqlalchemy import Connection, Table, select
 
-from app.core.config import SEED_SQL
-from app.core.schema import app_metadata, locations, quizzes, species, species_images
+from app.core.config import ITERATION_2_FUN_FACTS_PILOT, SEED_SQL
+from app.core.schema import (
+    app_metadata,
+    locations,
+    quizzes,
+    species,
+    species_fun_facts,
+    species_fun_fact_sources,
+    species_images,
+)
 
 
 ITERATION_1_LOCATION_IDS = {
@@ -146,3 +155,66 @@ def seed_iteration_one(connection: Connection) -> None:
         connection.execute(
             app_metadata.insert().values(key="iteration_1_seed_sha256", value=seed_version)
         )
+
+
+def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
+    """Load the reviewable Iteration 2 fun-fact pilot without changing I1 data.
+
+    The facts deliberately retain ``source-linked-draft`` status.  A team
+    member must approve them before a future child-facing endpoint exposes
+    them as verified content.
+    """
+    if not ITERATION_2_FUN_FACTS_PILOT.exists():
+        return
+
+    seed_version = hashlib.sha256(ITERATION_2_FUN_FACTS_PILOT.read_bytes()).hexdigest()
+    version_key = "iteration_2_fun_facts_pilot_sha256"
+    current_version = connection.execute(
+        select(app_metadata.c.value).where(app_metadata.c.key == version_key)
+    ).scalar_one_or_none()
+    if current_version == seed_version:
+        return
+
+    records = json.loads(ITERATION_2_FUN_FACTS_PILOT.read_text(encoding="utf-8"))
+    for record in records:
+        values = {
+            **{key: value for key, value in record.items() if key != "additional_sources"},
+            "retrieved_at": datetime.fromisoformat(record["retrieved_at"].replace("Z", "+00:00")),
+            "verified_at": (
+                datetime.fromisoformat(record["verified_at"].replace("Z", "+00:00"))
+                if record.get("verified_at")
+                else None
+            ),
+        }
+        predicate = (
+            (species_fun_facts.c.species_id == values["species_id"])
+            & (species_fun_facts.c.display_order == values["display_order"])
+        )
+        exists = connection.execute(select(species_fun_facts.c.id).where(predicate)).first()
+        if exists:
+            connection.execute(species_fun_facts.update().where(predicate).values(**values))
+        else:
+            connection.execute(species_fun_facts.insert().values(**values))
+
+        fact_id = connection.execute(select(species_fun_facts.c.id).where(predicate)).scalar_one()
+        for source in record.get("additional_sources", []):
+            source_values = {"fact_id": fact_id, **source}
+            source_exists = connection.execute(
+                select(species_fun_fact_sources.c.id).where(
+                    species_fun_fact_sources.c.fact_id == fact_id,
+                    species_fun_fact_sources.c.source_url == source_values["source_url"],
+                )
+            ).first()
+            if source_exists:
+                connection.execute(
+                    species_fun_fact_sources.update()
+                    .where(species_fun_fact_sources.c.id == source_exists.id)
+                    .values(**source_values)
+                )
+            else:
+                connection.execute(species_fun_fact_sources.insert().values(**source_values))
+
+    if connection.execute(select(app_metadata.c.key).where(app_metadata.c.key == version_key)).first():
+        connection.execute(app_metadata.update().where(app_metadata.c.key == version_key).values(value=seed_version))
+    else:
+        connection.execute(app_metadata.insert().values(key=version_key, value=seed_version))
