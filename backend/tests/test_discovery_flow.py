@@ -246,7 +246,7 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     )
     monkeypatch.setattr(
         "app.routers.discoveries.identify_supported_species",
-        lambda content, content_type, catalogue: {
+        lambda content, content_type, catalogue, **_kwargs: {
             "species_id": species_item["id"],
             "confidence": 0.97,
         },
@@ -367,7 +367,8 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     assert gallery.json()["items"][1]["photo_url"] == signed_url
 
 
-def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch):
+def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
+    caplog.set_level("INFO")
     child_id, token, _ = register("unverified")
     auth = headers(token)
     upload_called = False
@@ -378,7 +379,10 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch):
         raise AssertionError("An uncertain photo must not be stored")
 
     monkeypatch.setattr("app.routers.discoveries.upload_discovery_photo", unexpected_upload)
-    monkeypatch.setattr("app.routers.discoveries.identify_supported_species", lambda *_args: None)
+    monkeypatch.setattr(
+        "app.routers.discoveries.identify_supported_species",
+        lambda *_args, **_kwargs: None,
+    )
     uncertain = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
@@ -390,7 +394,7 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch):
 
     from app.services.vision import VisionServiceUnavailable
 
-    def fail_provider(*_args):
+    def fail_provider(*_args, **_kwargs):
         raise VisionServiceUnavailable("timeout")
 
     monkeypatch.setattr("app.routers.discoveries.identify_supported_species", fail_provider)
@@ -400,6 +404,8 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch):
         files={"photo": ("wildlife.jpg", b"wildlife", "image/jpeg")},
     )
     assert failed.status_code == 503
+    assert failed.headers.get("x-rimbaquest-trace-id")
+    assert "phase=vision reason=timeout" in caplog.text
 
     collection = client.get(f"/api/v1/children/{child_id}/collection", headers=auth).json()["items"]
     assert all(item["discovered"] == 0 for item in collection)

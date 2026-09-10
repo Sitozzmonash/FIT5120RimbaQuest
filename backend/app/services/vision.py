@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import logging
 from typing import Any
 
 import httpx
@@ -13,6 +14,11 @@ from app.core.config import (
     ZHIPU_API_URL,
     ZHIPU_VISION_MODEL,
 )
+
+
+# Uvicorn owns the production console handlers on Render. Using its error
+# logger ensures these diagnostics reach the service log at INFO/WARNING level.
+logger = logging.getLogger("uvicorn.error")
 
 
 class VisionServiceUnavailable(RuntimeError):
@@ -48,6 +54,8 @@ def identify_supported_species(
     image_bytes: bytes,
     content_type: str,
     catalogue: list[dict[str, Any]],
+    *,
+    trace_id: str = "-",
 ) -> dict[str, Any] | None:
     """Return one catalogue species selected by GLM, or ``None`` when uncertain.
 
@@ -56,7 +64,12 @@ def identify_supported_species(
     than coerced into a discovery.
     """
     if not ZHIPU_API_KEY:
-        raise VisionServiceUnavailable("Wildlife verification is not configured")
+        logger.error(
+            "vision_not_configured trace_id=%s model=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+        )
+        raise VisionServiceUnavailable("vision_not_configured")
 
     allowed = {str(item["id"]): item for item in catalogue}
     catalogue_prompt = [
@@ -108,17 +121,105 @@ def identify_supported_species(
         response.raise_for_status()
         body = response.json()
         content = body["choices"][0]["message"]["content"]
-    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
-        raise VisionServiceUnavailable("The wildlife verification service is unavailable") from error
+    except httpx.TimeoutException as error:
+        logger.warning(
+            "vision_timeout trace_id=%s model=%s timeout_seconds=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            VISION_TIMEOUT_SECONDS,
+        )
+        raise VisionServiceUnavailable("vision_timeout") from error
+    except httpx.HTTPStatusError as error:
+        provider_request_id = (
+            error.response.headers.get("x-request-id")
+            or error.response.headers.get("x-b3-traceid")
+            or "-"
+        )
+        provider_code = "-"
+        try:
+            error_body = error.response.json()
+            if isinstance(error_body, dict):
+                nested_error = error_body.get("error")
+                if isinstance(nested_error, dict):
+                    provider_code = str(nested_error.get("code") or nested_error.get("type") or "-")
+                else:
+                    provider_code = str(error_body.get("code") or "-")
+        except ValueError:
+            pass
+        logger.warning(
+            "vision_http_error trace_id=%s model=%s status=%s provider_code=%s provider_request_id=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            error.response.status_code,
+            provider_code[:80],
+            provider_request_id[:120],
+        )
+        raise VisionServiceUnavailable(f"vision_http_{error.response.status_code}") from error
+    except httpx.RequestError as error:
+        logger.warning(
+            "vision_network_error trace_id=%s model=%s error_type=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            type(error).__name__,
+        )
+        raise VisionServiceUnavailable("vision_network_error") from error
+    except (KeyError, IndexError, TypeError, ValueError) as error:
+        logger.warning(
+            "vision_invalid_provider_envelope trace_id=%s model=%s error_type=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            type(error).__name__,
+        )
+        raise VisionServiceUnavailable("vision_invalid_provider_envelope") from error
 
-    result = _json_object(content)
+    try:
+        result = _json_object(content)
+    except VisionServiceUnavailable as error:
+        logger.warning(
+            "vision_invalid_model_response trace_id=%s model=%s content_type=%s",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            type(content).__name__,
+        )
+        raise VisionServiceUnavailable("vision_invalid_model_response") from error
     if result.get("supported") is not True:
+        logger.info(
+            "vision_unverified trace_id=%s model=%s reason=unsupported_or_unclear",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+        )
         return None
     species_id = result.get("species_id")
     try:
         confidence = float(result.get("confidence", 0))
     except (TypeError, ValueError):
+        logger.info(
+            "vision_unverified trace_id=%s model=%s reason=invalid_confidence",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+        )
         return None
-    if species_id not in allowed or not 0 <= confidence <= 1 or confidence < VISION_MIN_CONFIDENCE:
+    if species_id not in allowed:
+        logger.info(
+            "vision_unverified trace_id=%s model=%s reason=species_outside_catalogue",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+        )
+        return None
+    if not 0 <= confidence <= 1:
+        logger.info(
+            "vision_unverified trace_id=%s model=%s reason=confidence_out_of_range",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+        )
+        return None
+    if confidence < VISION_MIN_CONFIDENCE:
+        logger.info(
+            "vision_unverified trace_id=%s model=%s reason=low_confidence confidence=%.3f threshold=%.3f",
+            trace_id,
+            ZHIPU_VISION_MODEL,
+            confidence,
+            VISION_MIN_CONFIDENCE,
+        )
         return None
     return {"species_id": species_id, "confidence": confidence}

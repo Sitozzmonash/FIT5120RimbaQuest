@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 import json
+import logging
 import random
 from typing import Annotated
 from uuid import uuid4
@@ -29,6 +30,8 @@ from app.services.vision import VisionServiceUnavailable, identify_supported_spe
 
 
 router = APIRouter(tags=["Discoveries & Collection"])
+# Uvicorn's error logger is wired to Render stdout/stderr in production.
+logger = logging.getLogger("uvicorn.error")
 UNVERIFIED_MESSAGE = "We couldn't verify this animal. Please try another wildlife photo."
 VERIFICATION_FAILED_MESSAGE = "We couldn't check your wildlife photo right now. Please try again."
 
@@ -113,6 +116,7 @@ async def verify_discovery_photo(
     photo: UploadFile = File(...),
 ):
     """Verify a photo without exposing the model-selected answer to the child."""
+    trace_id = uuid4().hex[:12]
     content_type = (photo.content_type or "").lower()
     if content_type not in CONTENT_EXTENSIONS:
         raise HTTPException(415, "Please upload a JPEG, PNG, or WebP image.")
@@ -122,6 +126,15 @@ async def verify_discovery_photo(
     if len(content) > MAX_PHOTO_BYTES:
         raise HTTPException(413, "The photo must be 5 MB or smaller.")
 
+    logger.info(
+        "discovery_verification_started trace_id=%s child_id=%s content_type=%s photo_bytes=%s model=%s",
+        trace_id,
+        child_id,
+        content_type,
+        len(content),
+        ZHIPU_VISION_MODEL,
+    )
+
     with engine.connect() as connection:
         catalogue = rows(connection.execute(text("""SELECT
             id, common_name, scientific_name, category, habitat, diet, fun_fact,
@@ -130,10 +143,30 @@ async def verify_discovery_photo(
             WHERE is_active=TRUE AND image_url IS NOT NULL AND image_url <> ''
             ORDER BY common_name""")))
     try:
-        match = identify_supported_species(content, content_type, catalogue)
+        match = identify_supported_species(
+            content,
+            content_type,
+            catalogue,
+            trace_id=trace_id,
+        )
     except VisionServiceUnavailable as error:
-        raise HTTPException(503, VERIFICATION_FAILED_MESSAGE) from error
+        logger.warning(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=vision reason=%s",
+            trace_id,
+            child_id,
+            error,
+        )
+        raise HTTPException(
+            503,
+            VERIFICATION_FAILED_MESSAGE,
+            headers={"X-RimbaQuest-Trace-ID": trace_id},
+        ) from error
     if not match:
+        logger.info(
+            "discovery_verification_unverified trace_id=%s child_id=%s",
+            trace_id,
+            child_id,
+        )
         return {"status": "unverified", "message": UNVERIFIED_MESSAGE}
 
     by_id = {item["id"]: item for item in catalogue}
@@ -142,12 +175,32 @@ async def verify_discovery_photo(
         return {"status": "unverified", "message": UNVERIFIED_MESSAGE}
     candidate_ids = _candidate_ids(verified, catalogue)
     if len(candidate_ids) != 4:
-        raise HTTPException(503, VERIFICATION_FAILED_MESSAGE)
+        logger.error(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=candidates candidate_count=%s",
+            trace_id,
+            child_id,
+            len(candidate_ids),
+        )
+        raise HTTPException(
+            503,
+            VERIFICATION_FAILED_MESSAGE,
+            headers={"X-RimbaQuest-Trace-ID": trace_id},
+        )
 
     try:
         object_path = upload_discovery_photo(child_id, content, content_type)
     except StorageUnavailable as error:
-        raise HTTPException(503, str(error)) from error
+        logger.exception(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=storage reason=%s",
+            trace_id,
+            child_id,
+            error,
+        )
+        raise HTTPException(
+            503,
+            str(error),
+            headers={"X-RimbaQuest-Trace-ID": trace_id},
+        ) from error
 
     verification_id = str(uuid4())
     created_at = datetime.now(timezone.utc)
@@ -164,6 +217,16 @@ async def verify_discovery_photo(
             created_at=created_at,
             expires_at=created_at + timedelta(minutes=DISCOVERY_VERIFICATION_TTL_MINUTES),
         ))
+
+    logger.info(
+        "discovery_verification_succeeded trace_id=%s child_id=%s verification_id=%s species_id=%s confidence=%.3f model=%s",
+        trace_id,
+        child_id,
+        verification_id,
+        verified["id"],
+        match["confidence"],
+        ZHIPU_VISION_MODEL,
+    )
 
     return {
         "status": "verified",
