@@ -790,7 +790,7 @@ export default function RimbaQuest() {
         setForgotFieldError(apiMessage(data, 'No RimbaQuest account was found for this email.'));
         return;
       }
-      setForgotToken(String(data.dev_code || data.simulated_token || ''));
+      setForgotToken('');
       open('reset_password');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");

@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 # Windows Python path corruption when the checkout directory contains CJK text.
 ROOT = Path(".")
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv(Path(__file__).resolve().parents[2] / "backend" / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
 ITERATION_2_FUN_FACTS_PILOT = Path(

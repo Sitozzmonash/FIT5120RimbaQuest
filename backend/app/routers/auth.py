@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import secrets
 import time
 from datetime import datetime, timezone
@@ -148,12 +149,14 @@ def forgot_password(payload: ForgotPasswordIn):
             )
             send_password_reset_email(email, code)
 
-    return {
+    resp: dict[str, Any] = {
         "success": True,
-        "message": "If this email is registered, a password reset code has been sent.",
-        "dev_code": code,
-        "simulated_token": code,
+        "message": "If this email is registered, a password reset code has been sent to your email.",
     }
+    if not os.getenv("SMTP_USER"):
+        resp["dev_code"] = code
+        resp["simulated_token"] = code
+    return resp
 
 
 @router.post("/api/v1/auth/reset-password")
