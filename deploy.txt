@@ -1,0 +1,10 @@
+web 部署
+$env:EXPO_PUBLIC_API_BASE_URL ="https://fit5120rimbaquest-iteration1.onrender.com"
+npx expo export --platform web --clear
+npx eas-cli@latest deploy --alias iteration1
+
+
+apk 打包命令
+npx eas-cli@latest build --platform android --profile iteration1 --clear-cache
+查看apk下载链接
+npx eas-cli@latest build:list --platform android --build-profile iteration1
