@@ -9,6 +9,8 @@ import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function ResetPasswordScreen({
+  email = '',
+  setEmail,
   code,
   setCode,
   newPassword,
@@ -21,6 +23,8 @@ export function ResetPasswordScreen({
   onResetPassword,
   onBackToLogin,
 }: {
+  email?: string;
+  setEmail?: (s: string) => void;
   code: string;
   setCode: (s: string) => void;
   newPassword: string;
@@ -64,6 +68,30 @@ export function ResetPasswordScreen({
             {formError && <Text style={styles.resetErrorBanner}>{formError}</Text>}
 
             <View style={styles.resetFields}>
+              {email ? (
+                <View style={{ backgroundColor: '#EAF5EE', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 12, color: '#1B4D2E', fontWeight: '700' }}>
+                    Resetting password for: <Text style={{ fontWeight: '800' }}>{email}</Text>
+                  </Text>
+                </View>
+              ) : setEmail ? (
+                <View style={styles.resetField}>
+                  <Text style={styles.resetFieldLabel}>Account Email *</Text>
+                  <View style={[styles.resetInputBox, fieldError && styles.resetInputBoxError]}>
+                    <MaterialIcons name="mail-outline" size={20} color="#0A4D26" />
+                    <TextInput
+                      style={styles.resetInput}
+                      placeholder="Your registered email"
+                      placeholderTextColor="#88A693"
+                      value={email}
+                      onChangeText={setEmail}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                    />
+                  </View>
+                </View>
+              ) : null}
+
               <View style={styles.resetField}>
                 <Text style={styles.resetFieldLabel}>Verification Code *</Text>
                 <View style={[styles.resetInputBox, fieldError && !code && styles.resetInputBoxError]}>

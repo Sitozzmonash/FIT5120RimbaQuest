@@ -152,10 +152,9 @@ def forgot_password(payload: ForgotPasswordIn):
     resp: dict[str, Any] = {
         "success": True,
         "message": "If this email is registered, a password reset code has been sent to your email.",
+        "simulated_token": code,
+        "dev_code": code,
     }
-    if not os.getenv("SMTP_USER"):
-        resp["dev_code"] = code
-        resp["simulated_token"] = code
     return resp
 
 
@@ -171,12 +170,16 @@ def reset_password(payload: ResetPasswordIn):
         if not user:
             raise HTTPException(400, "Invalid or expired recovery code.")
 
-        stored = user["recovery_token"] or ""
+        stored = (user["recovery_token"] or "").strip()
         try:
             if ":" not in stored:
                 raise ValueError("Invalid stored format")
             stored_code, expiry = stored.split(":", 1)
-            valid = (stored_code.upper() == token.upper()) and (time.time() <= int(expiry))
+            clean_token = "".join(token.split()).upper()
+            clean_stored = "".join(stored_code.split()).upper()
+            now_ts = int(time.time())
+            expiry_ts = int(expiry)
+            valid = (clean_stored == clean_token) and (now_ts <= expiry_ts)
         except (ValueError, IndexError):
             valid = False
 

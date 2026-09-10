@@ -1512,6 +1512,8 @@ export default function RimbaQuest() {
 
         {screen === 'reset_password' && (
           <ResetPasswordScreen
+            email={forgotEmail}
+            setEmail={setForgotEmail}
             code={forgotToken}
             setCode={setForgotToken}
             newPassword={forgotNewPassword}
