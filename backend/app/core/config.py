@@ -4,10 +4,13 @@ import os
 import tempfile
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 
 # Keep local paths relative to the backend working directory. This also avoids
 # Windows Python path corruption when the checkout directory contains CJK text.
 ROOT = Path(".")
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
 ITERATION_2_FUN_FACTS_PILOT = Path(
@@ -38,6 +41,7 @@ SIGNED_PHOTO_TTL_SECONDS = 60 * 60
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-rimbaquest-secret-change-before-deploy")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
+GOOGLE_PLACES_API_KEY = os.getenv("GOOGLE_PLACES_API_KEY", "").strip()
 
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"

@@ -17,10 +17,12 @@ import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
 import { FactsTab } from "./components/FactsTab";
 import { GalleryTab } from "./components/GalleryTab";
+import { QuizTab } from "./components/QuizTab";
 
 const DETAIL_TABS: [Screen, string][] = [
   ["about", "About"],
   ["facts", "Fun Facts"],
+  ["quiz", "Quiz"],
   ["battle_stats", "Battle Stats"],
   ["gallery", "Gallery"],
 ];
@@ -29,6 +31,7 @@ export function SpeciesDetailScreen({
   species,
   screen,
   photos,
+  token,
   onTabChange,
   onStartBattle,
   onBack,
@@ -36,6 +39,7 @@ export function SpeciesDetailScreen({
   species: Species;
   screen: Screen;
   photos: GalleryItem[];
+  token?: string | null;
   onTabChange: (s: Screen) => void;
   onStartBattle: () => void;
   onBack: () => void;
@@ -162,6 +166,7 @@ export function SpeciesDetailScreen({
               nestedScrollEnabled
             >
               {key === "about" && <AboutTab item={species} />}
+              {key === "quiz" && <QuizTab species={species} token={token} />}
               {key === "battle_stats" && (
                 <BattleStatsTab item={species} onBattle={onStartBattle} />
               )}

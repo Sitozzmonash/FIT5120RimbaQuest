@@ -11,6 +11,7 @@ export type Screen =
   | 'battle_stats'
   | 'facts'
   | 'gallery'
+  | 'quiz'
   | 'locked'
   | 'progress'
   | 'locations'

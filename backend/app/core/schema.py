@@ -192,3 +192,17 @@ collection_entries = Table(
     Column("observed_boolean", Boolean, nullable=False, default=True),
     UniqueConstraint("child_id", "species_id", name="uq_collection_child_species"),
 )
+
+child_quiz_progress = Table(
+    "child_quiz_progress",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("easy_passed", Boolean, nullable=False, default=False),
+    Column("medium_passed", Boolean, nullable=False, default=False),
+    Column("hard_passed", Boolean, nullable=False, default=False),
+    Column("last_failed_set", JSON, nullable=True),  # e.g. {"easy": 0, "medium": 1}
+    UniqueConstraint("child_id", "species_id", name="uq_child_species_quiz_progress"),
+)
+

@@ -6,7 +6,7 @@ import { BattleHeaderBar } from "./components/BattleHeaderBar";
 import { ArenaCombatantCard } from "./components/ArenaCombatantCard";
 import { BattleVsBadge } from "./components/BattleVsBadge";
 import { BattleLogPanel } from "./components/BattleLogPanel";
-import { BattleActionBar } from "./components/BattleActionBar";
+import { BattleActionBar, BattleAbilityItem } from "./components/BattleActionBar";
 import { BattleOutcomePanel } from "./components/BattleOutcomePanel";
 import { GiveUpConfirmModal } from "./components/GiveUpConfirmModal";
 
@@ -28,6 +28,9 @@ export function BattleArenaScreen({
   onBattleAgain,
   onSelectAnotherCard,
   onBack,
+  unlockedAbilities,
+  abilities,
+  onUseAbility,
 }: {
   card: Species;
   opponentName: string;
@@ -46,6 +49,9 @@ export function BattleArenaScreen({
   onBattleAgain: () => void;
   onSelectAnotherCard: () => void;
   onBack: () => void;
+  unlockedAbilities?: number[];
+  abilities?: BattleAbilityItem[];
+  onUseAbility?: (slot: number) => void;
 }) {
   const [giveUpConfirmVisible, setGiveUpConfirmVisible] = useState(false);
   const title =
@@ -80,6 +86,9 @@ export function BattleArenaScreen({
             isAttacking={isAttacking}
             onAttack={onAttack}
             onGiveUp={() => setGiveUpConfirmVisible(true)}
+            unlockedAbilities={unlockedAbilities}
+            abilities={abilities}
+            onUseAbility={onUseAbility}
           />
         )}
       </ScrollView>
