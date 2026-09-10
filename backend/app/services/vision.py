@@ -53,15 +53,8 @@ def _chat_completions_url(base_url: str) -> str:
 
 
 def _providers() -> tuple[VisionProvider, ...]:
-    """Return the fixed failover order requested for Iteration 2."""
+    """Return the fixed failover order: Groq, then Zhipu, then Gemini."""
     return (
-        VisionProvider(
-            name="gemini",
-            api_key=GEMINI_API_KEY,
-            model=GEMINI_VISION_MODEL,
-            url=_chat_completions_url(GEMINI_API_BASE_URL),
-            use_data_uri=True,
-        ),
         VisionProvider(
             name="groq",
             api_key=GROQ_API_KEY,
@@ -75,6 +68,13 @@ def _providers() -> tuple[VisionProvider, ...]:
             model=ZHIPU_VISION_MODEL,
             url=ZHIPU_API_URL,
             use_data_uri=False,
+        ),
+        VisionProvider(
+            name="gemini",
+            api_key=GEMINI_API_KEY,
+            model=GEMINI_VISION_MODEL,
+            url=_chat_completions_url(GEMINI_API_BASE_URL),
+            use_data_uri=True,
         ),
     )
 
@@ -232,7 +232,7 @@ def identify_supported_species(
     *,
     trace_id: str = "-",
 ) -> dict[str, Any] | None:
-    """Select one supported species using Gemini, Groq, then Zhipu.
+    """Select one supported species using Groq, then Zhipu, then Gemini.
 
     Provider failures fall through to the next configured provider. A valid
     provider response that says the photo is unsupported, unclear, or below

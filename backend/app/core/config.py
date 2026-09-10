@@ -70,8 +70,8 @@ ZHIPU_API_URL = os.getenv(
     "ZHIPU_API_URL", "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 ).strip()
 ZHIPU_VISION_MODEL = os.getenv("ZHIPU_VISION_MODEL", "glm-4.6v-flash").strip()
-PRIMARY_VISION_MODEL = GEMINI_VISION_MODEL
-VISION_PROVIDER_ORDER = "gemini,groq,zhipu"
+PRIMARY_VISION_MODEL = GROQ_VISION_MODEL
+VISION_PROVIDER_ORDER = "groq,zhipu,gemini"
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
 VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "45"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))

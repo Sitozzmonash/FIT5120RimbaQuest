@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Gemini-first, cross-provider failover chain.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Groq-first, cross-provider failover chain.
 
 Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, and Wildlife Card battles. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
@@ -96,8 +96,8 @@ flowchart LR
 ### Discovery data flow
 
 1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
-2. FastAPI first supplies Gemini 3.8 Flash with the image and an explicit allow-list of supported catalogue IDs.
-3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to Groq Qwen3.8-27B and then GLM-4.6V-Flash. Missing provider keys are skipped.
+2. FastAPI first supplies Groq-hosted Qwen3.8-27B with the image and an explicit allow-list of supported catalogue IDs.
+3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to GLM-4.6V-Flash and then Gemini 3.8 Flash. Missing provider keys are skipped.
 4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
 5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
 6. The client receives four shuffled candidates but not the verified species ID.
@@ -249,12 +249,12 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `GEMINI_API_KEY` | Yes for primary AI verification | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_API_KEY` | Recommended for final failover | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
 | `GEMINI_VISION_MODEL` | No | Defaults to `gemini-3.8-flash`; legacy `MODEL_NAME` is also accepted |
 | `GEMINI_API_BASE_URL` | No | Defaults to Google's OpenAI-compatible base URL; legacy `MODEL_BASE_URL` is also accepted |
-| `GROQ_API_KEY` | Recommended for failover | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
+| `GROQ_API_KEY` | Yes for primary AI verification | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
 | `GROQ_VISION_MODEL` | No | Defaults to `qwen/qwen3.8-27b` |
-| `ZHIPU_API_KEY` | Recommended for final failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `ZHIPU_API_KEY` | Recommended for failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
 | `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |

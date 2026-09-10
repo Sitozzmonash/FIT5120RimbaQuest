@@ -38,8 +38,8 @@ def clear_provider_keys(monkeypatch):
     monkeypatch.setattr(vision, "ZHIPU_API_KEY", "")
 
 
-def test_vision_uses_gemini_as_primary_provider(monkeypatch):
-    monkeypatch.setattr(vision, "GEMINI_API_KEY", "gemini-test-key")
+def test_vision_uses_groq_as_primary_provider(monkeypatch):
+    monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
     requests: list[tuple[str, dict]] = []
 
     def fake_post(url, **kwargs):
@@ -56,17 +56,19 @@ def test_vision_uses_gemini_as_primary_provider(monkeypatch):
     assert result == {
         "species_id": "sp_common_marmoset",
         "confidence": 0.93,
-        "provider": "gemini",
-        "model": "gemini-3.8-flash",
+        "provider": "groq",
+        "model": "qwen/qwen3.8-27b",
     }
     assert len(requests) == 1
-    assert requests[0][0].endswith("/v1beta/openai/chat/completions")
-    assert requests[0][1]["model"] == "gemini-3.8-flash"
+    assert requests[0][0].endswith("/openai/v1/chat/completions")
+    assert requests[0][1]["model"] == "qwen/qwen3.8-27b"
+    assert requests[0][1]["response_format"] == {"type": "json_object"}
+    assert requests[0][1]["reasoning_effort"] == "none"
     image_url = requests[0][1]["messages"][0]["content"][0]["image_url"]["url"]
     assert image_url.startswith("data:image/jpeg;base64,")
 
 
-def test_vision_falls_back_from_gemini_to_groq(monkeypatch, caplog):
+def test_vision_falls_back_from_groq_to_zhipu(monkeypatch, caplog):
     caplog.set_level(logging.INFO)
     monkeypatch.setattr(vision, "GEMINI_API_KEY", "gemini-test-key")
     monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
@@ -76,7 +78,7 @@ def test_vision_falls_back_from_gemini_to_groq(monkeypatch, caplog):
     def fake_post(url, **kwargs):
         payload = kwargs["json"]
         requested_models.append(payload["model"])
-        if "generativelanguage.googleapis.com" in url:
+        if "api.groq.com" in url:
             request = httpx.Request("POST", url)
             return httpx.Response(
                 429,
@@ -100,12 +102,12 @@ def test_vision_falls_back_from_gemini_to_groq(monkeypatch, caplog):
     assert result == {
         "species_id": "sp_common_marmoset",
         "confidence": 0.88,
-        "provider": "groq",
-        "model": "qwen/qwen3.8-27b",
+        "provider": "zhipu",
+        "model": "glm-4.6v-flash",
     }
-    assert requested_models == ["gemini-3.8-flash", "qwen/qwen3.8-27b"]
-    assert "failed_provider=gemini reason=http_429" in caplog.text
-    assert "provider=groq model=qwen/qwen3.8-27b" in caplog.text
+    assert requested_models == ["qwen/qwen3.8-27b", "glm-4.6v-flash"]
+    assert "failed_provider=groq reason=http_429" in caplog.text
+    assert "provider=zhipu model=glm-4.6v-flash" in caplog.text
 
 
 def test_valid_unverified_result_does_not_ask_backup_models(monkeypatch):
@@ -127,7 +129,7 @@ def test_valid_unverified_result_does_not_ask_backup_models(monkeypatch):
     assert calls == 1
 
 
-def test_vision_uses_zhipu_as_third_provider(monkeypatch):
+def test_vision_uses_zhipu_as_second_provider(monkeypatch):
     monkeypatch.setattr(vision, "GEMINI_API_KEY", "gemini-test-key")
     monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
     monkeypatch.setattr(vision, "ZHIPU_API_KEY", "zhipu-test-key")
@@ -138,7 +140,7 @@ def test_vision_uses_zhipu_as_third_provider(monkeypatch):
         nonlocal zhipu_payload
         payload = kwargs["json"]
         requested_models.append(payload["model"])
-        if len(requested_models) < 3:
+        if len(requested_models) < 2:
             request = httpx.Request("POST", url)
             return httpx.Response(503, request=request, json={"error": {"code": "busy"}})
         zhipu_payload = payload
@@ -154,10 +156,12 @@ def test_vision_uses_zhipu_as_third_provider(monkeypatch):
     assert result is not None
     assert result["provider"] == "zhipu"
     assert requested_models == [
-        "gemini-3.8-flash",
         "qwen/qwen3.8-27b",
         "glm-4.6v-flash",
     ]
+    assert zhipu_payload["thinking"] == {"type": "disabled"}
+    zhipu_image = zhipu_payload["messages"][0]["content"][0]["image_url"]["url"]
+    assert not zhipu_image.startswith("data:")
     assert zhipu_payload["thinking"] == {"type": "disabled"}
     zhipu_image = zhipu_payload["messages"][0]["content"][0]["image_url"]["url"]
     assert not zhipu_image.startswith("data:")
@@ -204,8 +208,8 @@ def test_invalid_primary_response_falls_back_to_next_provider(monkeypatch, caplo
     )
 
     assert result is not None
-    assert result["provider"] == "groq"
-    assert "vision_invalid_model_response trace_id=trace-invalid provider=gemini" in caplog.text
+    assert result["provider"] == "gemini"
+    assert "vision_invalid_model_response trace_id=trace-invalid provider=groq" in caplog.text
 
 
 def test_vision_logs_provider_status_without_credentials_or_response_message(monkeypatch, caplog):
