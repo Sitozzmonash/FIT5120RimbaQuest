@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification with GLM-4.6V-Flash.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Gemini-first, cross-provider failover chain.
 
 Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, and Wildlife Card battles. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
@@ -24,7 +24,8 @@ The primary discovery flow is:
 ```text
 Home
   → Take a photo
-  → GLM verifies the photo against the supported catalogue
+  → Gemini verifies the photo against the supported catalogue
+  → Groq Qwen3.8 or GLM is used only if an earlier provider fails
   → Choose Mammal / Bird / Butterfly / Reptile
   → Choose one of four species without seeing the AI answer
   → Submit both answers and receive Correct / Incorrect feedback
@@ -38,7 +39,7 @@ Implemented behaviour includes:
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Server-side GLM-4.6V-Flash analysis restricted to supported species with reference images.
+- Server-side Gemini 3.8 Flash analysis restricted to supported species with reference images, with Groq Qwen3.8-27B and GLM-4.6V-Flash provider-failure fallbacks.
 - Four plausible species choices containing one hidden AI-verified answer and three distractors, independent of the child's category answer.
 - Correct/Incorrect feedback only after submission, including the verified category, species, and identifying features.
 - A child-owned, expiring verification record that binds the photo to the AI result and prevents the client from substituting another species.
@@ -52,7 +53,7 @@ Implemented behaviour includes:
 
 Current Iteration 2 boundaries:
 
-- GLM-4.6V-Flash is active only for wildlife-photo verification.
+- Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification.
 - DeepSeek, BM25/RAG, and live GBIF enrichment are not active runtime components.
 - The source-linked ten-fact dataset remains review-stage content and is not yet exposed as verified child-facing content.
 - The species-specific chatbot remains a Could Have item and is not implemented.
@@ -64,7 +65,11 @@ Current Iteration 2 boundaries:
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
-    A -->|Base64 image + constrained catalogue prompt| V[GLM-4.6V-Flash]
+    A -->|1. Base64 image + constrained catalogue| G[Gemini 3.8 Flash]
+    G -.->|Provider failure| Q[Groq Qwen3.8-27B]
+    Q -.->|Provider failure| V[GLM-4.6V-Flash]
+    G -->|Supported species ID + confidence| A
+    Q -->|Supported species ID + confidence| A
     V -->|Supported species ID + confidence| A
     A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
     A -->|S3 API with signed URLs| S[(Private Neon Storage)]
@@ -79,8 +84,10 @@ flowchart LR
 | Component | Responsibility |
 |---|---|
 | Expo client | Screens, navigation, camera/gallery access, guided category/species questions, feedback, and presentation across Web/Android/iOS |
-| FastAPI service | Authentication, ownership checks, GLM orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
-| GLM-4.6V-Flash | Server-side visual matching against the supplied RimbaQuest species IDs; its API key never enters the Expo bundle |
+| FastAPI service | Authentication, ownership checks, multi-provider vision orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
+| Gemini 3.8 Flash | Primary server-side visual matcher through Google's OpenAI-compatible endpoint |
+| Groq Qwen3.8-27B | Second provider, used when Gemini is unavailable or returns an invalid provider/model response |
+| GLM-4.6V-Flash | Final provider fallback through the Zhipu AI Open Platform |
 | Neon PostgreSQL | Durable production storage for accounts, child profiles, AI verification records, sightings, collections, quizzes, and static catalogue data |
 | Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
@@ -89,13 +96,14 @@ flowchart LR
 ### Discovery data flow
 
 1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
-2. FastAPI supplies GLM-4.6V-Flash with the image and an explicit allow-list of supported catalogue IDs.
-3. An uncertain, unsupported, malformed, timed-out, or failed result stops the flow without saving a discovery or card.
-4. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record.
-5. The client receives four shuffled candidates but not the verified species ID.
-6. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
-7. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
-8. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
+2. FastAPI first supplies Gemini 3.8 Flash with the image and an explicit allow-list of supported catalogue IDs.
+3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to Groq Qwen3.8-27B and then GLM-4.6V-Flash. Missing provider keys are skipped.
+4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
+5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
+6. The client receives four shuffled candidates but not the verified species ID.
+7. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+8. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+9. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
 
@@ -109,7 +117,7 @@ flowchart LR
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
 | Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
-| AI verification | Zhipu AI Open Platform, GLM-4.6V-Flash, constrained JSON result, 0.65 default confidence threshold |
+| AI verification | Gemini 3.8 Flash primary; Groq Qwen3.8-27B and Zhipu GLM-4.6V-Flash fallbacks; constrained JSON result; 0.65 default confidence threshold |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -241,7 +249,12 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `ZHIPU_API_KEY` | Yes for AI verification | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_API_KEY` | Yes for primary AI verification | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_VISION_MODEL` | No | Defaults to `gemini-3.8-flash`; legacy `MODEL_NAME` is also accepted |
+| `GEMINI_API_BASE_URL` | No | Defaults to Google's OpenAI-compatible base URL; legacy `MODEL_BASE_URL` is also accepted |
+| `GROQ_API_KEY` | Recommended for failover | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
+| `GROQ_VISION_MODEL` | No | Defaults to `qwen/qwen3.8-27b` |
+| `ZHIPU_API_KEY` | Recommended for final failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
 | `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
@@ -277,6 +290,10 @@ AWS_REGION=us-east-2
 DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 CORS_ALLOWED_ORIGINS=*
+GEMINI_API_KEY=<server-side Google Gemini API key>
+GEMINI_VISION_MODEL=gemini-3.8-flash
+GROQ_API_KEY=<server-side Groq API key>
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
 ZHIPU_API_KEY=<server-side Zhipu API key>
 ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```
@@ -417,7 +434,7 @@ Verify that `AWS_ENDPOINT_URL_S3` and `AWS_SECRET_ACCESS_KEY` are present on Ren
 
 ### AI verification returns `503`
 
-Verify that `ZHIPU_API_KEY` is present only in the backend environment and that Render can reach `https://open.bigmodel.cn`. The app intentionally refuses to save or unlock a Wildlife Card when the provider times out or returns invalid data.
+Verify that at least one of `GEMINI_API_KEY`, `GROQ_API_KEY`/`Groq_Qwen3`, or `ZHIPU_API_KEY` is present only in the backend environment. Render logs `vision_provider_attempt`, `vision_provider_fallback`, and `vision_provider_succeeded` with the provider/model and a safe trace ID. The app intentionally refuses to save or unlock a Wildlife Card when every provider fails or the successful provider returns an uncertain result.
 
 ### Expo Go reports an incompatible SDK
 
@@ -426,7 +443,7 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
-- The catalogue uses curated local seed data rather than making live GBIF or PERHILITAN requests at runtime. Iteration 2 sends the captured image and constrained catalogue metadata to GLM solely for verification.
+- The catalogue uses curated local seed data rather than making live GBIF or PERHILITAN requests at runtime. Iteration 2 sends the captured image and constrained catalogue metadata only to the first available verification provider in the Gemini → Groq → Zhipu failure chain.
 - The Expo client bundles 151 verified species reference images for the 152-species catalogue.
 - Malaysian Mole currently has no verified reference image, so the interface must not invent or substitute an unrelated photograph.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.

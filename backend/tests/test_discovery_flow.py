@@ -249,6 +249,8 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
         lambda content, content_type, catalogue, **_kwargs: {
             "species_id": species_item["id"],
             "confidence": 0.97,
+            "provider": "gemini",
+            "model": "gemini-3.8-flash",
         },
     )
 

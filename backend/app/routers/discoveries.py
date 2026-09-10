@@ -14,7 +14,8 @@ from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.config import (
     DISCOVERY_VERIFICATION_TTL_MINUTES,
     MAX_PHOTO_BYTES,
-    ZHIPU_VISION_MODEL,
+    PRIMARY_VISION_MODEL,
+    VISION_PROVIDER_ORDER,
 )
 from app.core.database import engine, rows
 from app.core.schema import discovery_verifications
@@ -127,12 +128,13 @@ async def verify_discovery_photo(
         raise HTTPException(413, "The photo must be 5 MB or smaller.")
 
     logger.info(
-        "discovery_verification_started trace_id=%s child_id=%s content_type=%s photo_bytes=%s model=%s",
+        "discovery_verification_started trace_id=%s child_id=%s content_type=%s photo_bytes=%s primary_model=%s provider_order=%s",
         trace_id,
         child_id,
         content_type,
         len(content),
-        ZHIPU_VISION_MODEL,
+        PRIMARY_VISION_MODEL,
+        VISION_PROVIDER_ORDER,
     )
 
     with engine.connect() as connection:
@@ -212,20 +214,21 @@ async def verify_discovery_photo(
             verified_species_id=verified["id"],
             candidate_species_ids=candidate_ids,
             confidence=match["confidence"],
-            model=ZHIPU_VISION_MODEL,
+            model=match["model"],
             status="verified",
             created_at=created_at,
             expires_at=created_at + timedelta(minutes=DISCOVERY_VERIFICATION_TTL_MINUTES),
         ))
 
     logger.info(
-        "discovery_verification_succeeded trace_id=%s child_id=%s verification_id=%s species_id=%s confidence=%.3f model=%s",
+        "discovery_verification_succeeded trace_id=%s child_id=%s verification_id=%s species_id=%s confidence=%.3f provider=%s model=%s",
         trace_id,
         child_id,
         verification_id,
         verified["id"],
         match["confidence"],
-        ZHIPU_VISION_MODEL,
+        match["provider"],
+        match["model"],
     )
 
     return {
