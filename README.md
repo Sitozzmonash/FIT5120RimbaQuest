@@ -1,8 +1,8 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable production data.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification with GLM-4.6V-Flash.
 
-Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal.
+Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, and Wildlife Card battles. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
 ## Current deployments
 
@@ -15,47 +15,48 @@ Iteration 1 is a **manual wildlife recording and learning experience**. A photo 
 
 Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
 
-The configured production API reports `"database": "postgresql"` and `"version": "1.2.0"` from `/health`. Production persistence uses Neon PostgreSQL and the private `image` storage bucket. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
+The current API reports `"database": "postgresql"` and `"version": "2.0.0"` from `/health` after the Iteration 2 backend is deployed. Production persistence uses Neon PostgreSQL and the private `image` storage bucket.
 
-## Iteration 1 scope
+## Current Iteration 2 scope
 
 The primary discovery flow is:
 
 ```text
 Home
   → Take a photo
-  → Choose Mammals / Birds / Butterflies / Reptiles
-  → Search and manually select a supported species
-  → Confirm species, location, date, and time
-  → Record discovery
-  → Unlock Wildlife Card on the first discovery
-  → View Collection and learn about the species
-  → Complete species quiz and track progress
+  → GLM verifies the photo against the supported catalogue
+  → Choose Mammal / Bird / Butterfly / Reptile
+  → Choose one of four species without seeing the AI answer
+  → Submit both answers and receive Correct / Incorrect feedback
+  → Review the AI-verified species and location
+  → Save or report the result
+  → Unlock only the AI-verified Wildlife Card on first discovery
 ```
 
-Implemented Iteration 1 behaviour includes:
+Implemented behaviour includes:
 
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Manual category and species selection across 152 supported species.
-- Case-insensitive, partial species-name search with clear and no-result states.
-- Confirmation of the selected species and human-readable location.
+- Server-side GLM-4.6V-Flash analysis restricted to supported species with reference images.
+- Four plausible species choices containing one hidden AI-verified answer and three distractors, independent of the child's category answer.
+- Correct/Incorrect feedback only after submission, including the verified category, species, and identifying features.
+- A child-owned, expiring verification record that binds the photo to the AI result and prevents the client from substituting another species.
+- Explicit low-confidence, unsupported-image, timeout, invalid-response, and provider-failure handling with no discovery or unlock.
+- Confirmation of the AI-verified species and human-readable location, plus a report path that saves no discovery.
 - A confirmed first discovery unlocks one Wildlife Card and awards 100 Explorer Points.
 - Repeat sightings are retained in the species gallery without duplicating the card or its first-discovery reward.
 - Collection ordering with unlocked species before undiscovered species.
-- Species About, Fun Facts, Gallery, and species-specific Quiz content.
+- Species About, Fun Facts, Gallery, three-level Quiz progression, ability unlocking, and battle interfaces.
 - Overall and per-category progress based on the authenticated child's records.
 
-Not active in Iteration 1:
+Current Iteration 2 boundaries:
 
-- AI photo identification.
-- Automatic species confirmation.
-- BM25/RAG-generated learning content.
-- Runtime calls to DeepSeek, GLM vision models, or GBIF.
-- Iteration 2 or Iteration 3 gameplay and social features.
-
-DeepSeek V4 Flash, GLM-4.6V-Flash, BM25, and GBIF remain possible future architecture components only. They must not be described as active Iteration 1 functionality.
+- GLM-4.6V-Flash is active only for wildlife-photo verification.
+- DeepSeek, BM25/RAG, and live GBIF enrichment are not active runtime components.
+- The source-linked ten-fact dataset remains review-stage content and is not yet exposed as verified child-facing content.
+- The species-specific chatbot remains a Could Have item and is not implemented.
+- Iteration 3 social and expanded gameplay features are out of scope.
 
 ## Repository and target production architecture
 
@@ -63,6 +64,8 @@ DeepSeek V4 Flash, GLM-4.6V-Flash, BM25, and GBIF remain possible future archite
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
+    A -->|Base64 image + constrained catalogue prompt| V[GLM-4.6V-Flash]
+    V -->|Supported species ID + confidence| A
     A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
     A -->|S3 API with signed URLs| S[(Private Neon Storage)]
     P -->|Accounts, profiles, sightings, cards, progress| A
@@ -75,22 +78,24 @@ flowchart LR
 
 | Component | Responsibility |
 |---|---|
-| Expo client | Screens, navigation, camera/gallery access, validation, search, and presentation across Web/Android/iOS |
-| FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
-| Neon PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
+| Expo client | Screens, navigation, camera/gallery access, guided category/species questions, feedback, and presentation across Web/Android/iOS |
+| FastAPI service | Authentication, ownership checks, GLM orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
+| GLM-4.6V-Flash | Server-side visual matching against the supplied RimbaQuest species IDs; its API key never enters the Expo bundle |
+| Neon PostgreSQL | Durable production storage for accounts, child profiles, AI verification records, sightings, collections, quizzes, and static catalogue data |
 | Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
 | Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
 
 ### Discovery data flow
 
-1. The client captures or selects a photo.
-2. The child manually chooses a category and supported species.
-3. The client uploads the photo to the authenticated child's photo endpoint.
-4. FastAPI validates the JWT and child ownership, then stores the file in the private `discovery-photos` bucket.
-5. FastAPI writes the sighting to PostgreSQL using the private object path, not a permanent public URL.
-6. The first sighting of a species creates one collection entry and awards 100 XP.
-7. Gallery and recent-capture responses contain short-lived signed photo URLs.
+1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
+2. FastAPI supplies GLM-4.6V-Flash with the image and an explicit allow-list of supported catalogue IDs.
+3. An uncertain, unsupported, malformed, timed-out, or failed result stops the flow without saving a discovery or card.
+4. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record.
+5. The client receives four shuffled candidates but not the verified species ID.
+6. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+7. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+8. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
 
@@ -104,6 +109,7 @@ flowchart LR
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
 | Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
+| AI verification | Zhipu AI Open Platform, GLM-4.6V-Flash, constrained JSON result, 0.65 default confidence threshold |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -235,6 +241,11 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
+| `ZHIPU_API_KEY` | Yes for AI verification | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
+| `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
+| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
+| `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
 
 Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
@@ -249,7 +260,7 @@ Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-prov
 4. Create the S3-compatible storage access key pair (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
 5. Rotate any password or key that has appeared in a chat, screenshot, terminal recording, or commit.
 
-No manual schema SQL is required for an empty database. On startup, FastAPI uses SQLAlchemy to create the current Iteration 1 tables and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, sightings, cards, or progress.
+No manual schema SQL is required for an empty or existing database. On startup, FastAPI uses SQLAlchemy `create_all` to add missing tables, including the Iteration 2 verification table, and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, verification history, sightings, cards, or progress.
 
 ### Render configuration
 
@@ -266,6 +277,8 @@ AWS_REGION=us-east-2
 DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 CORS_ALLOWED_ORIGINS=*
+ZHIPU_API_KEY=<server-side Zhipu API key>
+ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```
 
 The bucket name and region have non-secret defaults and may be omitted (`image`, `us-east-2`).
@@ -282,7 +295,7 @@ Expected fields:
 {
   "status": "ok",
   "database": "postgresql",
-  "version": "1.2.0"
+  "version": "2.0.0"
 }
 ```
 
@@ -343,8 +356,10 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.
 - Protected routes validate that the token owns the requested child profile.
-- Cross-child profile, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
+- Cross-child profile, verification, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
 - Collection uniqueness and foreign-key constraints prevent duplicate unlock rows and orphaned child/species records.
+- The AI answer is not returned with the candidate list and the first submitted child answer is recorded idempotently.
+- Discovery creation requires an evaluated, unexpired, unused server verification and always uses its verified species ID.
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the storage secret access key.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
@@ -374,8 +389,8 @@ npx expo export --platform web
 Before release, manually verify this complete chain on Web and a physical phone:
 
 ```text
-Register/Login → Take Photo → Category → Search Species → Confirm
-→ Success → Collection → Wildlife Card → Quiz → Recent Captures → Progress
+Register/Login → Take Photo → AI Identifying → Category → Four Species Choices
+→ Correct/Incorrect Feedback → Confirm/Report → Success → Collection → Wildlife Card
 ```
 
 ## Troubleshooting
@@ -400,6 +415,10 @@ Check `/health`. Production must report `"database": "postgresql"`. Render's loc
 
 Verify that `AWS_ENDPOINT_URL_S3` and `AWS_SECRET_ACCESS_KEY` are present on Render and that the private bucket is named `image`.
 
+### AI verification returns `503`
+
+Verify that `ZHIPU_API_KEY` is present only in the backend environment and that Render can reach `https://open.bigmodel.cn`. The app intentionally refuses to save or unlock a Wildlife Card when the provider times out or returns invalid data.
+
 ### Expo Go reports an incompatible SDK
 
 Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer supports the project's SDK, use an EAS development/preview build or upgrade the SDK as a separate, tested change.
@@ -407,7 +426,7 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
-- Iteration 1 uses curated local seed data rather than making live third-party data requests at runtime.
+- The catalogue uses curated local seed data rather than making live GBIF or PERHILITAN requests at runtime. Iteration 2 sends the captured image and constrained catalogue metadata to GLM solely for verification.
 - The Expo client bundles 151 verified species reference images for the 152-species catalogue.
 - Malaysian Mole currently has no verified reference image, so the interface must not invent or substitute an unrelated photograph.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
@@ -416,7 +435,7 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 
 ### Open data sources
 
-Iteration 1 uses the following open datasets to prepare the local species catalogue and conservation context:
+The project uses the following open datasets to prepare the local species catalogue and conservation context:
 
 - **GBIF — Asian Camera Trap Vertebrate Data**: used for species catalogue preparation, scientific names, categories, and wildlife occurrence/reference context. [Dataset page](https://cloud.gbif.org/asia/resource?r=bifa5_006) · [raw archive](https://cloud.gbif.org/asia/archive.do?r=bifa5_006&v=1.9)
 - **PERHILITAN — Wildlife Conservation Act 2010 (Act 716)**: used for Malaysian legal protection information, including Protected and Totally Protected status. [Dataset page](https://archive.data.gov.my/data/dataset/bilangan-spesies-hidupan-liar-yang-tersenarai-di-bawah-akta-pemuliharaan-hidupan-liar-2010-akta-716) · [raw XLSX](https://archive.data.gov.my/data/dataset/a02803c6-fdae-488b-b191-9380c1d3ace6/resource/27ad4e98-d875-445e-b02e-8e7c8889e32a/download/spesies-dalam-akta.xlsx)

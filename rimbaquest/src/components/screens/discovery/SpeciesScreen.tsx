@@ -1,233 +1,236 @@
-import React, { useState } from "react";
-import {
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { Image, Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Species } from "../../../types";
+import { IdentificationFeedback, Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { Tap } from "../../common/Tap";
+import { PrimaryButton } from "../../common/PrimaryButton";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
-import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
-import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
-import { SelectableTile } from "./components/SelectableTile";
 
-// Step 3: pick the species. Selection is provisional (checkmark on the
-// tile) until Next is pressed, mirroring the Category step. The search bar
-// scrolls with the rest of the content until it reaches the app header, at
-// which point it sticks in place and the species grid scrolls underneath it.
 export function SpeciesScreen({
   photo,
   category,
   speciesList,
-  search,
-  setSearch,
   selectedId,
-  onChooseSpecies,
+  evaluating,
+  feedback,
+  errorMessage,
+  onSubmit,
+  onContinue,
   onBack,
   onDiscard,
 }: {
   photo: { uri: string };
   category: string;
   speciesList: Species[];
-  search: string;
-  setSearch: (s: string) => void;
   selectedId?: string | null;
-  onChooseSpecies: (item: Species) => void;
+  evaluating: boolean;
+  feedback: IdentificationFeedback | null;
+  errorMessage: string | null;
+  onSubmit: (item: Species) => void;
+  onContinue: (item: Species) => void;
   onBack: () => void;
   onDiscard: () => void;
 }) {
-  const [pending, setPending] = useState<Species | null>(
-    () => speciesList.find((item) => item.id === selectedId) ?? null
-  );
-  const [searchTop, setSearchTop] = useState(0);
-  const [stuck, setStuck] = useState(false);
+  const [pending, setPending] = useState<Species | null>(null);
+  const [requiredMessage, setRequiredMessage] = useState("");
 
-  const rows: Species[][] = [];
-  for (let i = 0; i < speciesList.length; i += 3)
-    rows.push(speciesList.slice(i, i + 3));
+  useEffect(() => {
+    setPending(speciesList.find((item) => item.id === selectedId) ?? null);
+    setRequiredMessage("");
+  }, [speciesList, selectedId]);
 
-  const handleSearchLayout = (e: LayoutChangeEvent) => {
-    setSearchTop((current) => current || e.nativeEvent.layout.y);
+  const submit = () => {
+    if (!pending) {
+      setRequiredMessage("Please choose a species before continuing.");
+      return;
+    }
+    setRequiredMessage("");
+    onSubmit(pending);
   };
-
-  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (!searchTop) return;
-    const next = e.nativeEvent.contentOffset.y >= searchTop;
-    setStuck((prev) => (prev === next ? prev : next));
-  };
-
-  const searchBar = (
-    <View style={styles.searchBox}>
-      <MaterialIcons name="search" size={20} color="#879089" />
-      <TextInput
-        placeholder="Search species..."
-        placeholderTextColor="#879089"
-        value={search}
-        onChangeText={setSearch}
-        autoCapitalize="none"
-        style={styles.searchInput}
-      />
-      {search.length > 0 && (
-        <Tap
-          label="Clear search"
-          style={styles.clearBtn}
-          onPress={() => setSearch("")}
-        >
-          <MaterialIcons name="close" size={16} color="#087B35" />
-        </Tap>
-      )}
-    </View>
-  );
 
   return (
     <View style={styles.page}>
       <DiscoveryHeader
-        title="Record a Discovery"
+        title="Confirm Discovery"
         onBack={onBack}
         confirmDiscard
         onDiscard={onDiscard}
+        disabled={evaluating}
       />
 
-      <View style={styles.scrollArea}>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
+      <ScrollView contentContainerStyle={styles.content}>
+        <PhotoPreview photo={photo} />
+
+        <View style={styles.categoryPill}>
+          <Text style={styles.categoryPillText}>{category}</Text>
+        </View>
+
+        <Text style={styles.title}>What species do you think matches what you see?</Text>
+
+        <View style={styles.grid}>
+          {speciesList.map((item) => {
+            const selected = pending?.id === item.id;
+            return (
+              <Tap
+                key={item.id}
+                label={selected ? `${item.common_name} selected` : `Choose ${item.common_name}`}
+                style={[styles.speciesCard, selected && styles.speciesCardSelected]}
+                disabled={evaluating}
+                onPress={() => {
+                  setPending(item);
+                  setRequiredMessage("");
+                }}
+              >
+                <Image source={imageFor(item)!} style={styles.speciesImage} resizeMode="cover" />
+                <View style={styles.imageShade} />
+                <Text style={styles.speciesName} numberOfLines={2}>{item.common_name}</Text>
+                {selected ? (
+                  <View style={styles.checkBadge}>
+                    <MaterialIcons name="check" size={18} color="#FFFFFF" />
+                  </View>
+                ) : null}
+              </Tap>
+            );
+          })}
+        </View>
+
+        {requiredMessage || errorMessage ? (
+          <Text style={styles.errorText}>{requiredMessage || errorMessage}</Text>
+        ) : null}
+      </ScrollView>
+
+      <View style={styles.bottomBar}>
+        <Tap
+          label="Not sure"
+          style={styles.notSureButton}
+          disabled={evaluating}
+          onPress={() => setRequiredMessage("Please choose a species before continuing.")}
         >
-          <DiscoveryStepIndicator step={3} />
-
-          <View style={styles.intro}>
-            <Text style={styles.title}>
-              Which {category.toLowerCase()} did you see?
-            </Text>
-            <Text style={styles.subtitle}>
-              Select the species that looks most like what you saw
-            </Text>
-          </View>
-
-          <PhotoPreview photo={photo} />
-
-          <View onLayout={handleSearchLayout}>{searchBar}</View>
-
-          {speciesList.length ? (
-            <View style={styles.grid}>
-              {rows.map((row, i) => (
-                <View key={`row-${i}`} style={styles.row}>
-                  {row.map((item) => (
-                    <SelectableTile
-                      key={item.id}
-                      image={imageFor(item)!}
-                      label={item.common_name}
-                      selected={pending?.id === item.id}
-                      onPress={() => setPending(item)}
-                    />
-                  ))}
-                  {Array.from({ length: 3 - row.length }).map((_, j) => (
-                    <View key={`spacer-${i}-${j}`} style={styles.spacer} />
-                  ))}
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={styles.empty}>
-              <Text style={styles.emptyTitle}>No matching species found.</Text>
-              <Text style={styles.emptyText}>
-                Try a different name, or clear the search to see all{" "}
-                {category.toLowerCase()}s.
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-
-        {stuck && <View style={styles.searchSticky}>{searchBar}</View>}
+          <Text style={styles.notSureText}>Not Sure</Text>
+        </Tap>
+        <PrimaryButton
+          label={evaluating ? "Checking..." : "Continue"}
+          loading={evaluating}
+          disabled={evaluating}
+          style={styles.continueButton}
+          onPress={submit}
+        />
       </View>
 
-      <DiscoveryBottomNav
-        onBack={onBack}
-        nextLabel="Next"
-        nextDisabled={!pending}
-        onNext={() => pending && onChooseSpecies(pending)}
-      />
+      <Modal visible={Boolean(feedback)} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.feedbackCard}>
+            <View style={[styles.feedbackIcon, feedback?.correct ? styles.correctIcon : styles.incorrectIcon]}>
+              <MaterialIcons name="check" size={28} color={feedback?.correct ? "#12B347" : "#FF4D4F"} />
+            </View>
+            <Text style={[styles.feedbackEyebrow, feedback?.correct ? styles.correctText : styles.incorrectText]}>
+              {feedback?.correct ? "CORRECT!" : "INCORRECT"}
+            </Text>
+            <Text style={styles.feedbackTitle}>{feedback?.correct ? "Great job!" : "Not quite."}</Text>
+            <Text style={styles.feedbackBody}>
+              This is a {feedback?.verified_species.common_name}, which belongs to the {feedback?.verified_species.category} category.
+            </Text>
+            {feedback?.explanation ? (
+              <Text style={styles.feedbackExplanation}>{feedback.explanation}</Text>
+            ) : null}
+            {feedback ? (
+              <PrimaryButton
+                label="Continue"
+                style={styles.feedbackContinue}
+                onPress={() => onContinue(feedback.verified_species)}
+              />
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#FFFFFF" },
-  scrollArea: { flex: 1, position: "relative" },
-  content: { padding: 16, gap: 16 },
-  intro: { gap: 6 },
-  title: { color: "#1A1A1A", fontSize: 24, lineHeight: 30, fontWeight: "900" },
-  subtitle: {
-    color: "#1A1A1A",
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-  searchBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    height: 44,
+  content: { padding: 16, gap: 16, paddingBottom: 24 },
+  categoryPill: {
+    alignSelf: "flex-start",
     borderWidth: 1,
-    borderColor: "#CCCCCC",
-    borderRadius: 24,
+    borderColor: "#CDE8D4",
+    borderRadius: 999,
     paddingHorizontal: 12,
+    paddingVertical: 7,
+    backgroundColor: "#F2FBF4",
+  },
+  categoryPillText: { color: "#1A1A1A", fontSize: 13, fontWeight: "800" },
+  title: { color: "#1A1A1A", fontSize: 21, lineHeight: 28, fontWeight: "900" },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  speciesCard: {
+    width: "48.5%",
+    height: 158,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#D8E6DC",
+    backgroundColor: "#E8EFE9",
+  },
+  speciesCardSelected: { borderWidth: 3, borderColor: "#12B347" },
+  speciesImage: { width: "100%", height: "100%" },
+  imageShade: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.18)" },
+  speciesName: {
+    position: "absolute",
+    left: 10,
+    right: 10,
+    bottom: 10,
+    color: "#FFFFFF",
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: "900",
+    textAlign: "center",
+    textShadowColor: "rgba(0,0,0,0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  checkBadge: {
+    position: "absolute",
+    top: 9,
+    right: 9,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#087B35",
+  },
+  errorText: { color: "#B3261E", fontSize: 13, lineHeight: 18, fontWeight: "700", textAlign: "center" },
+  bottomBar: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 24,
     backgroundColor: "#FFFFFF",
   },
-  searchInput: { flex: 1, color: "#1A1A1A", fontSize: 15, paddingVertical: 0 },
-  clearBtn: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#EDF5EF",
+  notSureButton: {
+    width: 120,
+    height: 52,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#0A5D2C",
     alignItems: "center",
     justifyContent: "center",
   },
-  searchSticky: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  grid: { gap: 12, width: "100%" },
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    width: "100%",
-  },
-  spacer: { flex: 1, opacity: 0 },
-  empty: {
-    borderWidth: 1,
-    borderColor: "#CBECD6",
-    backgroundColor: "#F4FFF7",
-    borderRadius: 14,
-    padding: 18,
-    alignItems: "center",
-  },
-  emptyTitle: {
-    color: "#087B35",
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 4,
-  },
-  emptyText: { color: "#707872", fontSize: 12, textAlign: "center" },
+  notSureText: { color: "#0A5D2C", fontSize: 15, fontWeight: "800" },
+  continueButton: { flex: 1 },
+  modalBackdrop: { flex: 1, justifyContent: "center", paddingHorizontal: 38, backgroundColor: "rgba(0,0,0,0.72)" },
+  feedbackCard: { borderRadius: 28, padding: 28, alignItems: "center", gap: 10, backgroundColor: "#FFFFFF" },
+  feedbackIcon: { width: 58, height: 58, borderRadius: 29, alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  correctIcon: { borderColor: "#CDECD6", backgroundColor: "#F3FCF5" },
+  incorrectIcon: { borderColor: "#F6CCCC", backgroundColor: "#FFF1F1" },
+  feedbackEyebrow: { fontSize: 14, fontWeight: "900" },
+  correctText: { color: "#12B347" },
+  incorrectText: { color: "#FF4D4F" },
+  feedbackTitle: { color: "#1A1A1A", fontSize: 23, lineHeight: 28, fontWeight: "900" },
+  feedbackBody: { color: "#667085", fontSize: 15, lineHeight: 22, textAlign: "center" },
+  feedbackExplanation: { color: "#344054", fontSize: 13, lineHeight: 19, fontWeight: "600", textAlign: "center" },
+  feedbackContinue: { width: "100%", marginTop: 8 },
 });

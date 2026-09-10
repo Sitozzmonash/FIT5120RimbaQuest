@@ -206,3 +206,34 @@ child_quiz_progress = Table(
     UniqueConstraint("child_id", "species_id", name="uq_child_species_quiz_progress"),
 )
 
+# An opaque, child-owned server record binds one uploaded photo to the species
+# selected by the vision model. The client receives the candidate list before
+# evaluation, but not ``verified_species_id``; this prevents early answer
+# disclosure and prevents a forged client species ID from unlocking a card.
+discovery_verifications = Table(
+    "discovery_verifications",
+    metadata,
+    Column("id", String(36), primary_key=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("photo_path", String(500), nullable=False),
+    Column("verified_species_id", String, ForeignKey("species.id"), nullable=False),
+    Column("candidate_species_ids", JSON, nullable=False),
+    Column("confidence", Float, nullable=False),
+    Column("model", String(80), nullable=False),
+    Column("status", String(30), nullable=False, default="verified"),
+    Column("child_category", String(20)),
+    Column("child_species_id", String),
+    Column("category_correct", Boolean),
+    Column("species_correct", Boolean),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Column("evaluated_at", DateTime(timezone=True)),
+    Column("reported_at", DateTime(timezone=True)),
+    Column("used_at", DateTime(timezone=True)),
+)
+Index(
+    "ix_discovery_verifications_child_created",
+    discovery_verifications.c.child_id,
+    discovery_verifications.c.created_at,
+)
+
