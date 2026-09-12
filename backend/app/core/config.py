@@ -37,6 +37,15 @@ JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-rimbaquest-secret-change-before-d
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_DAYS = 30
 
+# Epic 6: server-side only.  No Expo environment variable may contain this
+# credential.  If it is absent, the endpoint uses a deterministic approved-
+# data mock so automated tests and UI work without a network call.
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
+DEEPSEEK_API_BASE_URL = os.getenv("DEEPSEEK_API_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
+DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat").strip()
+CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
+CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
+
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"
     "http://localhost:8081,http://127.0.0.1:8081,"

@@ -11,6 +11,7 @@ from app.core.config import MAX_PHOTO_BYTES
 from app.core.database import engine, rows
 from app.schemas.discovery import DiscoveryIn
 from app.services.battle_engine import calculate_battle_stats
+from app.services.activity import record_species_activity
 from app.services.storage import (
     CONTENT_EXTENSIONS,
     StorageUnavailable,
@@ -100,6 +101,13 @@ def create_discovery(
                 text("UPDATE child_profiles SET xp=coalesce(xp, 0)+100 WHERE id=:child"),
                 {"child": child_id},
             )
+        record_species_activity(
+            connection,
+            child_id,
+            species["id"],
+            "discovery",
+            occurred_at=recorded_at,
+        )
         updated_profile = connection.execute(
             text("SELECT xp, level FROM child_profiles WHERE id=:id"), {"id": child_id}
         ).mappings().one()
@@ -125,14 +133,31 @@ def recent_captures(
 ):
     with engine.connect() as connection:
         captures = rows(connection.execute(text("""SELECT
-            sight.id AS sighting_id, sight.species_id, sight.recorded_at,
-            sight.location_label, sight.photo_path, sight.photo_url,
-            species.id, species.common_name, species.scientific_name, species.category,
-            species.habitat, species.diet, species.fun_fact, species.image_url,
-            species.act716_schedule, species.act716_status
-            FROM sightings sight JOIN species ON species.id=sight.species_id
-            WHERE sight.child_id=:child AND sight.status='confirmed'
-            ORDER BY sight.recorded_at DESC, sight.id DESC LIMIT 5"""), {"child": child_id}))
+            latest_sighting.id AS sighting_id,
+            species.id AS species_id,
+            COALESCE(activity.last_interacted_at, latest_sighting.recorded_at) AS recorded_at,
+            latest_sighting.location_label, latest_sighting.photo_path,
+            latest_sighting.photo_url,
+            activity.activity_type AS last_activity_type,
+            species.id AS id, species.common_name, species.scientific_name,
+            species.category, species.habitat, species.diet, species.fun_fact,
+            species.image_url, species.act716_schedule, species.act716_status
+            FROM collection_entries collection
+            JOIN species ON species.id=collection.species_id
+            LEFT JOIN child_species_activity activity
+              ON activity.child_id=collection.child_id
+              AND activity.species_id=collection.species_id
+            LEFT JOIN sightings latest_sighting ON latest_sighting.id=(
+                SELECT candidate.id FROM sightings candidate
+                WHERE candidate.child_id=:child
+                  AND candidate.species_id=collection.species_id
+                  AND candidate.status='confirmed'
+                ORDER BY candidate.recorded_at DESC, candidate.id DESC LIMIT 1
+            )
+            WHERE collection.child_id=:child AND species.is_active=TRUE
+            ORDER BY COALESCE(activity.last_interacted_at, latest_sighting.recorded_at) DESC,
+                     species.common_name ASC
+            LIMIT 5"""), {"child": child_id}))
     for capture in captures:
         capture["photo_url"] = _photo_url(capture)
         capture.pop("photo_path", None)

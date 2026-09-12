@@ -2,7 +2,7 @@
 
 RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Supabase PostgreSQL plus private Supabase Storage for durable production data.
 
-Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal.
+Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal. Iteration 2 adds Epic 6: a species-specific chat on an already discovered Wildlife Card.
 
 ## Current deployments
 
@@ -52,10 +52,28 @@ Not active in Iteration 1:
 - AI photo identification.
 - Automatic species confirmation.
 - BM25/RAG-generated learning content.
-- Runtime calls to DeepSeek, GLM vision models, or GBIF.
+- Runtime calls to GLM vision models or GBIF.
 - Iteration 2 or Iteration 3 gameplay and social features.
 
-DeepSeek V4 Flash, GLM-4.6V-Flash, BM25, and GBIF remain possible future architecture components only. They must not be described as active Iteration 1 functionality.
+DeepSeek is active only for Epic 6's current-card chat. It is never used for photo identification, automatic species confirmation, or to generate new wildlife facts. GLM-4.6V-Flash, BM25, and GBIF remain possible future architecture components only.
+
+## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
+
+An authenticated child can open the **WildGuide** drawer from a Wildlife Card they have already discovered and ask questions beyond the prewritten Fun Facts. The Expo client sends the question to the FastAPI backend; it never contacts DeepSeek directly and never contains a provider key.
+
+- The endpoint accepts only the current, discovered species card for that child.
+- Before calling DeepSeek, the backend redirects questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
+- DeepSeek receives only approved fields from that one card and selects an allowed field. The backend, not the model, renders the answer from the verified RimbaQuest value.
+- If the requested fact is unavailable, the chatbot says so rather than inventing an answer. If `DEEPSEEK_API_KEY` is absent locally, a deterministic approved-data fallback supports development and tests.
+- Every accepted chat interaction updates one deduplicated Continue Learning record. It affects the ordering of Recent Captures without changing discovery history or awarding XP.
+
+The protected endpoint is:
+
+```text
+POST /api/v1/children/{child_id}/species/{species_id}/chat
+Authorization: Bearer <child JWT>
+{ "question": "What does it eat?" }
+```
 
 ## Repository and target production architecture
 
@@ -234,7 +252,11 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `SUPABASE_URL` | No | Overrides the configured project URL |
 | `SUPABASE_STORAGE_BUCKET` | No | Overrides the default `discovery-photos` bucket |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
-| `DEEPSEEK_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
+| `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
+| `DEEPSEEK_CHAT_MODEL` | No | Defaults to `deepseek-chat` |
+| `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
+| `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
+| `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80` |
 | `ZHIPU_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
 
 Never place `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
@@ -261,6 +283,7 @@ Configure:
 DATABASE_URL=postgresql://postgres.ekwbvjikckuvvfkakhff:URL_ENCODED_DATABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
 SUPABASE_SECRET_KEY=<paste the current rotated server-side key from Supabase API settings>
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
+DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
 CORS_ALLOWED_ORIGINS=*
 ```
 
@@ -348,6 +371,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Collection uniqueness and foreign-key constraints prevent duplicate unlock rows and orphaned child/species records.
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the Supabase Secret Key.
+- The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
+- The chat service sends no child data or other-species facts to DeepSeek, and renders answers only from approved current-card fields.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.
@@ -376,7 +401,7 @@ Before release, manually verify this complete chain on Web and a physical phone:
 
 ```text
 Register/Login → Take Photo → Category → Search Species → Confirm
-→ Success → Collection → Wildlife Card → Quiz → Recent Captures → Progress
+→ Success → Collection → Wildlife Card → WildGuide chat → Recent Captures → Progress
 ```
 
 ## Troubleshooting

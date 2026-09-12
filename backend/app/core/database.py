@@ -87,6 +87,61 @@ def _migrate_retired_catalogue() -> None:
     """Safely retire duplicate catalogue rows without losing child history."""
     with engine.begin() as connection:
         for retired_id, canonical_id in CATALOGUE_SPECIES_MERGES.items():
+            # Move Continue Learning activity before deleting the retired
+            # catalogue row.  A child may have interacted with both cards;
+            # in that case retain only the newest timestamp and its activity.
+            activity_rows = connection.execute(
+                text("""SELECT child_id, species_id, last_interacted_at, activity_type
+                    FROM child_species_activity
+                    WHERE species_id IN (:retired, :canonical)"""),
+                {"retired": retired_id, "canonical": canonical_id},
+            ).mappings().all()
+            retired_activity = {
+                int(row["child_id"]): row
+                for row in activity_rows
+                if row["species_id"] == retired_id
+            }
+            canonical_activity = {
+                int(row["child_id"]): row
+                for row in activity_rows
+                if row["species_id"] == canonical_id
+            }
+            for child_id, retired_row in retired_activity.items():
+                existing = canonical_activity.get(child_id)
+                if existing:
+                    winner = (
+                        retired_row
+                        if retired_row["last_interacted_at"] > existing["last_interacted_at"]
+                        else existing
+                    )
+                    connection.execute(
+                        text("""UPDATE child_species_activity
+                            SET last_interacted_at=:last_interacted_at,
+                                activity_type=:activity_type
+                            WHERE child_id=:child_id AND species_id=:canonical"""),
+                        {
+                            "child_id": child_id,
+                            "canonical": canonical_id,
+                            "last_interacted_at": winner["last_interacted_at"],
+                            "activity_type": winner["activity_type"],
+                        },
+                    )
+                    connection.execute(
+                        text("""DELETE FROM child_species_activity
+                            WHERE child_id=:child_id AND species_id=:retired"""),
+                        {"child_id": child_id, "retired": retired_id},
+                    )
+                else:
+                    connection.execute(
+                        text("""UPDATE child_species_activity
+                            SET species_id=:canonical
+                            WHERE child_id=:child_id AND species_id=:retired"""),
+                        {
+                            "child_id": child_id,
+                            "retired": retired_id,
+                            "canonical": canonical_id,
+                        },
+                    )
             # Avoid a uniqueness collision when a child has unlocked both the
             # duplicate and canonical card, then repoint all remaining history.
             connection.execute(

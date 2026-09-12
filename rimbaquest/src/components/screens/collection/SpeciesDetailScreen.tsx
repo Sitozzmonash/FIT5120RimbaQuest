@@ -10,13 +10,19 @@ import {
   View,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { GalleryItem, Screen, Species } from "../../../types";
+import {
+  GalleryItem,
+  Screen,
+  Species,
+  SpeciesChatResponse,
+} from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { Tap } from "../../common/Tap";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
 import { FactsTab } from "./components/FactsTab";
 import { GalleryTab } from "./components/GalleryTab";
+import { SpeciesChatDrawer } from "./components/SpeciesChatDrawer";
 
 const DETAIL_TABS: [Screen, string][] = [
   ["about", "About"],
@@ -31,6 +37,8 @@ export function SpeciesDetailScreen({
   photos,
   onTabChange,
   onStartBattle,
+  childId,
+  onChatSend,
   onBack,
 }: {
   species: Species;
@@ -38,12 +46,15 @@ export function SpeciesDetailScreen({
   photos: GalleryItem[];
   onTabChange: (s: Screen) => void;
   onStartBattle: () => void;
+  childId?: number;
+  onChatSend?: (question: string) => Promise<SpeciesChatResponse>;
   onBack: () => void;
 }) {
   // Tab content lives in a horizontal, paging ScrollView so the user can swipe
   // left/right between tabs, in sync with tapping the tab labels above it.
   const [pageWidth, setPageWidth] = useState(0);
   const [heroEnlarged, setHeroEnlarged] = useState(false);
+  const [chatVisible, setChatVisible] = useState(false);
   const pagerRef = useRef<ScrollView>(null);
   const activeIndex = DETAIL_TABS.findIndex(([key]) => key === screen);
 
@@ -170,6 +181,21 @@ export function SpeciesDetailScreen({
             </ScrollView>
           ))}
       </ScrollView>
+
+      <Tap
+        label={`Ask WildGuide about ${species.common_name}`}
+        style={styles.chatLauncher}
+        onPress={() => setChatVisible(true)}
+      >
+        <MaterialIcons name="chat-bubble-outline" size={23} color="#FFFFFF" />
+      </Tap>
+      <SpeciesChatDrawer
+        visible={chatVisible}
+        species={species}
+        childId={childId}
+        onClose={() => setChatVisible(false)}
+        onSendQuestion={onChatSend}
+      />
     </View>
   );
 }
@@ -247,5 +273,21 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     backgroundColor: "#FFFFFF",
     flexGrow: 1,
+  },
+  chatLauncher: {
+    position: "absolute",
+    right: 18,
+    bottom: 20,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#075A2B",
+    shadowColor: "#001A0A",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.22,
+    shadowRadius: 7,
+    elevation: 5,
   },
 });
