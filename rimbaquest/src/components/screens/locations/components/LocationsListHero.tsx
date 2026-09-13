@@ -3,24 +3,21 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WILDLIFE_FILTERS } from "../../../../constants/seed";
+import { useLocationsStore } from "../../../../store/useLocationsStore";
 import { Tap } from "../../../common/Tap";
 import { styles as globalStyles } from "../../../../styles/theme";
 
 export function LocationsListHero({
   title,
   onBack,
-  search,
-  setSearch,
-  categoryFilter,
-  setCategoryFilter,
 }: {
   title: string;
   onBack: () => void;
-  search: string;
-  setSearch: (s: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (c: string) => void;
 }) {
+  const search = useLocationsStore((state) => state.search);
+  const setSearch = useLocationsStore((state) => state.setSearch);
+  const categoryFilter = useLocationsStore((state) => state.categoryFilter);
+  const setCategoryFilter = useLocationsStore((state) => state.setCategoryFilter);
   const insets = useSafeAreaInsets();
 
   return (

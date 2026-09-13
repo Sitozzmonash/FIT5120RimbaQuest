@@ -8,7 +8,6 @@ import * as Location from 'expo-location';
 import {
   GalleryItem,
   IdentificationFeedback,
-  LocationItem,
   LocationMode,
   RecentCapture,
   Screen,
@@ -18,7 +17,7 @@ import {
   VerificationError,
 } from '../types';
 import { API_BASE } from '../constants/config';
-import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
+import { CATEGORIES, SEED_SPECIES } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
 import { clearSession, loadSession, saveSession } from '../constants/session';
 import { levelForFound } from '../constants/progression';
@@ -44,6 +43,7 @@ import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { DEFAULT_AVATAR } from '../constants/images';
 import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
+import { useLocationsStore } from '../store/useLocationsStore';
 import { apiMessage, profileFromAuth } from '../utils/authApi';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
@@ -198,13 +198,8 @@ export default function RimbaQuest() {
   const verificationAttemptRef = useRef(0);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
-  const [locations, setLocations] = useState<LocationItem[]>(OFFLINE_LOCATIONS);
-  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
-  const [locationSearch, setLocationSearch] = useState('');
-  const [locationCategoryFilter, setLocationCategoryFilter] = useState('All');
-  const [locationsLoading, setLocationsLoading] = useState(false);
-  const [locationsError, setLocationsError] = useState<string | null>(null);
-  const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
+  const locations = useLocationsStore((state) => state.locations);
+  const selectedLocation = useLocationsStore((state) => state.selectedLocation);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
 
@@ -269,27 +264,6 @@ export default function RimbaQuest() {
     setScreen('login');
   };
 
-  const loadLocations = async () => {
-    setLocationsLoading(true);
-    setLocationsError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/locations`);
-      if (!res.ok) throw new Error('Unable to load locations');
-      const data = await res.json();
-      if (!data.items?.length) {
-        setLocations([]);
-        setLocationsError("We couldn't load wildlife locations right now. Please try again.");
-      } else {
-        setLocations(data.items);
-      }
-    } catch {
-      setLocationsError("We couldn't load wildlife locations right now. Please try again.");
-      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
-    } finally {
-      setLocationsLoading(false);
-    }
-  };
-
   const refresh = async (childId: number, token = accessToken) => {
     try {
       const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
@@ -323,11 +297,11 @@ export default function RimbaQuest() {
         const data = await recentRes.json();
         setRecentCaptures(data.items);
       }
-      await loadLocations();
+      await useLocationsStore.getState().loadLocations();
       setNotice(null);
     } catch {
       setNotice('You are exploring in offline demo mode. Discoveries will sync when the backend connects.');
-      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
+      // useLocationsStore.getState().useOfflineFallbackIfEmpty();
     } finally {
       setLoading(false);
     }
@@ -430,20 +404,6 @@ export default function RimbaQuest() {
     () => supportedSpecies.filter((item) => discovered.includes(item.id)),
     [discovered, supportedSpecies]
   );
-  const filteredLocations = useMemo(() => {
-    const query = locationSearch.trim().toLowerCase();
-    return locations.filter((loc) => {
-      const matchesQuery = locationMatchesQuery(loc, query);
-      return matchesQuery && locationMatchesCategory(loc, locationCategoryFilter);
-    });
-  }, [locations, locationSearch, locationCategoryFilter]);
-
-  const locationsEmptyMessage = locationSearch.trim()
-    ? 'No matching locations found.'
-    : locationCategoryFilter !== 'All'
-      ? 'No locations found for this wildlife category.'
-      : null;
-
   const displayProgress = useMemo(() => {
     const found = discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length;
     return {
@@ -850,25 +810,6 @@ export default function RimbaQuest() {
     resetTo('account_entry');
   };
 
-  const loadLocationDetail = async (loc: LocationItem) => {
-    setSelectedLocation(loc);
-    setLocationDetailError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/locations/${loc.id}`);
-      if (!res.ok) throw new Error('fail');
-      const data = await res.json();
-      setSelectedLocation({
-        ...loc,
-        ...data,
-        facilities: Array.isArray(data.facilities) ? data.facilities : loc.facilities,
-      });
-    } catch {
-      if (!loc.description) {
-        setLocationDetailError("We couldn't load this location. Please try again.");
-      }
-    }
-  };
-
   const loadSpeciesGallery = async (speciesId: string) => {
     try {
       const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`, {
@@ -1196,33 +1137,11 @@ export default function RimbaQuest() {
         )}
 
         {screen === 'locations' && (
-          <LocationsScreen
-            locations={filteredLocations}
-            hasLocations={locations.length > 0}
-            search={locationSearch}
-            setSearch={setLocationSearch}
-            categoryFilter={locationCategoryFilter}
-            setCategoryFilter={setLocationCategoryFilter}
-            loading={locationsLoading}
-            error={locationsError}
-            emptyMessage={locationsEmptyMessage}
-            onRetry={() => void loadLocations()}
-            onSelectLocation={(loc) => {
-              open('location_detail');
-              void loadLocationDetail(loc);
-            }}
-            onBack={goBack}
-          />
+          <LocationsScreen onOpenDetail={() => open('location_detail')} onBack={goBack} />
         )}
 
         {screen === 'location_detail' && selectedLocation && (
-          <LocationDetailScreen
-            location={selectedLocation}
-            error={locationDetailError}
-            onRetry={() => void loadLocationDetail(selectedLocation)}
-            onBack={goBack}
-            onRecordHere={(locName) => startDiscovery(locName)}
-          />
+          <LocationDetailScreen onBack={goBack} onRecordHere={(locName) => startDiscovery(locName)} />
         )}
 
         {screen === 'photo' && (

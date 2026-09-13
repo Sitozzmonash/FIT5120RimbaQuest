@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -7,6 +7,8 @@ import {
   View,
 } from "react-native";
 import { LocationItem } from "../../../types";
+import { locationMatchesCategory, locationMatchesQuery } from "../../../constants/seed";
+import { useLocationsStore } from "../../../store/useLocationsStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { styles as globalStyles } from "../../../styles/theme";
@@ -14,42 +16,44 @@ import { LocationsListHero } from "./components/LocationsListHero";
 import { LocationCard } from "./components/LocationCard";
 
 export function LocationsScreen({
-  locations,
-  hasLocations,
-  search,
-  setSearch,
-  categoryFilter,
-  setCategoryFilter,
-  loading,
-  error,
-  emptyMessage,
-  onRetry,
-  onSelectLocation,
+  onOpenDetail,
   onBack,
 }: {
-  locations: LocationItem[];
-  hasLocations: boolean;
-  search: string;
-  setSearch: (s: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (c: string) => void;
-  loading: boolean;
-  error: string | null;
-  emptyMessage: string | null;
-  onRetry: () => void;
-  onSelectLocation: (loc: LocationItem) => void;
+  onOpenDetail: () => void;
   onBack: () => void;
 }) {
+  const locations = useLocationsStore((state) => state.locations);
+  const search = useLocationsStore((state) => state.search);
+  const categoryFilter = useLocationsStore((state) => state.categoryFilter);
+  const loading = useLocationsStore((state) => state.loading);
+  const error = useLocationsStore((state) => state.error);
+  const loadLocations = useLocationsStore((state) => state.loadLocations);
+  const loadLocationDetail = useLocationsStore((state) => state.loadLocationDetail);
+
+  const hasLocations = locations.length > 0;
+
+  const filteredLocations = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return locations.filter((loc) => {
+      const matchesQuery = locationMatchesQuery(loc, query);
+      return matchesQuery && locationMatchesCategory(loc, categoryFilter);
+    });
+  }, [locations, search, categoryFilter]);
+
+  const emptyMessage = search.trim()
+    ? 'No matching locations found.'
+    : categoryFilter !== 'All'
+      ? 'No locations found for this wildlife category.'
+      : null;
+
+  const handleSelectLocation = (loc: LocationItem) => {
+    void loadLocationDetail(loc);
+    onOpenDetail();
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <LocationsListHero
-        title="Wildlife Locations"
-        onBack={onBack}
-        search={search}
-        setSearch={setSearch}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-      />
+      <LocationsListHero title="Wildlife Locations" onBack={onBack} />
       <View style={styles.listContainer}>
         {loading ? (
           <View style={styles.centerState}>
@@ -64,9 +68,9 @@ export function LocationsScreen({
               {error ||
                 "We couldn't load wildlife locations right now. Please try again."}
             </Text>
-            <PrimaryButton label="Try Again" icon="refresh" onPress={onRetry} />
+            <PrimaryButton label="Try Again" icon="refresh" onPress={() => void loadLocations()} />
           </View>
-        ) : !locations.length ? (
+        ) : !filteredLocations.length ? (
           <View style={styles.centerState}>
             <Text style={styles.centerStateTitle}>{emptyMessage}</Text>
           </View>
@@ -78,18 +82,18 @@ export function LocationsScreen({
                 <Tap
                   label="Try Again"
                   style={globalStyles.textButton}
-                  onPress={onRetry}
+                  onPress={() => void loadLocations()}
                 >
                   <Text style={globalStyles.textButtonText}>Try Again</Text>
                 </Tap>
               </View>
             ) : null}
             <View style={styles.locationList}>
-              {locations.map((loc) => (
+              {filteredLocations.map((loc) => (
                 <LocationCard
                   key={loc.id}
                   location={loc}
-                  onPress={() => onSelectLocation(loc)}
+                  onPress={() => handleSelectLocation(loc)}
                 />
               ))}
             </View>
