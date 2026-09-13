@@ -227,61 +227,138 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     child_id, token, _ = register("discover")
     auth = headers(token)
     species_item = client.get("/api/v1/species?category=Mammal").json()[0]
-    object_path = f"children/{child_id}/discoveries/test-photo.jpg"
+    other_species = client.get("/api/v1/species?category=Bird").json()[0]
+    upload_count = 0
     signed_url = "https://example.test/private-photo"
+
+    def fake_upload(incoming_child_id, content, content_type):
+        nonlocal upload_count
+        upload_count += 1
+        return f"children/{incoming_child_id}/discoveries/test-photo-{upload_count}.jpg"
+
     monkeypatch.setattr(
         "app.routers.discoveries.upload_discovery_photo",
-        lambda incoming_child_id, content, content_type: object_path,
+        fake_upload,
     )
     monkeypatch.setattr(
         "app.routers.discoveries.signed_photo_url",
         lambda path: signed_url if path else None,
     )
+    monkeypatch.setattr(
+        "app.routers.discoveries.identify_supported_species",
+        lambda content, content_type, catalogue, **_kwargs: {
+            "species_id": species_item["id"],
+            "confidence": 0.97,
+            "provider": "gemini",
+            "model": "gemini-3.8-flash",
+        },
+    )
 
-    uploaded = client.post(
-        f"/api/v1/children/{child_id}/photos",
+    verified = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
         files={"photo": ("wildlife.jpg", b"jpeg-data", "image/jpeg")},
     )
-    assert uploaded.status_code == 200
-    assert uploaded.json() == {"photo_path": object_path, "photo_url": signed_url}
+    assert verified.status_code == 200, verified.text
+    verification = verified.json()
+    assert verification["status"] == "verified"
+    assert len(verification["candidates"]) == 4
+    assert species_item["id"] in {item["id"] for item in verification["candidates"]}
+    # The provider-selected answer remains server-side until submission.
+    assert "verified_species_id" not in verification
 
-    foreign_path = f"children/{child_id + 1}/discoveries/foreign.jpg"
-    rejected = client.post(
+    # A wrong child answer is recorded, then the correct server answer is revealed.
+    evaluated = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications/{verification['verification_id']}/evaluate",
+        headers=auth,
+        json={"category": "Bird", "species_id": other_species["id"]},
+    )
+    # The selected species must be one of the four displayed candidates.
+    if evaluated.status_code == 400:
+        wrong_candidate = next(
+            item for item in verification["candidates"] if item["id"] != species_item["id"]
+        )
+        evaluated = client.post(
+            f"/api/v1/children/{child_id}/discovery-verifications/{verification['verification_id']}/evaluate",
+            headers=auth,
+            json={"category": "Bird", "species_id": wrong_candidate["id"]},
+        )
+    assert evaluated.status_code == 200, evaluated.text
+    assert evaluated.json()["correct"] is False
+    assert evaluated.json()["verified_species"]["id"] == species_item["id"]
+
+    missing_verification = client.post(
         f"/api/v1/children/{child_id}/discoveries",
         headers=auth,
-        json={"species_id": species_item["id"], "location_label": "FRIM", "photo_path": foreign_path},
+        json={"location_label": "FRIM"},
     )
-    assert rejected.status_code == 400
+    assert missing_verification.status_code == 422
 
     first = client.post(
         f"/api/v1/children/{child_id}/discoveries",
         headers=auth,
         json={
-            "species_id": species_item["id"],
+            "verification_id": verification["verification_id"],
             "location_label": "Bukit Gasing Nature Reserve",
-            "photo_path": object_path,
         },
     )
     assert first.status_code == 200
     assert first.json()["first_discovery"] is True
     assert first.json()["xp_awarded"] == 100
 
-    missing_photo = client.post(
+    replay = client.post(
         f"/api/v1/children/{child_id}/discoveries",
         headers=auth,
-        json={"species_id": species_item["id"], "location_label": "FRIM"},
+        json={"verification_id": verification["verification_id"], "location_label": "FRIM"},
     )
-    assert missing_photo.status_code == 400
+    assert replay.status_code == 409
+
+    reported = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications",
+        headers=auth,
+        files={"photo": ("reported.jpg", b"reported-photo", "image/jpeg")},
+    ).json()
+    report_result = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications/{reported['verification_id']}/report",
+        headers=auth,
+    )
+    assert report_result.status_code == 200
+    reported_save = client.post(
+        f"/api/v1/children/{child_id}/discoveries",
+        headers=auth,
+        json={"verification_id": reported["verification_id"], "location_label": "FRIM"},
+    )
+    assert reported_save.status_code == 409
+
+    verified_again = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications",
+        headers=auth,
+        files={"photo": ("wildlife-again.jpg", b"jpeg-data-two", "image/jpeg")},
+    ).json()
+    evaluated_again = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications/{verified_again['verification_id']}/evaluate",
+        headers=auth,
+        json={"category": species_item["category"], "species_id": species_item["id"]},
+    )
+    assert evaluated_again.status_code == 200
+    assert evaluated_again.json()["correct"] is True
 
     second = client.post(
         f"/api/v1/children/{child_id}/discoveries",
         headers=auth,
-        json={"species_id": species_item["id"], "location_label": "FRIM", "photo_path": object_path},
+        json={"verification_id": verified_again["verification_id"], "location_label": "FRIM"},
     )
     assert second.status_code == 200
     assert second.json()["first_discovery"] is False
     assert second.json()["xp_awarded"] == 0
+
+    with engine.connect() as connection:
+        activity = connection.execute(
+            text("""SELECT activity_type FROM child_species_activity
+                    WHERE child_id=:child_id AND species_id=:species_id"""),
+            {"child_id": child_id, "species_id": species_item["id"]},
+        ).scalar_one()
+    assert activity == "discovery"
 
     progress = client.get(f"/api/v1/children/{child_id}/progress", headers=auth).json()
     assert progress["found"] == 1
@@ -298,6 +375,50 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     assert len(gallery.json()["items"]) == 2
     assert gallery.json()["items"][0]["photo_url"] == signed_url
     assert gallery.json()["items"][1]["photo_url"] == signed_url
+
+
+def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
+    caplog.set_level("INFO")
+    child_id, token, _ = register("unverified")
+    auth = headers(token)
+    upload_called = False
+
+    def unexpected_upload(*_args):
+        nonlocal upload_called
+        upload_called = True
+        raise AssertionError("An uncertain photo must not be stored")
+
+    monkeypatch.setattr("app.routers.discoveries.upload_discovery_photo", unexpected_upload)
+    monkeypatch.setattr(
+        "app.routers.discoveries.identify_supported_species",
+        lambda *_args, **_kwargs: None,
+    )
+    uncertain = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications",
+        headers=auth,
+        files={"photo": ("unclear.jpg", b"unclear", "image/jpeg")},
+    )
+    assert uncertain.status_code == 200
+    assert uncertain.json()["status"] == "unverified"
+    assert upload_called is False
+
+    from app.services.vision import VisionServiceUnavailable
+
+    def fail_provider(*_args, **_kwargs):
+        raise VisionServiceUnavailable("timeout")
+
+    monkeypatch.setattr("app.routers.discoveries.identify_supported_species", fail_provider)
+    failed = client.post(
+        f"/api/v1/children/{child_id}/discovery-verifications",
+        headers=auth,
+        files={"photo": ("wildlife.jpg", b"wildlife", "image/jpeg")},
+    )
+    assert failed.status_code == 503
+    assert failed.headers.get("x-rimbaquest-trace-id")
+    assert "phase=vision reason=timeout" in caplog.text
+
+    collection = client.get(f"/api/v1/children/{child_id}/collection", headers=auth).json()["items"]
+    assert all(item["discovered"] == 0 for item in collection)
 
 
 def test_seed_is_idempotent_and_does_not_delete_user_data():

@@ -33,6 +33,8 @@ export type Species = {
   habitat: string;
   diet: string;
   fun_fact: string;
+  distinctive_features?: string | null;
+  image_url?: string | null;
   act716_status?: string | null;
   hp?: number;
   base_attack?: number;
@@ -40,6 +42,19 @@ export type Species = {
   ability_2?: string;
   ability_3?: string;
   abilities_locked?: boolean;
+};
+
+export type IdentificationFeedback = {
+  correct: boolean;
+  category_correct: boolean;
+  species_correct: boolean;
+  verified_species: Species;
+  explanation?: string | null;
+};
+
+export type VerificationError = {
+  kind: 'unverified' | 'failed';
+  message: string;
 };
 
 export type RecentCapture = Species & {
@@ -83,3 +98,14 @@ export type GalleryItem = {
 };
 
 export type LocationMode = 'auto' | 'manual';
+
+export type SpeciesChatMessage = {
+  id: string;
+  role: 'assistant' | 'user';
+  content: string;
+};
+
+export type SpeciesChatResponse = {
+  answer: string;
+  suggested_questions?: string[];
+};

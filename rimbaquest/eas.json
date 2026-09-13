@@ -7,12 +7,42 @@
       "developmentClient": true,
       "distribution": "internal"
     },
-    "preview": {
+
+    "apk-base": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       }
     },
+
+    "iteration1": {
+      "extends": "apk-base",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://fit5120rimbaquest-iteration1.onrender.com"
+      }
+    },
+
+    "iteration2": {
+      "extends": "apk-base",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://fit5120rimbaquest-iteration2.onrender.com"
+      }
+    },
+
+    "iteration3": {
+      "extends": "apk-base",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://fit5120rimbaquest-iteration3.onrender.com"
+      }
+    },
+
+    "master": {
+      "extends": "apk-base",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://fit5120rimbaquest-master.onrender.com"
+      }
+    },
+
     "production": {}
   }
 }

@@ -24,3 +24,7 @@ services:
         value: us-east-2
       - key: DATABASE_STORAGE_BUCKET
         value: image
+      - key: ZHIPU_API_KEY
+        sync: false
+      - key: ZHIPU_VISION_MODEL
+        value: glm-4.6v-flash

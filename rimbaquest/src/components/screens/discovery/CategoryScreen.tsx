@@ -27,6 +27,7 @@ export function CategoryScreen({
   const [pending, setPending] = useState<string | null>(
     categories.includes(category) ? category : null,
   );
+  const [requiredMessage, setRequiredMessage] = useState("");
 
   return (
     <View style={styles.page}>
@@ -58,17 +59,26 @@ export function CategoryScreen({
               label={`${item}s`}
               description={CATEGORY_APPEARANCE[item] ?? ""}
               selected={pending === item}
-              onPress={() => setPending(item)}
+              onPress={() => {
+                setPending(item);
+                setRequiredMessage("");
+              }}
             />
           ))}
         </View>
+        {requiredMessage ? <Text style={styles.requiredMessage}>{requiredMessage}</Text> : null}
       </ScrollView>
 
       <DiscoveryBottomNav
         onBack={onBack}
         nextLabel="Next"
-        nextDisabled={!pending}
-        onNext={() => pending && onSelectCategory(pending)}
+        onNext={() => {
+          if (!pending) {
+            setRequiredMessage("Please choose an animal group before continuing.");
+            return;
+          }
+          onSelectCategory(pending);
+        }}
       />
     </View>
   );
@@ -86,4 +96,10 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   list: { gap: 14, width: "100%" },
+  requiredMessage: {
+    color: "#B3261E",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
 });
