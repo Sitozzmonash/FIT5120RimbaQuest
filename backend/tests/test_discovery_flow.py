@@ -352,6 +352,14 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     assert second.json()["first_discovery"] is False
     assert second.json()["xp_awarded"] == 0
 
+    with engine.connect() as connection:
+        activity = connection.execute(
+            text("""SELECT activity_type FROM child_species_activity
+                    WHERE child_id=:child_id AND species_id=:species_id"""),
+            {"child_id": child_id, "species_id": species_item["id"]},
+        ).scalar_one()
+    assert activity == "discovery"
+
     progress = client.get(f"/api/v1/children/{child_id}/progress", headers=auth).json()
     assert progress["found"] == 1
     assert progress["profile"]["xp"] == 100

@@ -98,3 +98,14 @@ export type GalleryItem = {
 };
 
 export type LocationMode = 'auto' | 'manual';
+
+export type SpeciesChatMessage = {
+  id: string;
+  role: 'assistant' | 'user';
+  content: string;
+};
+
+export type SpeciesChatResponse = {
+  answer: string;
+  suggested_questions?: string[];
+};

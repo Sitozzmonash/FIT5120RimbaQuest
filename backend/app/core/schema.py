@@ -193,6 +193,24 @@ collection_entries = Table(
     UniqueConstraint("child_id", "species_id", name="uq_collection_child_species"),
 )
 
+# A compact, deduplicated learning-activity index. It deliberately does not
+# replace sightings, which remain the authoritative discovery history.
+child_species_activity = Table(
+    "child_species_activity",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("last_interacted_at", DateTime(timezone=True), nullable=False),
+    Column("activity_type", String(40), nullable=False),
+    UniqueConstraint("child_id", "species_id", name="uq_child_species_activity"),
+)
+Index(
+    "ix_child_species_activity_child_recent",
+    child_species_activity.c.child_id,
+    child_species_activity.c.last_interacted_at,
+)
+
 child_quiz_progress = Table(
     "child_quiz_progress",
     metadata,
@@ -236,4 +254,3 @@ Index(
     discovery_verifications.c.child_id,
     discovery_verifications.c.created_at,
 )
-

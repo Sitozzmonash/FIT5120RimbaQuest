@@ -2,7 +2,7 @@
 
 RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Groq-first, cross-provider failover chain.
 
-Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, and Wildlife Card battles. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
+Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, Wildlife Card battles, and the Epic 6 species-specific chatbot. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
 ## Current deployments
 
@@ -54,10 +54,26 @@ Implemented behaviour includes:
 Current Iteration 2 boundaries:
 
 - Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification.
-- DeepSeek, BM25/RAG, and live GBIF enrichment are not active runtime components.
+- DeepSeek is active only for the Epic 6 current-card chatbot; it is not used for photo verification or to generate new wildlife facts.
+- BM25/RAG and live GBIF enrichment are not active runtime components.
 - The source-linked ten-fact dataset remains review-stage content and is not yet exposed as verified child-facing content.
-- The species-specific chatbot remains a Could Have item and is not implemented.
 - Iteration 3 social and expanded gameplay features are out of scope.
+
+## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
+
+An authenticated child can open the **WildGuide** drawer from an already discovered Wildlife Card and ask questions beyond the prewritten Fun Facts. The Expo client calls only the RimbaQuest FastAPI endpoint; it never contacts DeepSeek directly and never contains a provider key.
+
+- The endpoint verifies the child's ownership of the current discovered card before answering.
+- Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
+- DeepSeek receives only approved fields from the current card and selects an allowed field. The backend, not the model, renders the answer from the approved RimbaQuest value.
+- If information is unavailable, the chatbot uses a controlled fallback rather than inventing an answer. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
+- Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
+
+```text
+POST /api/v1/children/{child_id}/species/{species_id}/chat
+Authorization: Bearer <child JWT>
+{ "question": "What does it eat?" }
+```
 
 ## Repository and target production architecture
 
@@ -260,6 +276,11 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
 | `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
+| `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
+| `DEEPSEEK_CHAT_MODEL` | No | Defaults to `deepseek-chat` |
+| `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
+| `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
+| `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80` |
 
 Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
@@ -289,6 +310,7 @@ AWS_SECRET_ACCESS_KEY=<storage secret access key>
 AWS_REGION=us-east-2
 DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
+DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
 CORS_ALLOWED_ORIGINS=*
 GEMINI_API_KEY=<server-side Google Gemini API key>
 GEMINI_VISION_MODEL=gemini-3.8-flash
@@ -379,6 +401,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Discovery creation requires an evaluated, unexpired, unused server verification and always uses its verified species ID.
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the storage secret access key.
+- The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
+- The chat service sends no child data or other-species facts to DeepSeek, and renders answers only from approved current-card fields.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.
@@ -408,6 +432,7 @@ Before release, manually verify this complete chain on Web and a physical phone:
 ```text
 Register/Login → Take Photo → AI Identifying → Category → Four Species Choices
 → Correct/Incorrect Feedback → Confirm/Report → Success → Collection → Wildlife Card
+→ WildGuide chat → Continue Learning
 ```
 
 ## Troubleshooting

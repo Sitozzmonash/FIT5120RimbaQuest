@@ -5,7 +5,18 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
-import { GalleryItem, IdentificationFeedback, LocationItem, LocationMode, RecentCapture, Screen, Species, UserProfile, VerificationError } from '../types';
+import {
+  GalleryItem,
+  IdentificationFeedback,
+  LocationItem,
+  LocationMode,
+  RecentCapture,
+  Screen,
+  Species,
+  SpeciesChatResponse,
+  UserProfile,
+  VerificationError,
+} from '../types';
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
@@ -360,6 +371,66 @@ export default function RimbaQuest() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshRecentCaptures = async (childId: number, token = accessToken) => {
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/children/${childId}/recent-captures`,
+        { headers: authenticatedHeaders(token) },
+      );
+      if (response.status === 401 || response.status === 403) {
+        await expireSession();
+        return;
+      }
+      if (response.ok) {
+        const data = await response.json();
+        setRecentCaptures(data.items);
+      }
+    } catch {
+      // A chat answer may still be visible even if the background refresh
+      // cannot update the home card immediately.
+    }
+  };
+
+  const sendSpeciesChatQuestion = async (
+    speciesId: string,
+    question: string,
+  ): Promise<SpeciesChatResponse> => {
+    if (!currentUser.id || !accessToken) {
+      throw new Error('Please sign in before using WildGuide.');
+    }
+    const response = await fetch(
+      `${API_BASE}/api/v1/children/${currentUser.id}/species/${encodeURIComponent(speciesId)}/chat`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...authenticatedHeaders(),
+        },
+        body: JSON.stringify({ question }),
+      },
+    );
+    const data: unknown = await response.json().catch(() => ({}));
+    if (response.status === 401 || response.status === 403) {
+      await expireSession();
+      throw new Error(SESSION_EXPIRED_ERROR);
+    }
+    if (!response.ok) {
+      throw new Error(apiMessage(data, "I couldn't answer that right now. Please try again."));
+    }
+    if (!data || typeof data !== 'object' || !('answer' in data) ||
+      typeof data.answer !== 'string' || !data.answer.trim()) {
+      throw new Error("I couldn't answer that right now. Please try again.");
+    }
+    void refreshRecentCaptures(currentUser.id, accessToken);
+    const suggestions = 'suggested_questions' in data ? data.suggested_questions : undefined;
+    return {
+      answer: data.answer,
+      suggested_questions: Array.isArray(suggestions)
+        ? suggestions.filter((item): item is string => typeof item === 'string')
+        : undefined,
+    };
   };
 
   useEffect(() => {
@@ -1503,6 +1574,8 @@ export default function RimbaQuest() {
             token={accessToken}
             onTabChange={(tab) => open(tab)}
             onStartBattle={() => void initBattle(selected)}
+            childId={currentUser.id}
+            onChatSend={(question) => sendSpeciesChatQuestion(selected.id, question)}
             onBack={() => resetTo('collection')}
           />
         )}
