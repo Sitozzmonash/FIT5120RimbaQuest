@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, StatusBar, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -40,11 +40,10 @@ import { BattleAbilityItem } from '../components/screens/battle/components/Battl
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/LoginScreen';
 import { AccountCreationScreen } from '../components/screens/account-creation';
-import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
-import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
+import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { DEFAULT_AVATAR } from '../constants/images';
-import { EMAIL_RE } from '../constants/validation';
+import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
 import { apiMessage, profileFromAuth } from '../utils/authApi';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
@@ -214,14 +213,6 @@ export default function RimbaQuest() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authSubmitting, setAuthSubmitting] = useState(false);
-
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotToken, setForgotToken] = useState('');
-  const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
-  const [forgotFieldError, setForgotFieldError] = useState<string | null>(null);
-  const [forgotFormError, setForgotFormError] = useState<string | null>(null);
-  const [forgotSubmitting, setForgotSubmitting] = useState(false);
 
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editAvatar, setEditAvatar] = useState(DEFAULT_AVATAR);
@@ -808,80 +799,6 @@ export default function RimbaQuest() {
       setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
     } finally {
       setAuthSubmitting(false);
-    }
-  };
-
-  const handleForgotRequest = async () => {
-    if (forgotSubmitting) return;
-    setForgotFormError(null);
-    if (!forgotEmail.trim()) {
-      setForgotFieldError('Please enter an email.');
-      return;
-    }
-    if (!EMAIL_RE.test(forgotEmail.trim())) {
-      setForgotFieldError('Please enter a valid email address.');
-      return;
-    }
-    setForgotFieldError(null);
-    setForgotSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setForgotFieldError(apiMessage(data, 'No RimbaQuest account was found for this email.'));
-        return;
-      }
-      setForgotToken('');
-      open('reset_password');
-    } catch {
-      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setForgotSubmitting(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (forgotSubmitting) return;
-    setForgotFieldError(null);
-    if (!forgotNewPassword) {
-      setForgotFormError('Please create a password.');
-      return;
-    }
-    if (forgotNewPassword !== forgotConfirmPassword) {
-      setForgotFieldError('Passwords do not match.');
-      return;
-    }
-    setForgotSubmitting(true);
-    setForgotFormError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: forgotEmail.trim(),
-          recovery_token: forgotToken.trim().toUpperCase(),
-          new_password: forgotNewPassword,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const message = apiMessage(data, 'Invalid or expired recovery code.');
-        setForgotFormError(/expired/i.test(message) ? `${message} Please request a new code.` : message);
-        return;
-      }
-      Alert.alert('Success', 'Password successfully updated!');
-      setForgotToken('');
-      setForgotNewPassword('');
-      setForgotConfirmPassword('');
-      resetTo('login');
-    } catch {
-      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setForgotSubmitting(false);
     }
   };
 
@@ -1511,8 +1428,7 @@ export default function RimbaQuest() {
             submitting={authSubmitting}
             onLogin={() => void handleLogin()}
             onForgotPassword={() => {
-              setForgotFieldError(null);
-              setForgotFormError(null);
+              useForgotPasswordStore.getState().reset();
               open('forgot_password');
             }}
             onCreateAccount={() => {
@@ -1535,28 +1451,14 @@ export default function RimbaQuest() {
 
         {screen === 'forgot_password' && (
           <ForgotPasswordScreen
-            email={forgotEmail}
-            setEmail={setForgotEmail}
-            fieldError={forgotFieldError}
-            formError={forgotFormError}
-            submitting={forgotSubmitting}
-            onSendRecoveryLink={() => void handleForgotRequest()}
+            onRequestSuccess={() => open('reset_password')}
             onBackToLogin={() => resetTo('login')}
           />
         )}
 
         {screen === 'reset_password' && (
           <ResetPasswordScreen
-            code={forgotToken}
-            setCode={setForgotToken}
-            newPassword={forgotNewPassword}
-            setNewPassword={setForgotNewPassword}
-            confirmPassword={forgotConfirmPassword}
-            setConfirmPassword={setForgotConfirmPassword}
-            fieldError={forgotFieldError}
-            formError={forgotFormError}
-            submitting={forgotSubmitting}
-            onResetPassword={() => void handleResetPassword()}
+            onResetSuccess={() => resetTo('login')}
             onBackToLogin={() => resetTo('login')}
           />
         )}

@@ -4,8 +4,6 @@ import { collectionStyles } from './screens/collection.styles';
 import { homeStyles } from './screens/home.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
 import { loginStyles } from './screens/login.styles';
-import { forgotPasswordStyles } from './screens/forgotPassword.styles';
-import { resetPasswordStyles } from './screens/resetPassword.styles';
 import { commonUiStyles } from './common-ui.styles';
 
 // General / shared styles used across multiple screens, plus the app shell
@@ -78,6 +76,4 @@ export const styles: any = {
   ...collectionStyles,
   ...accountEntryStyles,
   ...loginStyles,
-  ...forgotPasswordStyles,
-  ...resetPasswordStyles,
 };
