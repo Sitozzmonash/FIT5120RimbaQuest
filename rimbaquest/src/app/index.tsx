@@ -37,14 +37,15 @@ import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../componen
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
 import { BattleAbilityItem } from '../components/screens/battle/components/BattleActionBar';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
-import { LoginScreen } from '../components/screens/LoginScreen';
+import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { DEFAULT_AVATAR } from '../constants/images';
 import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
 import { useLocationsStore } from '../store/useLocationsStore';
-import { apiMessage, profileFromAuth } from '../utils/authApi';
+import { useLoginStore } from '../store/useLoginStore';
+import { apiMessage } from '../utils/authApi';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
@@ -203,12 +204,6 @@ export default function RimbaQuest() {
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
 
-  const [authUsername, setAuthUsername] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [authSubmitting, setAuthSubmitting] = useState(false);
-
   const [editDisplayName, setEditDisplayName] = useState('');
   const [editAvatar, setEditAvatar] = useState(DEFAULT_AVATAR);
   const [editAge, setEditAge] = useState('10');
@@ -230,10 +225,7 @@ export default function RimbaQuest() {
   const battleRecordedRef = useRef(false);
 
   const resetAuthForm = () => {
-    setAuthUsername('');
-    setAuthPassword('');
-    setFieldErrors({});
-    setAuthError(null);
+    useLoginStore.getState().reset();
   };
 
   const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
@@ -259,7 +251,7 @@ export default function RimbaQuest() {
     setRecentCaptures([]);
     setGalleryPhotos({});
     resetAuthForm();
-    setAuthError('Your session is no longer valid. Please sign in again.');
+    useLoginStore.getState().setAuthError('Your session is no longer valid. Please sign in again.');
     setHistory([]);
     setScreen('login');
   };
@@ -728,38 +720,6 @@ export default function RimbaQuest() {
       return;
     }
     await recordDiscoveryWithLocation(discoveryLocation.trim());
-  };
-
-  const handleLogin = async () => {
-    if (authSubmitting) return;
-    setAuthError(null);
-    const errors: Record<string, string> = {};
-    if (!authUsername.trim()) errors.username = 'Please enter your username or email.';
-    if (!authPassword) errors.password = 'Please enter your password.';
-    setFieldErrors(errors);
-    if (Object.keys(errors).length) return;
-
-    setAuthSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username_or_email: authUsername.trim(), password: authPassword }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (res.status >= 500) setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
-        else setAuthError(apiMessage(data, 'Invalid username or password. Please try again.'));
-        return;
-      }
-      const token = String(data.access_token || '');
-      if (!token) throw new Error('Login did not return an access token.');
-      applyUser(profileFromAuth(data), token);
-    } catch {
-      setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setAuthSubmitting(false);
-    }
   };
 
   const handleSaveProfile = async () => {
@@ -1338,14 +1298,7 @@ export default function RimbaQuest() {
 
         {screen === 'login' && (
           <LoginScreen
-            username={authUsername}
-            setUsername={setAuthUsername}
-            password={authPassword}
-            setPassword={setAuthPassword}
-            fieldErrors={fieldErrors}
-            authError={authError}
-            submitting={authSubmitting}
-            onLogin={() => void handleLogin()}
+            onLoginSuccess={(user, token) => applyUser(user, token)}
             onForgotPassword={() => {
               useForgotPasswordStore.getState().reset();
               open('forgot_password');
