@@ -39,7 +39,7 @@ def get_species(species_id: str):
     return item
 
 
-@router.get("/api/v1/species/{species_id}/quiz")
+@router.get("/api/v1/species/{species_id}/legacy-quiz")
 def get_species_quiz(species_id: str):
     with engine.connect() as connection:
         row = connection.execute(
@@ -49,3 +49,4 @@ def get_species_quiz(species_id: str):
     if not row:
         raise HTTPException(404, "Quiz not found")
     return {"species_id": species_id, "questions": row["questions_json"]}
+

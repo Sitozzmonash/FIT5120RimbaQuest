@@ -157,6 +157,7 @@ Object.assign(SPECIES_IMAGES, {
   sp_malayan_peacock_pheasant: require('../../assets/species/sp_malayan_peacock_pheasant.jpg'),
   sp_malayan_porcupine: require('../../assets/species/sp_malayan_porcupine.jpg'),
   sp_malaysian_field_rat: require('../../assets/species/sp_malaysian_field_rat.jpg'),
+  sp_malaysian_mole: require('../../assets/species/sp_malaysian_mole.jpg'),
   sp_malaysian_rail_babbler: require('../../assets/species/sp_malaysian_rail_babbler.jpg'),
   sp_marbled_cat: require('../../assets/species/sp_marbled_cat.jpg'),
   sp_maroon_sureli: require('../../assets/species/sp_maroon_sureli.jpg'),

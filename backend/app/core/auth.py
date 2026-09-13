@@ -40,6 +40,26 @@ def get_current_user(
     return AuthenticatedUser(user_id=user_id, child_id=child_id)
 
 
+def get_optional_current_user(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> AuthenticatedUser | None:
+    if not credentials or credentials.scheme.lower() != "bearer":
+        return None
+    try:
+        user_id, child_id = decode_access_token(credentials.credentials)
+    except ValueError:
+        return None
+
+    with engine.connect() as connection:
+        owned = connection.execute(
+            text("SELECT 1 FROM child_profiles WHERE id=:child AND parent_user_id=:user"),
+            {"child": child_id, "user": user_id},
+        ).first()
+    if not owned:
+        return None
+    return AuthenticatedUser(user_id=user_id, child_id=child_id)
+
+
 def require_child_access(
     child_id: int,
     current: Annotated[AuthenticatedUser, Depends(get_current_user)],

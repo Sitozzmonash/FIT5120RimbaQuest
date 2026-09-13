@@ -9,6 +9,8 @@ import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
 export function ResetPasswordScreen({
+  code,
+  setCode,
   newPassword,
   setNewPassword,
   confirmPassword,
@@ -19,6 +21,8 @@ export function ResetPasswordScreen({
   onResetPassword,
   onBackToLogin,
 }: {
+  code: string;
+  setCode: (s: string) => void;
   newPassword: string;
   setNewPassword: (s: string) => void;
   confirmPassword: string;
@@ -60,6 +64,22 @@ export function ResetPasswordScreen({
             {formError && <Text style={styles.resetErrorBanner}>{formError}</Text>}
 
             <View style={styles.resetFields}>
+              <View style={styles.resetField}>
+                <Text style={styles.resetFieldLabel}>Verification Code *</Text>
+                <View style={[styles.resetInputBox, fieldError && !code && styles.resetInputBoxError]}>
+                  <MaterialIcons name="vpn-key" size={20} color="#0A4D26" />
+                  <TextInput
+                    style={styles.resetInput}
+                    placeholder="6-character code"
+                    placeholderTextColor="#88A693"
+                    value={code}
+                    onChangeText={(val) => setCode(val.toUpperCase())}
+                    autoCapitalize="characters"
+                    maxLength={6}
+                  />
+                </View>
+              </View>
+
               <View style={styles.resetField}>
                 <Text style={styles.resetFieldLabel}>New Password *</Text>
                 <View style={[styles.resetInputBox, fieldError && styles.resetInputBoxError]}>

@@ -100,6 +100,41 @@ species_images = Table(
     Column("attribution", Text),
 )
 
+# Iteration 2 keeps additional learning facts separate from the single
+# Iteration 1 ``species.fun_fact`` field so existing catalogue views remain
+# backwards compatible.  Each fact is source-linked and can be reviewed by
+# the team before it is shown in the child-facing app.
+species_fun_facts = Table(
+    "species_fun_facts",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("display_order", Integer, nullable=False),
+    Column("fact_text", Text, nullable=False),
+    Column("source_name", String(200), nullable=False),
+    Column("source_url", Text, nullable=False),
+    Column("source_license", String(100), nullable=False),
+    Column("retrieved_at", DateTime(timezone=True), nullable=False),
+    Column("verification_status", String(40), nullable=False, default="source-linked-draft"),
+    Column("uncertainty_note", Text),
+    Column("verified_by", String(100)),
+    Column("verified_at", DateTime(timezone=True)),
+    UniqueConstraint("species_id", "display_order", name="uq_species_fun_facts_species_order"),
+)
+Index("ix_species_fun_facts_species_order", species_fun_facts.c.species_id, species_fun_facts.c.display_order)
+
+species_fun_fact_sources = Table(
+    "species_fun_fact_sources",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("fact_id", Integer, ForeignKey("species_fun_facts.id", ondelete="CASCADE"), nullable=False),
+    Column("source_role", String(30), nullable=False),
+    Column("source_name", String(200), nullable=False),
+    Column("source_url", Text, nullable=False),
+    Column("source_license", String(100), nullable=False),
+    UniqueConstraint("fact_id", "source_url", name="uq_species_fun_fact_sources_fact_url"),
+)
+
 locations = Table(
     "locations",
     metadata,
@@ -174,4 +209,48 @@ Index(
     "ix_child_species_activity_child_recent",
     child_species_activity.c.child_id,
     child_species_activity.c.last_interacted_at,
+)
+
+child_quiz_progress = Table(
+    "child_quiz_progress",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("easy_passed", Boolean, nullable=False, default=False),
+    Column("medium_passed", Boolean, nullable=False, default=False),
+    Column("hard_passed", Boolean, nullable=False, default=False),
+    Column("last_failed_set", JSON, nullable=True),  # e.g. {"easy": 0, "medium": 1}
+    UniqueConstraint("child_id", "species_id", name="uq_child_species_quiz_progress"),
+)
+
+# An opaque, child-owned server record binds one uploaded photo to the species
+# selected by the vision model. The client receives the candidate list before
+# evaluation, but not ``verified_species_id``; this prevents early answer
+# disclosure and prevents a forged client species ID from unlocking a card.
+discovery_verifications = Table(
+    "discovery_verifications",
+    metadata,
+    Column("id", String(36), primary_key=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("photo_path", String(500), nullable=False),
+    Column("verified_species_id", String, ForeignKey("species.id"), nullable=False),
+    Column("candidate_species_ids", JSON, nullable=False),
+    Column("confidence", Float, nullable=False),
+    Column("model", String(80), nullable=False),
+    Column("status", String(30), nullable=False, default="verified"),
+    Column("child_category", String(20)),
+    Column("child_species_id", String),
+    Column("category_correct", Boolean),
+    Column("species_correct", Boolean),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Column("evaluated_at", DateTime(timezone=True)),
+    Column("reported_at", DateTime(timezone=True)),
+    Column("used_at", DateTime(timezone=True)),
+)
+Index(
+    "ix_discovery_verifications_child_created",
+    discovery_verifications.c.child_id,
+    discovery_verifications.c.created_at,
 )

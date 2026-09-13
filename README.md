@@ -1,8 +1,8 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current repository architecture runs a Dockerised FastAPI service on Render and uses Supabase PostgreSQL plus private Supabase Storage for durable production data.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Groq-first, cross-provider failover chain.
 
-Iteration 1 is a **manual wildlife recording and learning experience**. A photo is kept as the child's personal discovery record; it is not sent to an AI model to identify the animal. Iteration 2 adds Epic 6: a species-specific chat on an already discovered Wildlife Card.
+Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, Wildlife Card battles, and the Epic 6 species-specific chatbot. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
 ## Current deployments
 
@@ -15,59 +15,59 @@ Iteration 1 is a **manual wildlife recording and learning experience**. A photo 
 
 Render's free service can take time to wake after inactivity. The first API request may therefore be slower than later requests.
 
-The configured production API reports `"database": "postgresql"` and `"version": "1.2.0"` from `/health`. Production persistence uses Supabase PostgreSQL and the private `discovery-photos` Storage bucket. A browser session created before the PostgreSQL/JWT migration must sign in again; an account that existed only in the former ephemeral SQLite database may need to register again.
+The current API reports `"database": "postgresql"` and `"version": "2.0.0"` from `/health` after the Iteration 2 backend is deployed. Production persistence uses Neon PostgreSQL and the private `image` storage bucket.
 
-## Iteration 1 scope
+## Current Iteration 2 scope
 
 The primary discovery flow is:
 
 ```text
 Home
   → Take a photo
-  → Choose Mammals / Birds / Butterflies / Reptiles
-  → Search and manually select a supported species
-  → Confirm species, location, date, and time
-  → Record discovery
-  → Unlock Wildlife Card on the first discovery
-  → View Collection and learn about the species
-  → Complete species quiz and track progress
+  → Gemini verifies the photo against the supported catalogue
+  → Groq Qwen3.8 or GLM is used only if an earlier provider fails
+  → Choose Mammal / Bird / Butterfly / Reptile
+  → Choose one of four species without seeing the AI answer
+  → Submit both answers and receive Correct / Incorrect feedback
+  → Review the AI-verified species and location
+  → Save or report the result
+  → Unlock only the AI-verified Wildlife Card on first discovery
 ```
 
-Implemented Iteration 1 behaviour includes:
+Implemented behaviour includes:
 
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Manual category and species selection across 152 supported species.
-- Case-insensitive, partial species-name search with clear and no-result states.
-- Confirmation of the selected species and human-readable location.
+- Server-side Gemini 3.8 Flash analysis restricted to supported species with reference images, with Groq Qwen3.8-27B and GLM-4.6V-Flash provider-failure fallbacks.
+- Four plausible species choices containing one hidden AI-verified answer and three distractors, independent of the child's category answer.
+- Correct/Incorrect feedback only after submission, including the verified category, species, and identifying features.
+- A child-owned, expiring verification record that binds the photo to the AI result and prevents the client from substituting another species.
+- Explicit low-confidence, unsupported-image, timeout, invalid-response, and provider-failure handling with no discovery or unlock.
+- Confirmation of the AI-verified species and human-readable location, plus a report path that saves no discovery.
 - A confirmed first discovery unlocks one Wildlife Card and awards 100 Explorer Points.
 - Repeat sightings are retained in the species gallery without duplicating the card or its first-discovery reward.
 - Collection ordering with unlocked species before undiscovered species.
-- Species About, Fun Facts, Gallery, and species-specific Quiz content.
+- Species About, Fun Facts, Gallery, three-level Quiz progression, ability unlocking, and battle interfaces.
 - Overall and per-category progress based on the authenticated child's records.
 
-Not active in Iteration 1:
+Current Iteration 2 boundaries:
 
-- AI photo identification.
-- Automatic species confirmation.
-- BM25/RAG-generated learning content.
-- Runtime calls to GLM vision models or GBIF.
-- Iteration 2 or Iteration 3 gameplay and social features.
-
-DeepSeek is active only for Epic 6's current-card chat. It is never used for photo identification, automatic species confirmation, or to generate new wildlife facts. GLM-4.6V-Flash, BM25, and GBIF remain possible future architecture components only.
+- Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification.
+- DeepSeek is active only for the Epic 6 current-card chatbot; it is not used for photo verification or to generate new wildlife facts.
+- BM25/RAG and live GBIF enrichment are not active runtime components.
+- The source-linked ten-fact dataset remains review-stage content and is not yet exposed as verified child-facing content.
+- Iteration 3 social and expanded gameplay features are out of scope.
 
 ## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
 
-An authenticated child can open the **WildGuide** drawer from a Wildlife Card they have already discovered and ask questions beyond the prewritten Fun Facts. The Expo client sends the question to the FastAPI backend; it never contacts DeepSeek directly and never contains a provider key.
+An authenticated child can open the **WildGuide** drawer from an already discovered Wildlife Card and ask questions beyond the prewritten Fun Facts. The Expo client calls only the RimbaQuest FastAPI endpoint; it never contacts DeepSeek directly and never contains a provider key.
 
-- The endpoint accepts only the current, discovered species card for that child.
-- Before calling DeepSeek, the backend redirects questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
-- DeepSeek receives only approved fields from that one card and selects an allowed field. The backend, not the model, renders the answer from the verified RimbaQuest value.
-- If the requested fact is unavailable, the chatbot says so rather than inventing an answer. If `DEEPSEEK_API_KEY` is absent locally, a deterministic approved-data fallback supports development and tests.
-- Every accepted chat interaction updates one deduplicated Continue Learning record. It affects the ordering of Recent Captures without changing discovery history or awarding XP.
-
-The protected endpoint is:
+- The endpoint verifies the child's ownership of the current discovered card before answering.
+- Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
+- DeepSeek receives only approved fields from the current card and selects an allowed field. The backend, not the model, renders the answer from the approved RimbaQuest value.
+- If information is unavailable, the chatbot uses a controlled fallback rather than inventing an answer. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
+- Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
 
 ```text
 POST /api/v1/children/{child_id}/species/{species_id}/chat
@@ -81,8 +81,14 @@ Authorization: Bearer <child JWT>
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
-    A -->|SQLAlchemy + psycopg| P[(Supabase PostgreSQL)]
-    A -->|Service-side Storage API| S[(Private Supabase Storage)]
+    A -->|1. Base64 image + constrained catalogue| G[Gemini 3.8 Flash]
+    G -.->|Provider failure| Q[Groq Qwen3.8-27B]
+    Q -.->|Provider failure| V[GLM-4.6V-Flash]
+    G -->|Supported species ID + confidence| A
+    Q -->|Supported species ID + confidence| A
+    V -->|Supported species ID + confidence| A
+    A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
+    A -->|S3 API with signed URLs| S[(Private Neon Storage)]
     P -->|Accounts, profiles, sightings, cards, progress| A
     S -->|One-hour signed photo URL| A
     A -->|JSON response| C
@@ -93,22 +99,27 @@ flowchart LR
 
 | Component | Responsibility |
 |---|---|
-| Expo client | Screens, navigation, camera/gallery access, validation, search, and presentation across Web/Android/iOS |
-| FastAPI service | Authentication, ownership checks, discovery rules, XP/card updates, catalogue APIs, and signed-photo access |
-| Supabase PostgreSQL | Durable production storage for accounts, child profiles, sightings, collections, quizzes, and static catalogue data |
-| Supabase Storage | Private storage for child discovery photos under child-scoped object paths |
+| Expo client | Screens, navigation, camera/gallery access, guided category/species questions, feedback, and presentation across Web/Android/iOS |
+| FastAPI service | Authentication, ownership checks, multi-provider vision orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
+| Gemini 3.8 Flash | Primary server-side visual matcher through Google's OpenAI-compatible endpoint |
+| Groq Qwen3.8-27B | Second provider, used when Gemini is unavailable or returns an invalid provider/model response |
+| GLM-4.6V-Flash | Final provider fallback through the Zhipu AI Open Platform |
+| Neon PostgreSQL | Durable production storage for accounts, child profiles, AI verification records, sightings, collections, quizzes, and static catalogue data |
+| Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
 | Bundled Expo assets | Offline-friendly reference images used during manual species selection and in Wildlife Cards |
 
 ### Discovery data flow
 
-1. The client captures or selects a photo.
-2. The child manually chooses a category and supported species.
-3. The client uploads the photo to the authenticated child's photo endpoint.
-4. FastAPI validates the JWT and child ownership, then stores the file in the private `discovery-photos` bucket.
-5. FastAPI writes the sighting to PostgreSQL using the private object path, not a permanent public URL.
-6. The first sighting of a species creates one collection entry and awards 100 XP.
-7. Gallery and recent-capture responses contain short-lived signed photo URLs.
+1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
+2. FastAPI first supplies Groq-hosted Qwen3.8-27B with the image and an explicit allow-list of supported catalogue IDs.
+3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to GLM-4.6V-Flash and then Gemini 3.8 Flash. Missing provider keys are skipped.
+4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
+5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
+6. The client receives four shuffled candidates but not the verified species ID.
+7. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+8. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+9. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
 
@@ -118,10 +129,11 @@ flowchart LR
 | Client capabilities | Expo Camera, Expo Image Picker, Expo SecureStore, React Native Web |
 | API | Python 3.12, FastAPI 0.115, Uvicorn, Pydantic |
 | Data access | SQLAlchemy 2.0, psycopg 3 |
-| Production database | Supabase PostgreSQL through the Session pooler |
+| Production database | Neon PostgreSQL through the pooled connection |
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
-| Photo storage | Private Supabase Storage, 5 MB server-side upload limit, one-hour signed URLs |
+| Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
+| AI verification | Gemini 3.8 Flash primary; Groq Qwen3.8-27B and Zhipu GLM-4.6V-Flash fallbacks; constrained JSON result; 0.65 default confidence threshold |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -152,7 +164,7 @@ FIT5120RimbaQuest/
 └── README.md
 ```
 
-The repository-root `Dockerfile` is the only backend container definition and is the production Render build. It does not hard-code a database URL; Render supplies the Supabase PostgreSQL `DATABASE_URL` at runtime.
+The repository-root `Dockerfile` is the only backend container definition and is the production Render build. It does not hard-code a database URL; Render supplies the Neon PostgreSQL `DATABASE_URL` at runtime.
 
 `doc/`, `docs/`, local databases, `.env` files, editor settings, QR images, and agent instruction files are intentionally excluded from Git.
 
@@ -207,7 +219,7 @@ Copy-Item .env.example .env
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --env-file .env
 ```
 
-The default example uses SQLite at `backend/data/RimbaQuest.db`. To exercise discovery-photo upload with a local API, also provide a server-side Supabase Secret Key and use a private development bucket. Without private Storage configuration, catalogue and authentication routes work, but the photo-upload endpoint returns `503`.
+The default example uses SQLite at `backend/data/RimbaQuest.db`. To exercise discovery-photo upload with a local API, also provide the Neon storage credentials (`AWS_ENDPOINT_URL_S3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) and use a private development bucket. Without private Storage configuration, catalogue and authentication routes work, but the photo-upload endpoint returns `503`.
 
 Configure the client according to where it runs:
 
@@ -245,33 +257,44 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 
 | Variable | Required in production | Purpose |
 |---|---:|---|
-| `DATABASE_URL` | Yes | Supabase PostgreSQL Session-pooler connection string |
-| `SUPABASE_SECRET_KEY` | Yes | Server-only key used for private Storage operations |
+| `DATABASE_URL` | Yes | Neon PostgreSQL pooled connection string |
+| `AWS_ENDPOINT_URL_S3` | Yes | Neon S3-compatible storage endpoint |
+| `AWS_ACCESS_KEY_ID` | Yes | Storage access key ID |
+| `AWS_SECRET_ACCESS_KEY` | Yes | Storage secret access key |
+| `AWS_REGION` | No | Storage region; defaults to `us-east-2` |
+| `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `SUPABASE_URL` | No | Overrides the configured project URL |
-| `SUPABASE_STORAGE_BUCKET` | No | Overrides the default `discovery-photos` bucket |
+| `GEMINI_API_KEY` | Recommended for final failover | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_VISION_MODEL` | No | Defaults to `gemini-3.8-flash`; legacy `MODEL_NAME` is also accepted |
+| `GEMINI_API_BASE_URL` | No | Defaults to Google's OpenAI-compatible base URL; legacy `MODEL_BASE_URL` is also accepted |
+| `GROQ_API_KEY` | Yes for primary AI verification | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
+| `GROQ_VISION_MODEL` | No | Defaults to `qwen/qwen3.8-27b` |
+| `ZHIPU_API_KEY` | Recommended for failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
+| `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
+| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
+| `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
 | `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
 | `DEEPSEEK_CHAT_MODEL` | No | Defaults to `deepseek-chat` |
 | `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
 | `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
 | `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80` |
-| `ZHIPU_API_KEY` | No | Reserved for a future iteration; unused by Iteration 1 |
 
-Never place `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
+Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
 ## Production backend deployment
 
-### Supabase preparation
+### Neon preparation
 
-1. Create or select the Supabase project.
-2. Create a **private** Storage bucket named `discovery-photos`.
-3. Copy the PostgreSQL **Session pooler** connection string on port `5432`.
-4. Create a server-side Supabase Secret Key.
+1. Create or select the Neon project.
+2. Create a **private** Storage bucket named `image`.
+3. Copy the PostgreSQL **pooled** connection string.
+4. Create the S3-compatible storage access key pair (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`).
 5. Rotate any password or key that has appeared in a chat, screenshot, terminal recording, or commit.
 
-No manual schema SQL is required for an empty database. On startup, FastAPI uses SQLAlchemy to create the current Iteration 1 tables and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, sightings, cards, or progress.
+No manual schema SQL is required for an empty or existing database. On startup, FastAPI uses SQLAlchemy `create_all` to add missing tables, including the Iteration 2 verification table, and idempotently seeds static catalogue data. A SHA-256 seed version prevents the full catalogue from being rewritten on every Render cold start. Seeding does not delete registered accounts, verification history, sightings, cards, or progress.
 
 ### Render configuration
 
@@ -280,19 +303,24 @@ Create a Docker Web Service from the repository root, or apply `render.yaml`. Th
 Configure:
 
 ```text
-DATABASE_URL=postgresql://postgres.ekwbvjikckuvvfkakhff:URL_ENCODED_DATABASE_PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
-SUPABASE_SECRET_KEY=<paste the current rotated server-side key from Supabase API settings>
+DATABASE_URL=postgresql://user:URL_ENCODED_PASSWORD@ep-XXXX-pooler.REGION.aws.neon.tech/neondb
+AWS_ENDPOINT_URL_S3=https://XXXX.storage.c-2.us-east-2.aws.neon.tech
+AWS_ACCESS_KEY_ID=<storage access key id>
+AWS_SECRET_ACCESS_KEY=<storage secret access key>
+AWS_REGION=us-east-2
+DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
 CORS_ALLOWED_ORIGINS=*
+GEMINI_API_KEY=<server-side Google Gemini API key>
+GEMINI_VISION_MODEL=gemini-3.8-flash
+GROQ_API_KEY=<server-side Groq API key>
+GROQ_VISION_MODEL=qwen/qwen3.8-27b
+ZHIPU_API_KEY=<server-side Zhipu API key>
+ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```
 
-The project URL and bucket already have non-secret defaults:
-
-```text
-SUPABASE_URL=https://ekwbvjikckuvvfkakhff.supabase.co
-SUPABASE_STORAGE_BUCKET=discovery-photos
-```
+The bucket name and region have non-secret defaults and may be omitted (`image`, `us-east-2`).
 
 After saving the variables, deploy the latest `master` commit and verify:
 
@@ -306,11 +334,11 @@ Expected fields:
 {
   "status": "ok",
   "database": "postgresql",
-  "version": "1.2.0"
+  "version": "2.0.0"
 }
 ```
 
-If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database. Existing data from an earlier ephemeral Render SQLite container is not automatically transferred to Supabase.
+If the response says `sqlite`, the Render `DATABASE_URL` is missing or still points to the old local database.
 
 ## Web deployment with EAS Hosting
 
@@ -367,10 +395,12 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.
 - Protected routes validate that the token owns the requested child profile.
-- Cross-child profile, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
+- Cross-child profile, verification, sighting, collection, gallery, progress, photo, and battle requests return an authorization error.
 - Collection uniqueness and foreign-key constraints prevent duplicate unlock rows and orphaned child/species records.
+- The AI answer is not returned with the candidate list and the first submitted child answer is recorded idempotently.
+- Discovery creation requires an evaluated, unexpired, unused server verification and always uses its verified species ID.
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
-- The client never receives the Supabase Secret Key.
+- The client never receives the storage secret access key.
 - The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
 - The chat service sends no child data or other-species facts to DeepSeek, and renders answers only from approved current-card fields.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
@@ -400,8 +430,9 @@ npx expo export --platform web
 Before release, manually verify this complete chain on Web and a physical phone:
 
 ```text
-Register/Login → Take Photo → Category → Search Species → Confirm
-→ Success → Collection → Wildlife Card → WildGuide chat → Recent Captures → Progress
+Register/Login → Take Photo → AI Identifying → Category → Four Species Choices
+→ Correct/Incorrect Feedback → Confirm/Report → Success → Collection → Wildlife Card
+→ WildGuide chat → Continue Learning
 ```
 
 ## Troubleshooting
@@ -424,7 +455,11 @@ Check `/health`. Production must report `"database": "postgresql"`. Render's loc
 
 ### Photo upload returns `503`
 
-Verify that `SUPABASE_SECRET_KEY` is present on Render and that the private bucket is named `discovery-photos`.
+Verify that `AWS_ENDPOINT_URL_S3` and `AWS_SECRET_ACCESS_KEY` are present on Render and that the private bucket is named `image`.
+
+### AI verification returns `503`
+
+Verify that at least one of `GEMINI_API_KEY`, `GROQ_API_KEY`/`Groq_Qwen3`, or `ZHIPU_API_KEY` is present only in the backend environment. Render logs `vision_provider_attempt`, `vision_provider_fallback`, and `vision_provider_succeeded` with the provider/model and a safe trace ID. The app intentionally refuses to save or unlock a Wildlife Card when every provider fails or the successful provider returns an uncertain result.
 
 ### Expo Go reports an incompatible SDK
 
@@ -433,18 +468,29 @@ Update Expo Go and confirm that it supports Expo SDK 54. If Expo Go no longer su
 ## Data and attribution
 
 - The source catalogue is versioned in `backend/data/seed.sql`.
+- The catalogue uses curated local seed data rather than making live GBIF or PERHILITAN requests at runtime. Iteration 2 sends the captured image and constrained catalogue metadata only to the first available verification provider in the Gemini → Groq → Zhipu failure chain.
 - The Expo client bundles 151 verified species reference images for the 152-species catalogue.
 - Malaysian Mole currently has no verified reference image, so the interface must not invent or substitute an unrelated photograph.
 - Image attribution metadata is stored in `rimbaquest/assets/species/commons-attribution.json`.
 - Five hard-to-source gap-fill visuals are educational illustrations rather than photographic evidence and should be reviewed before public redistribution.
 - Discovery location data is currently a human-readable label; it is not presented as precise GPS evidence.
 
+### Open data sources
+
+The project uses the following open datasets to prepare the local species catalogue and conservation context:
+
+- **GBIF — Asian Camera Trap Vertebrate Data**: used for species catalogue preparation, scientific names, categories, and wildlife occurrence/reference context. [Dataset page](https://cloud.gbif.org/asia/resource?r=bifa5_006) · [raw archive](https://cloud.gbif.org/asia/archive.do?r=bifa5_006&v=1.9)
+- **PERHILITAN — Wildlife Conservation Act 2010 (Act 716)**: used for Malaysian legal protection information, including Protected and Totally Protected status. [Dataset page](https://archive.data.gov.my/data/dataset/bilangan-spesies-hidupan-liar-yang-tersenarai-di-bawah-akta-pemuliharaan-hidupan-liar-2010-akta-716) · [raw XLSX](https://archive.data.gov.my/data/dataset/a02803c6-fdae-488b-b191-9380c1d3ace6/resource/27ad4e98-d875-445e-b02e-8e7c8889e32a/download/spesies-dalam-akta.xlsx)
+- **Area of Permanent Forest Reserves by State**: used as supporting habitat and conservation context. [Dataset page](https://data.gov.my/data-catalogue/forest_reserve_state) · [CSV](https://storage.data.gov.my/environment/forest_reserve_state.csv)
+
+Wikimedia Commons remains the source for the bundled species reference images; each image's author, source page, and licence are recorded in the attribution metadata above.
+
 ## Secret and repository hygiene
 
 Never commit:
 
 - `.env` files or database connection strings.
-- Supabase Secret Keys, JWT secrets, or AI-provider keys.
+- Storage secret access keys, JWT secrets, or AI-provider keys.
 - Local SQLite databases or personal discovery photos.
 - `.claude`, `.vscode`, `AGENTS.md`, `CLAUDE.md`, QR-code images, `doc/`, or `docs/`.
 

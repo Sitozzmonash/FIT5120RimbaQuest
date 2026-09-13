@@ -6,9 +6,11 @@ import { Section, Stat } from "../../../common/CommonUI";
 
 export function BattleStatsTab({
   item,
+  unlockedAbilities = [],
   onBattle,
 }: {
   item: Species;
+  unlockedAbilities?: number[];
   onBattle: () => void;
 }) {
   return (
@@ -26,21 +28,43 @@ export function BattleStatsTab({
         item.ability_1 || "Ability 1",
         item.ability_2 || "Ability 2",
         item.ability_3 || "Ability 3",
-      ].map((ability, idx) => (
-        <View key={idx} style={styles.abilitySlotLocked}>
-          <Text style={styles.abilitySlotIcon}>🔒</Text>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.abilitySlotName}>
-              Ability {idx + 1}: {ability}
-            </Text>
-            <Text style={styles.abilitySlotHint}>Locked</Text>
+      ].map((ability, idx) => {
+        const slot = idx + 1;
+        const isUnlocked = unlockedAbilities.includes(slot);
+        return (
+          <View
+            key={idx}
+            style={[
+              styles.abilitySlotLocked,
+              isUnlocked && styles.abilitySlotUnlocked,
+            ]}
+          >
+            <Text style={styles.abilitySlotIcon}>{isUnlocked ? "⚡" : "🔒"}</Text>
+            <View style={{ flex: 1 }}>
+              <Text
+                style={[
+                  styles.abilitySlotName,
+                  isUnlocked && styles.abilitySlotNameUnlocked,
+                ]}
+              >
+                Ability {slot}: {ability}
+              </Text>
+              <Text
+                style={[
+                  styles.abilitySlotHint,
+                  isUnlocked && styles.abilitySlotHintUnlocked,
+                ]}
+              >
+                {isUnlocked ? "Unlocked (Ready for Battle)" : "Locked (Pass Quiz to unlock)"}
+              </Text>
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
 
-      {/* <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
+      <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
         <Text style={styles.primaryText}>Enter Card Battle</Text>
-      </Tap> */}
+      </Tap>
     </View>
   );
 }
@@ -67,9 +91,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAF8",
     marginBottom: 6,
   },
+  abilitySlotUnlocked: {
+    backgroundColor: "#EBF7F0",
+    borderColor: "#2C6B4F",
+  },
   abilitySlotIcon: { fontSize: 16 },
   abilitySlotName: { fontSize: 12, fontWeight: "800", color: "#566159" },
+  abilitySlotNameUnlocked: { color: "#2C6B4F" },
   abilitySlotHint: { fontSize: 10, color: "#879089", marginTop: 2 },
+  abilitySlotHintUnlocked: { color: "#1E583E", fontWeight: "700" },
   primary: {
     minHeight: 48,
     marginTop: 14,

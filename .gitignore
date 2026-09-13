@@ -2,6 +2,8 @@
 .env.*
 !.env.example
 node_modules/
+.venv/
+venv/
 .next/
 __pycache__/
 .pytest_cache/
@@ -22,6 +24,9 @@ tmp/
 
 # Agent instruction files and local preview artifacts (never commit)
 .claude/
+.cursor/
+.zcode/
+lit_runs/
 AGENTS.md
 CLAUDE.md
 rimbaquest-preview-qr.png

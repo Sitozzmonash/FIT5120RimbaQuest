@@ -2,7 +2,7 @@
 
 This directory contains the RimbaQuest cross-platform client built with Expo SDK 54, React Native, TypeScript, and Expo Router. The same codebase targets Web, Android, and iOS.
 
-For the complete system architecture, Iteration 1 scope, Supabase/Render deployment, database behaviour, and security notes, see the [repository README](../README.md).
+For the complete system architecture, Iteration 1 scope, Neon/Render deployment, database behaviour, and security notes, see the [repository README](../README.md).
 
 ## Iteration 1 behaviour
 
@@ -46,7 +46,7 @@ For the deployed Render API, configure:
 EXPO_PUBLIC_API_BASE_URL=https://fit5120rimbaquest.onrender.com
 ```
 
-`EXPO_PUBLIC_` values are embedded into the client bundle. Never place a database password, Supabase Secret Key, JWT secret, or AI-provider key in this directory's environment file.
+`EXPO_PUBLIC_` values are embedded into the client bundle. Never place a database password, storage secret access key, JWT secret, or AI-provider key in this directory's environment file.
 
 ## Start the client
 

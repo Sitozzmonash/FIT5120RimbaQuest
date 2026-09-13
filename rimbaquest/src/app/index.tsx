@@ -5,7 +5,18 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
-import { GalleryItem, LocationItem, LocationMode, RecentCapture, Screen, Species, SpeciesChatResponse, UserProfile } from '../types';
+import {
+  GalleryItem,
+  IdentificationFeedback,
+  LocationItem,
+  LocationMode,
+  RecentCapture,
+  Screen,
+  Species,
+  SpeciesChatResponse,
+  UserProfile,
+  VerificationError,
+} from '../types';
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
@@ -25,6 +36,7 @@ import {
 } from '../components/screens/discovery';
 import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
+import { BattleAbilityItem } from '../components/screens/battle/components/BattleActionBar';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/LoginScreen';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -55,6 +67,58 @@ const BATTLE_OPPONENT = {
   hp: 110,
   attack: 20,
 };
+
+type BattleOpponent = {
+  species_id: string;
+  name: string;
+  category: string;
+  hp: number;
+  max_hp: number;
+  base_attack: number;
+  abilities?: BattleAbilityItem[];
+};
+
+const DEFAULT_OPPONENT: BattleOpponent = {
+  species_id: 'sp_wild_boar',
+  name: 'Wild Boar',
+  category: 'Mammal',
+  hp: 110,
+  max_hp: 110,
+  base_attack: 20,
+};
+
+const FALLBACK_ABILITIES: Record<string, BattleAbilityItem[]> = {
+  Mammal: [
+    { slot: 1, name: 'Swift Pounce', multiplier: 1.5, heal_amount: 0, description: 'A rapid leaping attack dealing 1.5x damage.' },
+    { slot: 2, name: 'Wild Roar', multiplier: 0.8, heal_amount: 25, description: 'An intimidating roar recovering 25 HP and dealing moderate damage.' },
+    { slot: 3, name: 'Guardian Guard', multiplier: 2.2, heal_amount: 10, description: 'An ultimate territorial strike dealing 2.2x damage and restoring 10 HP.' },
+  ],
+  Reptile: [
+    { slot: 1, name: 'Iron Scales', multiplier: 1.4, heal_amount: 0, description: 'Hardened armored charge dealing 1.4x damage.' },
+    { slot: 2, name: 'Venom Strike', multiplier: 1.3, heal_amount: 20, description: 'A venomous bite dealing damage and absorbing 20 HP.' },
+    { slot: 3, name: 'Ambush Snap', multiplier: 2.1, heal_amount: 0, description: 'A crushing ambush strike dealing devastating 2.1x damage.' },
+  ],
+  Bird: [
+    { slot: 1, name: 'Aerial Dive', multiplier: 1.5, heal_amount: 0, description: 'A high-speed dive from above dealing 1.5x damage.' },
+    { slot: 2, name: 'Sonic Cry', multiplier: 1.3, heal_amount: 15, description: 'A disorienting screech dealing damage and rallying 15 HP.' },
+    { slot: 3, name: 'Sharp Talon', multiplier: 2.2, heal_amount: 0, description: 'Savage razor-sharp talons dealing 2.2x base attack damage.' },
+  ],
+  Butterfly: [
+    { slot: 1, name: 'Toxic Powder', multiplier: 1.5, heal_amount: 0, description: 'Scatters irritating spore dust dealing 1.5x damage.' },
+    { slot: 2, name: 'Nectar Heal', multiplier: 0.5, heal_amount: 35, description: 'Sips restorative jungle nectar to recover 35 HP.' },
+    { slot: 3, name: 'Dazzle Flutter', multiplier: 2.0, heal_amount: 15, description: 'A mesmerizing wing flurry dealing 2.0x damage and restoring 15 HP.' },
+  ],
+};
+
+function getFallbackAbilities(category?: string): BattleAbilityItem[] {
+  const cat = (category || '').charAt(0).toUpperCase() + (category || '').slice(1).toLowerCase();
+  return FALLBACK_ABILITIES[cat] || [
+    { slot: 1, name: 'Basic Tackle', multiplier: 1.4, heal_amount: 0, description: 'A forceful body tackle dealing 1.4x damage.' },
+    { slot: 2, name: 'Defend', multiplier: 0.6, heal_amount: 20, description: 'Braces defense and recovers 20 HP.' },
+    { slot: 3, name: 'Focus Strike', multiplier: 2.0, heal_amount: 0, description: 'Concentrates energy for a heavy 2.0x damage strike.' },
+  ];
+}
+
 
 function apiMessage(data: unknown, fallback: string): string {
   if (data && typeof data === 'object' && 'detail' in data) {
@@ -110,6 +174,8 @@ async function readCurrentLocationLabel(): Promise<string | null> {
       // fall back to coordinates rather than failing the whole lookup.
     }
 
+    if (Platform.OS === 'web') return null;
+
     return `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
   } catch {
     return null;
@@ -127,13 +193,11 @@ export default function RimbaQuest() {
   const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
   const [chosenSpeciesId, setChosenSpeciesId] = useState<string | null>(null);
-  const [category, setCategory] = useState('Mammal');
-  const [speciesSearch, setSpeciesSearch] = useState('');
+  const [category, setCategory] = useState('');
   const [discovered, setDiscovered] = useState<string[]>([]);
   const [filter, setFilter] = useState('All');
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [photoMimeType, setPhotoMimeType] = useState('image/jpeg');
   const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
   const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
   const [discoveryLocation, setDiscoveryLocation] = useState('');
@@ -142,11 +206,21 @@ export default function RimbaQuest() {
   const [resolvingLocation, setResolvingLocation] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [reportingVerification, setReportingVerification] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [verifyingPhoto, setVerifyingPhoto] = useState(false);
+  const [verificationError, setVerificationError] = useState<VerificationError | null>(null);
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [verificationCandidates, setVerificationCandidates] = useState<Species[]>([]);
+  const [verificationPhotoUrl, setVerificationPhotoUrl] = useState<string | null>(null);
+  const [identificationFeedback, setIdentificationFeedback] = useState<IdentificationFeedback | null>(null);
+  const [identificationError, setIdentificationError] = useState<string | null>(null);
+  const [evaluatingIdentification, setEvaluatingIdentification] = useState(false);
   const [firstDiscovery, setFirstDiscovery] = useState(true);
   const [discoveryXpAwarded, setDiscoveryXpAwarded] = useState(0);
   const [discoveryRecordedAt, setDiscoveryRecordedAt] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const verificationAttemptRef = useRef(0);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const [locations, setLocations] = useState<LocationItem[]>(OFFLINE_LOCATIONS);
@@ -184,8 +258,11 @@ export default function RimbaQuest() {
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
   const [battlePlayerMaxHp, setBattlePlayerMaxHp] = useState(120);
-  const [battleOpponentHp, setBattleOpponentHp] = useState(BATTLE_OPPONENT.hp);
-  const [battleOpponentMaxHp, setBattleOpponentMaxHp] = useState(BATTLE_OPPONENT.hp);
+  const [battleOpponent, setBattleOpponent] = useState<BattleOpponent>(DEFAULT_OPPONENT);
+  const [battleOpponentHp, setBattleOpponentHp] = useState(DEFAULT_OPPONENT.hp);
+  const [battleOpponentMaxHp, setBattleOpponentMaxHp] = useState(DEFAULT_OPPONENT.hp);
+  const [unlockedAbilities, setUnlockedAbilities] = useState<number[]>([]);
+  const [playerAbilities, setPlayerAbilities] = useState<BattleAbilityItem[]>([]);
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [battleRound, setBattleRound] = useState(1);
   const [battleOutcome, setBattleOutcome] = useState<'playing' | 'win' | 'lose' | null>(null);
@@ -393,16 +470,6 @@ export default function RimbaQuest() {
     () => supportedSpecies.filter((item) => discovered.includes(item.id)),
     [discovered, supportedSpecies]
   );
-  const selectedCategorySpecies = useMemo(
-    () => supportedSpecies.filter((item) => item.category === category),
-    [category, supportedSpecies]
-  );
-  const filteredCategorySpecies = useMemo(() => {
-    const query = speciesSearch.trim().toLowerCase();
-    if (!query) return selectedCategorySpecies;
-    return selectedCategorySpecies.filter((item) => item.common_name.toLowerCase().includes(query));
-  }, [selectedCategorySpecies, speciesSearch]);
-
   const filteredLocations = useMemo(() => {
     const query = locationSearch.trim().toLowerCase();
     return locations.filter((loc) => {
@@ -444,12 +511,20 @@ export default function RimbaQuest() {
   };
 
   const resetDiscoverySelections = () => {
-    setCategory('Mammal');
-    setSpeciesSearch('');
+    setCategory('');
     setSelected(OFFLINE_SPECIES[0]);
     setChosenSpeciesId(null);
     setDiscoveryLocation('');
     setLocationMode('manual');
+    setVerifyingPhoto(false);
+    setVerificationError(null);
+    setVerificationId(null);
+    setVerificationCandidates([]);
+    setVerificationPhotoUrl(null);
+    setIdentificationFeedback(null);
+    setIdentificationError(null);
+    setEvaluatingIdentification(false);
+    setReportingVerification(false);
   };
 
   const startDiscovery = (presetLocation?: string) => {
@@ -459,7 +534,6 @@ export default function RimbaQuest() {
       setLocationMode('manual');
     }
     setPhotoUri(null);
-    setPhotoMimeType('image/jpeg');
     setPhotoError(null);
     setSaveError(null);
     setLocationNotice(null);
@@ -467,16 +541,20 @@ export default function RimbaQuest() {
   };
 
   const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
+    const attempt = verificationAttemptRef.current + 1;
+    verificationAttemptRef.current = attempt;
     setPhotoUri(uri);
-    setPhotoMimeType(mimeType);
     setPhotoError(null);
+    setVerificationError(null);
     open('photo_preview');
+    void verifyDiscoveryPhoto(uri, mimeType, attempt);
   };
 
   // Confirmed from the discard-photo dialog: abandon the in-progress
   // discovery entirely and land back on Home, rather than stepping back
   // one screen at a time.
   const discardDiscovery = () => {
+    verificationAttemptRef.current += 1;
     setPhotoUri(null);
     setPhotoError(null);
     setSaveError(null);
@@ -486,8 +564,15 @@ export default function RimbaQuest() {
   };
 
   const retakePhoto = () => {
+    verificationAttemptRef.current += 1;
     setPhotoUri(null);
     setPhotoError(null);
+    setVerificationError(null);
+    setVerificationId(null);
+    setVerificationCandidates([]);
+    setVerificationPhotoUrl(null);
+    setIdentificationFeedback(null);
+    setIdentificationError(null);
     setScreen('photo');
   };
 
@@ -515,35 +600,131 @@ export default function RimbaQuest() {
     }
   };
 
-  const uploadDiscoveryPhoto = async (uri: string): Promise<{ photo_path: string; photo_url?: string | null }> => {
+  const verifyDiscoveryPhoto = async (uri: string, mimeType: string, attempt: number) => {
+    setVerifyingPhoto(true);
+    setVerificationError(null);
+    setIdentificationFeedback(null);
+    setIdentificationError(null);
     const form = new FormData();
     if (Platform.OS === 'web') {
       const blob = await fetch(uri).then((response) => response.blob());
-      form.append('photo', blob, `discovery.${photoMimeType === 'image/png' ? 'png' : photoMimeType === 'image/webp' ? 'webp' : 'jpg'}`);
+      form.append('photo', blob, `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`);
     } else {
       form.append('photo', {
         uri,
-        name: `discovery.${photoMimeType === 'image/png' ? 'png' : photoMimeType === 'image/webp' ? 'webp' : 'jpg'}`,
-        type: photoMimeType,
+        name: `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`,
+        type: mimeType,
       } as unknown as Blob);
     }
-    const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/photos`, {
-      method: 'POST',
-      headers: authenticatedHeaders(),
-      body: form,
-    });
-    const data = await response.json().catch(() => ({}));
-    if (response.status === 401 || response.status === 403) {
-      await expireSession();
-      throw new Error(SESSION_EXPIRED_ERROR);
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications`, {
+        method: 'POST',
+        headers: authenticatedHeaders(),
+        body: form,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        await expireSession();
+        throw new Error(SESSION_EXPIRED_ERROR);
+      }
+      if (!response.ok) {
+        throw new Error(apiMessage(data, "We couldn't check your wildlife photo right now. Please try again."));
+      }
+      if (attempt !== verificationAttemptRef.current) return;
+      if (data.status !== 'verified') {
+        setVerificationError({
+          kind: 'unverified',
+          message: String(data.message || "We couldn't verify this animal. Please try another wildlife photo."),
+        });
+        return;
+      }
+      if (!data.verification_id || !Array.isArray(data.candidates) || data.candidates.length !== 4) {
+        throw new Error("We couldn't check your wildlife photo right now. Please try again.");
+      }
+      setVerificationId(String(data.verification_id));
+      setVerificationCandidates(data.candidates as Species[]);
+      setVerificationPhotoUrl(typeof data.photo_url === 'string' ? data.photo_url : null);
+      setScreen('category');
+    } catch (error) {
+      if (attempt !== verificationAttemptRef.current) return;
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
+      setVerificationError({
+        kind: 'failed',
+        message: error instanceof Error ? error.message : "We couldn't check your wildlife photo right now. Please try again.",
+      });
+    } finally {
+      if (attempt === verificationAttemptRef.current) setVerifyingPhoto(false);
     }
-    if (!response.ok) throw new Error(apiMessage(data, "Your photo couldn't be uploaded. Please try again."));
-    return data as { photo_path: string; photo_url?: string | null };
+  };
+
+  const evaluateIdentification = async (item: Species) => {
+    if (!verificationId || evaluatingIdentification) return;
+    setChosenSpeciesId(item.id);
+    setEvaluatingIdentification(true);
+    setIdentificationError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/evaluate`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
+          body: JSON.stringify({ category, species_id: item.id }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        await expireSession();
+        throw new Error(SESSION_EXPIRED_ERROR);
+      }
+      if (!response.ok) throw new Error(apiMessage(data, "We couldn't check your answer right now. Please try again."));
+      setIdentificationFeedback(data as IdentificationFeedback);
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
+      setIdentificationError(error instanceof Error ? error.message : "We couldn't check your answer right now. Please try again.");
+    } finally {
+      setEvaluatingIdentification(false);
+    }
+  };
+
+  const continueWithVerifiedSpecies = (item: Species) => {
+    setSelected(item);
+    setChosenSpeciesId(item.id);
+    setIdentificationFeedback(null);
+    open('confirm');
+  };
+
+  const reportVerification = async () => {
+    if (!verificationId || reportingVerification || saving) return;
+    setReportingVerification(true);
+    setSaveError(null);
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/report`,
+        { method: 'POST', headers: authenticatedHeaders() },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        await expireSession();
+        throw new Error(SESSION_EXPIRED_ERROR);
+      }
+      if (!response.ok) throw new Error(apiMessage(data, "We couldn't report this result right now. Please try again."));
+      discardDiscovery();
+      setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
+    } catch (error) {
+      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
+      setSaveError(error instanceof Error ? error.message : "We couldn't report this result right now. Please try again.");
+    } finally {
+      setReportingVerification(false);
+    }
   };
 
   const recordDiscoveryWithLocation = async (locationLabel: string) => {
     if (saving) return;
     if (!photoUri) return;
+    if (!verificationId) {
+      setSaveError('This photo has not been verified. Please try another wildlife photo.');
+      return;
+    }
     if (!locationLabel) {
       setSaveError('Please choose or enter a discovery location.');
       return;
@@ -551,14 +732,12 @@ export default function RimbaQuest() {
     setSaving(true);
     setSaveError(null);
     try {
-      const storedPhoto = await uploadDiscoveryPhoto(photoUri);
       const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
-          species_id: selected.id,
+          verification_id: verificationId,
           location_label: locationLabel,
-          photo_path: storedPhoto.photo_path,
         }),
       });
       const responseData = await response.json().catch(() => ({}));
@@ -566,7 +745,7 @@ export default function RimbaQuest() {
         await expireSession();
         throw new Error(SESSION_EXPIRED_ERROR);
       }
-      if (!response.ok) throw new Error(apiMessage(responseData, 'Unable to save'));
+      if (!response.ok) throw new Error(apiMessage(responseData, "Your discovery wasn't saved. Please try again."));
       const result = responseData as {
         first_discovery?: boolean;
         total_xp?: number;
@@ -584,7 +763,7 @@ export default function RimbaQuest() {
       setGalleryPhotos((current) => ({
         ...current,
         [selected.id]: [
-          { photo_url: result.photo_url || storedPhoto.photo_url || photoUri, location_label: locationLabel },
+          { photo_url: result.photo_url || verificationPhotoUrl || photoUri, location_label: locationLabel },
           ...(current[selected.id] ?? []),
         ],
       }));
@@ -662,7 +841,8 @@ export default function RimbaQuest() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
+        let message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
+        message = message.replace(/^String should have at least (\d+) characters?$/i, 'Password should have at least $1 characters');
         if (/already taken/i.test(message)) setFieldErrors({ username: 'That username is already taken. Try another one.' });
         else setAuthError(message);
         return;
@@ -791,7 +971,7 @@ export default function RimbaQuest() {
         setForgotFieldError(apiMessage(data, 'No RimbaQuest account was found for this email.'));
         return;
       }
-      setForgotToken(String(data.simulated_token || ''));
+      setForgotToken('');
       open('reset_password');
     } catch {
       setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
@@ -819,7 +999,7 @@ export default function RimbaQuest() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: forgotEmail.trim(),
-          recovery_token: forgotToken.trim(),
+          recovery_token: forgotToken.trim().toUpperCase(),
           new_password: forgotNewPassword,
         }),
       });
@@ -926,17 +1106,69 @@ export default function RimbaQuest() {
     }
   };
 
-  const initBattle = (card: Species) => {
+  const initBattle = async (card: Species) => {
     battleRecordedRef.current = false;
     setBattleXpAwarded(null);
     setBattlePlayerCard(card);
-    const hp = card.hp || 120;
-    setBattlePlayerHp(hp);
-    setBattlePlayerMaxHp(hp);
-    setBattleOpponentHp(BATTLE_OPPONENT.hp);
-    setBattleOpponentMaxHp(BATTLE_OPPONENT.hp);
+
+    let opponent: BattleOpponent = DEFAULT_OPPONENT;
+    let unlocked: number[] = [];
+    let abilities: BattleAbilityItem[] = getFallbackAbilities(card.category);
+    let playerMaxHp = card.hp || 120;
+
+    if (currentUser.id) {
+      try {
+        const [oppRes, cardRes] = await Promise.all([
+          fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/opponent?player_species_id=${encodeURIComponent(card.id)}`, {
+            headers: authenticatedHeaders(),
+          }),
+          fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${encodeURIComponent(card.id)}/battle-card`, {
+            headers: authenticatedHeaders(),
+          }),
+        ]);
+
+        if (oppRes.ok) {
+          const oppData = await oppRes.json();
+          if (oppData.opponent) {
+            opponent = {
+              species_id: oppData.opponent.species_id || 'sp_wild_boar',
+              name: oppData.opponent.name || 'Wild Boar',
+              category: oppData.opponent.category || 'Mammal',
+              hp: oppData.opponent.hp || 110,
+              max_hp: oppData.opponent.max_hp || oppData.opponent.hp || 110,
+              base_attack: oppData.opponent.base_attack || 20,
+              abilities: oppData.opponent.abilities,
+            };
+          }
+        }
+
+        if (cardRes.ok) {
+          const cardData = await cardRes.json();
+          if (cardData.card) {
+            if (cardData.card.hp) playerMaxHp = cardData.card.hp;
+            if (Array.isArray(cardData.card.unlocked_abilities)) {
+              unlocked = cardData.card.unlocked_abilities;
+            }
+            if (Array.isArray(cardData.card.abilities_details)) {
+              abilities = cardData.card.abilities_details;
+            }
+          }
+        }
+      } catch {
+        // Fallback to defaults
+      }
+    }
+
+    setBattleOpponent(opponent);
+    setUnlockedAbilities(unlocked);
+    setPlayerAbilities(abilities);
+
+    setBattlePlayerHp(playerMaxHp);
+    setBattlePlayerMaxHp(playerMaxHp);
+    setBattleOpponentHp(opponent.hp);
+    setBattleOpponentMaxHp(opponent.max_hp);
     setBattleLog([
-      `A wild ${BATTLE_OPPONENT.name} appeared!`,
+      `A wild ${opponent.name} appeared!`,
       `You sent out ${card.common_name}.`,
     ]);
     setBattleRound(1);
@@ -953,7 +1185,7 @@ export default function RimbaQuest() {
         headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
         body: JSON.stringify({
           won,
-          opponent_name: BATTLE_OPPONENT.name,
+          opponent_name: battleOpponent.name,
           rounds,
         }),
       });
@@ -975,15 +1207,62 @@ export default function RimbaQuest() {
     }
   };
 
+  const executeBotTurn = async (
+    currentOpponent: BattleOpponent,
+    botHp: number,
+    playerHp: number,
+    round: number,
+  ): Promise<{ action_name: string; damage: number; healing: number; log: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/battle/bot-turn`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bot_data: currentOpponent,
+          bot_current_hp: botHp,
+          player_current_hp: playerHp,
+          round_num: round,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.action) {
+          return data.action;
+        }
+      }
+    } catch {
+      // offline fallback
+    }
+
+    const baseAtk = currentOpponent.base_attack || 20;
+    const hit = Math.random() < 0.85;
+    const dmg = hit ? baseAtk : 0;
+    const log = hit
+      ? `${currentOpponent.name} used Basic Attack for ${dmg} damage.`
+      : `${currentOpponent.name}'s Basic Attack missed!`;
+    return {
+      action_name: 'Basic Attack',
+      damage: dmg,
+      healing: 0,
+      log,
+    };
+  };
+
   const performAttack = () => {
     if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
     setIsAttacking(true);
-    const playerDmg = battlePlayerCard.base_attack || 25;
+    const missed = Math.random() < 0.15;
+    const playerDmg = missed ? 0 : battlePlayerCard.base_attack || 25;
     const nextOpponentHp = Math.max(0, battleOpponentHp - playerDmg);
-    const newLogs = [...battleLog, `${battlePlayerCard.common_name} used Basic Attack for ${playerDmg} damage.`];
+    const newLogs = [
+      ...battleLog,
+      missed
+        ? `${battlePlayerCard.common_name}'s Basic Attack missed!`
+        : `${battlePlayerCard.common_name} used Basic Attack for ${playerDmg} damage.`,
+    ];
     if (nextOpponentHp <= 0) {
       setBattleOpponentHp(0);
-      newLogs.push(`${BATTLE_OPPONENT.name} fainted. You won!`);
+      newLogs.push(`${battleOpponent.name} fainted. You won!`);
       setBattleLog(newLogs);
       setBattleOutcome('win');
       setIsAttacking(false);
@@ -991,9 +1270,20 @@ export default function RimbaQuest() {
       return;
     }
     setBattleOpponentHp(nextOpponentHp);
-    setTimeout(() => {
-      const nextPlayerHp = Math.max(0, battlePlayerHp - BATTLE_OPPONENT.attack);
-      newLogs.push(`${BATTLE_OPPONENT.name} attacked for ${BATTLE_OPPONENT.attack} damage.`);
+    setBattleLog(newLogs);
+
+    setTimeout(async () => {
+      const botAction = await executeBotTurn(
+        battleOpponent,
+        nextOpponentHp,
+        battlePlayerHp,
+        battleRound,
+      );
+      if (botAction.healing > 0) {
+        setBattleOpponentHp((curr) => Math.min(battleOpponentMaxHp, curr + botAction.healing));
+      }
+      const nextPlayerHp = Math.max(0, battlePlayerHp - botAction.damage);
+      newLogs.push(botAction.log);
       if (nextPlayerHp <= 0) {
         setBattlePlayerHp(0);
         newLogs.push(`${battlePlayerCard.common_name} is too tired to continue.`);
@@ -1001,11 +1291,88 @@ export default function RimbaQuest() {
         void recordBattleResult(false, battleRound);
       } else {
         setBattlePlayerHp(nextPlayerHp);
+        setBattleRound((r) => r + 1);
       }
-      setBattleLog(newLogs);
-      setBattleRound((r) => r + 1);
+      setBattleLog([...newLogs]);
       setIsAttacking(false);
     }, 500);
+  };
+
+  const performAbility = (slot: number) => {
+    if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
+    setIsAttacking(true);
+
+    const ability = playerAbilities.find((a) => a.slot === slot) || {
+      slot,
+      name: `Ability ${slot}`,
+      multiplier: slot === 3 ? 2.0 : slot === 2 ? 0.8 : 1.5,
+      heal_amount: slot === 2 ? 25 : 0,
+    };
+
+    const baseAtk = battlePlayerCard.base_attack || 25;
+    const mult = typeof ability.multiplier === 'number' ? ability.multiplier : 1.0;
+    const dmg = Math.round(baseAtk * mult);
+    const heal = ability.heal_amount || 0;
+
+    let nextPlayerHp = battlePlayerHp;
+    if (heal > 0) {
+      nextPlayerHp = Math.min(battlePlayerMaxHp, battlePlayerHp + heal);
+      setBattlePlayerHp(nextPlayerHp);
+    }
+
+    const nextOpponentHp = Math.max(0, battleOpponentHp - dmg);
+    setBattleOpponentHp(nextOpponentHp);
+
+    let abilityLog = `${battlePlayerCard.common_name} used ${ability.name}! Opponent lost ${dmg} HP.`;
+    if (heal > 0) {
+      abilityLog += ` Recovered ${heal} HP.`;
+    }
+    const newLogs = [...battleLog, abilityLog];
+
+    if (nextOpponentHp <= 0) {
+      setBattleOpponentHp(0);
+      newLogs.push(`${battleOpponent.name} fainted. You won!`);
+      setBattleLog(newLogs);
+      setBattleOutcome('win');
+      setIsAttacking(false);
+      void recordBattleResult(true, battleRound);
+      return;
+    }
+
+    setBattleLog(newLogs);
+
+    setTimeout(async () => {
+      const botAction = await executeBotTurn(
+        battleOpponent,
+        nextOpponentHp,
+        nextPlayerHp,
+        battleRound,
+      );
+      if (botAction.healing > 0) {
+        setBattleOpponentHp((curr) => Math.min(battleOpponentMaxHp, curr + botAction.healing));
+      }
+      const afterBotPlayerHp = Math.max(0, nextPlayerHp - botAction.damage);
+      newLogs.push(botAction.log);
+      if (afterBotPlayerHp <= 0) {
+        setBattlePlayerHp(0);
+        newLogs.push(`${battlePlayerCard.common_name} is too tired to continue.`);
+        setBattleOutcome('lose');
+        void recordBattleResult(false, battleRound);
+      } else {
+        setBattlePlayerHp(afterBotPlayerHp);
+        setBattleRound((r) => r + 1);
+      }
+      setBattleLog([...newLogs]);
+      setIsAttacking(false);
+    }, 500);
+  };
+
+  const performGiveUp = () => {
+    if (!battlePlayerCard || isAttacking || battleOutcome !== 'playing') return;
+    setBattlePlayerHp(0);
+    setBattleLog((current) => [...current, `You gave up. ${battlePlayerCard.common_name} retreated from the battle.`]);
+    setBattleOutcome('lose');
+    void recordBattleResult(false, battleRound);
   };
 
   const discoveryPhoto = photoUri ? { uri: photoUri } : null;
@@ -1091,7 +1458,12 @@ export default function RimbaQuest() {
         )}
 
         {screen === 'photo_preview' && discoveryPhoto && (
-          <PhotoPreviewScreen photo={discoveryPhoto} onRetake={retakePhoto} onUpload={() => open('category')} />
+          <PhotoPreviewScreen
+            photo={discoveryPhoto}
+            verifying={verifyingPhoto}
+            verificationError={verificationError}
+            onRetake={retakePhoto}
+          />
         )}
 
         {screen === 'category' && discoveryPhoto && (
@@ -1101,7 +1473,7 @@ export default function RimbaQuest() {
             category={category}
             onSelectCategory={(cat) => {
               setCategory(cat);
-              setSpeciesSearch('');
+              setIdentificationError(null);
               open('species');
             }}
             onBack={goBack}
@@ -1113,15 +1485,13 @@ export default function RimbaQuest() {
           <SpeciesScreen
             photo={discoveryPhoto}
             category={category}
-            speciesList={filteredCategorySpecies}
-            search={speciesSearch}
-            setSearch={setSpeciesSearch}
+            speciesList={verificationCandidates}
             selectedId={chosenSpeciesId}
-            onChooseSpecies={(item) => {
-              setSelected(item);
-              setChosenSpeciesId(item.id);
-              open('confirm');
-            }}
+            evaluating={evaluatingIdentification}
+            feedback={identificationFeedback}
+            errorMessage={identificationError}
+            onSubmit={(item) => void evaluateIdentification(item)}
+            onContinue={continueWithVerifiedSpecies}
             onBack={goBack}
             onDiscard={discardDiscovery}
           />
@@ -1131,6 +1501,7 @@ export default function RimbaQuest() {
           <ConfirmScreen
             photo={discoveryPhoto}
             selected={selected}
+            candidates={verificationCandidates}
             discoveryLocation={discoveryLocation}
             setDiscoveryLocation={setDiscoveryLocation}
             locationMode={locationMode}
@@ -1147,7 +1518,9 @@ export default function RimbaQuest() {
             locationNotice={locationNotice}
             saveError={saveError}
             saving={saving}
+            reporting={reportingVerification}
             onConfirm={() => void recordDiscovery()}
+            onReport={() => void reportVerification()}
             onBack={goBack}
             onDiscard={discardDiscovery}
           />
@@ -1193,13 +1566,14 @@ export default function RimbaQuest() {
           />
         )}
 
-        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery') && (
+        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
           <SpeciesDetailScreen
             species={selected}
             screen={screen}
             photos={galleryPhotos[selected.id] ?? []}
+            token={accessToken}
             onTabChange={(tab) => open(tab)}
-            onStartBattle={() => initBattle(selected)}
+            onStartBattle={() => void initBattle(selected)}
             childId={currentUser.id}
             onChatSend={(question) => sendSpeciesChatQuestion(selected.id, question)}
             onBack={() => resetTo('collection')}
@@ -1218,7 +1592,7 @@ export default function RimbaQuest() {
             unlockedSpecies={unlockedSpeciesList}
             selectedCard={battlePlayerCard}
             onSelectCard={setBattlePlayerCard}
-            onStartBattle={() => battlePlayerCard && initBattle(battlePlayerCard)}
+            onStartBattle={() => battlePlayerCard && void initBattle(battlePlayerCard)}
             onStartDiscovery={() => startDiscovery()}
             onBack={goBack}
           />
@@ -1227,8 +1601,8 @@ export default function RimbaQuest() {
         {screen === 'battle_arena' && battlePlayerCard && (
           <BattleArenaScreen
             card={battlePlayerCard}
-            opponentName={BATTLE_OPPONENT.name}
-            opponentImage={BATTLE_OPPONENT.image}
+            opponentName={battleOpponent.name}
+            opponentImage={SPECIES_IMAGES[battleOpponent.species_id] || BATTLE_OPPONENT.image}
             playerHp={battlePlayerHp}
             playerMaxHp={battlePlayerMaxHp}
             opponentHp={battleOpponentHp}
@@ -1239,9 +1613,13 @@ export default function RimbaQuest() {
             xpAwarded={battleXpAwarded}
             isAttacking={isAttacking}
             onAttack={performAttack}
-            onBattleAgain={() => initBattle(battlePlayerCard)}
+            onGiveUp={performGiveUp}
+            onBattleAgain={() => void initBattle(battlePlayerCard)}
             onSelectAnotherCard={() => resetTo('battle_select')}
             onBack={goBack}
+            unlockedAbilities={unlockedAbilities}
+            abilities={playerAbilities}
+            onUseAbility={performAbility}
           />
         )}
 
@@ -1323,6 +1701,8 @@ export default function RimbaQuest() {
 
         {screen === 'reset_password' && (
           <ResetPasswordScreen
+            code={forgotToken}
+            setCode={setForgotToken}
             newPassword={forgotNewPassword}
             setNewPassword={setForgotNewPassword}
             confirmPassword={forgotConfirmPassword}

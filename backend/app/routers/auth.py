@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import secrets
 import time
 from datetime import datetime, timezone
 from typing import Annotated, Any
@@ -10,6 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.database import engine
+from app.core.email import send_password_reset_email
 from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import (
     ForgotPasswordIn,
@@ -131,22 +134,29 @@ def login(payload: LoginIn):
 @router.post("/api/v1/auth/forgot-password")
 def forgot_password(payload: ForgotPasswordIn):
     email = payload.email.strip().lower()
+    code = "".join(secrets.choice("23456789ABCDEFGHJKLMNPQRSTUVWXYZ") for _ in range(6))
+    expiry = int(time.time()) + 15 * 60
+    stored_token = f"{code}:{expiry}"
+
     with engine.begin() as connection:
         user = connection.execute(
             text("SELECT id FROM users WHERE lower(email)=lower(:email)"), {"email": email}
         ).mappings().first()
-        if not user:
-            raise HTTPException(400, "No RimbaQuest account was found for this email.")
-        token = f"RESET-{user['id']}-{int(time.time()) + 15 * 60}"
-        connection.execute(
-            text("UPDATE users SET recovery_token=:token WHERE id=:id"),
-            {"token": token, "id": user["id"]},
-        )
-    return {
+        if user:
+            connection.execute(
+                text("UPDATE users SET recovery_token=:token WHERE id=:id"),
+                {"token": stored_token, "id": user["id"]},
+            )
+            send_password_reset_email(email, code)
+
+    resp: dict[str, Any] = {
         "success": True,
-        "message": "Password recovery instructions generated.",
-        "simulated_token": token,
+        "message": "If this email is registered, a password reset code has been sent to your email.",
     }
+    if not os.getenv("SMTP_USER"):
+        resp["dev_code"] = code
+        resp["simulated_token"] = code
+    return resp
 
 
 @router.post("/api/v1/auth/reset-password")
@@ -159,14 +169,20 @@ def reset_password(payload: ResetPasswordIn):
             {"email": email},
         ).mappings().first()
         if not user:
-            raise HTTPException(404, "No account found with this email.")
+            raise HTTPException(400, "Invalid or expired recovery code.")
+
         stored = user["recovery_token"] or ""
         try:
-            expired = time.time() > int(stored.rsplit("-", 1)[-1])
-        except ValueError:
-            expired = True
-        if not stored or stored != token or expired:
+            if ":" not in stored:
+                raise ValueError("Invalid stored format")
+            stored_code, expiry = stored.split(":", 1)
+            valid = (stored_code.upper() == token.upper()) and (time.time() <= int(expiry))
+        except (ValueError, IndexError):
+            valid = False
+
+        if not valid:
             raise HTTPException(400, "Invalid or expired recovery code.")
+
         connection.execute(
             text("UPDATE users SET password_hash=:password_hash, recovery_token=NULL WHERE id=:id"),
             {"password_hash": hash_password(payload.new_password), "id": user["id"]},
