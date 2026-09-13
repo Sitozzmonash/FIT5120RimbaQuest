@@ -42,7 +42,27 @@ export type Species = {
   ability_2?: string;
   ability_3?: string;
   abilities_locked?: boolean;
+  // Additive structured battle fields
+  role?: string;
+  max_energy?: number;
+  energy?: number;
+  passive?: {
+    name: string;
+    trigger: string;
+    description: string;
+  } | null;
+  abilities?: Array<{
+    slot: number;
+    name: string;
+    description?: string;
+    energy_cost?: number;
+    multiplier?: number;
+    heal_amount?: number;
+    shield_amount?: number;
+  }>;
 };
+
+export * from './battle';
 
 export type IdentificationFeedback = {
   correct: boolean;

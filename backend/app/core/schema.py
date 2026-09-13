@@ -254,3 +254,45 @@ Index(
     discovery_verifications.c.child_id,
     discovery_verifications.c.created_at,
 )
+
+battle_sessions = Table(
+    "battle_sessions",
+    metadata,
+    Column("id", String(36), primary_key=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("player_species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("create_request_id", String(100), nullable=False),
+    Column("version", Integer, nullable=False, default=0),
+    Column("state", JSON, nullable=False),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("settled", Boolean, nullable=False, default=False),
+    Column("xp_awarded", Integer, nullable=True),
+    Column("first_win", Boolean, nullable=False, default=False),
+    UniqueConstraint("child_id", "create_request_id", name="uq_battle_sessions_child_create_req"),
+)
+Index("ix_battle_sessions_child_id", battle_sessions.c.child_id)
+Index("ix_battle_sessions_expires_at", battle_sessions.c.expires_at)
+
+battle_requests = Table(
+    "battle_requests",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("battle_id", String(36), ForeignKey("battle_sessions.id", ondelete="CASCADE"), nullable=False),
+    Column("request_id", String(100), nullable=False),
+    Column("operation", String(50), nullable=False),
+    Column("payload", JSON, nullable=False),
+    Column("response", JSON, nullable=False),
+    UniqueConstraint("battle_id", "request_id", name="uq_battle_requests_battle_request"),
+)
+
+battle_first_wins = Table(
+    "battle_first_wins",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("battle_id", String(36), ForeignKey("battle_sessions.id", ondelete="CASCADE"), nullable=False),
+    UniqueConstraint("child_id", "species_id", name="uq_battle_first_wins_child_species"),
+)

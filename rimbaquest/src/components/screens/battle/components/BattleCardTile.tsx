@@ -5,6 +5,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Species } from "../../../../types";
 import { imageFor } from "../../../../constants/images";
 import { Tap } from "../../../common/Tap";
+import { PixelSprite } from "./PixelSprite";
 
 export function BattleCardTile({
   species,
@@ -15,9 +16,13 @@ export function BattleCardTile({
   selected: boolean;
   onPress: () => void;
 }) {
+  const energy = species.max_energy || species.hp || "—";
+  const role = species.role || "Unknown";
+  const imageSrc = imageFor(species);
+
   return (
     <Tap
-      label={`Select ${species.common_name}`}
+      label={`Select ${species.common_name}, ${role} role, ${energy} Energy`}
       style={[styles.tile, selected && styles.tileSelected]}
       onPress={onPress}
     >
@@ -26,19 +31,34 @@ export function BattleCardTile({
         style={styles.gradient}
       />
       <View style={styles.imageWrap}>
-        <Image source={imageFor(species)!} style={styles.image} resizeMode="cover" />
+        {imageSrc ? (
+          <Image source={imageSrc} style={styles.image} resizeMode="cover" />
+        ) : (
+          <View style={styles.artPlaceholder}>
+            <MaterialIcons name="image-not-supported" size={28} color="#A0AAB0" />
+            <Text style={styles.artPlaceholderText}>Art Unavailable</Text>
+          </View>
+        )}
+        {/* Pixel Sprite Preview overlay icon */}
+        <View style={styles.pixelBadge}>
+          <PixelSprite
+            category={species.category}
+            role={role}
+            speciesId={species.id}
+            size={32}
+          />
+        </View>
       </View>
       <Text style={styles.name} numberOfLines={1}>
         {species.common_name}
       </Text>
       <View style={styles.statsRow}>
         <View style={styles.hpBadge}>
-          <MaterialIcons name="favorite" size={10} color="#D9383A" />
-          <Text style={styles.hpBadgeText}>{species.hp || 120}</Text>
+          <MaterialIcons name="bolt" size={11} color="#2E7D32" />
+          <Text style={styles.hpBadgeText}>{energy} EN</Text>
         </View>
-        <View style={styles.atkBadge}>
-          <MaterialIcons name="bolt" size={10} color="#B36200" />
-          <Text style={styles.atkBadgeText}>{species.base_attack || 25}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleBadgeText}>{role.toUpperCase()}</Text>
         </View>
       </View>
       <View style={[styles.cta, !selected && styles.ctaIdle]}>
@@ -68,30 +88,55 @@ const styles = StyleSheet.create({
   },
   tileSelected: { borderColor: "#0BA84A", borderWidth: 2 },
   gradient: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  imageWrap: { width: "100%", height: 96, borderRadius: 16, overflow: "hidden" },
+  imageWrap: {
+    width: "100%",
+    height: 96,
+    borderRadius: 16,
+    overflow: "hidden",
+    position: "relative",
+    backgroundColor: "#EDF2EE",
+  },
   image: { width: "100%", height: "100%" },
+  artPlaceholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F0F4F1",
+    gap: 4,
+  },
+  artPlaceholderText: {
+    fontSize: 10,
+    color: "#7E8B82",
+    fontWeight: "700",
+  },
+  pixelBadge: {
+    position: "absolute",
+    bottom: 4,
+    right: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.85)",
+    borderRadius: 8,
+    padding: 2,
+  },
   name: { color: "#0A4D26", fontSize: 14, fontWeight: "900", paddingHorizontal: 2 },
-  statsRow: { flexDirection: "row", gap: 6, paddingHorizontal: 2 },
+  statsRow: { flexDirection: "row", gap: 6, paddingHorizontal: 2, alignItems: "center" },
   hpBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#FCE8E8",
+    backgroundColor: "#E8F5E9",
     borderRadius: 8,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
-  hpBadgeText: { fontSize: 10, fontWeight: "800", color: "#D9383A" },
-  atkBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "#FFF2DF",
+  hpBadgeText: { fontSize: 10, fontWeight: "800", color: "#2E7D32" },
+  roleBadge: {
+    backgroundColor: "#EDE7F6",
     borderRadius: 8,
-    paddingHorizontal: 7,
+    paddingHorizontal: 6,
     paddingVertical: 3,
   },
-  atkBadgeText: { fontSize: 10, fontWeight: "800", color: "#B36200" },
+  roleBadgeText: { fontSize: 9, fontWeight: "800", color: "#6A1B9A" },
   cta: {
     backgroundColor: "#0BA84A",
     borderRadius: 999,
@@ -101,7 +146,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 7,
   },
-  ctaIdle: { backgroundColor: "#DCE6DF" },
-  ctaText: { color: "#FFFFFF", fontSize: 11, fontWeight: "800" },
-  ctaTextIdle: { color: "#566159" },
+  ctaIdle: { backgroundColor: "#E9F6ED" },
+  ctaText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
+  ctaTextIdle: { color: "#0BA84A" },
 });

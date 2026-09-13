@@ -11,6 +11,8 @@ export function ArenaCombatantCard({
   maxHp,
   categoryLabel,
   atk,
+  shield,
+  combatRole,
 }: {
   role: "opponent" | "player";
   name: string;
@@ -19,6 +21,8 @@ export function ArenaCombatantCard({
   maxHp: number;
   categoryLabel?: string;
   atk?: number;
+  shield?: number;
+  combatRole?: string;
 }) {
   const isPlayer = role === "player";
   const washColors: [string, string] = isPlayer
@@ -43,9 +47,9 @@ export function ArenaCombatantCard({
               {name}
             </Text>
             <View style={styles.hpTextRow}>
-              <MaterialIcons name="favorite" size={11} color={nameColor} />
+              <MaterialIcons name="bolt" size={12} color="#FF9800" />
               <Text style={styles.hpText}>
-                {hp} / {maxHp}
+                {hp} / {maxHp} Energy
               </Text>
             </View>
           </View>
@@ -57,19 +61,30 @@ export function ArenaCombatantCard({
               style={[styles.fill, { width: `${pct}%` }]}
             />
           </View>
-          {categoryLabel ? (
-            <View style={styles.metaRow}>
+          <View style={styles.metaRow}>
+            {categoryLabel ? (
               <View style={styles.pill}>
                 <Text style={styles.pillText}>{categoryLabel}</Text>
               </View>
-              {atk != null && (
-                <View style={styles.atkPill}>
-                  <MaterialIcons name="bolt" size={11} color="#B36200" />
-                  <Text style={styles.atkPillText}>ATK {atk}</Text>
-                </View>
-              )}
-            </View>
-          ) : null}
+            ) : null}
+            {combatRole ? (
+              <View style={styles.rolePill}>
+                <Text style={styles.rolePillText}>{combatRole.toUpperCase()}</Text>
+              </View>
+            ) : null}
+            {shield != null && shield > 0 ? (
+              <View style={styles.shieldPill}>
+                <MaterialIcons name="shield" size={11} color="#0288D1" />
+                <Text style={styles.shieldPillText}>+{shield}</Text>
+              </View>
+            ) : null}
+            {atk != null && (
+              <View style={styles.atkPill}>
+                <MaterialIcons name="bolt" size={11} color="#B36200" />
+                <Text style={styles.atkPillText}>ATK {atk}</Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </View>
@@ -102,34 +117,50 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
   },
-  name: { fontSize: 16, fontWeight: "900", flexShrink: 1 },
+  name: { fontSize: 16, fontWeight: "900", flex: 1, marginRight: 8 },
   hpTextRow: { flexDirection: "row", alignItems: "center", gap: 3 },
-  hpText: { fontSize: 12, fontWeight: "800", color: "#1B211C" },
+  hpText: { fontSize: 12, fontWeight: "800", color: "#37474F" },
   track: {
-    height: 10,
-    backgroundColor: "rgba(0,0,0,0.08)",
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.06)",
     overflow: "hidden",
   },
-  fill: { height: "100%", borderRadius: 5 },
-  metaRow: { flexDirection: "row", gap: 8, marginTop: 2 },
+  fill: { height: "100%", borderRadius: 999 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
   pill: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
   },
-  pillText: { fontSize: 10, fontWeight: "800", color: "#2F7814" },
+  pillText: { fontSize: 11, fontWeight: "700", color: "#3B473F" },
+  rolePill: {
+    backgroundColor: "#E8EAF6",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  rolePillText: { fontSize: 10, fontWeight: "800", color: "#3949AB" },
+  shieldPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: "#E1F5FE",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  shieldPillText: { fontSize: 10, fontWeight: "800", color: "#0288D1" },
   atkPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    backgroundColor: "#FFF2DF",
-    borderRadius: 10,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
+    gap: 2,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
   },
-  atkPillText: { fontSize: 10, fontWeight: "800", color: "#B36200" },
+  atkPillText: { fontSize: 11, fontWeight: "800", color: "#B36200" },
 });

@@ -144,14 +144,14 @@
       "title": "First photo-backed discovery unlock and XP",
       "http_status": 200,
       "result": "Pass",
-      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:31.419197+00:00', 'first_discovery': True, 'xp_awarded': 100, 'total_xp': 100, 'photo_url': 'https://br-curly-voice-aei9xgmj.storage.c-2.us-east-2.aws.neon.tech/images/children/14/discoveries/33bf6c07-3812-4b2b-bfab-ae2ea3e63c7a.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=nak_live_8103b418feba4e309835c23a53f78350%2F20260903%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260903T130031Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=1209cb55927fe1c45a10cc82629d81e8a4bddcba271f6973712a74b40a33c47c'}"
+      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:31.419197+00:00', 'first_discovery': True, 'xp_awarded': 100, 'total_xp': 100, 'photo_url': '<signed URL redacted>'}"
     },
     {
       "id": "DEP-API-20",
       "title": "Repeat photo-backed discovery creates no duplicate reward",
       "http_status": 200,
       "result": "Pass",
-      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:32.593442+00:00', 'first_discovery': False, 'xp_awarded': 0, 'total_xp': 100, 'photo_url': 'https://br-curly-voice-aei9xgmj.storage.c-2.us-east-2.aws.neon.tech/images/children/14/discoveries/33bf6c07-3812-4b2b-bfab-ae2ea3e63c7a.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=nak_live_8103b418feba4e309835c23a53f78350%2F20260903%2Fus-east-2%2Fs3%2Faws4_request&X-Amz-Date=20260903T130032Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=eb48cb382dfa55a6b3aadc8d506b6f32b69808b97d3bc5a5fdcbfbd19d8ee79d'}"
+      "note": "detail={'success': True, 'species_id': 'sp_ashy_tailorbird', 'common_name': 'Ashy Tailorbird', 'category': 'Bird', 'location_label': 'QA Test Location - not real child data', 'recorded_at': '2026-09-03T13:00:32.593442+00:00', 'first_discovery': False, 'xp_awarded': 0, 'total_xp': 100, 'photo_url': '<signed URL redacted>'}"
     },
     {
       "id": "DEP-API-21",

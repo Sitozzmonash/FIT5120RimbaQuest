@@ -192,7 +192,69 @@ def get_abilities_for_category(category: str) -> list[dict[str, Any]]:
 
 def calculate_battle_stats(species_id: str, category: str) -> dict[str, Any]:
     """Deterministic battle stats for cards."""
+    from app.services.battle_catalogue import get_battle_definition
+    try:
+        cat_entry = get_battle_definition(species_id)
+    except ValueError:
+        cat_entry = None
+
     cat = (category or "").capitalize()
+    if cat_entry:
+        cat = (cat_entry.get("category") or cat).capitalize()
+        hp = cat_entry.get("hp", 100)
+        base_atk = cat_entry.get("base_attack", 20)
+        abilities_cat = cat_entry.get("abilities", [])
+        passive_cat = cat_entry.get("passive")
+
+        # Legacy details compatibility:
+        # multiplier = damage / base_attack and heal_amount
+        details: list[dict[str, Any]] = []
+        for ab in abilities_cat:
+            slot = ab.get("slot", 1)
+            effects = ab.get("effects", [])
+            dmg = sum(eff.get("value", 0) for eff in effects if eff.get("type") == "damage")
+            heal = sum(eff.get("value", 0) for eff in effects if eff.get("type") == "heal")
+            mult = round(dmg / base_atk, 2) if base_atk else 1.0
+            details.append({
+                "slot": slot,
+                "name": ab.get("name", f"Ability {slot}"),
+                "type": "offensive" if dmg > 0 else "heal",
+                "multiplier": mult,
+                "heal_amount": heal,
+                "description": ab.get("description", ""),
+            })
+
+        # Slot 3 legacy compatible inactive metadata
+        if passive_cat:
+            details.append({
+                "slot": 3,
+                "name": passive_cat.get("name", "Passive"),
+                "type": "passive",
+                "multiplier": 1.0,
+                "heal_amount": 0,
+                "description": passive_cat.get("description", ""),
+            })
+
+        ab1_name = details[0]["name"] if len(details) > 0 else "Ability 1"
+        ab2_name = details[1]["name"] if len(details) > 1 else "Ability 2"
+        ab3_name = details[2]["name"] if len(details) > 2 else "Ability 3"
+
+        return {
+            "hp": hp,
+            "max_energy": hp,
+            "energy": hp,
+            "base_attack": base_atk,
+            "role": cat_entry.get("role", "Balanced"),
+            "category": cat,
+            "ability_1": ab1_name,
+            "ability_2": ab2_name,
+            "ability_3": ab3_name,
+            "abilities_details": details,
+            "abilities": abilities_cat,
+            "passive": passive_cat,
+            "abilities_locked": True,
+        }
+
     val = sum(ord(c) for c in species_id) % 15
     if cat == "Mammal":
         base_hp = 120 + val
@@ -214,7 +276,10 @@ def calculate_battle_stats(species_id: str, category: str) -> dict[str, Any]:
 
     return {
         "hp": base_hp,
+        "max_energy": base_hp,
+        "energy": base_hp,
         "base_attack": base_atk,
+        "role": "Balanced",
         "category": cat,
         "ability_1": abilities[0]["name"],
         "ability_2": abilities[1]["name"],

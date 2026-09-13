@@ -172,7 +172,7 @@ export function QuizTab({
                 {diff.toUpperCase()} {isPassed ? "✓" : isLocked ? "🔒" : ""}
               </Text>
               <Text style={styles.diffAbilityHint}>
-                Ability {idx + 1}
+                {idx === 2 ? 'Passive' : `Active ${idx + 1}`}
               </Text>
             </Tap>
           );
@@ -197,7 +197,7 @@ export function QuizTab({
                     isUnlocked && styles.abilitySlotBadgeTextActive,
                   ]}
                 >
-                  Ability {slot} {isUnlocked ? "Unlocked" : "Locked"}
+                  {slot === 3 ? 'Passive' : `Active ${slot}`} {isUnlocked ? "Unlocked" : "Locked"}
                 </Text>
               </View>
             );
