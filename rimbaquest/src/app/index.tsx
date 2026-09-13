@@ -44,11 +44,12 @@ import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen
 import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { DEFAULT_AVATAR } from '../constants/images';
+import { EMAIL_RE } from '../constants/validation';
+import { apiMessage, profileFromAuth } from '../utils/authApi';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
 const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
 const GUEST_USER: UserProfile = {
   id: 0,
@@ -120,33 +121,8 @@ function getFallbackAbilities(category?: string): BattleAbilityItem[] {
 }
 
 
-function apiMessage(data: unknown, fallback: string): string {
-  if (data && typeof data === 'object' && 'detail' in data) {
-    const detail = (data as { detail: unknown }).detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && detail[0] && 'msg' in detail[0]) {
-      return String((detail[0] as { msg: string }).msg);
-    }
-  }
-  return fallback;
-}
-
 function isHttpPhotoUrl(url?: string | null): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
-}
-
-function profileFromAuth(data: Record<string, unknown>): UserProfile {
-  return {
-    id: Number(data.child_id || data.id || 0),
-    username: String(data.username || ''),
-    email: String(data.email || ''),
-    display_name: String(data.display_name || data.username || 'Explorer'),
-    avatar: String(data.avatar || DEFAULT_AVATAR),
-    age: Number(data.age || 10),
-    age_band: '8-11',
-    xp: Number(data.xp || 0),
-    level: Number(data.level || 1),
-  };
 }
 
 async function readCurrentLocationLabel(): Promise<string | null> {
@@ -232,12 +208,9 @@ export default function RimbaQuest() {
   const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
+
   const [authUsername, setAuthUsername] = useState('');
-  const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authAge, setAuthAge] = useState('10');
-  const [authAvatar, setAuthAvatar] = useState('hornbill');
   const [authError, setAuthError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authSubmitting, setAuthSubmitting] = useState(false);
@@ -272,11 +245,7 @@ export default function RimbaQuest() {
 
   const resetAuthForm = () => {
     setAuthUsername('');
-    setAuthEmail('');
     setAuthPassword('');
-    setAuthConfirmPassword('');
-    setAuthAge('10');
-    setAuthAvatar('hornbill');
     setFieldErrors({});
     setAuthError(null);
   };
@@ -810,53 +779,6 @@ export default function RimbaQuest() {
     await recordDiscoveryWithLocation(discoveryLocation.trim());
   };
 
-  const handleRegister = async () => {
-    if (authSubmitting) return;
-    setAuthError(null);
-    const errors: Record<string, string> = {};
-    const username = authUsername.trim();
-    if (!username) errors.username = 'Please enter a username.';
-    else if (username.length < 3 || username.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
-    if (!authAge.trim()) errors.age = 'Please enter your age.';
-    if (!authEmail.trim()) errors.email = 'Please enter an email address.';
-    else if (!EMAIL_RE.test(authEmail.trim())) errors.email = 'Please enter a valid email address.';
-    if (!authPassword) errors.password = 'Please create a password.';
-    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
-    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
-    setFieldErrors(errors);
-    if (Object.keys(errors).length) return;
-
-    setAuthSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          age: parseInt(authAge, 10) || 10,
-          email: authEmail.trim(),
-          password: authPassword,
-          avatar: authAvatar,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        let message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
-        message = message.replace(/^String should have at least (\d+) characters?$/i, 'Password should have at least $1 characters');
-        if (/already taken/i.test(message)) setFieldErrors({ username: 'That username is already taken. Try another one.' });
-        else setAuthError(message);
-        return;
-      }
-      const token = String(data.access_token || '');
-      if (!token) throw new Error('Registration did not return an access token.');
-      applyUser(profileFromAuth(data), token);
-    } catch {
-      setAuthError('Registration was unsuccessful. Please try again.');
-    } finally {
-      setAuthSubmitting(false);
-    }
-  };
-
   const handleLogin = async () => {
     if (authSubmitting) return;
     setAuthError(null);
@@ -887,64 +809,6 @@ export default function RimbaQuest() {
     } finally {
       setAuthSubmitting(false);
     }
-  };
-
-  const validateUsernameBlur = () => {
-    const name = authUsername.trim();
-    if (!name) return;
-    if (name.length < 3 || name.length > 20) {
-      setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
-    } else {
-      setFieldErrors((cur) => {
-        const next = { ...cur };
-        delete next.username;
-        return next;
-      });
-    }
-  };
-
-  const validateEmailBlur = () => {
-    const email = authEmail.trim();
-    if (!email) return;
-    if (!EMAIL_RE.test(email)) {
-      setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
-    } else {
-      setFieldErrors((cur) => {
-        const next = { ...cur };
-        delete next.email;
-        return next;
-      });
-    }
-  };
-
-  // Gates step 1 -> 2 of the Create Account wizard: unlike the blur handlers
-  // above, this checks both fields synchronously (e.g. a field the user never
-  // focused) and reports whether it's safe to advance.
-  const validateStep1 = (): boolean => {
-    const name = authUsername.trim();
-    const email = authEmail.trim();
-    const errors: { username?: string; email?: string; password?: string; confirmPassword?: string } = {};
-    if (!name) errors.username = 'Please enter a username.';
-    else if (name.length < 3 || name.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
-    if (!email) errors.email = 'Please enter an email address.';
-    else if (!EMAIL_RE.test(email)) errors.email = 'Please enter a valid email address.';
-    if (!authPassword) errors.password = 'Please create a password.';
-    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
-    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
-
-    setFieldErrors((cur) => {
-      const next = { ...cur };
-      if (errors.username) next.username = errors.username;
-      else delete next.username;
-      if (errors.email) next.email = errors.email;
-      else delete next.email;
-      if (errors.password) next.password = errors.password;
-      else delete next.password;
-      if (errors.confirmPassword) next.confirmPassword = errors.confirmPassword;
-      else delete next.confirmPassword;
-      return next;
-    });
-    return !errors.username && !errors.email && !errors.password && !errors.confirmPassword;
   };
 
   const handleForgotRequest = async () => {
@@ -1660,30 +1524,12 @@ export default function RimbaQuest() {
 
         {screen === 'create_account' && (
           <AccountCreationScreen
-            username={authUsername}
-            setUsername={setAuthUsername}
-            age={authAge}
-            setAge={setAuthAge}
-            email={authEmail}
-            setEmail={setAuthEmail}
-            password={authPassword}
-            setPassword={setAuthPassword}
-            confirmPassword={authConfirmPassword}
-            setConfirmPassword={setAuthConfirmPassword}
-            avatar={authAvatar}
-            setAvatar={setAuthAvatar}
-            fieldErrors={fieldErrors}
-            authError={authError}
-            submitting={authSubmitting}
-            onRegister={() => void handleRegister()}
+            onRegisterSuccess={(user, token) => applyUser(user, token)}
             onLogin={() => {
               resetAuthForm();
               open('login');
             }}
             onBack={goBack}
-            onValidateStep1={validateStep1}
-            onBlurUsername={validateUsernameBlur}
-            onBlurEmail={validateEmailBlur}
           />
         )}
 
