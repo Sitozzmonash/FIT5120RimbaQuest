@@ -15,6 +15,7 @@ import { useUserStore } from "./useUserStore";
 
 type DiscoveryState = {
   photoUri: string | null;
+  photoMimeType: string | null;
   photoError: string | null;
   verifyingPhoto: boolean;
   verificationError: VerificationError | null;
@@ -61,6 +62,7 @@ type DiscoveryActions = {
   discard: () => void;
 
   submitPhoto: (uri: string, mimeType: string) => Promise<boolean>;
+  retryPhoto: () => Promise<void>;
 
   evaluateIdentification: (item: Species) => Promise<void>;
 
@@ -84,6 +86,7 @@ export type DiscoveryStore = DiscoveryState & DiscoveryActions;
 
 const initialState: DiscoveryState = {
   photoUri: null,
+  photoMimeType: null,
   photoError: null,
   verifyingPhoto: false,
   verificationError: null,
@@ -188,6 +191,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set((state) => ({
       verificationAttempt: state.verificationAttempt + 1,
       photoUri: null,
+      photoMimeType: null,
       photoError: null,
       verificationError: null,
       verificationId: null,
@@ -210,9 +214,13 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set({
       verificationAttempt: attempt,
       photoUri: uri,
+      photoMimeType: mimeType,
       photoError: null,
       verificationError: null,
       verifyingPhoto: true,
+      verificationId: null,
+      verificationCandidates: [],
+      verificationPhotoUrl: null,
       identificationFeedback: null,
       identificationError: null,
     });
@@ -298,6 +306,17 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     } finally {
       if (attempt === get().verificationAttempt) set({ verifyingPhoto: false });
     }
+  },
+
+  retryPhoto: async () => {
+    const state = get();
+    if (!state.photoUri || state.verifyingPhoto) return;
+
+    const verified = await get().submitPhoto(
+      state.photoUri,
+      state.photoMimeType ?? "image/jpeg",
+    );
+    if (verified) useNavigationStore.getState().setScreen("species");
   },
 
   evaluateIdentification: async (item) => {

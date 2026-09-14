@@ -19,6 +19,10 @@ export function PhotoPreviewScreen() {
     useNavigationStore.getState().setScreen("photo");
   };
 
+  const handleTryAgain = () => {
+    void useDiscoveryStore.getState().retryPhoto();
+  };
+
   useEffect(() => {
     if (!verifying) return;
     setProgress(12);
@@ -86,8 +90,16 @@ export function PhotoPreviewScreen() {
             <PrimaryButton
               label="Try Again"
               style={styles.tryAgainButton}
-              onPress={handleRetake}
+              onPress={handleTryAgain}
             />
+            <Tap
+              label="Capture Again"
+              style={styles.captureAgainButton}
+              onPress={handleRetake}
+            >
+              <MaterialIcons name="photo-camera" size={18} color="#0A4D26" />
+              <Text style={styles.captureAgainText}>Capture Again</Text>
+            </Tap>
           </View>
         </View>
       </Modal>
@@ -184,4 +196,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tryAgainButton: { width: "100%", marginTop: 8 },
+  captureAgainButton: {
+    width: "100%",
+    minHeight: 50,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#0A4D26",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  captureAgainText: { color: "#0A4D26", fontSize: 15, fontWeight: "800" },
 });
