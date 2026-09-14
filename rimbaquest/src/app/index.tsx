@@ -102,8 +102,6 @@ export default function RimbaQuest() {
   const selected = useSelectedSpeciesStore((state) => state.selected);
   const species = useSpeciesCatalogStore((state) => state.species);
 
-  const [filter, setFilter] = useState('All');
-
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
   const [battlePlayerMaxHp, setBattlePlayerMaxHp] = useState(120);
@@ -135,16 +133,6 @@ export default function RimbaQuest() {
   }, [isLoggedIn]);
 
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
-  const visibleSpecies = useMemo(
-    () =>
-      supportedSpecies
-        .filter((item) => filter === 'All' || item.category === filter)
-        .sort((left, right) => {
-          const unlockOrder = Number(discovered.includes(right.id)) - Number(discovered.includes(left.id));
-          return unlockOrder || left.common_name.localeCompare(right.common_name);
-        }),
-    [discovered, filter, supportedSpecies]
-  );
   const unlockedSpeciesList = useMemo(
     () => supportedSpecies.filter((item) => discovered.includes(item.id)),
     [discovered, supportedSpecies]
@@ -457,14 +445,7 @@ export default function RimbaQuest() {
 
         {screen === 'success' && <SuccessScreen />}
 
-        {screen === 'collection' && (
-          <CollectionScreen
-            speciesList={visibleSpecies}
-            discoveredIds={discovered}
-            filter={filter}
-            setFilter={setFilter}
-          />
-        )}
+        {screen === 'collection' && <CollectionScreen />}
 
         {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
           <SpeciesDetailScreen onStartBattle={() => void initBattle(selected)} />
