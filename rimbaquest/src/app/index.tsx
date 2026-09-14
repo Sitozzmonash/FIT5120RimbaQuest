@@ -14,7 +14,7 @@ import {
   SpeciesScreen,
   SuccessScreen,
 } from '../components/screens/discovery';
-import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
+import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
@@ -88,9 +88,11 @@ export default function RimbaQuest() {
 
         {screen === 'collection' && <CollectionScreen />}
 
-        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
+        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery') && (
           <SpeciesDetailScreen />
         )}
+
+        {screen === 'quiz' && <AbilityQuizScreen />}
 
         {screen === 'locked' && <LockedScreen />}
 

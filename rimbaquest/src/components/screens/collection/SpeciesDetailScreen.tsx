@@ -12,22 +12,21 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import { GalleryItem, Screen } from "../../../types";
 import { imageFor } from "../../../constants/images";
-import { API_BASE } from "../../../constants/config";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { useUserStore } from "../../../store/useUserStore";
+import { useAbilityQuizStore } from "../../../store/useAbilityQuizStore";
 import { Tap } from "../../common/Tap";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
 import { FactsTab } from "./components/FactsTab";
 import { GalleryTab } from "./components/GalleryTab";
 import { SpeciesChatDrawer } from "./components/SpeciesChatDrawer";
-import { QuizTab } from "./components/QuizTab";
+import { AbilityUnlockModal } from "./components/AbilityUnlockModal";
 
 const DETAIL_TABS: [Screen, string][] = [
   ["about", "About"],
   ["facts", "Fun Facts"],
-  ["quiz", "Quiz"],
   ["battle_stats", "Battle Stats"],
   ["gallery", "Gallery"],
 ];
@@ -52,32 +51,12 @@ export function SpeciesDetailScreen() {
   const [pageWidth, setPageWidth] = useState(0);
   const [heroEnlarged, setHeroEnlarged] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
-  const [unlockedAbilities, setUnlockedAbilities] = useState<number[]>([]);
   const pagerRef = useRef<ScrollView>(null);
   const activeIndex = DETAIL_TABS.findIndex(([key]) => key === screen);
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchAbilities = async () => {
-      try {
-        const headers: Record<string, string> = {};
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`${API_BASE}/api/v1/species/${species.id}/quiz-progression`, { headers });
-        if (res.ok) {
-          const data = await res.json();
-          if (!cancelled && Array.isArray(data.unlocked_abilities)) {
-            setUnlockedAbilities(data.unlocked_abilities);
-          }
-        }
-      } catch {
-        // ignore
-      }
-    };
-    void fetchAbilities();
-    return () => {
-      cancelled = true;
-    };
-  }, [species.id, token, screen]);
+    void useAbilityQuizStore.getState().fetchProgression(species.id);
+  }, [species.id, token]);
 
   useEffect(() => {
     if (pageWidth > 0 && activeIndex >= 0) {
@@ -194,10 +173,7 @@ export function SpeciesDetailScreen() {
               nestedScrollEnabled
             >
               {key === "about" && <AboutTab item={species} />}
-              {key === "quiz" && <QuizTab species={species} token={token} />}
-              {key === "battle_stats" && (
-                <BattleStatsTab item={species} unlockedAbilities={unlockedAbilities} />
-              )}
+              {key === "battle_stats" && <BattleStatsTab item={species} />}
               {key === "facts" && <FactsTab item={species} />}
               {key === "gallery" && <GalleryTab photos={photos} />}
             </ScrollView>
@@ -218,6 +194,7 @@ export function SpeciesDetailScreen() {
         onClose={() => setChatVisible(false)}
         onSendQuestion={onChatSend}
       />
+      <AbilityUnlockModal />
     </View>
   );
 }

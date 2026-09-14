@@ -129,3 +129,26 @@ export type SpeciesChatResponse = {
   answer: string;
   suggested_questions?: string[];
 };
+
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+
+export type QuizQuestion = {
+  id: string;
+  question: string;
+  options: string[];
+};
+
+export type QuizProgression = {
+  easy_passed: boolean;
+  medium_passed: boolean;
+  hard_passed: boolean;
+  unlocked_abilities: number[];
+};
+
+export type QuizResult = {
+  score: number;
+  total: number;
+  passed: boolean;
+  ability_unlocked?: number | null;
+  message: string;
+};
