@@ -3,30 +3,12 @@ import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 import { Tap } from "../../../common/Tap";
+import { useBattleStore } from "../../../../store/useBattleStore";
 
-export type BattleAbilityItem = {
-  slot: number;
-  name: string;
-  multiplier?: number;
-  heal_amount?: number;
-  description?: string;
-};
-
-export function BattleActionBar({
-  isAttacking,
-  onAttack,
-  onGiveUp,
-  unlockedAbilities = [],
-  abilities,
-  onUseAbility,
-}: {
-  isAttacking: boolean;
-  onAttack: () => void;
-  onGiveUp: () => void;
-  unlockedAbilities?: number[];
-  abilities?: BattleAbilityItem[];
-  onUseAbility?: (slot: number) => void;
-}) {
+export function BattleActionBar() {
+  const isAttacking = useBattleStore((state) => state.isAttacking);
+  const unlockedAbilities = useBattleStore((state) => state.unlockedAbilities);
+  const abilities = useBattleStore((state) => state.abilities);
   const slots = [1, 2, 3];
 
   return (
@@ -36,14 +18,14 @@ export function BattleActionBar({
         displayText={isAttacking ? "Attacking…" : "Basic Attack"}
         icon="bolt"
         loading={isAttacking}
-        onPress={onAttack}
+        onPress={() => useBattleStore.getState().attack()}
       />
 
       <View style={styles.abilitiesContainer}>
         <Text style={styles.sectionTitle}>Special Abilities</Text>
         <View style={styles.abilitiesList}>
           {slots.map((slot) => {
-            const ability = abilities?.find((a) => a.slot === slot);
+            const ability = abilities.find((a) => a.slot === slot);
             const name = ability?.name || `Ability ${slot}`;
             const isUnlocked = unlockedAbilities.includes(slot);
 
@@ -54,7 +36,7 @@ export function BattleActionBar({
                   label={name}
                   style={[styles.abilityBtnActive, isAttacking && styles.btnDisabled]}
                   disabled={isAttacking}
-                  onPress={() => onUseAbility?.(slot)}
+                  onPress={() => useBattleStore.getState().useAbility(slot)}
                 >
                   <View style={styles.abilityHeader}>
                     <View style={styles.abilityIconBadge}>
@@ -112,7 +94,7 @@ export function BattleActionBar({
         label="Give Up"
         style={styles.giveUpBtn}
         disabled={isAttacking}
-        onPress={onGiveUp}
+        onPress={() => useBattleStore.getState().openGiveUpConfirm()}
       >
         <MaterialIcons name="flag" size={15} color="#8C1D24" />
         <Text style={styles.giveUpText}>Give Up</Text>

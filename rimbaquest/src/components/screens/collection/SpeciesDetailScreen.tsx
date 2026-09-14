@@ -32,16 +32,9 @@ const DETAIL_TABS: [Screen, string][] = [
   ["gallery", "Gallery"],
 ];
 
-// A stable fallback reference — `?? []` inline in a zustand selector would
-// return a *new* array every call, which makes the store look like it
-// changes on every render and causes an infinite update loop.
 const EMPTY_PHOTOS: GalleryItem[] = [];
 
-export function SpeciesDetailScreen({
-  onStartBattle,
-}: {
-  onStartBattle: () => void;
-}) {
+export function SpeciesDetailScreen() {
   const species = useSelectedSpeciesStore((state) => state.selected);
   const screen = useNavigationStore((state) => state.screen);
   const photos = useUserStore(
@@ -203,11 +196,7 @@ export function SpeciesDetailScreen({
               {key === "about" && <AboutTab item={species} />}
               {key === "quiz" && <QuizTab species={species} token={token} />}
               {key === "battle_stats" && (
-                <BattleStatsTab
-                  item={species}
-                  unlockedAbilities={unlockedAbilities}
-                  onBattle={onStartBattle}
-                />
+                <BattleStatsTab item={species} unlockedAbilities={unlockedAbilities} />
               )}
               {key === "facts" && <FactsTab item={species} />}
               {key === "gallery" && <GalleryTab photos={photos} />}

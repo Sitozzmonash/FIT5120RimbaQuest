@@ -4,22 +4,17 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Species } from "../../../../types";
 import { imageFor } from "../../../../constants/images";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
 
-export function BattleCardTile({
-  species,
-  selected,
-  onPress,
-}: {
-  species: Species;
-  selected: boolean;
-  onPress: () => void;
-}) {
+export function BattleCardTile({ species }: { species: Species }) {
+  const selected = useBattleStore((state) => state.playerCard?.id === species.id);
+
   return (
     <Tap
       label={`Select ${species.common_name}`}
       style={[styles.tile, selected && styles.tileSelected]}
-      onPress={onPress}
+      onPress={() => useBattleStore.getState().selectCard(species)}
     >
       <LinearGradient
         colors={selected ? ["#F4FCF6", "#DFF6E7"] : ["#FFFFFF", "#F8FAF8"]}

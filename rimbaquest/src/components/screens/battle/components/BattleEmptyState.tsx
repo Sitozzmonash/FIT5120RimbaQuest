@@ -1,13 +1,10 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function BattleEmptyState({
-  onStartDiscovery,
-}: {
-  onStartDiscovery: () => void;
-}) {
+export function BattleEmptyState() {
   return (
     <View style={styles.wrap}>
       <View style={styles.iconWrap}>
@@ -20,7 +17,7 @@ export function BattleEmptyState({
       <PrimaryButton
         label="Record a Discovery"
         style={styles.cta}
-        onPress={onStartDiscovery}
+        onPress={() => useDiscoveryStore.getState().start()}
       />
     </View>
   );

@@ -1,17 +1,16 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Species } from "../../../../types";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
 import { Section, Stat } from "../../../common/CommonUI";
 
 export function BattleStatsTab({
   item,
   unlockedAbilities = [],
-  onBattle,
 }: {
   item: Species;
   unlockedAbilities?: number[];
-  onBattle: () => void;
 }) {
   return (
     <View style={styles.battleStatsContainer}>
@@ -62,7 +61,11 @@ export function BattleStatsTab({
         );
       })}
 
-      <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
+      <Tap
+        label="Battle with Card"
+        style={styles.primary}
+        onPress={() => void useBattleStore.getState().startBattle(item)}
+      >
         <Text style={styles.primaryText}>Enter Card Battle</Text>
       </Tap>
     </View>

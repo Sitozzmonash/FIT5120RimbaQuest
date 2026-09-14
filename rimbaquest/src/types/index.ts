@@ -99,6 +99,26 @@ export type GalleryItem = {
 
 export type LocationMode = 'auto' | 'manual';
 
+export type BattleAbilityItem = {
+  slot: number;
+  name: string;
+  multiplier?: number;
+  heal_amount?: number;
+  description?: string;
+};
+
+export type BattleOpponent = {
+  species_id: string;
+  name: string;
+  category: string;
+  hp: number;
+  max_hp: number;
+  base_attack: number;
+  abilities?: BattleAbilityItem[];
+};
+
+export type BattleOutcome = 'playing' | 'win' | 'lose' | null;
+
 export type SpeciesChatMessage = {
   id: string;
   role: 'assistant' | 'user';
