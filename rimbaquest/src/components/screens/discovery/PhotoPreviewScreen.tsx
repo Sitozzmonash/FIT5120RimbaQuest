@@ -1,22 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { VerificationError } from "../../../types";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
 export function PhotoPreviewScreen({
   photo,
-  verifying,
-  verificationError,
   onRetake,
 }: {
   photo: { uri: string };
-  verifying: boolean;
-  verificationError: VerificationError | null;
   onRetake: () => void;
 }) {
+  const verifying = useDiscoveryStore((state) => state.verifyingPhoto);
+  const verificationError = useDiscoveryStore(
+    (state) => state.verificationError,
+  );
   const [progress, setProgress] = useState(12);
+
+  const handleRetake = () => {
+    useDiscoveryStore.getState().retake();
+    onRetake();
+  };
 
   useEffect(() => {
     if (!verifying) return;
@@ -29,21 +34,29 @@ export function PhotoPreviewScreen({
 
   return (
     <View style={styles.page}>
-      <Image source={photo} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image
+        source={photo}
+        style={StyleSheet.absoluteFill}
+        resizeMode="cover"
+      />
       <View style={styles.photoShade} />
 
       <View style={styles.header}>
-        <Tap label="Go back" style={styles.backButton} onPress={onRetake}>
+        <Tap label="Go back" style={styles.backButton} onPress={handleRetake}>
           <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />
         </Tap>
-        <Text style={styles.brand}>Rimba<Text style={styles.brandAccent}>Quest</Text></Text>
+        <Text style={styles.brand}>
+          Rimba<Text style={styles.brandAccent}>Quest</Text>
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.identifyingCard}>
         <View style={styles.identifyingRow}>
           <View style={styles.pulseDot} />
-          <Text style={styles.identifyingText}>AI is identifying this image...</Text>
+          <Text style={styles.identifyingText}>
+            AI is identifying this image...
+          </Text>
         </View>
         <View style={styles.progressRow}>
           <View style={styles.progressTrack}>
@@ -53,7 +66,12 @@ export function PhotoPreviewScreen({
         </View>
       </View>
 
-      <Modal visible={Boolean(verificationError)} transparent animationType="fade" onRequestClose={onRetake}>
+      <Modal
+        visible={Boolean(verificationError)}
+        transparent
+        animationType="fade"
+        onRequestClose={handleRetake}
+      >
         <View style={styles.modalBackdrop}>
           <View style={styles.failureCard}>
             <Text style={styles.failureEyebrow}>UNVERIFIED</Text>
@@ -67,7 +85,11 @@ export function PhotoPreviewScreen({
                 ? "Please try again."
                 : "Please try another wildlife photo."}
             </Text>
-            <PrimaryButton label="Try Again" style={styles.tryAgainButton} onPress={onRetake} />
+            <PrimaryButton
+              label="Try Again"
+              style={styles.tryAgainButton}
+              onPress={handleRetake}
+            />
           </View>
         </View>
       </Modal>
@@ -77,7 +99,10 @@ export function PhotoPreviewScreen({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#07120B" },
-  photoShade: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.18)" },
+  photoShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.18)",
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -110,12 +135,28 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.14)",
   },
   identifyingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  pulseDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: "#9AF11A" },
+  pulseDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: "#9AF11A",
+  },
   identifyingText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
   progressRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  progressTrack: { flex: 1, height: 6, borderRadius: 4, overflow: "hidden", backgroundColor: "#565656" },
+  progressTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 4,
+    overflow: "hidden",
+    backgroundColor: "#565656",
+  },
   progressFill: { height: "100%", borderRadius: 4, backgroundColor: "#9AF11A" },
-  progressText: { color: "#FFFFFF", width: 34, fontSize: 13, fontWeight: "800" },
+  progressText: {
+    color: "#FFFFFF",
+    width: 34,
+    fontSize: 13,
+    fontWeight: "800",
+  },
   modalBackdrop: {
     flex: 1,
     justifyContent: "center",
@@ -131,7 +172,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   failureEyebrow: { color: "#F05A24", fontSize: 14, fontWeight: "900" },
-  failureTitle: { color: "#1A1A1A", fontSize: 23, lineHeight: 29, fontWeight: "900", textAlign: "center" },
-  failureText: { color: "#667085", fontSize: 15, lineHeight: 22, textAlign: "center" },
+  failureTitle: {
+    color: "#1A1A1A",
+    fontSize: 23,
+    lineHeight: 29,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  failureText: {
+    color: "#667085",
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "center",
+  },
   tryAgainButton: { width: "100%", marginTop: 8 },
 });

@@ -1,33 +1,41 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { DISCOVERY_CATEGORY_IMAGES } from "../../../constants/images";
-import { CATEGORY_APPEARANCE } from "../../../constants/seed";
+import { CATEGORIES, CATEGORY_APPEARANCE } from "../../../constants/seed";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
 import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
 import { CategoryOptionCard } from "./components/CategoryOptionCard";
 
-// Step 2: pick a wildlife category
 export function CategoryScreen({
   photo,
-  categories,
-  category,
-  onSelectCategory,
+  onNext,
   onBack,
   onDiscard,
 }: {
   photo: { uri: string };
-  categories: string[];
-  category: string;
-  onSelectCategory: (cat: string) => void;
+  onNext: () => void;
   onBack: () => void;
   onDiscard: () => void;
 }) {
+  const category = useDiscoveryStore((state) => state.category);
   const [pending, setPending] = useState<string | null>(
-    categories.includes(category) ? category : null,
+    CATEGORIES.includes(category) ? category : null,
   );
   const [requiredMessage, setRequiredMessage] = useState("");
+
+  const handleNext = () => {
+    if (!pending) {
+      setRequiredMessage("Please choose an animal group before continuing.");
+      return;
+    }
+    const store = useDiscoveryStore.getState();
+    store.setCategory(pending);
+    store.setIdentificationError(null);
+    onNext();
+  };
 
   return (
     <View style={styles.page}>
@@ -48,7 +56,7 @@ export function CategoryScreen({
         <PhotoPreview photo={photo} />
 
         <View style={styles.list}>
-          {categories.map((item) => (
+          {CATEGORIES.map((item) => (
             <CategoryOptionCard
               key={item}
               image={
@@ -66,19 +74,15 @@ export function CategoryScreen({
             />
           ))}
         </View>
-        {requiredMessage ? <Text style={styles.requiredMessage}>{requiredMessage}</Text> : null}
+        {requiredMessage ? (
+          <Text style={styles.requiredMessage}>{requiredMessage}</Text>
+        ) : null}
       </ScrollView>
 
       <DiscoveryBottomNav
         onBack={onBack}
         nextLabel="Next"
-        onNext={() => {
-          if (!pending) {
-            setRequiredMessage("Please choose an animal group before continuing.");
-            return;
-          }
-          onSelectCategory(pending);
-        }}
+        onNext={handleNext}
       />
     </View>
   );

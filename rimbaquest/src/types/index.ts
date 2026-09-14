@@ -57,6 +57,12 @@ export type VerificationError = {
   message: string;
 };
 
+export type DiscoverySession = {
+  childId: number;
+  token: string;
+  onSessionExpired: () => Promise<void>;
+};
+
 export type RecentCapture = Species & {
   location_label?: string | null;
   recorded_at?: string | null;

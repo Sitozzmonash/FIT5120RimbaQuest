@@ -1,20 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, StatusBar, View } from 'react-native';
+import { ActivityIndicator, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
-
 import {
+  DiscoverySession,
   GalleryItem,
-  IdentificationFeedback,
-  LocationMode,
   RecentCapture,
   Screen,
   Species,
   SpeciesChatResponse,
   UserProfile,
-  VerificationError,
 } from '../types';
 import { API_BASE } from '../constants/config';
 import { CATEGORIES, SEED_SPECIES } from '../constants/seed';
@@ -42,6 +36,7 @@ import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { DEFAULT_AVATAR } from '../constants/images';
+import { SaveDiscoveryResult, useDiscoveryStore } from '../store/useDiscoveryStore';
 import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
 import { useLocationsStore } from '../store/useLocationsStore';
 import { useLoginStore } from '../store/useLoginStore';
@@ -50,7 +45,6 @@ import { apiMessage } from '../utils/authApi';
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
 
 const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
-const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
 const GUEST_USER: UserProfile = {
   id: 0,
   username: '',
@@ -125,39 +119,6 @@ function isHttpPhotoUrl(url?: string | null): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
 }
 
-async function readCurrentLocationLabel(): Promise<string | null> {
-  try {
-    const servicesEnabled = await Location.hasServicesEnabledAsync();
-    if (!servicesEnabled) return null;
-
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return null;
-
-    const position = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
-    ]);
-
-    const { latitude, longitude } = position.coords;
-    try {
-      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const label = [place?.city || place?.subregion, place?.region || place?.country]
-        .filter(Boolean)
-        .join(', ');
-      if (label) return label;
-    } catch {
-      // Reverse geocoding can fail independently of the GPS fix (e.g. offline);
-      // fall back to coordinates rather than failing the whole lookup.
-    }
-
-    if (Platform.OS === 'web') return null;
-
-    return `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-  } catch {
-    return null;
-  }
-}
-
 export default function RimbaQuest() {
   const [screen, setScreen] = useState<Screen>('account_entry');
   const [history, setHistory] = useState<Screen[]>([]);
@@ -168,36 +129,11 @@ export default function RimbaQuest() {
 
   const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
   const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
-  const [chosenSpeciesId, setChosenSpeciesId] = useState<string | null>(null);
-  const [category, setCategory] = useState('');
   const [discovered, setDiscovered] = useState<string[]>([]);
   const [filter, setFilter] = useState('All');
 
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
   const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
-  const [discoveryLocation, setDiscoveryLocation] = useState('');
-  const [locationMode, setLocationMode] = useState<LocationMode>('manual');
-  const [locationNotice, setLocationNotice] = useState<string | null>(null);
-  const [resolvingLocation, setResolvingLocation] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [reportingVerification, setReportingVerification] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [verifyingPhoto, setVerifyingPhoto] = useState(false);
-  const [verificationError, setVerificationError] = useState<VerificationError | null>(null);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [verificationCandidates, setVerificationCandidates] = useState<Species[]>([]);
-  const [verificationPhotoUrl, setVerificationPhotoUrl] = useState<string | null>(null);
-  const [identificationFeedback, setIdentificationFeedback] = useState<IdentificationFeedback | null>(null);
-  const [identificationError, setIdentificationError] = useState<string | null>(null);
-  const [evaluatingIdentification, setEvaluatingIdentification] = useState(false);
-  const [firstDiscovery, setFirstDiscovery] = useState(true);
-  const [discoveryXpAwarded, setDiscoveryXpAwarded] = useState(0);
-  const [discoveryRecordedAt, setDiscoveryRecordedAt] = useState<string | null>(null);
-  const cameraRef = useRef<CameraView>(null);
-  const verificationAttemptRef = useRef(0);
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
 
   const locations = useLocationsStore((state) => state.locations);
   const selectedLocation = useLocationsStore((state) => state.selectedLocation);
@@ -340,7 +276,7 @@ export default function RimbaQuest() {
     const data: unknown = await response.json().catch(() => ({}));
     if (response.status === 401 || response.status === 403) {
       await expireSession();
-      throw new Error(SESSION_EXPIRED_ERROR);
+      throw new Error('Your session is no longer valid. Please sign in again.');
     }
     if (!response.ok) {
       throw new Error(apiMessage(data, "I couldn't answer that right now. Please try again."));
@@ -422,304 +358,60 @@ export default function RimbaQuest() {
     });
   };
 
-  const resetDiscoverySelections = () => {
-    setCategory('');
-    setSelected(OFFLINE_SPECIES[0]);
-    setChosenSpeciesId(null);
-    setDiscoveryLocation('');
-    setLocationMode('manual');
-    setVerifyingPhoto(false);
-    setVerificationError(null);
-    setVerificationId(null);
-    setVerificationCandidates([]);
-    setVerificationPhotoUrl(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
-    setEvaluatingIdentification(false);
-    setReportingVerification(false);
-  };
-
   const startDiscovery = (presetLocation?: string) => {
-    resetDiscoverySelections();
-    if (presetLocation) {
-      setDiscoveryLocation(presetLocation);
-      setLocationMode('manual');
-    }
-    setPhotoUri(null);
-    setPhotoError(null);
-    setSaveError(null);
-    setLocationNotice(null);
+    useDiscoveryStore.getState().resetSelections();
+    setSelected(OFFLINE_SPECIES[0]);
+    if (presetLocation) useDiscoveryStore.getState().setDiscoveryLocation(presetLocation);
     resetTo('photo');
   };
 
   const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
-    const attempt = verificationAttemptRef.current + 1;
-    verificationAttemptRef.current = attempt;
-    setPhotoUri(uri);
-    setPhotoError(null);
-    setVerificationError(null);
     open('photo_preview');
-    void verifyDiscoveryPhoto(uri, mimeType, attempt);
+    void (async () => {
+      const verified = await useDiscoveryStore
+        .getState()
+        .submitPhoto(uri, mimeType, currentUser.id, accessToken, expireSession);
+      if (verified) setScreen('category');
+    })();
   };
 
   // Confirmed from the discard-photo dialog: abandon the in-progress
   // discovery entirely and land back on Home, rather than stepping back
   // one screen at a time.
   const discardDiscovery = () => {
-    verificationAttemptRef.current += 1;
-    setPhotoUri(null);
-    setPhotoError(null);
-    setSaveError(null);
-    setLocationNotice(null);
-    resetDiscoverySelections();
+    useDiscoveryStore.getState().discard();
+    setSelected(OFFLINE_SPECIES[0]);
     resetTo('home');
   };
 
   const retakePhoto = () => {
-    verificationAttemptRef.current += 1;
-    setPhotoUri(null);
-    setPhotoError(null);
-    setVerificationError(null);
-    setVerificationId(null);
-    setVerificationCandidates([]);
-    setVerificationPhotoUrl(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
     setScreen('photo');
   };
 
-  const takePhoto = async () => {
-    try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-      if (photo?.uri) acceptPhoto(photo.uri);
-    } catch {
-      setPhotoError("Your photo couldn't be uploaded. Please try again.");
-    }
-  };
-
-  const pickFromGallery = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]?.uri) {
-        acceptPhoto(result.assets[0].uri, result.assets[0].mimeType || 'image/jpeg');
-      }
-    } catch {
-      setPhotoError("Your photo couldn't be uploaded. Please try again.");
-    }
-  };
-
-  const verifyDiscoveryPhoto = async (uri: string, mimeType: string, attempt: number) => {
-    setVerifyingPhoto(true);
-    setVerificationError(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
-    const form = new FormData();
-    if (Platform.OS === 'web') {
-      const blob = await fetch(uri).then((response) => response.blob());
-      form.append('photo', blob, `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`);
-    } else {
-      form.append('photo', {
-        uri,
-        name: `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`,
-        type: mimeType,
-      } as unknown as Blob);
-    }
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications`, {
-        method: 'POST',
-        headers: authenticatedHeaders(),
-        body: form,
-      });
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) {
-        throw new Error(apiMessage(data, "We couldn't check your wildlife photo right now. Please try again."));
-      }
-      if (attempt !== verificationAttemptRef.current) return;
-      if (data.status !== 'verified') {
-        setVerificationError({
-          kind: 'unverified',
-          message: String(data.message || "We couldn't verify this animal. Please try another wildlife photo."),
-        });
-        return;
-      }
-      if (!data.verification_id || !Array.isArray(data.candidates) || data.candidates.length !== 4) {
-        throw new Error("We couldn't check your wildlife photo right now. Please try again.");
-      }
-      setVerificationId(String(data.verification_id));
-      setVerificationCandidates(data.candidates as Species[]);
-      setVerificationPhotoUrl(typeof data.photo_url === 'string' ? data.photo_url : null);
-      setScreen('category');
-    } catch (error) {
-      if (attempt !== verificationAttemptRef.current) return;
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setVerificationError({
-        kind: 'failed',
-        message: error instanceof Error ? error.message : "We couldn't check your wildlife photo right now. Please try again.",
-      });
-    } finally {
-      if (attempt === verificationAttemptRef.current) setVerifyingPhoto(false);
-    }
-  };
-
-  const evaluateIdentification = async (item: Species) => {
-    if (!verificationId || evaluatingIdentification) return;
-    setChosenSpeciesId(item.id);
-    setEvaluatingIdentification(true);
-    setIdentificationError(null);
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/evaluate`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-          body: JSON.stringify({ category, species_id: item.id }),
-        },
-      );
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(data, "We couldn't check your answer right now. Please try again."));
-      setIdentificationFeedback(data as IdentificationFeedback);
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setIdentificationError(error instanceof Error ? error.message : "We couldn't check your answer right now. Please try again.");
-    } finally {
-      setEvaluatingIdentification(false);
-    }
-  };
-
   const continueWithVerifiedSpecies = (item: Species) => {
+    useDiscoveryStore.getState().confirmSpecies(item);
     setSelected(item);
-    setChosenSpeciesId(item.id);
-    setIdentificationFeedback(null);
     open('confirm');
   };
 
-  const reportVerification = async () => {
-    if (!verificationId || reportingVerification || saving) return;
-    setReportingVerification(true);
-    setSaveError(null);
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/report`,
-        { method: 'POST', headers: authenticatedHeaders() },
-      );
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(data, "We couldn't report this result right now. Please try again."));
-      discardDiscovery();
-      setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setSaveError(error instanceof Error ? error.message : "We couldn't report this result right now. Please try again.");
-    } finally {
-      setReportingVerification(false);
+  const handleDiscoverySaved = (result: SaveDiscoveryResult) => {
+    if (result.first_discovery && !discovered.includes(selected.id)) {
+      setDiscovered((current) => [...current, selected.id]);
+      setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
     }
+    setGalleryPhotos((current) => ({
+      ...current,
+      [selected.id]: [
+        { photo_url: result.photo_url, location_label: result.location_label },
+        ...(current[selected.id] ?? []),
+      ],
+    }));
+    return refresh(currentUser.id, accessToken).then(() => open('success'));
   };
 
-  const recordDiscoveryWithLocation = async (locationLabel: string) => {
-    if (saving) return;
-    if (!photoUri) return;
-    if (!verificationId) {
-      setSaveError('This photo has not been verified. Please try another wildlife photo.');
-      return;
-    }
-    if (!locationLabel) {
-      setSaveError('Please choose or enter a discovery location.');
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-        body: JSON.stringify({
-          verification_id: verificationId,
-          location_label: locationLabel,
-        }),
-      });
-      const responseData = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(responseData, "Your discovery wasn't saved. Please try again."));
-      const result = responseData as {
-        first_discovery?: boolean;
-        total_xp?: number;
-        xp_awarded?: number;
-        recorded_at?: string;
-        photo_url?: string | null;
-      };
-      setFirstDiscovery(Boolean(result.first_discovery));
-      setDiscoveryXpAwarded(Number(result.xp_awarded ?? 0));
-      setDiscoveryRecordedAt(result.recorded_at ?? new Date().toISOString());
-      if (result.first_discovery && !discovered.includes(selected.id)) {
-        setDiscovered((current) => [...current, selected.id]);
-        setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
-      }
-      setGalleryPhotos((current) => ({
-        ...current,
-        [selected.id]: [
-          { photo_url: result.photo_url || verificationPhotoUrl || photoUri, location_label: locationLabel },
-          ...(current[selected.id] ?? []),
-        ],
-      }));
-      await refresh(currentUser.id, accessToken);
-      open('success');
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setSaveError(error instanceof Error ? error.message : "Your discovery wasn't saved. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const useAutomaticLocation = async () => {
-    setLocationMode('auto');
-    setLocationNotice(null);
-    setResolvingLocation(true);
-    try {
-      const label = await readCurrentLocationLabel();
-      if (!label) {
-        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
-        setLocationMode('manual');
-        return;
-      }
-      setDiscoveryLocation(label);
-    } finally {
-      setResolvingLocation(false);
-    }
-  };
-
-  const recordDiscovery = async () => {
-    if (saving) return;
-    if (locationMode === 'auto') {
-      const label = discoveryLocation.trim() || (await readCurrentLocationLabel());
-      if (!label) {
-        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
-        setLocationMode('manual');
-        return;
-      }
-      setDiscoveryLocation(label);
-      await recordDiscoveryWithLocation(label);
-      return;
-    }
-    await recordDiscoveryWithLocation(discoveryLocation.trim());
+  const handleDiscoveryReported = () => {
+    discardDiscovery();
+    setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
   };
 
   const handleSaveProfile = async () => {
@@ -1057,7 +749,13 @@ export default function RimbaQuest() {
     void recordBattleResult(false, battleRound);
   };
 
-  const discoveryPhoto = photoUri ? { uri: photoUri } : null;
+  const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
+  const discoveryPhoto = discoveryPhotoUri ? { uri: discoveryPhotoUri } : null;
+  const discoverySession: DiscoverySession = {
+    childId: currentUser.id,
+    token: accessToken,
+    onSessionExpired: expireSession,
+  };
   const profileDirty =
     editDisplayName !== currentUser.username ||
     editAvatar !== currentUser.avatar ||
@@ -1106,36 +804,20 @@ export default function RimbaQuest() {
 
         {screen === 'photo' && (
           <CameraScreen
-            cameraRef={cameraRef}
-            cameraPermission={cameraPermission}
-            photoError={photoError}
             lastCaptureUri={recentCaptures[0]?.photo_url ?? null}
-            onRequestPermission={requestCameraPermission}
-            onTakePhoto={() => void takePhoto()}
-            onPickFromGallery={() => void pickFromGallery()}
+            onCapture={acceptPhoto}
             onBack={goBack}
           />
         )}
 
         {screen === 'photo_preview' && discoveryPhoto && (
-          <PhotoPreviewScreen
-            photo={discoveryPhoto}
-            verifying={verifyingPhoto}
-            verificationError={verificationError}
-            onRetake={retakePhoto}
-          />
+          <PhotoPreviewScreen photo={discoveryPhoto} onRetake={retakePhoto} />
         )}
 
         {screen === 'category' && discoveryPhoto && (
           <CategoryScreen
             photo={discoveryPhoto}
-            categories={CATEGORIES}
-            category={category}
-            onSelectCategory={(cat) => {
-              setCategory(cat);
-              setIdentificationError(null);
-              open('species');
-            }}
+            onNext={() => open('species')}
             onBack={goBack}
             onDiscard={discardDiscovery}
           />
@@ -1144,13 +826,7 @@ export default function RimbaQuest() {
         {screen === 'species' && discoveryPhoto && (
           <SpeciesScreen
             photo={discoveryPhoto}
-            category={category}
-            speciesList={verificationCandidates}
-            selectedId={chosenSpeciesId}
-            evaluating={evaluatingIdentification}
-            feedback={identificationFeedback}
-            errorMessage={identificationError}
-            onSubmit={(item) => void evaluateIdentification(item)}
+            session={discoverySession}
             onContinue={continueWithVerifiedSpecies}
             onBack={goBack}
             onDiscard={discardDiscovery}
@@ -1161,41 +837,16 @@ export default function RimbaQuest() {
           <ConfirmScreen
             photo={discoveryPhoto}
             selected={selected}
-            candidates={verificationCandidates}
-            discoveryLocation={discoveryLocation}
-            setDiscoveryLocation={setDiscoveryLocation}
-            locationMode={locationMode}
-            setLocationMode={(mode) => {
-              if (mode === 'auto') {
-                void useAutomaticLocation();
-                return;
-              }
-              setLocationMode(mode);
-              setLocationNotice(null);
-            }}
-            resolvingLocation={resolvingLocation}
-            locationOptions={locations}
-            locationNotice={locationNotice}
-            saveError={saveError}
-            saving={saving}
-            reporting={reportingVerification}
-            onConfirm={() => void recordDiscovery()}
-            onReport={() => void reportVerification()}
+            session={discoverySession}
+            onSaved={handleDiscoverySaved}
+            onReported={handleDiscoveryReported}
             onBack={goBack}
             onDiscard={discardDiscovery}
           />
         )}
 
         {screen === 'success' && (
-          <SuccessScreen
-            selected={selected}
-            discoveryLocation={discoveryLocation}
-            firstDiscovery={firstDiscovery}
-            xpAwarded={discoveryXpAwarded}
-            recordedAt={discoveryRecordedAt}
-            onViewCard={() => open('about')}
-            onRecordAnother={() => startDiscovery()}
-          />
+          <SuccessScreen selected={selected} onViewCard={() => open('about')} onRecordAnother={() => startDiscovery()} />
         )}
 
         {screen === 'collection' && (
@@ -1214,14 +865,7 @@ export default function RimbaQuest() {
               setSelected(item);
               open('locked');
             }}
-            onStartDiscovery={() => {
-              resetDiscoverySelections();
-              setPhotoUri(null);
-              setPhotoError(null);
-              setSaveError(null);
-              setLocationNotice(null);
-              open('photo');
-            }}
+            onStartDiscovery={() => startDiscovery()}
             onBack={goBack}
           />
         )}
