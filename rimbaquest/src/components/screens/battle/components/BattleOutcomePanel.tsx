@@ -35,12 +35,12 @@ export function BattleOutcomePanel() {
             />
           </View>
           <Text style={[styles.title, { color: win ? "#087B35" : "#8C1D24" }]}>
-            {win ? "Victory!" : "Defeat"}
+            {win ? "You Won!" : "Good Try!"}
           </Text>
           <Text style={styles.copy}>
             {win
-              ? "Your Wildlife Card won this battle."
-              : "Your Wildlife Card was defeated. Try another card or battle again."}
+              ? "Your animal card won this battle."
+              : "Your animal card lost this time. Try another card or battle again."}
           </Text>
 
           {/* {xpAwarded ? (

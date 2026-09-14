@@ -14,7 +14,7 @@ export function UsernameField() {
 
   return (
     <View style={styles.createField}>
-      <Text style={styles.createFieldLabel}>Username *</Text>
+      <Text style={styles.createFieldLabel}>Explorer Name *</Text>
       <View
         style={[styles.createInputBox, error && styles.createInputBoxError]}
       >
@@ -23,20 +23,25 @@ export function UsernameField() {
           control={control}
           name="username"
           rules={{
-            required: "Please enter a username.",
+            required: "Please choose an explorer name.",
             minLength: {
               value: 3,
-              message: "Username must be between 3 and 20 characters.",
+              message: "Use 3 to 20 letters or numbers for your explorer name.",
             },
             maxLength: {
               value: 20,
-              message: "Username must be between 3 and 20 characters.",
+              message: "Use 3 to 20 letters or numbers for your explorer name.",
+            },
+            pattern: {
+              value: /^[a-zA-Z0-9_-]+$/,
+              message:
+                "Use only letters or numbers. You can also use - or _ with no spaces.",
             },
           }}
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
               style={styles.createInput}
-              placeholder="3-20 characters"
+              placeholder="For example: JungleHero7"
               placeholderTextColor="#6A9B7D"
               value={value}
               onChangeText={onChange}

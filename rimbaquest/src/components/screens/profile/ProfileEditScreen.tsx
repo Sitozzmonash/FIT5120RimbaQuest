@@ -57,7 +57,7 @@ export function ProfileEditScreen() {
     const username = store.displayName.trim() || store.originalUsername;
     if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
       store.setError(
-        "Username must be 3–20 letters, numbers, hyphens, or underscores, with no spaces.",
+        "Use 3 to 20 letters or numbers. You can also use - or _ with no spaces.",
       );
       return;
     }
@@ -86,8 +86,14 @@ export function ProfileEditScreen() {
       }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        const message = apiMessage(
+          data,
+          "We could not save your profile changes.",
+        );
         store.setError(
-          apiMessage(data, "We could not save your profile changes."),
+          /username.*taken/i.test(message)
+            ? "Someone already uses that explorer name. Try another one."
+            : "We could not save your changes. Please try again.",
         );
         return;
       }
@@ -95,7 +101,7 @@ export function ProfileEditScreen() {
       useNavigationStore.getState().goBack();
     } catch {
       store.setError(
-        "We couldn't reach RimbaQuest. Your profile was not changed.",
+        "We couldn't save your changes. Please try again.",
       );
     } finally {
       store.setSaving(false);
@@ -123,7 +129,7 @@ export function ProfileEditScreen() {
         ]}
       >
         <View style={styles.card}>
-          <Text style={styles.inputLabel}>USERNAME</Text>
+          <Text style={styles.inputLabel}>EXPLORER NAME</Text>
           <View style={styles.inputBox}>
             <MaterialIcons name="person-outline" size={18} color="#0A4D26" />
             <TextInput
@@ -137,7 +143,7 @@ export function ProfileEditScreen() {
             />
           </View>
           <Text style={styles.helpText}>
-            This is also the name you use to sign in.
+            You can use this name when you log in.
           </Text>
 
           <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>
@@ -151,7 +157,7 @@ export function ProfileEditScreen() {
               editable={false}
             />
           </View>
-          <Text style={styles.helpText}>Email address cannot be changed.</Text>
+          <Text style={styles.helpText}>This email cannot be changed here.</Text>
 
           <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>AGE</Text>
           <View style={[styles.inputBox, styles.inputBoxDisabled]}>
@@ -163,7 +169,7 @@ export function ProfileEditScreen() {
               keyboardType="numeric"
             />
           </View>
-          <Text style={styles.helpText}>Age cannot be changed here.</Text>
+          <Text style={styles.helpText}>Your age cannot be changed here.</Text>
         </View>
 
         <View style={styles.card}>
@@ -202,7 +208,7 @@ export function ProfileEditScreen() {
         ) : null}
 
         <PrimaryButton
-          label={saving ? "Saving..." : "Save Profile Changes"}
+          label={saving ? "Saving..." : "Save My Changes"}
           loading={saving}
           disabled={saving}
           style={styles.saveBtn}

@@ -27,7 +27,7 @@ export function ForgotPasswordScreen() {
       return;
     }
     if (!EMAIL_RE.test(store.email.trim())) {
-      store.setFieldError("Please enter a valid email address.");
+      store.setFieldError("That email does not look right. Please check it.");
       return;
     }
     store.setFieldError(null);
@@ -41,7 +41,7 @@ export function ForgotPasswordScreen() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         store.setFieldError(
-          apiMessage(data, "No RimbaQuest account was found for this email."),
+          apiMessage(data, "We could not find an account with that email."),
         );
         return;
       }
@@ -83,10 +83,10 @@ export function ForgotPasswordScreen() {
             </View>
 
             <View style={styles.forgotTextGroup}>
-              <Text style={styles.forgotTitle}>Forgot Password?</Text>
+              <Text style={styles.forgotTitle}>Need a New Password?</Text>
               <Text style={styles.forgotSubtitle}>
-                Enter the email connected to your RimbaQuest account. We'll send
-                you a link or verification code to reset your password.
+                Enter the email used for your account. We will send a secret code
+                to that email.
               </Text>
             </View>
 
@@ -98,8 +98,8 @@ export function ForgotPasswordScreen() {
               <RecoveryEmailField />
 
               <PrimaryButton
-                label="Send Recovery Link"
-                displayText={submitting ? "Sending..." : "Send Recovery Link"}
+                label="Send Secret Code"
+                displayText={submitting ? "Sending..." : "Send Secret Code"}
                 loading={submitting}
                 style={styles.forgotSubmitBtn}
                 onPress={() => void handleSendRecoveryLink()}

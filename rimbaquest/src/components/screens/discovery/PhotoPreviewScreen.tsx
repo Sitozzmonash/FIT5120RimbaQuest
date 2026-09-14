@@ -53,7 +53,7 @@ export function PhotoPreviewScreen() {
         <View style={styles.identifyingRow}>
           <View style={styles.pulseDot} />
           <Text style={styles.identifyingText}>
-            AI is identifying this image...
+            Looking for the animal in your photo...
           </Text>
         </View>
         <View style={styles.progressRow}>
@@ -72,16 +72,16 @@ export function PhotoPreviewScreen() {
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.failureCard}>
-            <Text style={styles.failureEyebrow}>UNVERIFIED</Text>
+            <Text style={styles.failureEyebrow}>PHOTO NOT CHECKED</Text>
             <Text style={styles.failureTitle}>
               {verificationError?.kind === "failed"
                 ? "We couldn't check your wildlife photo right now."
-                : "We couldn't verify this animal."}
+                : "We couldn't find an animal in this photo."}
             </Text>
             <Text style={styles.failureText}>
               {verificationError?.kind === "failed"
                 ? "Please try again."
-                : "Please try another wildlife photo."}
+                : "Please try a clearer wildlife photo."}
             </Text>
             <PrimaryButton
               label="Try Again"

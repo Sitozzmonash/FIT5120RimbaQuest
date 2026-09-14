@@ -19,7 +19,7 @@ export function BattleSelectScreen() {
   return (
     <View style={styles.root}>
       <BattleHeaderBar
-        title="Wildlife Card Battles"
+        title="Animal Card Battles"
         onBack={() => useNavigationStore.getState().goBack()}
       />
       <ScrollView
@@ -30,7 +30,7 @@ export function BattleSelectScreen() {
 
         {hasCards ? (
           <>
-            <Text style={styles.sectionTitle}>Select Your Battle Card</Text>
+            <Text style={styles.sectionTitle}>Choose Your Battle Card</Text>
             <View style={styles.grid}>
               {unlockedSpecies.map((item) => (
                 <BattleCardTile key={item.id} species={item} />

@@ -46,7 +46,7 @@ export function LocationManualSection() {
         style={styles.input}
         value={discoveryLocation}
         onChangeText={setDiscoveryLocation}
-        placeholder="Or type a location name"
+        placeholder="Or type the name of a place"
         placeholderTextColor="#879089"
       />
     </>

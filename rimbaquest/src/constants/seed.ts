@@ -34,10 +34,10 @@ export const OFFLINE_SPECIES = Array.from(
 export const CATEGORIES = ['Mammal', 'Bird', 'Butterfly', 'Reptile'];
 
 export const CATEGORY_APPEARANCE: Record<string, string> = {
-  Mammal: 'Fur or hair on the body, visible ears and nose, and four limbs with a tail.',
-  Bird: 'Feathers, a hard beak, two wings, two legs, and tail feathers at the back.',
-  Butterfly: 'A thin body, six legs, two antennae, and four broad, patterned wings.',
-  Reptile: 'Dry, scaly skin or a hard shell, a long low body, and a long tail.',
+  Mammal: 'Look for fur or hair, ears, a nose, four legs, and often a tail.',
+  Bird: 'Look for feathers, a beak, two wings, two legs, and tail feathers.',
+  Butterfly: 'Look for a small body, six legs, two feelers, and four colourful wings.',
+  Reptile: 'Look for dry scales or a hard shell, a low body, and often a long tail.',
 };
 
 export const WILDLIFE_FILTERS = [

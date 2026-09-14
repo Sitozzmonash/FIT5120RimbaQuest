@@ -34,7 +34,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
       {!isProgressionKnown ? (
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color="#0A4D26" />
-          <Text style={styles.loadingText}>Checking ability progress…</Text>
+          <Text style={styles.loadingText}>Checking your ability progress…</Text>
         </View>
       ) : (
         abilities.map((name, idx) => {
@@ -59,11 +59,11 @@ export function BattleStatsTab({ item }: { item: Species }) {
       )}
 
       <Tap
-        label="Battle with Card"
+        label="Battle with this card"
         style={styles.primary}
         onPress={() => void useBattleStore.getState().startBattle(item)}
       >
-        <Text style={styles.primaryText}>Enter Card Battle</Text>
+        <Text style={styles.primaryText}>Battle with This Card</Text>
       </Tap>
     </View>
   );

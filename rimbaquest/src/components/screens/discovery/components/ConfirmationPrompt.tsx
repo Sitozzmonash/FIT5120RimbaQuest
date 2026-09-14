@@ -6,7 +6,7 @@ export function ConfirmationPrompt() {
     <View style={styles.question}>
       <Text style={styles.title}>Is this the species you saw?</Text>
       <Text style={styles.subtitle}>
-        Double-check the photo and details before you record your discovery.
+        Look at the photo and species name one more time before you save it.
       </Text>
     </View>
   );

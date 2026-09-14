@@ -27,7 +27,7 @@ export function EmailField() {
             required: "Please enter an email address.",
             pattern: {
               value: EMAIL_RE,
-              message: "Please enter a valid email address.",
+              message: "That email does not look right. Please check it.",
             },
           }}
           render={({ field: { value, onChange, onBlur } }) => (

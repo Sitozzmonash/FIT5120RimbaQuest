@@ -7,7 +7,7 @@ export function AiDetectionNotice() {
     <View style={styles.notice}>
       <MaterialIcons name="info-outline" size={20} color="#667085" />
       <Text style={styles.noticeText}>
-        AI powered detection results may not always be accurate
+        Our photo helper makes its best guess, but it can be wrong.
       </Text>
     </View>
   );

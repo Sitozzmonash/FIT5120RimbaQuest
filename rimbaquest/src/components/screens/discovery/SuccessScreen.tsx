@@ -35,12 +35,12 @@ export function SuccessScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleBlock}>
           <Text style={styles.title}>
-            {firstDiscovery ? "New Wildlife Discovered!" : "Discovery Logged!"}
+            {firstDiscovery ? "You Found a New Animal!" : "Animal Saved!"}
           </Text>
           <View style={[styles.badge, !firstDiscovery && styles.badgeMuted]}>
             <Text style={styles.badgeText}>
               {firstDiscovery
-                ? "Level 1 - Discovered"
+                ? "New Card Added"
                 : "Already in Your Collection"}
             </Text>
           </View>
@@ -55,7 +55,7 @@ export function SuccessScreen() {
 
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>DATE RECORDED</Text>
+            <Text style={styles.summaryLabel}>DATE FOUND</Text>
             <Text style={styles.summaryValue}>{formatDate(recordedAt)}</Text>
           </View>
           <View style={styles.summaryRow}>
@@ -88,11 +88,11 @@ export function SuccessScreen() {
             onPress={() => useNavigationStore.getState().open("about")}
           />
           <Tap
-            label="Record another discovery"
+            label="Record another animal"
             style={styles.secondaryBtn}
             onPress={() => useDiscoveryStore.getState().start()}
           >
-            <Text style={styles.secondaryText}>Record Another Discovery</Text>
+            <Text style={styles.secondaryText}>Record Another Animal</Text>
           </Tap>
         </View>
       </ScrollView>

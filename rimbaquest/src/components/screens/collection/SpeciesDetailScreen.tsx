@@ -100,7 +100,7 @@ export function SpeciesDetailScreen() {
       </View>
 
       <Tap
-        label={`Enlarge ${species.common_name} illustration`}
+        label={`Make the ${species.common_name} picture bigger`}
         style={styles.detailHeroTap}
         onPress={() => setHeroEnlarged(true)}
       >
@@ -118,7 +118,7 @@ export function SpeciesDetailScreen() {
         onRequestClose={() => setHeroEnlarged(false)}
       >
         <Tap
-          label="Close enlarged illustration"
+          label="Close big picture"
           style={styles.lightboxBackdrop}
           onPress={() => setHeroEnlarged(false)}
         >

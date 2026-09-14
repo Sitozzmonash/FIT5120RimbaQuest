@@ -46,7 +46,7 @@ export function ConfirmScreen() {
   return (
     <View style={styles.page}>
       <DiscoveryHeader
-        title="Confirm Discovery"
+        title="Check Your Animal"
         confirmDiscard
         onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
         disabled={finalizing || reporting}
@@ -83,9 +83,9 @@ export function ConfirmScreen() {
 
       <DiscoveryBottomNav
         onBack={() => void handleReport()}
-        backLabel={reporting ? "Reporting..." : "No, Report"}
+        backLabel={reporting ? "Sending..." : "No, That's Wrong"}
         backDisabled={finalizing || reporting}
-        nextLabel={finalizing ? "Saving..." : "Yes and Save"}
+        nextLabel={finalizing ? "Saving..." : "Yes, Save It"}
         nextDisabled={finalizing || reporting}
         onNext={() => void handleConfirm()}
       />

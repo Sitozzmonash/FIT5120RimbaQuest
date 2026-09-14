@@ -105,7 +105,7 @@ export function HomeScreen() {
         </View>
 
         <View style={styles.menuSection}>
-          <Text style={styles.sectionHeading}>Explore Nature</Text>
+          <Text style={styles.sectionHeading}>Explore Now</Text>
 
           <View style={styles.collectionTileWrap}>
             <Tap label="Open your collection" style={styles.collectionTile} onPress={() => open('collection')}>
@@ -119,7 +119,7 @@ export function HomeScreen() {
                 <View style={styles.collectionProgress}>
                   <View style={styles.collectionProgressRow}>
                     <Text style={styles.collectionProgressText}>
-                      {displayProgress.found}/{displayProgress.total} discovered
+                      {displayProgress.found}/{displayProgress.total} found
                     </Text>
                     <Text style={styles.collectionProgressPercent}>{collectedPercent}%</Text>
                   </View>
@@ -137,12 +137,12 @@ export function HomeScreen() {
           </View>
 
           <View style={styles.tileRow}>
-            <Tap label="Discover wildlife locations" style={styles.actionTile} onPress={() => open('locations')}>
+            <Tap label="Find places to see animals" style={styles.actionTile} onPress={() => open('locations')}>
               <LinearGradient colors={['#FFF5EE', '#FFE4D0']} style={styles.actionTileGradient} />
               <Image source={HOME_IMAGES.tileDiscover} style={styles.actionTileIcon} resizeMode="contain" />
               <Text style={styles.actionTileLabel}>Discover</Text>
             </Tap>
-            <Tap label="Capture a wildlife sighting" style={styles.actionTile} onPress={() => useDiscoveryStore.getState().start()}>
+            <Tap label="Take an animal photo" style={styles.actionTile} onPress={() => useDiscoveryStore.getState().start()}>
               <LinearGradient colors={['#EDFAD0', '#D8F0A8']} style={styles.actionTileGradient} />
               <Image source={HOME_IMAGES.tileCapture} style={styles.actionTileIcon} resizeMode="contain" />
               <Text style={styles.actionTileLabel}>Capture</Text>
@@ -190,7 +190,7 @@ export function HomeScreen() {
             ))
           ) : (
             <View style={styles.learnEmpty}>
-              <Text style={styles.muted}>No wildlife yet! Discover an animal to start learning.</Text>
+              <Text style={styles.muted}>No animals yet! Take an animal photo to start learning.</Text>
             </View>
           )}
         </View>

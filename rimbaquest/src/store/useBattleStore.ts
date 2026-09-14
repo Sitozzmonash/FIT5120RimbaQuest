@@ -13,35 +13,52 @@ const DEFAULT_OPPONENT: BattleOpponent = {
   base_attack: 20,
 };
 
+function moveDescription(move: BattleAbilityItem): string {
+  const hit = (move.multiplier ?? 1) >= 2 ? "A very strong hit." : "A strong hit.";
+  return (move.heal_amount ?? 0) > 0
+    ? `${hit} Brings back ${move.heal_amount} health.`
+    : hit;
+}
+
+function botMoveLog(
+  name: string,
+  action: { action_name: string; damage: number; healing: number },
+): string {
+  if (action.damage <= 0) return `${name} tried ${action.action_name}, but missed!`;
+  const healing =
+    action.healing > 0 ? ` It got back ${action.healing} health.` : "";
+  return `${name} used ${action.action_name}. It took ${action.damage} health.${healing}`;
+}
+
 const FALLBACK_ABILITIES: Record<string, BattleAbilityItem[]> = {
   Mammal: [
-    { slot: 1, name: "Swift Pounce", multiplier: 1.5, heal_amount: 0, description: "A rapid leaping attack dealing 1.5x damage." },
-    { slot: 2, name: "Wild Roar", multiplier: 0.8, heal_amount: 25, description: "An intimidating roar recovering 25 HP and dealing moderate damage." },
-    { slot: 3, name: "Guardian Guard", multiplier: 2.2, heal_amount: 10, description: "An ultimate territorial strike dealing 2.2x damage and restoring 10 HP." },
+    { slot: 1, name: "Swift Pounce", multiplier: 1.5, heal_amount: 0, description: "A fast jumping attack." },
+    { slot: 2, name: "Wild Roar", multiplier: 0.8, heal_amount: 25, description: "A loud roar that brings back health." },
+    { slot: 3, name: "Guardian Guard", multiplier: 2.2, heal_amount: 10, description: "A strong attack that also brings back health." },
   ],
   Reptile: [
-    { slot: 1, name: "Iron Scales", multiplier: 1.4, heal_amount: 0, description: "Hardened armored charge dealing 1.4x damage." },
-    { slot: 2, name: "Venom Strike", multiplier: 1.3, heal_amount: 20, description: "A venomous bite dealing damage and absorbing 20 HP." },
-    { slot: 3, name: "Ambush Snap", multiplier: 2.1, heal_amount: 0, description: "A crushing ambush strike dealing devastating 2.1x damage." },
+    { slot: 1, name: "Iron Scales", multiplier: 1.4, heal_amount: 0, description: "A charge protected by hard scales." },
+    { slot: 2, name: "Venom Strike", multiplier: 1.3, heal_amount: 20, description: "A bite that also brings back health." },
+    { slot: 3, name: "Ambush Snap", multiplier: 2.1, heal_amount: 0, description: "A very strong surprise attack." },
   ],
   Bird: [
-    { slot: 1, name: "Aerial Dive", multiplier: 1.5, heal_amount: 0, description: "A high-speed dive from above dealing 1.5x damage." },
-    { slot: 2, name: "Sonic Cry", multiplier: 1.3, heal_amount: 15, description: "A disorienting screech dealing damage and rallying 15 HP." },
-    { slot: 3, name: "Sharp Talon", multiplier: 2.2, heal_amount: 0, description: "Savage razor-sharp talons dealing 2.2x base attack damage." },
+    { slot: 1, name: "Aerial Dive", multiplier: 1.5, heal_amount: 0, description: "A fast dive from the sky." },
+    { slot: 2, name: "Sonic Cry", multiplier: 1.3, heal_amount: 15, description: "A loud cry that also brings back health." },
+    { slot: 3, name: "Sharp Talon", multiplier: 2.2, heal_amount: 0, description: "A very strong claw attack." },
   ],
   Butterfly: [
-    { slot: 1, name: "Toxic Powder", multiplier: 1.5, heal_amount: 0, description: "Scatters irritating spore dust dealing 1.5x damage." },
-    { slot: 2, name: "Nectar Heal", multiplier: 0.5, heal_amount: 35, description: "Sips restorative jungle nectar to recover 35 HP." },
-    { slot: 3, name: "Dazzle Flutter", multiplier: 2.0, heal_amount: 15, description: "A mesmerizing wing flurry dealing 2.0x damage and restoring 15 HP." },
+    { slot: 1, name: "Toxic Powder", multiplier: 1.5, heal_amount: 0, description: "A cloud of stinging dust." },
+    { slot: 2, name: "Nectar Heal", multiplier: 0.5, heal_amount: 35, description: "A sip of nectar that brings back health." },
+    { slot: 3, name: "Dazzle Flutter", multiplier: 2.0, heal_amount: 15, description: "A bright wing attack that also brings back health." },
   ],
 };
 
 function getFallbackAbilities(category?: string): BattleAbilityItem[] {
   const cat = (category || "").charAt(0).toUpperCase() + (category || "").slice(1).toLowerCase();
   return FALLBACK_ABILITIES[cat] || [
-    { slot: 1, name: "Basic Tackle", multiplier: 1.4, heal_amount: 0, description: "A forceful body tackle dealing 1.4x damage." },
-    { slot: 2, name: "Defend", multiplier: 0.6, heal_amount: 20, description: "Braces defense and recovers 20 HP." },
-    { slot: 3, name: "Focus Strike", multiplier: 2.0, heal_amount: 0, description: "Concentrates energy for a heavy 2.0x damage strike." },
+    { slot: 1, name: "Basic Tackle", multiplier: 1.4, heal_amount: 0, description: "A strong body bump." },
+    { slot: 2, name: "Defend", multiplier: 0.6, heal_amount: 20, description: "Blocks an attack and brings back health." },
+    { slot: 3, name: "Focus Strike", multiplier: 2.0, heal_amount: 0, description: "A very strong attack." },
   ];
 }
 
@@ -65,7 +82,10 @@ async function executeBotTurn(
     if (res.ok) {
       const data = await res.json();
       if (data.action) {
-        return data.action;
+        return {
+          ...data.action,
+          log: botMoveLog(currentOpponent.name, data.action),
+        };
       }
     }
   } catch {
@@ -76,10 +96,10 @@ async function executeBotTurn(
   const hit = Math.random() < 0.85;
   const dmg = hit ? baseAtk : 0;
   const log = hit
-    ? `${currentOpponent.name} used Basic Attack for ${dmg} damage.`
-    : `${currentOpponent.name}'s Basic Attack missed!`;
+    ? `${currentOpponent.name} used Quick Attack. It took ${dmg} health.`
+    : `${currentOpponent.name}'s Quick Attack missed!`;
   return {
-    action_name: "Basic Attack",
+    action_name: "Quick Attack",
     damage: dmg,
     healing: 0,
     log,
@@ -224,7 +244,12 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
               unlocked = cardData.card.unlocked_abilities;
             }
             if (Array.isArray(cardData.card.abilities_details)) {
-              abilities = cardData.card.abilities_details;
+              abilities = cardData.card.abilities_details.map(
+                (move: BattleAbilityItem) => ({
+                  ...move,
+                  description: moveDescription(move),
+                }),
+              );
             }
           }
         }
@@ -268,7 +293,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     ];
 
     if (nextOpponentHp <= 0) {
-      newLogs.push(`${opponent.name} fainted. You won!`);
+      newLogs.push(`${opponent.name} is out of health. You won!`);
       set({ opponentHp: 0, log: newLogs, outcome: "win", isAttacking: false });
       void recordBattleResult(true, round);
       return;
@@ -331,7 +356,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     const newLogs = [...log, abilityLog];
 
     if (nextOpponentHp <= 0) {
-      newLogs.push(`${opponent.name} fainted. You won!`);
+      newLogs.push(`${opponent.name} is out of health. You won!`);
       set({ opponentHp: 0, log: newLogs, outcome: "win", isAttacking: false });
       void recordBattleResult(true, round);
       return;
@@ -363,7 +388,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
     if (!playerCard || isAttacking || outcome !== "playing") return;
     set((state) => ({
       playerHp: 0,
-      log: [...state.log, `You gave up. ${playerCard.common_name} retreated from the battle.`],
+      log: [...state.log, `You stopped the battle. ${playerCard.common_name} went back to rest.`],
       outcome: "lose",
       giveUpConfirmVisible: false,
     }));

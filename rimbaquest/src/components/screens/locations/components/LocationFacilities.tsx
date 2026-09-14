@@ -7,7 +7,7 @@ export function LocationFacilities({ facilities }: { facilities: string[] }) {
 
   return (
     <View style={styles.info}>
-      <Text style={styles.infoLabel}>PARK FACILITIES</Text>
+      <Text style={styles.infoLabel}>THINGS AT THIS PARK</Text>
       <View style={styles.badges}>
         {facilities.map((fac) => (
           <Text key={fac} style={styles.badge}>

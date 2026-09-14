@@ -33,7 +33,7 @@ export function CollectionCard({
         />
       </View>
       <View style={styles.discoveredTag}>
-        <Text style={styles.discoveredTagText}>Discovered</Text>
+        <Text style={styles.discoveredTagText}>Found</Text>
       </View>
       <Text numberOfLines={1} style={styles.collectionCardName}>
         {species.common_name}
@@ -45,7 +45,7 @@ export function CollectionCard({
     </Tap>
   ) : (
     <Tap
-      label={`Preview undiscovered ${species.common_name}`}
+      label={`See the ${species.common_name} card you have not found yet`}
       style={styles.collectionCard}
       onPress={onPress}
     >

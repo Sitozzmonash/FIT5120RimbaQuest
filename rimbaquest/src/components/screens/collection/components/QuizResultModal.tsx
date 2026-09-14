@@ -22,12 +22,16 @@ export function QuizResultModal() {
             />
           </View>
           <Text style={styles.title}>
-            {result?.passed ? "Quiz Passed!" : "Almost there!"}
+            {result?.passed ? "You Did It!" : "Almost There!"}
           </Text>
           <Text style={styles.score}>
-            Score: {result?.score} / {result?.total}
+            You got {result?.score} out of {result?.total} right
           </Text>
-          <Text style={styles.message}>{result?.message}</Text>
+          <Text style={styles.message}>
+            {result?.passed
+              ? "You earned a new special move!"
+              : "Try again and get every answer right to earn the move."}
+          </Text>
           <View style={styles.actions}>
             {result?.passed ? (
               <PrimaryButton
@@ -43,11 +47,11 @@ export function QuizResultModal() {
                   onPress={() => useAbilityQuizStore.getState().retryQuiz()}
                 />
                 <Tap
-                  label="Exit challenge"
+                  label="Leave quiz"
                   style={styles.exitBtn}
                   onPress={() => useAbilityQuizStore.getState().finishQuiz()}
                 >
-                  <Text style={styles.exitBtnText}>Exit Challenge</Text>
+                  <Text style={styles.exitBtnText}>Leave Quiz</Text>
                 </Tap>
               </>
             )}

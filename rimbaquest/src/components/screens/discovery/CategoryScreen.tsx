@@ -31,7 +31,7 @@ export function CategoryScreen() {
   return (
     <View style={styles.page}>
       <DiscoveryHeader
-        title="Record a Discovery"
+        title="Save an Animal"
         confirmDiscard
         onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
       />
@@ -39,9 +39,9 @@ export function CategoryScreen() {
         {/* <DiscoveryStepIndicator step={2} /> */}
 
         <View style={styles.intro}>
-          <Text style={styles.title}>Wildlife Category</Text>
+          <Text style={styles.title}>Animal Group</Text>
           <Text style={styles.subtitle}>
-            Based on your photo, here's the animal group we detected.
+            We think your photo shows this kind of animal.
           </Text>
         </View>
 
@@ -66,8 +66,8 @@ export function CategoryScreen() {
         </View>
         {!detectedCategory ? (
           <Text style={styles.requiredMessage}>
-            We couldn't detect an animal group for this photo. Please try
-            another wildlife photo.
+            We could not find an animal in this photo. Try a clearer wildlife
+            photo.
           </Text>
         ) : null}
       </ScrollView>

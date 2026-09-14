@@ -24,7 +24,14 @@ export function PasswordField() {
         <Controller
           control={control}
           name="password"
-          rules={{ required: "Please create a password." }}
+          rules={{
+            required: "Please create a password.",
+            minLength: {
+              value: 6,
+              message:
+                "Use at least 6 letters, numbers, or symbols for your password.",
+            },
+          }}
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
               style={styles.createInput}

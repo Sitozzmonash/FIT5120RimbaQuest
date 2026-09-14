@@ -12,12 +12,12 @@ export function BattleEmptyState() {
       <View style={styles.iconWrap}>
         <MaterialIcons name="style" size={28} color="#087B35" />
       </View>
-      <Text style={styles.title}>No unlocked Wildlife Cards yet</Text>
+      <Text style={styles.title}>You Need an Animal Card</Text>
       <Text style={styles.copy}>
-        Record a wildlife discovery to unlock cards for battle.
+        Take an animal photo to earn a card for battle.
       </Text>
       <PrimaryButton
-        label="Record a Discovery"
+        label="Take an Animal Photo"
         style={styles.cta}
         onPress={() => useDiscoveryStore.getState().start()}
       />

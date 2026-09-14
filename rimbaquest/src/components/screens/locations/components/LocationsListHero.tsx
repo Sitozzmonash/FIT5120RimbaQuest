@@ -42,7 +42,7 @@ export function LocationsListHero({
         <View style={[globalStyles.searchBox, styles.searchBox]}>
           <MaterialIcons name="search" size={18} color="#879089" style={styles.searchIcon} />
           <TextInput
-            placeholder="Search locations or areas"
+          placeholder="Type a park or area name"
             placeholderTextColor="#879089"
             value={search}
             onChangeText={setSearch}

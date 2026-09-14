@@ -80,11 +80,9 @@ async function loadQuizQuestions(
       { headers: useUserStore.getState().authHeaders() },
     );
     if (!res.ok) {
-      const err = await res
-        .json()
-        .catch(() => ({ detail: "Failed to load quiz" }));
+      await res.json().catch(() => ({}));
       useAbilityQuizStore.setState({
-        errorMsg: err.detail || "Quiz locked or unavailable.",
+        errorMsg: "We couldn't get this quiz ready. Please try again.",
         loadingQuiz: false,
       });
       return;
@@ -97,7 +95,7 @@ async function loadQuizQuestions(
     });
   } catch {
     useAbilityQuizStore.setState({
-      errorMsg: "Network error loading quiz.",
+      errorMsg: "We couldn't get this quiz ready. Please try again.",
       loadingQuiz: false,
     });
   }
@@ -254,7 +252,7 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
     } catch {
       set({
         submitting: false,
-        errorMsg: "Failed to submit quiz. Please try again.",
+        errorMsg: "We couldn't check your answers. Please try again.",
       });
     }
   },

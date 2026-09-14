@@ -10,8 +10,8 @@ export function BattlePreparingModal() {
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <ActivityIndicator size="large" color="#0A4D26" />
-          <Text style={styles.title}>Preparing Battle Arena...</Text>
-          <Text style={styles.copy}>Summoning your opponent and readying the field.</Text>
+          <Text style={styles.title}>Getting the Battle Ready...</Text>
+          <Text style={styles.copy}>Finding an animal card for you to battle.</Text>
         </View>
       </View>
     </Modal>

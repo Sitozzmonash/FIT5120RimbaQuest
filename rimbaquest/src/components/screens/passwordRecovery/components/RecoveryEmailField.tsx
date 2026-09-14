@@ -20,7 +20,7 @@ export function RecoveryEmailField() {
         <MaterialIcons name="mail-outline" size={20} color="#0A4D26" />
         <TextInput
           style={styles.forgotInput}
-          placeholder="Parent or Guardian Email Address *"
+          placeholder="Email address *"
           placeholderTextColor="#637D6E"
           value={email}
           onChangeText={setEmail}

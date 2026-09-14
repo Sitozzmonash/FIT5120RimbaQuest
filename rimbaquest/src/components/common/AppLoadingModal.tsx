@@ -12,7 +12,7 @@ export function AppLoadingModal() {
           <ActivityIndicator size="large" color="#0A4D26" />
           <Text style={styles.title}>Getting Your Adventure Ready!</Text>
           <Text style={styles.copy}>
-            Waking up your wildlife collection and explorer badges...
+            Gathering your animal cards...
           </Text>
         </View>
       </View>

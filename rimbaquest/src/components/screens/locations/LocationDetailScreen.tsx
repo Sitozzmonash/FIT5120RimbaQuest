@@ -57,7 +57,7 @@ export function LocationDetailScreen() {
 
             {location.why_recommended ? (
               <Info
-                label="WILDLIFE / NATURE CONTEXT"
+                label="WHY THIS PLACE IS FUN"
                 value={location.why_recommended}
               />
             ) : null}
@@ -68,8 +68,8 @@ export function LocationDetailScreen() {
 
             {location.typical_wildlife ? (
               <Info
-                label="WILDLIFE YOU MAY ENCOUNTER"
-                value={`${location.typical_wildlife}\nThese species were previously observed here — sightings are not guaranteed.`}
+                label="ANIMALS YOU MAY SEE"
+                value={`${location.typical_wildlife}\nPeople have seen these animals here before, but you may not see them today.`}
               />
             ) : null}
 
@@ -78,7 +78,7 @@ export function LocationDetailScreen() {
             )}
 
             <PrimaryButton
-              label="Record Wildlife Sighting Here"
+              label="Take an Animal Photo Here"
               style={styles.recordBtn}
               onPress={() => useDiscoveryStore.getState().start(location.name)}
             />

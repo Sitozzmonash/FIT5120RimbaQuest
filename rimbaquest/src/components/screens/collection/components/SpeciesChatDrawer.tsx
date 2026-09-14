@@ -22,9 +22,9 @@ import { Tap } from "../../../common/Tap";
 const DEFAULT_SUGGESTIONS = ["What do they eat?", "Where do they live?"];
 const EMPTY_QUESTION_MESSAGE = "Please type a question.";
 const UNAVAILABLE_MESSAGE =
-  "WildGuide is not connected yet. Please try again shortly.";
+  "WildGuide cannot chat right now. Please try again soon.";
 const REQUEST_ERROR_MESSAGE =
-  "I couldn't answer that right now. Please try again.";
+  "I couldn't answer that question. Please try again.";
 
 let messageSequence = 0;
 
@@ -303,7 +303,7 @@ export function SpeciesChatDrawer({
                 setDraft(value);
                 if (error) setError(null);
               }}
-              placeholder="Ask about this species…"
+              placeholder="Ask about this animal..."
               placeholderTextColor="#92A099"
               editable={chatAvailable && !isSending}
               returnKeyType="send"

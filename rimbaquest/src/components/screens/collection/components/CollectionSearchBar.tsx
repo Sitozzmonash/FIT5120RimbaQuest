@@ -18,7 +18,7 @@ export function CollectionSearchBar() {
         style={styles.searchIcon}
       />
       <TextInput
-        placeholder="Search wildlife by name"
+        placeholder="Type an animal name"
         placeholderTextColor="#879089"
         value={search}
         onChangeText={setSearch}

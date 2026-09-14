@@ -20,10 +20,9 @@ export function QuizGiveUpConfirmModal() {
           <View style={styles.iconWrap}>
             <MaterialIcons name="warning-amber" size={26} color="#DC2626" />
           </View>
-          <Text style={styles.title}>Give up this challenge?</Text>
+          <Text style={styles.title}>Stop this quiz?</Text>
           <Text style={styles.message}>
-            Your progress on this quiz will be lost and the ability will stay
-            locked.
+            Your answers will be lost, and you will not earn the special move.
           </Text>
           <View style={styles.actions}>
             <PrimaryButton
@@ -33,11 +32,11 @@ export function QuizGiveUpConfirmModal() {
               }
             />
             <Tap
-              label="Give up challenge"
+              label="Stop quiz"
               style={styles.giveUpBtn}
               onPress={() => useAbilityQuizStore.getState().giveUp()}
             >
-              <Text style={styles.giveUpText}>Yes, Give Up</Text>
+              <Text style={styles.giveUpText}>Yes, Stop</Text>
             </Tap>
           </View>
         </View>

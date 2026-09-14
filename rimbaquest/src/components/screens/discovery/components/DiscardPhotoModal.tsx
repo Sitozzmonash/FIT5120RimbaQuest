@@ -25,19 +25,19 @@ export function DiscardPhotoModal({
           <View style={styles.iconWrap}>
             <MaterialIcons name="warning-amber" size={26} color="#E8541A" />
           </View>
-          <Text style={styles.title}>Discard this discovery?</Text>
+          <Text style={styles.title}>Delete this photo?</Text>
           <Text style={styles.message}>
-            Going back now will remove the photo you captured. You'll need to
-            take or choose it again.
+            Going back will remove this photo. You will need to take or choose
+            it again.
           </Text>
           <View style={styles.actions}>
-            <PrimaryButton label="Keep Editing" onPress={onCancel} />
+            <PrimaryButton label="Keep Photo" onPress={onCancel} />
             <Tap
-              label="Discard and go back"
+              label="Delete photo and go back"
               style={styles.discardBtn}
               onPress={onConfirm}
             >
-              <Text style={styles.discardText}>Discard & Go Back</Text>
+              <Text style={styles.discardText}>Delete & Go Back</Text>
             </Tap>
           </View>
         </View>
