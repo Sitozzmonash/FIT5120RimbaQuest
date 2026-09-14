@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { AUTH_IMAGES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
 import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { apiMessage } from "../../../utils/authApi";
 import { ConfirmNewPasswordField } from "./components/ConfirmNewPasswordField";
 import { NewPasswordField } from "./components/NewPasswordField";
@@ -12,13 +13,7 @@ import { VerificationCodeField } from "./components/VerificationCodeField";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
-export function ResetPasswordScreen({
-  onResetSuccess,
-  onBackToLogin,
-}: {
-  onResetSuccess: () => void;
-  onBackToLogin: () => void;
-}) {
+export function ResetPasswordScreen() {
   const insets = useSafeAreaInsets();
 
   const formError = useForgotPasswordStore((state) => state.formError);
@@ -62,7 +57,7 @@ export function ResetPasswordScreen({
       store.setToken("");
       store.setNewPassword("");
       store.setConfirmPassword("");
-      onResetSuccess();
+      useNavigationStore.getState().resetTo("login");
     } catch {
       store.setFormError(
         "We couldn't reach RimbaQuest right now. Please try again.",
@@ -137,7 +132,11 @@ export function ResetPasswordScreen({
                 style={styles.resetSubmitBtn}
                 onPress={() => void handleResetPassword()}
               />
-              <Tap label="Back to Log In" style={{}} onPress={onBackToLogin}>
+              <Tap
+                label="Back to Log In"
+                style={{}}
+                onPress={() => useNavigationStore.getState().resetTo("login")}
+              >
                 <Text style={styles.resetLinkBack}>Back to Log In</Text>
               </Tap>
             </View>

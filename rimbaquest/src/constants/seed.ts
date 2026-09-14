@@ -18,6 +18,10 @@ export const SEED_SPECIES: Species[] = [
   { id: 'sp_tailed_jay', common_name: 'Tailed Jay', scientific_name: 'Graphium agamemnon', category: 'Butterfly', habitat: 'Gardens and forest edges.', diet: 'Flower nectar.', fun_fact: 'It is a very fast-flying butterfly.', hp: 78, base_attack: 35 },
 ];
 
+export const OFFLINE_SPECIES = Array.from(
+  new Map(SEED_SPECIES.map((item) => [item.id, item])).values(),
+);
+
 // export const OFFLINE_LOCATIONS: LocationItem[] = [
 //   { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest reserve', area: 'Petaling Jaya, Selangor', description: 'A family-friendly green lung with gentle forest trails. Birds and butterflies have previously been observed here.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: 'Daily, 6:00 AM–7:00 PM', distance_km: 1.2, why_recommended: 'Gentle trails and safe walking paths near the city.', typical_wildlife: 'Butterflies, Birds, Small Mammals' },
 //   { id: 'loc_perdana_botanical', name: 'Perdana Botanical Gardens', type: 'Botanical garden', area: 'Kuala Lumpur', description: 'Kuala Lumpur’s main gardens, where butterflies and garden birds may be encountered along open paths.', facilities: ['Paths', 'Parking', 'Restroom', 'Playground'], best_time: 'Daily, 6:30 AM–10:00 PM', distance_km: 2.0, why_recommended: 'Open, family-friendly paths in the city.', typical_wildlife: 'Butterflies, Birds' },

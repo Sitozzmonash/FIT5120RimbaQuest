@@ -1,39 +1,33 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { UserProfile } from "../../../types";
 import { WILDLIFE_FILTERS } from "../../../constants/seed";
-import { avatarImageFor } from "../../../constants/images";
+import { avatarImageFor, hasReferenceImage } from "../../../constants/images";
+import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
+import { useSpeciesCatalogStore } from "../../../store/useSpeciesCatalogStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { OverallProgressCard } from "./components/OverallProgressCard";
 import { LogoutButton } from "./components/LogoutButton";
 
-export function ProfileScreen({
-  currentUser,
-  displayProgress,
-  discoveredSpeciesCount,
-  onOpenEdit,
-  onLogout,
-  onBack,
-}: {
-  currentUser: UserProfile;
-  displayProgress: { found: number; total: number; xp: number; level?: number };
-  discoveredSpeciesCount: (cat: string) => { found: number; total: number };
-  onOpenEdit: () => void;
-  onLogout: () => void;
-  onBack: () => void;
-}) {
+export function ProfileScreen() {
   const insets = useSafeAreaInsets();
 
-  const categories = WILDLIFE_FILTERS.filter((item) => item.id !== "All").map(
-    (item) => ({
-      id: item.id,
-      label: item.label,
-      ...discoveredSpeciesCount(item.id),
-    }),
-  );
+  const currentUser = useUserStore((state) => state.currentUser);
+  const discovered = useUserStore((state) => state.discovered);
+  const species = useSpeciesCatalogStore((state) => state.species);
+  const displayProgress = useDisplayProgress();
+
+  const categories = useMemo(() => {
+    const supportedSpecies = species.filter(hasReferenceImage);
+    return WILDLIFE_FILTERS.filter((item) => item.id !== "All").map((item) => {
+      const items = supportedSpecies.filter((s) => s.category === item.id);
+      const found = items.filter((s) => discovered.includes(s.id)).length;
+      return { id: item.id, label: item.label, found, total: items.length };
+    });
+  }, [species, discovered]);
 
   return (
     <View style={styles.root}>
@@ -51,7 +45,7 @@ export function ProfileScreen({
           { paddingTop: insets.top + 8, paddingBottom: 32 + insets.bottom },
         ]}
       >
-        <ProfileHeader title="My Profile" onBack={onBack} onEdit={onOpenEdit} />
+        <ProfileHeader title="My Profile" />
 
         <ProfileHero
           avatarImage={avatarImageFor(currentUser.avatar)}
@@ -59,9 +53,12 @@ export function ProfileScreen({
           level={displayProgress.level || currentUser.level}
         />
 
-        <OverallProgressCard progress={displayProgress} categories={categories} />
+        <OverallProgressCard
+          progress={displayProgress}
+          categories={categories}
+        />
 
-        <LogoutButton onPress={onLogout} />
+        <LogoutButton />
       </ScrollView>
     </View>
   );

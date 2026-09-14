@@ -9,19 +9,14 @@ import {
 import { LocationItem } from "../../../types";
 import { locationMatchesCategory, locationMatchesQuery } from "../../../constants/seed";
 import { useLocationsStore } from "../../../store/useLocationsStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { styles as globalStyles } from "../../../styles/theme";
 import { LocationsListHero } from "./components/LocationsListHero";
 import { LocationCard } from "./components/LocationCard";
 
-export function LocationsScreen({
-  onOpenDetail,
-  onBack,
-}: {
-  onOpenDetail: () => void;
-  onBack: () => void;
-}) {
+export function LocationsScreen() {
   const locations = useLocationsStore((state) => state.locations);
   const search = useLocationsStore((state) => state.search);
   const categoryFilter = useLocationsStore((state) => state.categoryFilter);
@@ -48,12 +43,15 @@ export function LocationsScreen({
 
   const handleSelectLocation = (loc: LocationItem) => {
     void loadLocationDetail(loc);
-    onOpenDetail();
+    useNavigationStore.getState().open("location_detail");
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <LocationsListHero title="Wildlife Locations" onBack={onBack} />
+      <LocationsListHero
+        title="Wildlife Locations"
+        onBack={() => useNavigationStore.getState().goBack()}
+      />
       <View style={styles.listContainer}>
         {loading ? (
           <View style={styles.centerState}>

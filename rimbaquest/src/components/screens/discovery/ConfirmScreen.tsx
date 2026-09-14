@@ -1,10 +1,7 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { DiscoverySession, Species } from "../../../types";
-import {
-  useDiscoveryStore,
-  SaveDiscoveryResult,
-} from "../../../store/useDiscoveryStore";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
@@ -13,23 +10,8 @@ import { LocationEditSheet } from "./components/LocationEditSheet";
 import { AiDetectionNotice } from "./components/AiDetectionNotice";
 import { ConfirmationPrompt } from "./components/ConfirmationPrompt";
 
-export function ConfirmScreen({
-  photo,
-  selected,
-  session,
-  onSaved,
-  onReported,
-  onBack,
-  onDiscard,
-}: {
-  photo: { uri: string };
-  selected: Species;
-  session: DiscoverySession;
-  onSaved: (result: SaveDiscoveryResult) => void | Promise<void>;
-  onReported: () => void;
-  onBack: () => void;
-  onDiscard: () => void;
-}) {
+export function ConfirmScreen() {
+  const selected = useSelectedSpeciesStore((state) => state.selected);
   const discoveryLocation = useDiscoveryStore(
     (state) => state.discoveryLocation,
   );
@@ -53,45 +35,26 @@ export function ConfirmScreen({
 
   const handleConfirm = async () => {
     setFinalizing(true);
-    const result = await useDiscoveryStore
-      .getState()
-      .saveDiscovery(
-        selected.id,
-        session.childId,
-        session.token,
-        session.onSessionExpired,
-      );
-    if (!result) {
-      setFinalizing(false);
-      return;
-    }
-    await onSaved(result);
+    const ok = await useDiscoveryStore.getState().confirmAndSave();
+    if (!ok) setFinalizing(false);
   };
 
   const handleReport = async () => {
-    const reported = await useDiscoveryStore
-      .getState()
-      .reportVerification(
-        session.childId,
-        session.token,
-        session.onSessionExpired,
-      );
-    if (reported) onReported();
+    await useDiscoveryStore.getState().reportAndExit();
   };
 
   return (
     <View style={styles.page}>
       <DiscoveryHeader
         title="Confirm Discovery"
-        onBack={onBack}
         confirmDiscard
-        onDiscard={onDiscard}
+        onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
         disabled={finalizing || reporting}
       />
       <ScrollView contentContainerStyle={styles.content}>
         <AiDetectionNotice />
 
-        <PhotoPreview photo={photo} />
+        <PhotoPreview />
 
         <View style={styles.speciesHeader}>
           <Text style={styles.speciesName}>{selected.common_name}</Text>

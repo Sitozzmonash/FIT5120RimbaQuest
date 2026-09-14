@@ -2,16 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
-export function PhotoPreviewScreen({
-  photo,
-  onRetake,
-}: {
-  photo: { uri: string };
-  onRetake: () => void;
-}) {
+export function PhotoPreviewScreen() {
+  const photoUri = useDiscoveryStore((state) => state.photoUri);
   const verifying = useDiscoveryStore((state) => state.verifyingPhoto);
   const verificationError = useDiscoveryStore(
     (state) => state.verificationError,
@@ -20,7 +16,7 @@ export function PhotoPreviewScreen({
 
   const handleRetake = () => {
     useDiscoveryStore.getState().retake();
-    onRetake();
+    useNavigationStore.getState().setScreen("photo");
   };
 
   useEffect(() => {
@@ -32,10 +28,12 @@ export function PhotoPreviewScreen({
     return () => clearInterval(timer);
   }, [verifying]);
 
+  if (!photoUri) return null;
+
   return (
     <View style={styles.page}>
       <Image
-        source={photo}
+        source={{ uri: photoUri }}
         style={StyleSheet.absoluteFill}
         resizeMode="cover"
       />

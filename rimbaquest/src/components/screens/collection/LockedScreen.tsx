@@ -2,7 +2,8 @@ import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Species } from "../../../types";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { imageFor } from "../../../constants/images";
 import { Tap } from "../../common/Tap";
 
@@ -13,20 +14,20 @@ import { Tap } from "../../common/Tap";
 const GENERIC_DISCOVERY_HINT =
   "Explore parks and nature reserves in KL and the Klang Valley, then record a photo to unlock this Wildlife Card.";
 
-export function LockedScreen({
-  species,
-  onBack,
-}: {
-  species: Species;
-  onBack: () => void;
-}) {
+export function LockedScreen() {
+  const species = useSelectedSpeciesStore((state) => state.selected);
+
   return (
     <ScrollView
       style={styles.lockedRoot}
       contentContainerStyle={styles.lockedBody}
     >
       <View style={styles.lockedHeaderBar}>
-        <Tap label="Go back" style={styles.lockedBackBtn} onPress={onBack}>
+        <Tap
+          label="Go back"
+          style={styles.lockedBackBtn}
+          onPress={() => useNavigationStore.getState().resetTo("collection")}
+        >
           <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
         </Tap>
         <Text style={styles.lockedHeaderTitle}>Undiscovered</Text>

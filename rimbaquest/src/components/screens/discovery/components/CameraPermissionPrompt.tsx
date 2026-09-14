@@ -2,15 +2,14 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
 export function CameraPermissionPrompt({
-  onBack,
   onRequestPermission,
   onPickFromGallery,
 }: {
-  onBack: () => void;
   onRequestPermission: () => void;
   onPickFromGallery: () => void;
 }) {
@@ -18,7 +17,11 @@ export function CameraPermissionPrompt({
 
   return (
     <View style={styles.wrap}>
-      <Tap label="Go back" style={styles.backBtn} onPress={onBack}>
+      <Tap
+        label="Go back"
+        style={styles.backBtn}
+        onPress={() => useNavigationStore.getState().goBack()}
+      >
         <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
       </Tap>
       <Text style={styles.title}>

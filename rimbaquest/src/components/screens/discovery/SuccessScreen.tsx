@@ -1,9 +1,10 @@
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
@@ -17,15 +18,8 @@ function formatDate(iso: string | null): string {
   });
 }
 
-export function SuccessScreen({
-  selected,
-  onViewCard,
-  onRecordAnother,
-}: {
-  selected: Species;
-  onViewCard: () => void;
-  onRecordAnother: () => void;
-}) {
+export function SuccessScreen() {
+  const selected = useSelectedSpeciesStore((state) => state.selected);
   const discoveryLocation = useDiscoveryStore(
     (state) => state.discoveryLocation,
   );
@@ -91,12 +85,12 @@ export function SuccessScreen({
           <PrimaryButton
             label="View New Card"
             style={styles.primaryBtn}
-            onPress={onViewCard}
+            onPress={() => useNavigationStore.getState().open("about")}
           />
           <Tap
             label="Record another discovery"
             style={styles.secondaryBtn}
-            onPress={onRecordAnother}
+            onPress={() => useDiscoveryStore.getState().start()}
           >
             <Text style={styles.secondaryText}>Record Another Discovery</Text>
           </Tap>

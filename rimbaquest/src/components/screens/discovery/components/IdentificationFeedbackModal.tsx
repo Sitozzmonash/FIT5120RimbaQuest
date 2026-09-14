@@ -1,16 +1,12 @@
 import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { IdentificationFeedback, Species } from "../../../../types";
+import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function IdentificationFeedbackModal({
-  feedback,
-  onContinue,
-}: {
-  feedback: IdentificationFeedback | null;
-  onContinue: (item: Species) => void;
-}) {
+export function IdentificationFeedbackModal() {
+  const feedback = useDiscoveryStore((state) => state.identificationFeedback);
+
   return (
     <Modal visible={Boolean(feedback)} transparent animationType="fade">
       <View style={styles.backdrop}>
@@ -49,7 +45,9 @@ export function IdentificationFeedbackModal({
             <PrimaryButton
               label="Continue"
               style={styles.continueButton}
-              onPress={() => onContinue(feedback.verified_species)}
+              onPress={() =>
+                useDiscoveryStore.getState().continueToConfirm(feedback.verified_species)
+              }
             />
           ) : null}
         </View>

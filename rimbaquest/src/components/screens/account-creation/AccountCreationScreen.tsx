@@ -4,7 +4,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { FormProvider, useForm } from "react-hook-form";
 import { API_BASE } from "../../../constants/config";
-import { UserProfile } from "../../../types";
+import { useLoginStore } from "../../../store/useLoginStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { apiMessage, profileFromAuth } from "../../../utils/authApi";
 import {
   AccountFormValues,
@@ -13,15 +15,7 @@ import {
 import { AccountStep } from "./components/AccountStep";
 import { AgeStep } from "./components/AgeStep";
 
-export function AccountCreationScreen({
-  onRegisterSuccess,
-  onLogin,
-  onBack,
-}: {
-  onRegisterSuccess: (user: UserProfile, token: string) => void;
-  onLogin: () => void;
-  onBack: () => void;
-}) {
+export function AccountCreationScreen() {
   const [step, setStep] = useState<1 | 2>(1);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -91,7 +85,7 @@ export function AccountCreationScreen({
         throw new Error("Registration did not return an access token.");
       }
 
-      onRegisterSuccess(profileFromAuth(data), token);
+      useUserStore.getState().applyUser(profileFromAuth(data), token);
     } catch {
       setAuthError("Registration was unsuccessful. Please try again.");
     }
@@ -134,9 +128,12 @@ export function AccountCreationScreen({
           <FormProvider {...form}>
             {step === 1 && (
               <AccountStep
-                onBack={onBack}
+                onBack={() => useNavigationStore.getState().goBack()}
                 onNext={() => void handleNextFromStep1()}
-                onLogin={onLogin}
+                onLogin={() => {
+                  useLoginStore.getState().reset();
+                  useNavigationStore.getState().open("login");
+                }}
               />
             )}
 

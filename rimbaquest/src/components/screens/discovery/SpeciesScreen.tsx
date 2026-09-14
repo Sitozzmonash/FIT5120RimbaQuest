@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { DiscoverySession, Species } from "../../../types";
+import { Species } from "../../../types";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
@@ -9,19 +9,7 @@ import { CategoryCaptureBanner } from "./components/CategoryCaptureBanner";
 import { SpeciesGrid } from "./components/SpeciesGrid";
 import { IdentificationFeedbackModal } from "./components/IdentificationFeedbackModal";
 
-export function SpeciesScreen({
-  photo,
-  session,
-  onContinue,
-  onBack,
-  onDiscard,
-}: {
-  photo: { uri: string };
-  session: DiscoverySession;
-  onContinue: (item: Species) => void;
-  onBack: () => void;
-  onDiscard: () => void;
-}) {
+export function SpeciesScreen() {
   const category = useDiscoveryStore((state) => state.category);
   const speciesList = useDiscoveryStore(
     (state) => state.verificationCandidates,
@@ -30,7 +18,6 @@ export function SpeciesScreen({
   const evaluating = useDiscoveryStore(
     (state) => state.evaluatingIdentification,
   );
-  const feedback = useDiscoveryStore((state) => state.identificationFeedback);
   const errorMessage = useDiscoveryStore((state) => state.identificationError);
 
   const [pending, setPending] = useState<Species | null>(null);
@@ -47,28 +34,20 @@ export function SpeciesScreen({
       return;
     }
     setRequiredMessage("");
-    void useDiscoveryStore
-      .getState()
-      .evaluateIdentification(
-        pending,
-        session.childId,
-        session.token,
-        session.onSessionExpired,
-      );
+    void useDiscoveryStore.getState().evaluateIdentification(pending);
   };
 
   return (
     <View style={styles.page}>
       <DiscoveryHeader
         title="Confirm Discovery"
-        onBack={onBack}
         confirmDiscard
-        onDiscard={onDiscard}
+        onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
         disabled={evaluating}
       />
 
       <View style={styles.content}>
-        <PhotoPreview photo={photo} />
+        <PhotoPreview />
 
         <View style={styles.headline}>
           <CategoryCaptureBanner category={category} />
@@ -103,10 +82,7 @@ export function SpeciesScreen({
         />
       </View>
 
-      <IdentificationFeedbackModal
-        feedback={feedback}
-        onContinue={onContinue}
-      />
+      <IdentificationFeedbackModal />
     </View>
   );
 }

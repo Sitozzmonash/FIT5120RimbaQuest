@@ -3,20 +3,16 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { CameraPermissionPrompt } from "./components/CameraPermissionPrompt";
 import { CameraHeaderBar } from "./components/CameraHeaderBar";
 import { ViewfinderOverlay } from "./components/ViewfinderOverlay";
 import { CameraControlsBar } from "./components/CameraControlsBar";
 
-export function CameraScreen({
-  lastCaptureUri,
-  onCapture,
-  onBack,
-}: {
-  lastCaptureUri: string | null;
-  onCapture: (uri: string, mimeType: string) => void;
-  onBack: () => void;
-}) {
+export function CameraScreen() {
+  const lastCaptureUri = useUserStore(
+    (state) => state.recentCaptures[0]?.photo_url ?? null,
+  );
   const cameraRef = useRef<CameraView>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [torchOn, setTorchOn] = useState(false);
@@ -24,7 +20,7 @@ export function CameraScreen({
   const takePhoto = async () => {
     try {
       const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-      if (photo?.uri) onCapture(photo.uri, "image/jpeg");
+      if (photo?.uri) useDiscoveryStore.getState().capturePhoto(photo.uri, "image/jpeg");
     } catch {
       useDiscoveryStore
         .getState()
@@ -40,10 +36,9 @@ export function CameraScreen({
         quality: 0.8,
       });
       if (!result.canceled && result.assets[0]?.uri) {
-        onCapture(
-          result.assets[0].uri,
-          result.assets[0].mimeType || "image/jpeg",
-        );
+        useDiscoveryStore
+          .getState()
+          .capturePhoto(result.assets[0].uri, result.assets[0].mimeType || "image/jpeg");
       }
     } catch {
       useDiscoveryStore
@@ -60,7 +55,6 @@ export function CameraScreen({
         </View>
       ) : !cameraPermission.granted ? (
         <CameraPermissionPrompt
-          onBack={onBack}
           onRequestPermission={requestCameraPermission}
           onPickFromGallery={() => void pickFromGallery()}
         />
@@ -73,7 +67,7 @@ export function CameraScreen({
             enableTorch={torchOn}
           />
 
-          <CameraHeaderBar onBack={onBack} />
+          <CameraHeaderBar />
 
           <ViewfinderOverlay />
 

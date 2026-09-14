@@ -1,10 +1,15 @@
 import React from "react";
 import { StyleSheet } from "react-native";
+import { useUserStore } from "../../../../store/useUserStore";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function LogoutButton({ onPress }: { onPress: () => void }) {
+export function LogoutButton() {
   return (
-    <PrimaryButton label="Log Out" style={styles.button} onPress={onPress} />
+    <PrimaryButton
+      label="Log Out"
+      style={styles.button}
+      onPress={() => useUserStore.getState().logout()}
+    />
   );
 }
 

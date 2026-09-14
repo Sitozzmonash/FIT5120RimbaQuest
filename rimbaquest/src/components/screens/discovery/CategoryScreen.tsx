@@ -3,23 +3,14 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { DISCOVERY_CATEGORY_IMAGES } from "../../../constants/images";
 import { CATEGORIES, CATEGORY_APPEARANCE } from "../../../constants/seed";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
 // import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
 import { CategoryOptionCard } from "./components/CategoryOptionCard";
 
-export function CategoryScreen({
-  photo,
-  onNext,
-  onBack,
-  onDiscard,
-}: {
-  photo: { uri: string };
-  onNext: () => void;
-  onBack: () => void;
-  onDiscard: () => void;
-}) {
+export function CategoryScreen() {
   const candidates = useDiscoveryStore((state) => state.verificationCandidates);
 
   const detectedCategory = candidates[0]?.category ?? null;
@@ -29,19 +20,20 @@ export function CategoryScreen({
       useDiscoveryStore.getState().setCategory(detectedCategory);
   }, [detectedCategory]);
 
+  const goBack = () => useNavigationStore.getState().goBack();
+
   const handleNext = () => {
     if (!detectedCategory) return;
     useDiscoveryStore.getState().setIdentificationError(null);
-    onNext();
+    useNavigationStore.getState().open("species");
   };
 
   return (
     <View style={styles.page}>
       <DiscoveryHeader
         title="Record a Discovery"
-        onBack={onBack}
         confirmDiscard
-        onDiscard={onDiscard}
+        onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
       />
       <ScrollView contentContainerStyle={styles.content}>
         {/* <DiscoveryStepIndicator step={2} /> */}
@@ -53,7 +45,7 @@ export function CategoryScreen({
           </Text>
         </View>
 
-        <PhotoPreview photo={photo} />
+        <PhotoPreview />
 
         <View style={styles.list}>
           {CATEGORIES.map((item) => (
@@ -81,7 +73,7 @@ export function CategoryScreen({
       </ScrollView>
 
       <DiscoveryBottomNav
-        onBack={onBack}
+        onBack={goBack}
         nextLabel="Next"
         nextDisabled={!detectedCategory}
         onNext={handleNext}

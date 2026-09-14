@@ -13,6 +13,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Species } from "../../../types";
 import { HOME_IMAGES } from "../../../constants/images";
+import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { Tap } from "../../common/Tap";
 import { CollectionCard } from "./components/CollectionCard";
 import { CollectionLevelBar } from "./components/CollectionLevelBar";
@@ -26,23 +31,25 @@ export function CollectionScreen({
   discoveredIds,
   filter,
   setFilter,
-  displayProgress,
-  onSelectSpecies,
-  onSelectLocked,
-  onStartDiscovery,
-  onBack,
 }: {
   speciesList: Species[];
   discoveredIds: string[];
   filter: string;
   setFilter: (f: string) => void;
-  displayProgress: { found: number; total: number; xp: number; level?: number };
-  onSelectSpecies: (s: Species) => void;
-  onSelectLocked: (s: Species) => void;
-  onStartDiscovery: () => void;
-  onBack: () => void;
 }) {
   const insets = useSafeAreaInsets();
+  const displayProgress = useDisplayProgress();
+
+  const selectSpecies = (item: Species) => {
+    useSelectedSpeciesStore.getState().setSelected(item);
+    void useUserStore.getState().loadSpeciesGallery(item.id);
+    useNavigationStore.getState().open("about");
+  };
+  const selectLocked = (item: Species) => {
+    useSelectedSpeciesStore.getState().setSelected(item);
+    useNavigationStore.getState().open("locked");
+  };
+  const goBack = () => useNavigationStore.getState().goBack();
   const percentage = displayProgress.total
     ? Math.min(
         100,
@@ -85,7 +92,7 @@ export function CollectionScreen({
         species={item}
         discovered={discovered}
         onPress={() =>
-          discovered ? onSelectSpecies(item) : onSelectLocked(item)
+          discovered ? selectSpecies(item) : selectLocked(item)
         }
       />
     );
@@ -173,7 +180,7 @@ export function CollectionScreen({
                 <Tap
                   label="Go to Discover to capture more wildlife"
                   style={styles.collectionCaptureDecor}
-                  onPress={onStartDiscovery}
+                  onPress={() => useDiscoveryStore.getState().start()}
                 >
                   <Image
                     source={HOME_IMAGES.tileCapture}
@@ -214,7 +221,7 @@ export function CollectionScreen({
                 ? styles.collectionBackBtnOnLight
                 : styles.collectionBackBtnOnDark,
             ]}
-            onPress={onBack}
+            onPress={goBack}
           >
             <MaterialIcons
               name="chevron-left"

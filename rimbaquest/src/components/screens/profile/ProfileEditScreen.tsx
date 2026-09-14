@@ -12,12 +12,13 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_CHOICES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
-import { UserProfile } from "../../../types";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useProfileEditStore } from "../../../store/useProfileEditStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { apiMessage } from "../../../utils/authApi";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
-import { ProfileHeader } from "./components/ProfileHeader";
+import { EditProfileHeader } from "./components/EditProfileHeader";
 import { UnsavedChangesModal } from "./components/UnsavedChangesModal";
 import { styles as globalStyles } from "../../../styles/theme";
 
@@ -26,19 +27,8 @@ function formatAge(age: string): string {
   return Number.isFinite(n) && n >= 18 ? "18+" : age;
 }
 
-export function ProfileEditScreen({
-  email,
-  childId,
-  token,
-  onSaved,
-  onBack,
-}: {
-  email: string;
-  childId: number;
-  token: string;
-  onSaved: (data: Partial<UserProfile>, submittedUsername: string) => void;
-  onBack: () => void;
-}) {
+export function ProfileEditScreen() {
+  const email = useUserStore((state) => state.currentUser.email);
   const displayName = useProfileEditStore((state) => state.displayName);
   const avatar = useProfileEditStore((state) => state.avatar);
   const age = useProfileEditStore((state) => state.age);
@@ -56,7 +46,7 @@ export function ProfileEditScreen({
 
   const leave = () => {
     if (!isDirty) {
-      onBack();
+      useNavigationStore.getState().goBack();
       return;
     }
     setConfirmingLeave(true);
@@ -74,13 +64,14 @@ export function ProfileEditScreen({
     store.setError(null);
     store.setSaving(true);
     try {
+      const user = useUserStore.getState();
       const res = await fetch(
-        `${API_BASE}/api/v1/children/${childId}/profile`,
+        `${API_BASE}/api/v1/children/${user.currentUser.id}/profile`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...user.authHeaders(),
           },
           body: JSON.stringify({
             username,
@@ -89,6 +80,10 @@ export function ProfileEditScreen({
           }),
         },
       );
+      if (res.status === 401 || res.status === 403) {
+        await user.expire();
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         store.setError(
@@ -96,7 +91,8 @@ export function ProfileEditScreen({
         );
         return;
       }
-      onSaved(data, username);
+      useUserStore.getState().applyProfileUpdate(data, username);
+      useNavigationStore.getState().goBack();
     } catch {
       store.setError(
         "We couldn't reach RimbaQuest. Your profile was not changed.",
@@ -117,7 +113,7 @@ export function ProfileEditScreen({
       <View style={[styles.decoCircle2, { pointerEvents: "none" }]} />
 
       <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
-        <ProfileHeader title="Edit Profile" onBack={leave} />
+        <EditProfileHeader onBack={leave} />
       </View>
 
       <ScrollView
@@ -219,7 +215,7 @@ export function ProfileEditScreen({
         onCancel={() => setConfirmingLeave(false)}
         onConfirm={() => {
           setConfirmingLeave(false);
-          onBack();
+          useNavigationStore.getState().goBack();
         }}
       />
     </View>

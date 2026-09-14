@@ -6,18 +6,13 @@ import { AUTH_IMAGES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
 import { EMAIL_RE } from "../../../constants/validation";
 import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { apiMessage } from "../../../utils/authApi";
 import { RecoveryEmailField } from "./components/RecoveryEmailField";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
-export function ForgotPasswordScreen({
-  onRequestSuccess,
-  onBackToLogin,
-}: {
-  onRequestSuccess: () => void;
-  onBackToLogin: () => void;
-}) {
+export function ForgotPasswordScreen() {
   const insets = useSafeAreaInsets();
 
   const formError = useForgotPasswordStore((state) => state.formError);
@@ -51,7 +46,7 @@ export function ForgotPasswordScreen({
         return;
       }
       store.setToken("");
-      onRequestSuccess();
+      useNavigationStore.getState().open("reset_password");
     } catch {
       store.setFormError(
         "We couldn't reach RimbaQuest right now. Please try again.",
@@ -111,7 +106,11 @@ export function ForgotPasswordScreen({
               />
             </View>
 
-            <Tap label="Back to Log In" style={{}} onPress={onBackToLogin}>
+            <Tap
+              label="Back to Log In"
+              style={{}}
+              onPress={() => useNavigationStore.getState().resetTo("login")}
+            >
               <Text style={styles.forgotBackToLogin}>Back to Log In</Text>
             </Tap>
           </View>

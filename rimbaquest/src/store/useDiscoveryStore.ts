@@ -8,7 +8,11 @@ import {
   Species,
   VerificationError,
 } from "../types";
+import { OFFLINE_SPECIES } from "../constants/seed";
 import { apiMessage } from "../utils/authApi";
+import { useNavigationStore } from "./useNavigationStore";
+import { useSelectedSpeciesStore } from "./useSelectedSpeciesStore";
+import { useUserStore } from "./useUserStore";
 
 type DiscoveryState = {
   photoUri: string | null;
@@ -46,8 +50,6 @@ export type SaveDiscoveryResult = {
   location_label: string;
 };
 
-type OnSessionExpired = () => Promise<void>;
-
 type DiscoveryActions = {
   setPhotoError: (error: string | null) => void;
   setCategory: (category: string) => void;
@@ -59,37 +61,24 @@ type DiscoveryActions = {
   retake: () => void;
   discard: () => void;
 
-  submitPhoto: (
-    uri: string,
-    mimeType: string,
-    childId: number,
-    token: string,
-    onSessionExpired: OnSessionExpired,
-  ) => Promise<boolean>;
+  submitPhoto: (uri: string, mimeType: string) => Promise<boolean>;
 
-  evaluateIdentification: (
-    item: Species,
-    childId: number,
-    token: string,
-    onSessionExpired: OnSessionExpired,
-  ) => Promise<void>;
+  evaluateIdentification: (item: Species) => Promise<void>;
 
   confirmSpecies: (item: Species) => void;
 
   useAutomaticLocation: () => Promise<void>;
 
-  reportVerification: (
-    childId: number,
-    token: string,
-    onSessionExpired: OnSessionExpired,
-  ) => Promise<boolean>;
+  reportVerification: () => Promise<boolean>;
 
-  saveDiscovery: (
-    speciesId: string,
-    childId: number,
-    token: string,
-    onSessionExpired: OnSessionExpired,
-  ) => Promise<SaveDiscoveryResult | null>;
+  saveDiscovery: (speciesId: string) => Promise<SaveDiscoveryResult | null>;
+
+  start: (presetLocation?: string) => void;
+  capturePhoto: (uri: string, mimeType?: string) => void;
+  discardAndExit: () => void;
+  continueToConfirm: (item: Species) => void;
+  confirmAndSave: () => Promise<boolean>;
+  reportAndExit: () => Promise<boolean>;
 };
 
 export type DiscoveryStore = DiscoveryState & DiscoveryActions;
@@ -119,10 +108,6 @@ const initialState: DiscoveryState = {
   discoveryXpAwarded: 0,
   discoveryRecordedAt: null,
 };
-
-function authHeaders(token: string): Record<string, string> {
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 async function readCurrentLocationLabel(): Promise<string | null> {
   try {
@@ -219,7 +204,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       verificationAttempt: state.verificationAttempt + 1,
     })),
 
-  submitPhoto: async (uri, mimeType, childId, token, onSessionExpired) => {
+  submitPhoto: async (uri, mimeType) => {
+    const { currentUser, authHeaders } = useUserStore.getState();
+    const childId = currentUser.id;
     const attempt = get().verificationAttempt + 1;
     set({
       verificationAttempt: attempt,
@@ -254,13 +241,13 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         `${API_BASE}/api/v1/children/${childId}/discovery-verifications`,
         {
           method: "POST",
-          headers: authHeaders(token),
+          headers: authHeaders(),
           body: form,
         },
       );
       const data = await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
-        await onSessionExpired();
+        await useUserStore.getState().expire();
         return false;
       }
       if (!response.ok) {
@@ -319,7 +306,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     }
   },
 
-  evaluateIdentification: async (item, childId, token, onSessionExpired) => {
+  evaluateIdentification: async (item) => {
+    const { currentUser, authHeaders } = useUserStore.getState();
+    const childId = currentUser.id;
     const state = get();
     if (!state.verificationId || state.evaluatingIdentification) return;
     set({
@@ -334,7 +323,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...authHeaders(token),
+            ...authHeaders(),
           },
           body: JSON.stringify({
             category: state.category,
@@ -344,7 +333,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       );
       const data = await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
-        await onSessionExpired();
+        await useUserStore.getState().expire();
         return;
       }
       if (!response.ok)
@@ -392,7 +381,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     }
   },
 
-  reportVerification: async (childId, token, onSessionExpired) => {
+  reportVerification: async () => {
+    const { currentUser, authHeaders } = useUserStore.getState();
+    const childId = currentUser.id;
     const state = get();
     if (!state.verificationId || state.reportingVerification || state.saving)
       return false;
@@ -400,11 +391,11 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     try {
       const response = await fetch(
         `${API_BASE}/api/v1/children/${childId}/discovery-verifications/${state.verificationId}/report`,
-        { method: "POST", headers: authHeaders(token) },
+        { method: "POST", headers: authHeaders() },
       );
       const data = await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
-        await onSessionExpired();
+        await useUserStore.getState().expire();
         return false;
       }
       if (!response.ok)
@@ -428,7 +419,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     }
   },
 
-  saveDiscovery: async (speciesId, childId, token, onSessionExpired) => {
+  saveDiscovery: async (speciesId) => {
+    const { currentUser, authHeaders } = useUserStore.getState();
+    const childId = currentUser.id;
     const state = get();
     if (state.saving) return null;
     if (!state.photoUri) return null;
@@ -466,7 +459,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...authHeaders(token),
+            ...authHeaders(),
           },
           body: JSON.stringify({
             verification_id: state.verificationId,
@@ -476,7 +469,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       );
       const responseData = await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
-        await onSessionExpired();
+        await useUserStore.getState().expire();
         return null;
       }
       if (!response.ok)
@@ -519,5 +512,54 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     } finally {
       set({ saving: false });
     }
+  },
+
+  start: (presetLocation) => {
+    get().resetSelections();
+    useSelectedSpeciesStore.getState().setSelected(OFFLINE_SPECIES[0]);
+    if (presetLocation) get().setDiscoveryLocation(presetLocation);
+    useNavigationStore.getState().resetTo("photo");
+  },
+
+  capturePhoto: (uri, mimeType = "image/jpeg") => {
+    useNavigationStore.getState().open("photo_preview");
+    void (async () => {
+      const verified = await get().submitPhoto(uri, mimeType);
+      if (verified) useNavigationStore.getState().setScreen("species");
+    })();
+  },
+
+  discardAndExit: () => {
+    get().discard();
+    useSelectedSpeciesStore.getState().setSelected(OFFLINE_SPECIES[0]);
+    useNavigationStore.getState().resetTo("home");
+  },
+
+  continueToConfirm: (item) => {
+    get().confirmSpecies(item);
+    useSelectedSpeciesStore.getState().setSelected(item);
+    useNavigationStore.getState().open("confirm");
+  },
+
+  confirmAndSave: async () => {
+    const speciesId = useSelectedSpeciesStore.getState().selected.id;
+    const result = await get().saveDiscovery(speciesId);
+    if (!result) return false;
+    useUserStore.getState().recordDiscoverySaved(speciesId, result);
+    await useUserStore.getState().refreshProfile();
+    useNavigationStore.getState().open("success");
+    return true;
+  },
+
+  reportAndExit: async () => {
+    const reported = await get().reportVerification();
+    if (!reported) return false;
+    get().discardAndExit();
+    useUserStore
+      .getState()
+      .setNotice(
+        "Thanks for reporting the AI result. No discovery or Wildlife Card was saved.",
+      );
+    return true;
   },
 }));

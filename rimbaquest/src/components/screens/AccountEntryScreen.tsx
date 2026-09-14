@@ -4,18 +4,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AUTH_IMAGES } from '../../constants/images';
 import { HOME_IMAGES } from '../../constants/images';
+import { useLoginStore } from '../../store/useLoginStore';
+import { useNavigationStore } from '../../store/useNavigationStore';
 import { Tap } from '../common/Tap';
 import { PrimaryButton } from '../common/PrimaryButton';
 import { styles } from '../../styles/theme';
 
-export function AccountEntryScreen({
-  onLogin,
-  onCreateAccount,
-}: {
-  onLogin: () => void;
-  onCreateAccount: () => void;
-}) {
+export function AccountEntryScreen() {
   const insets = useSafeAreaInsets();
+
+  const goTo = (screen: 'login' | 'create_account') => {
+    useLoginStore.getState().reset();
+    useNavigationStore.getState().open(screen);
+  };
 
   return (
     <View style={styles.entryRoot}>
@@ -46,8 +47,8 @@ export function AccountEntryScreen({
           </View>
 
           <View style={styles.entryButtons}>
-            <PrimaryButton label="Log In" onPress={onLogin} />
-            <Tap label="Create Account" style={styles.entryCreateBtn} onPress={onCreateAccount}>
+            <PrimaryButton label="Log In" onPress={() => goTo('login')} />
+            <Tap label="Create Account" style={styles.entryCreateBtn} onPress={() => goTo('create_account')}>
               <Text style={styles.entryCreateBtnText}>Create Account</Text>
             </Tap>
           </View>

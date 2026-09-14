@@ -4,23 +4,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { AUTH_IMAGES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
-import { UserProfile } from "../../../types";
+import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
 import { useLoginStore } from "../../../store/useLoginStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { apiMessage, profileFromAuth } from "../../../utils/authApi";
 import { PasswordField } from "./components/PasswordField";
 import { UsernameField } from "./components/UsernameField";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
-export function LoginScreen({
-  onLoginSuccess,
-  onForgotPassword,
-  onCreateAccount,
-}: {
-  onLoginSuccess: (user: UserProfile, token: string) => void;
-  onForgotPassword: () => void;
-  onCreateAccount: () => void;
-}) {
+export function LoginScreen() {
   const authError = useLoginStore((state) => state.authError);
   const submitting = useLoginStore((state) => state.submitting);
   const insets = useSafeAreaInsets();
@@ -60,7 +54,7 @@ export function LoginScreen({
       }
       const token = String(data.access_token || "");
       if (!token) throw new Error("Login did not return an access token.");
-      onLoginSuccess(profileFromAuth(data), token);
+      useUserStore.getState().applyUser(profileFromAuth(data), token);
     } catch {
       store.setAuthError(
         "We couldn't reach RimbaQuest right now. Please try again.",
@@ -110,7 +104,10 @@ export function LoginScreen({
                 <Tap
                   label="Forgot Password"
                   style={{}}
-                  onPress={onForgotPassword}
+                  onPress={() => {
+                    useForgotPasswordStore.getState().reset();
+                    useNavigationStore.getState().open("forgot_password");
+                  }}
                 >
                   <Text style={styles.loginForgotText}>Forgot Password?</Text>
                 </Tap>
@@ -131,7 +128,10 @@ export function LoginScreen({
                 <Tap
                   label="Create Account"
                   style={{}}
-                  onPress={onCreateAccount}
+                  onPress={() => {
+                    useLoginStore.getState().reset();
+                    useNavigationStore.getState().open("create_account");
+                  }}
                 >
                   <Text style={styles.loginSignupLink}>Create Account</Text>
                 </Tap>

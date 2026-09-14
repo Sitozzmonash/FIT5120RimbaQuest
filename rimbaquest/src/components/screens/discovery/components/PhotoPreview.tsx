@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { Tap } from "../../../common/Tap";
 
-export function PhotoPreview({ photo }: { photo: { uri: string } }) {
+export function PhotoPreview() {
+  const photoUri = useDiscoveryStore((state) => state.photoUri);
   const [enlarged, setEnlarged] = useState(false);
+
+  if (!photoUri) return null;
+  const photo = { uri: photoUri };
 
   return (
     <View style={styles.wrap}>

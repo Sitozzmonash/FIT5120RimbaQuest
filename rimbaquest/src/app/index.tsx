@@ -1,20 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  DiscoverySession,
-  GalleryItem,
-  RecentCapture,
-  Screen,
-  Species,
-  SpeciesChatResponse,
-  UserProfile,
-} from '../types';
+import { Screen, Species } from '../types';
 import { API_BASE } from '../constants/config';
-import { CATEGORIES, SEED_SPECIES } from '../constants/seed';
 import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
-import { clearSession, loadSession, saveSession } from '../constants/session';
-import { levelForFound } from '../constants/progression';
 import { styles } from '../styles/theme';
 
 import { HomeScreen } from '../components/screens/HomeScreen';
@@ -35,28 +24,13 @@ import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
-import { DEFAULT_AVATAR } from '../constants/images';
-import { SaveDiscoveryResult, useDiscoveryStore } from '../store/useDiscoveryStore';
-import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
-import { useLocationsStore } from '../store/useLocationsStore';
-import { useLoginStore } from '../store/useLoginStore';
-import { useProfileEditStore } from '../store/useProfileEditStore';
-import { apiMessage } from '../utils/authApi';
-
-const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+import { useDiscoveryStore } from '../store/useDiscoveryStore';
+import { useNavigationStore } from '../store/useNavigationStore';
+import { useSelectedSpeciesStore } from '../store/useSelectedSpeciesStore';
+import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
+import { useUserStore } from '../store/useUserStore';
 
 const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
-const GUEST_USER: UserProfile = {
-  id: 0,
-  username: '',
-  email: '',
-  display_name: 'Explorer',
-  avatar: DEFAULT_AVATAR,
-  age: 10,
-  age_band: '8-11',
-  xp: 0,
-  level: 1,
-};
 const BATTLE_OPPONENT = {
   name: 'Wild Boar',
   image: SPECIES_IMAGES.sp_wild_boar,
@@ -115,31 +89,20 @@ function getFallbackAbilities(category?: string): BattleAbilityItem[] {
   ];
 }
 
-
-function isHttpPhotoUrl(url?: string | null): boolean {
-  return Boolean(url && /^https?:\/\//i.test(url));
-}
-
 export default function RimbaQuest() {
-  const [screen, setScreen] = useState<Screen>('account_entry');
-  const [history, setHistory] = useState<Screen[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accessToken, setAccessToken] = useState('');
+  const screen = useNavigationStore((state) => state.screen);
+  const open = useNavigationStore((state) => state.open);
+  const resetTo = useNavigationStore((state) => state.resetTo);
+  const goBack = useNavigationStore((state) => state.goBack);
 
-  const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
-  const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
-  const [discovered, setDiscovered] = useState<string[]>([]);
+  const bootstrapped = useUserStore((state) => state.bootstrapped);
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const discovered = useUserStore((state) => state.discovered);
+
+  const selected = useSelectedSpeciesStore((state) => state.selected);
+  const species = useSpeciesCatalogStore((state) => state.species);
+
   const [filter, setFilter] = useState('All');
-
-  const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
-  const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
-
-  const locations = useLocationsStore((state) => state.locations);
-  const selectedLocation = useLocationsStore((state) => state.selectedLocation);
-
-  const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
 
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
@@ -154,164 +117,22 @@ export default function RimbaQuest() {
   const [battleOutcome, setBattleOutcome] = useState<'playing' | 'win' | 'lose' | null>(null);
   const [battleXpAwarded, setBattleXpAwarded] = useState<number | null>(null);
   const [isAttacking, setIsAttacking] = useState(false);
-  const battleRecordedRef = useRef(false);
-
-  const resetAuthForm = () => {
-    useLoginStore.getState().reset();
-  };
-
-  const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
-    setCurrentUser(user);
-    setAccessToken(token);
-    setGalleryPhotos({});
-    setIsLoggedIn(true);
-    void saveSession({ user, accessToken: token });
-    resetAuthForm();
-    setHistory([]);
-    setScreen(nextScreen);
-  };
-
-  const authenticatedHeaders = (token = accessToken): Record<string, string> =>
-    token ? { Authorization: `Bearer ${token}` } : {};
-
-  const expireSession = async () => {
-    await clearSession();
-    setAccessToken('');
-    setIsLoggedIn(false);
-    setCurrentUser(GUEST_USER);
-    setDiscovered([]);
-    setRecentCaptures([]);
-    setGalleryPhotos({});
-    resetAuthForm();
-    useLoginStore.getState().setAuthError('Your session is no longer valid. Please sign in again.');
-    setHistory([]);
-    setScreen('login');
-  };
-
-  const refresh = async (childId: number, token = accessToken) => {
-    try {
-      const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [speciesRes, collectionRes, profileRes, recentRes] = await Promise.all([
-        fetch(`${API_BASE}/api/v1/species`),
-        fetch(`${API_BASE}/api/v1/children/${childId}/collection`, { headers: auth }),
-        fetch(`${API_BASE}/api/v1/children/${childId}/profile`, { headers: auth }),
-        fetch(`${API_BASE}/api/v1/children/${childId}/recent-captures`, { headers: auth }),
-      ]);
-
-      if (profileRes.status === 401 || profileRes.status === 403) {
-        await expireSession();
-        setLoading(false);
-        return;
-      }
-
-      if (speciesRes.ok) setSpecies(await speciesRes.json());
-      if (collectionRes.ok) {
-        const data = await collectionRes.json();
-        setDiscovered(data.items.filter((item: { discovered: number }) => item.discovered).map((item: { id: string }) => item.id));
-      }
-      if (profileRes.ok) {
-        const data = await profileRes.json();
-        setCurrentUser((prev) => {
-          const next = { ...prev, ...data, username: String(data.username || prev.username) };
-          void saveSession({ user: next, accessToken: token });
-          return next;
-        });
-      }
-      if (recentRes.ok) {
-        const data = await recentRes.json();
-        setRecentCaptures(data.items);
-      }
-      await useLocationsStore.getState().loadLocations();
-      setNotice(null);
-    } catch {
-      setNotice('You are exploring in offline demo mode. Discoveries will sync when the backend connects.');
-      // useLocationsStore.getState().useOfflineFallbackIfEmpty();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshRecentCaptures = async (childId: number, token = accessToken) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${childId}/recent-captures`,
-        { headers: authenticatedHeaders(token) },
-      );
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        return;
-      }
-      if (response.ok) {
-        const data = await response.json();
-        setRecentCaptures(data.items);
-      }
-    } catch {
-      // A chat answer may still be visible even if the background refresh
-      // cannot update the home card immediately.
-    }
-  };
-
-  const sendSpeciesChatQuestion = async (
-    speciesId: string,
-    question: string,
-  ): Promise<SpeciesChatResponse> => {
-    if (!currentUser.id || !accessToken) {
-      throw new Error('Please sign in before using WildGuide.');
-    }
-    const response = await fetch(
-      `${API_BASE}/api/v1/children/${currentUser.id}/species/${encodeURIComponent(speciesId)}/chat`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authenticatedHeaders(),
-        },
-        body: JSON.stringify({ question }),
-      },
-    );
-    const data: unknown = await response.json().catch(() => ({}));
-    if (response.status === 401 || response.status === 403) {
-      await expireSession();
-      throw new Error('Your session is no longer valid. Please sign in again.');
-    }
-    if (!response.ok) {
-      throw new Error(apiMessage(data, "I couldn't answer that right now. Please try again."));
-    }
-    if (!data || typeof data !== 'object' || !('answer' in data) ||
-      typeof data.answer !== 'string' || !data.answer.trim()) {
-      throw new Error("I couldn't answer that right now. Please try again.");
-    }
-    void refreshRecentCaptures(currentUser.id, accessToken);
-    const suggestions = 'suggested_questions' in data ? data.suggested_questions : undefined;
-    return {
-      answer: data.answer,
-      suggested_questions: Array.isArray(suggestions)
-        ? suggestions.filter((item): item is string => typeof item === 'string')
-        : undefined,
-    };
-  };
+  const battleRecordedRef = React.useRef(false);
 
   useEffect(() => {
-    void (async () => {
-      const saved = await loadSession();
-      if (saved?.user?.id && saved.accessToken) {
-        setCurrentUser(saved.user);
-        setAccessToken(saved.accessToken);
-        setGalleryPhotos({});
-        setIsLoggedIn(true);
-        setScreen('home');
-      } else {
-        setScreen('account_entry');
-        setLoading(false);
-      }
-    })();
+    void useUserStore.getState().restoreSession();
   }, []);
 
+  // The species catalog is public and static enough to fetch once, rather
+  // than re-fetching alongside every profile refresh.
   useEffect(() => {
-    if (isLoggedIn && currentUser.id && accessToken) {
-      void refresh(currentUser.id, accessToken);
-    }
-  }, [isLoggedIn, currentUser.id, accessToken]);
+    void useSpeciesCatalogStore.getState().loadSpecies();
+  }, []);
+
+  // goBack() lands here once its history stack is empty.
+  useEffect(() => {
+    useNavigationStore.getState().setFallbackScreen(isLoggedIn ? 'home' : 'account_entry');
+  }, [isLoggedIn]);
 
   const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
   const visibleSpecies = useMemo(
@@ -328,147 +149,27 @@ export default function RimbaQuest() {
     () => supportedSpecies.filter((item) => discovered.includes(item.id)),
     [discovered, supportedSpecies]
   );
-  const displayProgress = useMemo(() => {
-    const found = discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length;
-    return {
-      found,
-      total: supportedSpecies.length,
-      xp: currentUser.xp,
-      level: levelForFound(found),
-    };
-  }, [discovered, supportedSpecies, currentUser]);
-
-  const open = (next: Screen) => {
-    setHistory((cur) => [...cur, screen]);
-    setScreen(next);
-  };
-  const resetTo = (next: Screen) => {
-    setHistory([]);
-    setScreen(next);
-  };
-  const goBack = () => {
-    setHistory((cur) => {
-      const prev = cur[cur.length - 1];
-      setScreen(prev ?? (isLoggedIn ? 'home' : 'account_entry'));
-      return cur.slice(0, -1);
-    });
-  };
-
-  const startDiscovery = (presetLocation?: string) => {
-    useDiscoveryStore.getState().resetSelections();
-    setSelected(OFFLINE_SPECIES[0]);
-    if (presetLocation) useDiscoveryStore.getState().setDiscoveryLocation(presetLocation);
-    resetTo('photo');
-  };
-
-  const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
-    open('photo_preview');
-    void (async () => {
-      const verified = await useDiscoveryStore
-        .getState()
-        .submitPhoto(uri, mimeType, currentUser.id, accessToken, expireSession);
-      if (verified) setScreen('species');
-    })();
-  };
-
-  // Confirmed from the discard-photo dialog: abandon the in-progress
-  // discovery entirely and land back on Home, rather than stepping back
-  // one screen at a time.
-  const discardDiscovery = () => {
-    useDiscoveryStore.getState().discard();
-    setSelected(OFFLINE_SPECIES[0]);
-    resetTo('home');
-  };
-
-  const retakePhoto = () => {
-    setScreen('photo');
-  };
-
-  const continueWithVerifiedSpecies = (item: Species) => {
-    useDiscoveryStore.getState().confirmSpecies(item);
-    setSelected(item);
-    open('confirm');
-  };
-
-  const handleDiscoverySaved = (result: SaveDiscoveryResult) => {
-    if (result.first_discovery && !discovered.includes(selected.id)) {
-      setDiscovered((current) => [...current, selected.id]);
-      setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
-    }
-    setGalleryPhotos((current) => ({
-      ...current,
-      [selected.id]: [
-        { photo_url: result.photo_url, location_label: result.location_label },
-        ...(current[selected.id] ?? []),
-      ],
-    }));
-    return refresh(currentUser.id, accessToken).then(() => open('success'));
-  };
-
-  const handleDiscoveryReported = () => {
-    discardDiscovery();
-    setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
-  };
-
-  const handleProfileSaved = (data: Partial<UserProfile>, submittedUsername: string) => {
-    setCurrentUser((prev) => {
-      const updatedUsername = String(data.username || submittedUsername || prev.username);
-      const next = { ...prev, ...data, username: updatedUsername, display_name: String(data.display_name || updatedUsername) };
-      void saveSession({ user: next, accessToken });
-      return next;
-    });
-    goBack();
-  };
-
-  const handleLogout = () => {
-    void clearSession();
-    setAccessToken('');
-    setIsLoggedIn(false);
-    setCurrentUser(GUEST_USER);
-    setDiscovered([]);
-    setRecentCaptures([]);
-    setGalleryPhotos({});
-    setNotice(null);
-    resetAuthForm();
-    resetTo('account_entry');
-  };
-
-  const loadSpeciesGallery = async (speciesId: string) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`, {
-        headers: authenticatedHeaders(),
-      });
-      if (res.status === 401 || res.status === 403) {
-        await expireSession();
-        return;
-      }
-      if (!res.ok) return;
-      const data = await res.json();
-      const remote = ((data.items || []) as GalleryItem[]).filter((item) => isHttpPhotoUrl(item.photo_url));
-      setGalleryPhotos((current) => ({ ...current, [speciesId]: remote }));
-    } catch {
-      // Keep the current in-memory gallery if the remote request is temporarily unavailable.
-    }
-  };
 
   const initBattle = async (card: Species) => {
     battleRecordedRef.current = false;
     setBattleXpAwarded(null);
     setBattlePlayerCard(card);
 
+    const { currentUser: user, authHeaders } = useUserStore.getState();
+
     let opponent: BattleOpponent = DEFAULT_OPPONENT;
     let unlocked: number[] = [];
     let abilities: BattleAbilityItem[] = getFallbackAbilities(card.category);
     let playerMaxHp = card.hp || 120;
 
-    if (currentUser.id) {
+    if (user.id) {
       try {
         const [oppRes, cardRes] = await Promise.all([
-          fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/opponent?player_species_id=${encodeURIComponent(card.id)}`, {
-            headers: authenticatedHeaders(),
+          fetch(`${API_BASE}/api/v1/children/${user.id}/battle/opponent?player_species_id=${encodeURIComponent(card.id)}`, {
+            headers: authHeaders(),
           }),
-          fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${encodeURIComponent(card.id)}/battle-card`, {
-            headers: authenticatedHeaders(),
+          fetch(`${API_BASE}/api/v1/children/${user.id}/species/${encodeURIComponent(card.id)}/battle-card`, {
+            headers: authHeaders(),
           }),
         ]);
 
@@ -522,12 +223,13 @@ export default function RimbaQuest() {
   };
 
   const recordBattleResult = async (won: boolean, rounds: number) => {
-    if (battleRecordedRef.current || !currentUser.id) return;
+    const { currentUser: user, authHeaders } = useUserStore.getState();
+    if (battleRecordedRef.current || !user.id) return;
     battleRecordedRef.current = true;
     try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/battle/record`, {
+      const res = await fetch(`${API_BASE}/api/v1/children/${user.id}/battle/record`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           won,
           opponent_name: battleOpponent.name,
@@ -541,11 +243,7 @@ export default function RimbaQuest() {
       const data = (await res.json()) as { xp_awarded?: number; total_xp?: number };
       if (typeof data.xp_awarded === 'number') setBattleXpAwarded(data.xp_awarded);
       if (typeof data.total_xp === 'number') {
-        setCurrentUser((prev) => {
-          const next = { ...prev, xp: data.total_xp as number };
-          void saveSession({ user: next, accessToken });
-          return next;
-        });
+        useUserStore.getState().updateCurrentUser({ xp: data.total_xp });
       }
     } catch {
       battleRecordedRef.current = false;
@@ -721,13 +419,8 @@ export default function RimbaQuest() {
   };
 
   const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
-  const discoveryPhoto = discoveryPhotoUri ? { uri: discoveryPhotoUri } : null;
-  const discoverySession: DiscoverySession = {
-    childId: currentUser.id,
-    token: accessToken,
-    onSessionExpired: expireSession,
-  };
-  if (loading) {
+
+  if (!bootstrapped) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.loading}>
@@ -746,74 +439,23 @@ export default function RimbaQuest() {
     >
       <StatusBar barStyle="dark-content" />
       <View style={[styles.page, fullBleed && styles.pageTransparent]}>
-        {screen === 'home' && isLoggedIn && (
-          <HomeScreen
-            currentUser={currentUser}
-            displayProgress={displayProgress}
-            recentCaptures={recentCaptures}
-            notice={notice}
-            onOpenProfile={() => open('progress')}
-            onOpenCollection={() => open('collection')}
-            onOpenLocations={() => open('locations')}
-            onStartDiscovery={() => startDiscovery()}
-            onOpenBattle={() => open('battle_select')}
-          />
-        )}
+        {screen === 'home' && isLoggedIn && <HomeScreen />}
 
-        {screen === 'locations' && (
-          <LocationsScreen onOpenDetail={() => open('location_detail')} onBack={goBack} />
-        )}
+        {screen === 'locations' && <LocationsScreen />}
 
-        {screen === 'location_detail' && selectedLocation && (
-          <LocationDetailScreen onBack={goBack} onRecordHere={(locName) => startDiscovery(locName)} />
-        )}
+        {screen === 'location_detail' && <LocationDetailScreen />}
 
-        {screen === 'photo' && (
-          <CameraScreen
-            lastCaptureUri={recentCaptures[0]?.photo_url ?? null}
-            onCapture={acceptPhoto}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'photo' && <CameraScreen />}
 
-        {screen === 'photo_preview' && discoveryPhoto && (
-          <PhotoPreviewScreen photo={discoveryPhoto} onRetake={retakePhoto} />
-        )}
+        {screen === 'photo_preview' && discoveryPhotoUri && <PhotoPreviewScreen />}
 
-        {screen === 'category' && discoveryPhoto && (
-          <CategoryScreen
-            photo={discoveryPhoto}
-            onNext={() => open('species')}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
+        {screen === 'category' && discoveryPhotoUri && <CategoryScreen />}
 
-        {screen === 'species' && discoveryPhoto && (
-          <SpeciesScreen
-            photo={discoveryPhoto}
-            session={discoverySession}
-            onContinue={continueWithVerifiedSpecies}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
+        {screen === 'species' && discoveryPhotoUri && <SpeciesScreen />}
 
-        {screen === 'confirm' && discoveryPhoto && (
-          <ConfirmScreen
-            photo={discoveryPhoto}
-            selected={selected}
-            session={discoverySession}
-            onSaved={handleDiscoverySaved}
-            onReported={handleDiscoveryReported}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
+        {screen === 'confirm' && discoveryPhotoUri && <ConfirmScreen />}
 
-        {screen === 'success' && (
-          <SuccessScreen selected={selected} onViewCard={() => open('about')} onRecordAnother={() => startDiscovery()} />
-        )}
+        {screen === 'success' && <SuccessScreen />}
 
         {screen === 'collection' && (
           <CollectionScreen
@@ -821,41 +463,14 @@ export default function RimbaQuest() {
             discoveredIds={discovered}
             filter={filter}
             setFilter={setFilter}
-            displayProgress={displayProgress}
-            onSelectSpecies={(item) => {
-              setSelected(item);
-              void loadSpeciesGallery(item.id);
-              open('about');
-            }}
-            onSelectLocked={(item) => {
-              setSelected(item);
-              open('locked');
-            }}
-            onStartDiscovery={() => startDiscovery()}
-            onBack={goBack}
           />
         )}
 
         {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
-          <SpeciesDetailScreen
-            species={selected}
-            screen={screen}
-            photos={galleryPhotos[selected.id] ?? []}
-            token={accessToken}
-            onTabChange={(tab) => open(tab)}
-            onStartBattle={() => void initBattle(selected)}
-            childId={currentUser.id}
-            onChatSend={(question) => sendSpeciesChatQuestion(selected.id, question)}
-            onBack={() => resetTo('collection')}
-          />
+          <SpeciesDetailScreen onStartBattle={() => void initBattle(selected)} />
         )}
 
-        {screen === 'locked' && (
-          <LockedScreen
-            species={selected}
-            onBack={() => resetTo('collection')}
-          />
-        )}
+        {screen === 'locked' && <LockedScreen />}
 
         {screen === 'battle_select' && (
           <BattleSelectScreen
@@ -863,7 +478,7 @@ export default function RimbaQuest() {
             selectedCard={battlePlayerCard}
             onSelectCard={setBattlePlayerCard}
             onStartBattle={() => battlePlayerCard && void initBattle(battlePlayerCard)}
-            onStartDiscovery={() => startDiscovery()}
+            onStartDiscovery={() => useDiscoveryStore.getState().start()}
             onBack={goBack}
           />
         )}
@@ -893,85 +508,19 @@ export default function RimbaQuest() {
           />
         )}
 
-        {screen === 'account_entry' && (
-          <AccountEntryScreen
-            onLogin={() => {
-              resetAuthForm();
-              open('login');
-            }}
-            onCreateAccount={() => {
-              resetAuthForm();
-              open('create_account');
-            }}
-          />
-        )}
+        {screen === 'account_entry' && <AccountEntryScreen />}
 
-        {screen === 'login' && (
-          <LoginScreen
-            onLoginSuccess={(user, token) => applyUser(user, token)}
-            onForgotPassword={() => {
-              useForgotPasswordStore.getState().reset();
-              open('forgot_password');
-            }}
-            onCreateAccount={() => {
-              resetAuthForm();
-              open('create_account');
-            }}
-          />
-        )}
+        {screen === 'login' && <LoginScreen />}
 
-        {screen === 'create_account' && (
-          <AccountCreationScreen
-            onRegisterSuccess={(user, token) => applyUser(user, token)}
-            onLogin={() => {
-              resetAuthForm();
-              open('login');
-            }}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'create_account' && <AccountCreationScreen />}
 
-        {screen === 'forgot_password' && (
-          <ForgotPasswordScreen
-            onRequestSuccess={() => open('reset_password')}
-            onBackToLogin={() => resetTo('login')}
-          />
-        )}
+        {screen === 'forgot_password' && <ForgotPasswordScreen />}
 
-        {screen === 'reset_password' && (
-          <ResetPasswordScreen
-            onResetSuccess={() => resetTo('login')}
-            onBackToLogin={() => resetTo('login')}
-          />
-        )}
+        {screen === 'reset_password' && <ResetPasswordScreen />}
 
-        {screen === 'profile_edit' && (
-          <ProfileEditScreen
-            email={currentUser.email}
-            childId={currentUser.id}
-            token={accessToken}
-            onSaved={handleProfileSaved}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'profile_edit' && <ProfileEditScreen />}
 
-        {screen === 'progress' && (
-          <ProfileScreen
-            currentUser={currentUser}
-            displayProgress={displayProgress}
-            discoveredSpeciesCount={(cat) => {
-              const items = supportedSpecies.filter((item) => item.category === cat);
-              const found = items.filter((item) => discovered.includes(item.id)).length;
-              return { found, total: items.length };
-            }}
-            onOpenEdit={() => {
-              useProfileEditStore.getState().startEditing(currentUser);
-              open('profile_edit');
-            }}
-            onLogout={handleLogout}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'progress' && <ProfileScreen />}
       </View>
     </SafeAreaView>
   );

@@ -10,14 +10,12 @@ import {
   View,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import {
-  GalleryItem,
-  Screen,
-  Species,
-  SpeciesChatResponse,
-} from "../../../types";
+import { GalleryItem, Screen } from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { Tap } from "../../common/Tap";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
@@ -34,27 +32,28 @@ const DETAIL_TABS: [Screen, string][] = [
   ["gallery", "Gallery"],
 ];
 
+// A stable fallback reference — `?? []` inline in a zustand selector would
+// return a *new* array every call, which makes the store look like it
+// changes on every render and causes an infinite update loop.
+const EMPTY_PHOTOS: GalleryItem[] = [];
+
 export function SpeciesDetailScreen({
-  species,
-  screen,
-  photos,
-  token,
-  onTabChange,
   onStartBattle,
-  childId,
-  onChatSend,
-  onBack,
 }: {
-  species: Species;
-  screen: Screen;
-  photos: GalleryItem[];
-  token?: string | null;
-  onTabChange: (s: Screen) => void;
   onStartBattle: () => void;
-  childId?: number;
-  onChatSend?: (question: string) => Promise<SpeciesChatResponse>;
-  onBack: () => void;
 }) {
+  const species = useSelectedSpeciesStore((state) => state.selected);
+  const screen = useNavigationStore((state) => state.screen);
+  const photos = useUserStore(
+    (state) => state.galleryPhotos[species.id] ?? EMPTY_PHOTOS,
+  );
+  const token = useUserStore((state) => state.accessToken);
+  const childId = useUserStore((state) => state.currentUser.id);
+
+  const onTabChange = (next: Screen) => useNavigationStore.getState().open(next);
+  const onBack = () => useNavigationStore.getState().resetTo("collection");
+  const onChatSend = (question: string) =>
+    useUserStore.getState().chatWithSpecies(species.id, question);
   // Tab content lives in a horizontal, paging ScrollView so the user can swipe
   // left/right between tabs, in sync with tapping the tab labels above it.
   const [pageWidth, setPageWidth] = useState(0);

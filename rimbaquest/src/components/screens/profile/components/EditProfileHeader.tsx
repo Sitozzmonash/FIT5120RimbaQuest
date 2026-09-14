@@ -1,32 +1,18 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useNavigationStore } from "../../../../store/useNavigationStore";
-import { useProfileEditStore } from "../../../../store/useProfileEditStore";
-import { useUserStore } from "../../../../store/useUserStore";
 import { Tap } from "../../../common/Tap";
 
-export function ProfileHeader({ title }: { title: string }) {
-  const openEdit = () => {
-    useProfileEditStore.getState().startEditing(useUserStore.getState().currentUser);
-    useNavigationStore.getState().open("profile_edit");
-  };
-
+export function EditProfileHeader({ onBack }: { onBack: () => void }) {
   return (
     <View style={styles.wrap}>
-      <Tap
-        label="Go back"
-        style={styles.navBtn}
-        onPress={() => useNavigationStore.getState().goBack()}
-      >
+      <Tap label="Go back" style={styles.navBtn} onPress={onBack}>
         <MaterialIcons name="chevron-left" size={20} color="#0A4D26" />
       </Tap>
       <Text style={styles.title} numberOfLines={1}>
-        {title}
+        Edit Profile
       </Text>
-      <Tap label="Edit Profile" style={styles.navBtn} onPress={openEdit}>
-        <MaterialIcons name="edit" size={18} color="#0A4D26" />
-      </Tap>
+      <View style={styles.navBtnSpacer} />
     </View>
   );
 }
@@ -52,6 +38,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  navBtnSpacer: { width: 40, height: 40 },
   title: {
     flex: 1,
     textAlign: "center",

@@ -1,14 +1,19 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 // import { DiscoveryStepIndicator } from "./DiscoveryStepIndicator";
 
-export function CameraHeaderBar({ onBack }: { onBack: () => void }) {
+export function CameraHeaderBar() {
   return (
     <View style={styles.headerBar}>
       <View style={styles.navRow}>
-        <Tap label="Go back" style={styles.navBackBtn} onPress={onBack}>
+        <Tap
+          label="Go back"
+          style={styles.navBackBtn}
+          onPress={() => useNavigationStore.getState().goBack()}
+        >
           <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
         </Tap>
         <Text style={styles.brand}>

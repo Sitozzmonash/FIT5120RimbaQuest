@@ -1,6 +1,8 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useLocationsStore } from "../../../store/useLocationsStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { Info } from "../../common/CommonUI";
@@ -8,13 +10,7 @@ import { styles as globalStyles } from "../../../styles/theme";
 import { LocationDetailHeader } from "./components/LocationDetailHeader";
 import { LocationFacilities } from "./components/LocationFacilities";
 
-export function LocationDetailScreen({
-  onBack,
-  onRecordHere,
-}: {
-  onBack: () => void;
-  onRecordHere: (name: string) => void;
-}) {
+export function LocationDetailScreen() {
   const location = useLocationsStore((state) => state.selectedLocation);
   const error = useLocationsStore((state) => state.detailError);
   const loadLocationDetail = useLocationsStore(
@@ -23,9 +19,11 @@ export function LocationDetailScreen({
 
   if (!location) return null;
 
+  const goBack = () => useNavigationStore.getState().goBack();
+
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <LocationDetailHeader onBack={onBack} />
+      <LocationDetailHeader onBack={goBack} />
       <ScrollView contentContainerStyle={globalStyles.content}>
         {error ? (
           <View style={globalStyles.searchEmpty}>
@@ -34,7 +32,7 @@ export function LocationDetailScreen({
               label="Try Again"
               onPress={() => void loadLocationDetail(location)}
             />
-            <Tap label="Back" style={globalStyles.secondary} onPress={onBack}>
+            <Tap label="Back" style={globalStyles.secondary} onPress={goBack}>
               <Text style={globalStyles.secondaryText}>Back</Text>
             </Tap>
           </View>
@@ -82,7 +80,7 @@ export function LocationDetailScreen({
             <PrimaryButton
               label="Record Wildlife Sighting Here"
               style={styles.recordBtn}
-              onPress={() => onRecordHere(location.name)}
+              onPress={() => useDiscoveryStore.getState().start(location.name)}
             />
           </>
         ) : null}
