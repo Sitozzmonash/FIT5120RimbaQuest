@@ -19,7 +19,7 @@ export function VerificationCodeField() {
       <MaterialIcons name="vpn-key" size={20} color="#0A4D26" />
       <TextInput
         style={styles.resetInput}
-        placeholder="6-character code"
+        placeholder="Type all 6 letters or numbers"
         placeholderTextColor="#88A693"
         value={code}
         onChangeText={(val) => setCode(val.toUpperCase())}

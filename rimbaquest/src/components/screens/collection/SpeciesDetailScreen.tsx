@@ -16,6 +16,7 @@ import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { useUserStore } from "../../../store/useUserStore";
 import { useAbilityQuizStore } from "../../../store/useAbilityQuizStore";
+import { useContinueLearningStore } from "../../../store/useContinueLearningStore";
 import { Tap } from "../../common/Tap";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
@@ -59,6 +60,16 @@ export function SpeciesDetailScreen() {
   }, [species.id, token]);
 
   useEffect(() => {
+    useContinueLearningStore.getState().recordActivity(childId, species.id, "view");
+  }, [species.id, childId]);
+
+  useEffect(() => {
+    if (screen === "facts") {
+      useContinueLearningStore.getState().recordActivity(childId, species.id, "fun_facts");
+    }
+  }, [species.id, screen, childId]);
+
+  useEffect(() => {
     if (pageWidth > 0 && activeIndex >= 0) {
       pagerRef.current?.scrollTo({
         x: activeIndex * pageWidth,
@@ -89,7 +100,7 @@ export function SpeciesDetailScreen() {
       </View>
 
       <Tap
-        label={`Enlarge ${species.common_name} illustration`}
+        label={`Make the ${species.common_name} picture bigger`}
         style={styles.detailHeroTap}
         onPress={() => setHeroEnlarged(true)}
       >
@@ -107,7 +118,7 @@ export function SpeciesDetailScreen() {
         onRequestClose={() => setHeroEnlarged(false)}
       >
         <Tap
-          label="Close enlarged illustration"
+          label="Close big picture"
           style={styles.lightboxBackdrop}
           onPress={() => setHeroEnlarged(false)}
         >

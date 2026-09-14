@@ -9,14 +9,14 @@ export function CollectionCaptureBanner() {
     <View style={styles.collectionLevelUpBannerWrap}>
       <View style={styles.collectionLevelUpBanner}>
         <View style={styles.collectionLevelUpCopy}>
-          <Text style={styles.collectionLevelUpTitle}>Capture More</Text>
+          <Text style={styles.collectionLevelUpTitle}>Find More Animals</Text>
           <Text style={styles.collectionLevelUpSubtitle}>
-            Unlock more wildlife species.
+            Take photos and add more.
           </Text>
         </View>
       </View>
       <Tap
-        label="Go to Discover to capture more wildlife"
+        label="Take a photo to find more animals"
         style={styles.collectionCaptureDecor}
         onPress={() => useDiscoveryStore.getState().start()}
       >

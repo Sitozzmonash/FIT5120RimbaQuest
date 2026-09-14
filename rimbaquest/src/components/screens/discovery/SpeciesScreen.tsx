@@ -30,7 +30,7 @@ export function SpeciesScreen() {
 
   const submit = () => {
     if (!pending) {
-      setRequiredMessage("Please choose a species before continuing.");
+      setRequiredMessage("Please choose an animal before you continue.");
       return;
     }
     setRequiredMessage("");
@@ -40,7 +40,7 @@ export function SpeciesScreen() {
   return (
     <View style={styles.page}>
       <DiscoveryHeader
-        title="Confirm Discovery"
+        title="Choose the Animal"
         confirmDiscard
         onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
         disabled={evaluating}

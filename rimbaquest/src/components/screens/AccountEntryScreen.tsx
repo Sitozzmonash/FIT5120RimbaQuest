@@ -42,7 +42,7 @@ export function AccountEntryScreen() {
           <View style={styles.entryTextGroup}>
             <Text style={styles.entryTitle}>Start your wildlife adventure</Text>
             <Text style={styles.entrySubtitle}>
-              Log in to continue your journey or create an account to save your discoveries.
+              Log in to keep exploring, or make an account to save the animals you find.
             </Text>
           </View>
 

@@ -37,7 +37,7 @@ export function CollectionProgressCard() {
             </LinearGradient>
           </View>
         </View>
-        <Text style={styles.collectionProgressLabel}>Wildlife Discovered</Text>
+        <Text style={styles.collectionProgressLabel}>Animals Found</Text>
         <CollectionLevelBar
           found={displayProgress.found}
           total={displayProgress.total}

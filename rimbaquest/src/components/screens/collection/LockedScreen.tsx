@@ -12,7 +12,7 @@ import { Tap } from "../../common/Tap";
 // discovery-hint field in the data model — just restyled to Figma's quoted
 // "Discovery Hint:" format.
 const GENERIC_DISCOVERY_HINT =
-  "Explore parks and nature reserves in KL and the Klang Valley, then record a photo to unlock this Wildlife Card.";
+  "Visit parks around KL and the Klang Valley, then take an animal photo to earn this card.";
 
 export function LockedScreen() {
   const species = useSelectedSpeciesStore((state) => state.selected);
@@ -30,7 +30,7 @@ export function LockedScreen() {
         >
           <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
         </Tap>
-        <Text style={styles.lockedHeaderTitle}>Undiscovered</Text>
+        <Text style={styles.lockedHeaderTitle}>Not Found Yet</Text>
       </View>
 
       <View style={styles.lockedCard}>
@@ -70,13 +70,13 @@ export function LockedScreen() {
           ) : null}
 
           <View style={styles.lockedStatusPill}>
-            <Text style={styles.lockedStatusPillText}>NOT DISCOVERED YET</Text>
+            <Text style={styles.lockedStatusPillText}>NOT FOUND YET</Text>
           </View>
 
           <View style={styles.lockedCardDivider} />
 
           <View style={styles.lockedFieldTight}>
-            <Text style={styles.lockedFieldLabel}>Discovery Hint:</Text>
+            <Text style={styles.lockedFieldLabel}>Where to Look:</Text>
             <Text style={styles.lockedFieldValue}>{species.habitat}</Text>
           </View>
           {/* <View style={styles.lockedField}>
@@ -91,8 +91,8 @@ export function LockedScreen() {
       <View style={styles.lockedMotivationBanner}>
         <MaterialIcons name="explore" size={24} color="#12B347" />
         <Text style={styles.lockedMotivationText}>
-          Keep exploring! Take photo captures out in nature to unlock this
-          creature!
+          Keep exploring! Take a photo of this animal in nature to earn its
+          card!
         </Text>
       </View>
     </ScrollView>

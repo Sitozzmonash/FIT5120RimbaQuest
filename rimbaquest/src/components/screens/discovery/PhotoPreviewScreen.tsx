@@ -19,6 +19,10 @@ export function PhotoPreviewScreen() {
     useNavigationStore.getState().setScreen("photo");
   };
 
+  const handleTryAgain = () => {
+    void useDiscoveryStore.getState().retryPhoto();
+  };
+
   useEffect(() => {
     if (!verifying) return;
     setProgress(12);
@@ -53,7 +57,7 @@ export function PhotoPreviewScreen() {
         <View style={styles.identifyingRow}>
           <View style={styles.pulseDot} />
           <Text style={styles.identifyingText}>
-            AI is identifying this image...
+            Looking for the animal in your photo...
           </Text>
         </View>
         <View style={styles.progressRow}>
@@ -72,22 +76,30 @@ export function PhotoPreviewScreen() {
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.failureCard}>
-            <Text style={styles.failureEyebrow}>UNVERIFIED</Text>
+            <Text style={styles.failureEyebrow}>PHOTO NOT CHECKED</Text>
             <Text style={styles.failureTitle}>
               {verificationError?.kind === "failed"
                 ? "We couldn't check your wildlife photo right now."
-                : "We couldn't verify this animal."}
+                : "We couldn't find an animal in this photo."}
             </Text>
             <Text style={styles.failureText}>
               {verificationError?.kind === "failed"
                 ? "Please try again."
-                : "Please try another wildlife photo."}
+                : "Please try a clearer wildlife photo."}
             </Text>
             <PrimaryButton
               label="Try Again"
               style={styles.tryAgainButton}
-              onPress={handleRetake}
+              onPress={handleTryAgain}
             />
+            <Tap
+              label="Capture Again"
+              style={styles.captureAgainButton}
+              onPress={handleRetake}
+            >
+              <MaterialIcons name="photo-camera" size={18} color="#0A4D26" />
+              <Text style={styles.captureAgainText}>Capture Again</Text>
+            </Tap>
           </View>
         </View>
       </Modal>
@@ -184,4 +196,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tryAgainButton: { width: "100%", marginTop: 8 },
+  captureAgainButton: {
+    width: "100%",
+    minHeight: 50,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: "#0A4D26",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  captureAgainText: { color: "#0A4D26", fontSize: 15, fontWeight: "800" },
 });

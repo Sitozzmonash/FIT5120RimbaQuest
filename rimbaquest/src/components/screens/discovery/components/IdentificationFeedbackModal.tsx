@@ -29,14 +29,14 @@ export function IdentificationFeedbackModal() {
               feedback?.correct ? styles.correctText : styles.incorrectText,
             ]}
           >
-            {feedback?.correct ? "CORRECT!" : "INCORRECT"}
+            {feedback?.correct ? "YOU GOT IT!" : "GOOD TRY!"}
           </Text>
           <Text style={styles.title}>
             {feedback?.correct ? "Great job!" : "Not quite."}
           </Text>
           <Text style={styles.body}>
             This is a {feedback?.verified_species.common_name}, which belongs to
-            the {feedback?.verified_species.category} category.
+            the {feedback?.verified_species.category} animal group.
           </Text>
           {feedback?.explanation ? (
             <Text style={styles.explanation}>{feedback.explanation}</Text>

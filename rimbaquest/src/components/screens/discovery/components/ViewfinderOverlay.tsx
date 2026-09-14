@@ -11,7 +11,7 @@ export function ViewfinderOverlay() {
       <View style={styles.instructionBanner}>
         <View style={styles.pulseDot} />
         <Text style={styles.instructionText}>
-          Point at wildlife & tap to capture
+          Point at an animal and tap the button
         </Text>
       </View>
 
@@ -21,7 +21,7 @@ export function ViewfinderOverlay() {
 
       <View style={styles.disclaimer}>
         <Text style={styles.disclaimerText}>
-          Photo is a personal record, not AI identification
+          Your photo helper will try to find the animal
         </Text>
       </View>
     </View>

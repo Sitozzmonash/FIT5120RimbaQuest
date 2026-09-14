@@ -14,8 +14,8 @@ export function BattleActionBar() {
   return (
     <View style={styles.wrap}>
       <PrimaryButton
-        label="Basic Attack"
-        displayText={isAttacking ? "Attacking…" : "Basic Attack"}
+        label="Quick Attack"
+        displayText={isAttacking ? "Attacking..." : "Quick Attack"}
         icon="bolt"
         loading={isAttacking}
         onPress={() => useBattleStore.getState().attack()}
@@ -77,11 +77,11 @@ export function BattleActionBar() {
                       {name}
                     </Text>
                     <Text style={styles.abilityTooltipText}>
-                      Pass Quiz {slot} to unlock
+                      Finish Quiz {slot} to earn this move
                     </Text>
                   </View>
                   <View style={styles.lockedBadge}>
-                    <Text style={styles.lockedBadgeText}>🔒 Locked</Text>
+                    <Text style={styles.lockedBadgeText}>Not Earned</Text>
                   </View>
                 </View>
               </View>
@@ -91,13 +91,13 @@ export function BattleActionBar() {
       </View>
 
       <Tap
-        label="Give Up"
+        label="Stop Battle"
         style={styles.giveUpBtn}
         disabled={isAttacking}
         onPress={() => useBattleStore.getState().openGiveUpConfirm()}
       >
         <MaterialIcons name="flag" size={15} color="#8C1D24" />
-        <Text style={styles.giveUpText}>Give Up</Text>
+        <Text style={styles.giveUpText}>Stop Battle</Text>
       </Tap>
     </View>
   );

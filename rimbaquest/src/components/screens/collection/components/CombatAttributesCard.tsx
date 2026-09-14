@@ -25,15 +25,15 @@ function StatCard({
 export function CombatAttributesCard({ hp, damage }: { hp: number; damage: number }) {
   return (
     <View style={styles.battleStatHeader}>
-      <Text style={styles.battleStatHeaderTitle}>Card Combat Attributes</Text>
+      <Text style={styles.battleStatHeaderTitle}>Card Power</Text>
       <View style={styles.stats}>
         <StatCard
-          label="HP"
+          label="HEALTH"
           value={hp}
           icon={<MaterialIcons name="favorite" size={26} color="#D9383A" />}
         />
         <StatCard
-          label="DAMAGE"
+          label="ATTACK POWER"
           value={damage}
           icon={<MaterialCommunityIcons name="sword-cross" size={22} color="#4A554D" />}
         />

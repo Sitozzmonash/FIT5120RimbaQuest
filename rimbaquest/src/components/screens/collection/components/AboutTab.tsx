@@ -29,36 +29,36 @@ function DetailField({
 export function AboutTab({ item }: { item: Species }) {
   const role =
     item.category === "Butterfly"
-      ? "Helps pollinate flowering plants while moving between gardens and forest edges."
+      ? "Helps flowers grow by carrying pollen from flower to flower."
       : item.category === "Bird"
-        ? "Helps spread seeds and supports a healthy rainforest food web."
+        ? "Helps new plants grow by carrying seeds to new places."
         : item.category === "Reptile"
-          ? "Helps keep the food web in balance as part of its wetland and forest habitat."
-          : "Plays an important role in Malaysia’s forest food web and healthy habitat.";
+          ? "Helps keep the numbers of other animals in balance."
+          : "Helps keep Malaysia's forests healthy.";
 
   return (
     <>
       <View style={styles.detailBadgeRow}>
         <View style={styles.detailDiscoveredBadge}>
-          <Text style={styles.detailDiscoveredBadgeText}>Discovered</Text>
+          <Text style={styles.detailDiscoveredBadgeText}>Found</Text>
         </View>
         <View style={styles.detailCategoryBadge}>
           <Text style={styles.detailCategoryBadgeText}>{item.category}</Text>
         </View>
       </View>
       <DetailField
-        label="Scientific Name"
+        label="Science Name"
         value={item.scientific_name}
         italic
       />
       {item.act716_status ? (
-        <DetailField label="Protection Status" value={item.act716_status} />
+        <DetailField label="Protection Level" value={item.act716_status} />
       ) : null}
       {item.habitat ? (
-        <DetailField label="Habitat" value={item.habitat} />
+        <DetailField label="Where It Lives" value={item.habitat} />
       ) : null}
-      {item.diet ? <DetailField label="Diet" value={item.diet} /> : null}
-      <DetailField label="Ecological Role" value={role} />
+      {item.diet ? <DetailField label="What It Eats" value={item.diet} /> : null}
+      <DetailField label="How It Helps Nature" value={role} />
       {item.fun_fact ? (
         <DetailField label="About" value={item.fun_fact} />
       ) : null}

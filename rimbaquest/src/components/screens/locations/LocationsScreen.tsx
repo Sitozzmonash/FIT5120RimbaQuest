@@ -36,9 +36,9 @@ export function LocationsScreen() {
   }, [locations, search, categoryFilter]);
 
   const emptyMessage = search.trim()
-    ? 'No matching locations found.'
+    ? 'We could not find a place with that name.'
     : categoryFilter !== 'All'
-      ? 'No locations found for this wildlife category.'
+      ? 'We could not find a place for this animal group.'
       : null;
 
   const handleSelectLocation = (loc: LocationItem) => {
@@ -57,7 +57,7 @@ export function LocationsScreen() {
           <View style={styles.centerState}>
             <ActivityIndicator color="#0BA84A" />
             <Text style={styles.centerStateSubtitle}>
-              Loading wildlife locations...
+              Finding places to see animals...
             </Text>
           </View>
         ) : !hasLocations ? (

@@ -17,7 +17,7 @@ export function ConfirmPasswordField() {
 
   return (
     <View style={styles.createField}>
-      <Text style={styles.createFieldLabel}>Confirm Password *</Text>
+      <Text style={styles.createFieldLabel}>Type Your Password Again *</Text>
       <View
         style={[styles.createInputBox, error && styles.createInputBoxError]}
       >
@@ -26,14 +26,14 @@ export function ConfirmPasswordField() {
           control={control}
           name="confirmPassword"
           rules={{
-            required: "Please confirm your password.",
+            required: "Please type your password again.",
             validate: (value) =>
               value === getValues("password") || "Passwords do not match.",
           }}
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
               style={styles.createInput}
-              placeholder="Confirm password"
+              placeholder="Type the same password"
               placeholderTextColor="#6A9B7D"
               value={value}
               onChangeText={onChange}
@@ -44,7 +44,7 @@ export function ConfirmPasswordField() {
         />
         <Tap
           label={
-            showConfirm ? "Hide confirm password" : "Show confirm password"
+            showConfirm ? "Hide repeated password" : "Show repeated password"
           }
           style={styles.createEyeToggle}
           onPress={() => setShowConfirm((v) => !v)}

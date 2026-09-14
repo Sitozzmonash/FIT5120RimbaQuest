@@ -23,7 +23,7 @@ export function AbilityCard({
           Ability {slot}: {name}
         </Text>
         <Text style={[styles.hint, isUnlocked && styles.hintUnlocked]}>
-          {isUnlocked ? "Ready for Battle" : "Locked"}
+          {isUnlocked ? "Ready to Use" : "Earn It with a Quiz"}
         </Text>
       </View>
 
@@ -33,7 +33,7 @@ export function AbilityCard({
           style={styles.unlockBtn}
           onPress={onUnlock}
         >
-          <Text style={styles.unlockBtnText}>Unlock</Text>
+          <Text style={styles.unlockBtnText}>Take Quiz</Text>
         </Tap>
       ) : (
         <View style={styles.lockedIconWrap}>

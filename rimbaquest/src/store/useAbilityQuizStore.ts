@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { API_BASE } from "../constants/config";
 import { QuizDifficulty, QuizQuestion, QuizResult, Species } from "../types";
+import { useContinueLearningStore } from "./useContinueLearningStore";
 import { useNavigationStore } from "./useNavigationStore";
 import { useUserStore } from "./useUserStore";
 
@@ -79,11 +80,9 @@ async function loadQuizQuestions(
       { headers: useUserStore.getState().authHeaders() },
     );
     if (!res.ok) {
-      const err = await res
-        .json()
-        .catch(() => ({ detail: "Failed to load quiz" }));
+      await res.json().catch(() => ({}));
       useAbilityQuizStore.setState({
-        errorMsg: err.detail || "Quiz locked or unavailable.",
+        errorMsg: "We couldn't get this quiz ready. Please try again.",
         loadingQuiz: false,
       });
       return;
@@ -96,7 +95,7 @@ async function loadQuizQuestions(
     });
   } catch {
     useAbilityQuizStore.setState({
-      errorMsg: "Network error loading quiz.",
+      errorMsg: "We couldn't get this quiz ready. Please try again.",
       loadingQuiz: false,
     });
   }
@@ -242,13 +241,18 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       );
       const data = await res.json();
       set({ result: data, submitting: false });
+      if (res.ok) {
+        useContinueLearningStore
+          .getState()
+          .recordActivity(useUserStore.getState().currentUser.id, activeSpecies.id, "quiz");
+      }
       if (data.passed) {
         await get().fetchProgression(activeSpecies.id);
       }
     } catch {
       set({
         submitting: false,
-        errorMsg: "Failed to submit quiz. Please try again.",
+        errorMsg: "We couldn't check your answers. Please try again.",
       });
     }
   },

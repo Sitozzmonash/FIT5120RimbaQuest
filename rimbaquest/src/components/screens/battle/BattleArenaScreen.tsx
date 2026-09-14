@@ -22,7 +22,7 @@ export function BattleArenaScreen() {
   if (!card) return null;
 
   const title =
-    battleOutcome === "win" ? "Victory" : battleOutcome === "lose" ? "Defeat" : "Battle Arena";
+    battleOutcome === "win" ? "You Won" : battleOutcome === "lose" ? "Good Try" : "Card Battle";
 
   return (
     <View style={styles.root}>

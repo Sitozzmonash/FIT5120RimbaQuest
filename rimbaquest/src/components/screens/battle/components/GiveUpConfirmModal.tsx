@@ -20,10 +20,9 @@ export function GiveUpConfirmModal() {
           <View style={styles.iconWrap}>
             <MaterialIcons name="warning-amber" size={26} color="#E8541A" />
           </View>
-          <Text style={styles.title}>Give up this battle?</Text>
+          <Text style={styles.title}>Stop this battle?</Text>
           <Text style={styles.message}>
-            Your Wildlife Card will be recorded as defeated and the battle
-            will end right away.
+            Your animal card will lose, and the battle will end now.
           </Text>
           <View style={styles.actions}>
             <PrimaryButton
@@ -31,11 +30,11 @@ export function GiveUpConfirmModal() {
               onPress={() => useBattleStore.getState().closeGiveUpConfirm()}
             />
             <Tap
-              label="Give up battle"
+              label="Stop battle"
               style={styles.giveUpBtn}
               onPress={() => useBattleStore.getState().giveUp()}
             >
-              <Text style={styles.giveUpText}>Yes, Give Up</Text>
+              <Text style={styles.giveUpText}>Yes, Stop</Text>
             </Tap>
           </View>
         </View>

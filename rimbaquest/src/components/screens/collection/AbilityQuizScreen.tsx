@@ -28,14 +28,14 @@ export function AbilityQuizScreen() {
     <View style={styles.root}>
       <View style={styles.headerBar}>
         <Text style={styles.headerTitle} numberOfLines={1}>
-          Prove Your Knowledge!
+          Animal Quiz
         </Text>
         <Tap
-          label="Give up this challenge"
+          label="Stop this quiz"
           style={styles.giveUpBtn}
           onPress={() => useAbilityQuizStore.getState().openGiveUpConfirm()}
         >
-          <Text style={styles.giveUpBtnText}>Give Up</Text>
+          <Text style={styles.giveUpBtnText}>Stop</Text>
         </Tap>
       </View>
 
@@ -53,7 +53,7 @@ export function AbilityQuizScreen() {
         {loadingQuiz ? (
           <View style={styles.centerBox}>
             <ActivityIndicator size="large" color="#0A4D26" />
-            <Text style={styles.hintText}>Loading your challenge...</Text>
+            <Text style={styles.hintText}>Getting your questions ready...</Text>
           </View>
         ) : errorMsg ? (
           <View style={styles.errorBox}>
@@ -113,7 +113,7 @@ export function AbilityQuizScreen() {
             <Text style={styles.backBtnText}>Back</Text>
           </Tap>
           <Tap
-            label={isLastQuestion ? "Submit Quiz" : "Next"}
+            label={isLastQuestion ? "Check My Answers" : "Next"}
             style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
             disabled={!selected || submitting}
             onPress={() => useAbilityQuizStore.getState().goNext()}
@@ -122,7 +122,7 @@ export function AbilityQuizScreen() {
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.nextBtnText}>
-                {isLastQuestion ? "Submit Quiz" : "Next"}
+                {isLastQuestion ? "Check My Answers" : "Next"}
               </Text>
             )}
           </Tap>

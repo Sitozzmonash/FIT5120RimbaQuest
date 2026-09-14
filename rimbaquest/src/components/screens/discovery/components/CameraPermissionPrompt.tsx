@@ -25,22 +25,22 @@ export function CameraPermissionPrompt({
         <MaterialIcons name="chevron-left" size={20} color="#FFFFFF" />
       </Tap>
       <Text style={styles.title}>
-        Point your camera at the wildlife, then take a photo or choose one from
-        your gallery.
+        Point your camera at an animal, then take a photo or choose one you
+        already have.
       </Text>
       {photoError ? <Text style={styles.errorBanner}>{photoError}</Text> : null}
       <PrimaryButton
-        label="Allow Camera"
+        label="Use Camera"
         style={styles.primaryBtn}
         onPress={onRequestPermission}
       />
       <Tap
-        label="Choose from device gallery"
+        label="Choose a photo"
         style={styles.secondaryBtn}
         onPress={onPickFromGallery}
       >
         <MaterialIcons name="photo-library" size={16} color="#1A1A1A" />
-        <Text style={styles.secondaryText}>Choose from Device Gallery</Text>
+        <Text style={styles.secondaryText}>Choose a Photo</Text>
       </Tap>
     </View>
   );
