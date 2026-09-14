@@ -2,7 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tap } from "../../../common/Tap";
-import { DiscoveryStepIndicator } from "./DiscoveryStepIndicator";
+// import { DiscoveryStepIndicator } from "./DiscoveryStepIndicator";
 
 export function CameraHeaderBar({ onBack }: { onBack: () => void }) {
   return (
@@ -16,7 +16,7 @@ export function CameraHeaderBar({ onBack }: { onBack: () => void }) {
         </Text>
         <View style={styles.navSpacer} />
       </View>
-      <DiscoveryStepIndicator step={1} variant="dark" />
+      {/* <DiscoveryStepIndicator step={1} variant="dark" /> */}
     </View>
   );
 }

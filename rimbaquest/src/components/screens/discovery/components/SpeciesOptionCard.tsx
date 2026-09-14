@@ -47,8 +47,7 @@ export function SpeciesOptionCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: "48.5%",
-    height: 158,
+    flex: 1,
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,

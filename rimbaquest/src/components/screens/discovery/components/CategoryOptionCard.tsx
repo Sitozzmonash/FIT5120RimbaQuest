@@ -14,18 +14,25 @@ export function CategoryOptionCard({
   label,
   description,
   selected,
+  disabled,
   onPress,
 }: {
   image: ImageSourcePropType;
   label: string;
   description: string;
   selected: boolean;
+  disabled?: boolean;
   onPress: () => void;
 }) {
   return (
     <Tap
       label={selected ? `${label} (selected)` : `Choose ${label}`}
-      style={[styles.card, selected && styles.cardSelected]}
+      style={[
+        styles.card,
+        selected && styles.cardSelected,
+        disabled && !selected && styles.cardDisabled,
+      ]}
+      disabled={disabled}
       onPress={onPress}
     >
       <View style={styles.thumbWrap}>
@@ -60,6 +67,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardSelected: { borderWidth: 2, borderColor: "#0A4D26" },
+  cardDisabled: { opacity: 0.4 },
   thumbWrap: { width: 90, maxHeight: 90, backgroundColor: "#E4E8E5" },
   image: { width: "100%", height: "100%" },
   check: {

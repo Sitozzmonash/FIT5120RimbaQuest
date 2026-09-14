@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { DiscoverySession, Species } from "../../../types";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
-import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
 import { PhotoPreview } from "./components/PhotoPreview";
+import { CategoryCaptureBanner } from "./components/CategoryCaptureBanner";
 import { SpeciesGrid } from "./components/SpeciesGrid";
 import { IdentificationFeedbackModal } from "./components/IdentificationFeedbackModal";
 
@@ -67,16 +67,15 @@ export function SpeciesScreen({
         disabled={evaluating}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <View style={styles.content}>
         <PhotoPreview photo={photo} />
 
-        <View style={styles.categoryPill}>
-          <Text style={styles.categoryPillText}>{category}</Text>
+        <View style={styles.headline}>
+          <CategoryCaptureBanner category={category} />
+          <Text style={styles.title}>
+            Which species matches what you see?
+          </Text>
         </View>
-
-        <Text style={styles.title}>
-          What species do you think matches what you see?
-        </Text>
 
         <SpeciesGrid
           speciesList={speciesList}
@@ -89,28 +88,17 @@ export function SpeciesScreen({
         />
 
         {requiredMessage || errorMessage ? (
-          <Text style={styles.errorText}>
+          <Text style={styles.errorText} numberOfLines={2}>
             {requiredMessage || errorMessage}
           </Text>
         ) : null}
-      </ScrollView>
+      </View>
 
-      <View style={styles.bottomBar}>
-        <Tap
-          label="Not sure"
-          style={styles.notSureButton}
-          disabled={evaluating}
-          onPress={() =>
-            setRequiredMessage("Please choose a species before continuing.")
-          }
-        >
-          <Text style={styles.notSureText}>Not Sure</Text>
-        </Tap>
+      <View style={styles.footer}>
         <PrimaryButton
           label={evaluating ? "Checking..." : "Continue"}
           loading={evaluating}
           disabled={evaluating}
-          style={styles.continueButton}
           onPress={submit}
         />
       </View>
@@ -125,42 +113,20 @@ export function SpeciesScreen({
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#FFFFFF" },
-  content: { padding: 16, gap: 16, paddingBottom: 24 },
-  categoryPill: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: "#CDE8D4",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: "#F2FBF4",
-  },
-  categoryPillText: { color: "#1A1A1A", fontSize: 13, fontWeight: "800" },
-  title: { color: "#1A1A1A", fontSize: 21, lineHeight: 28, fontWeight: "900" },
+  content: { flex: 1, padding: 16, gap: 12 },
+  headline: { gap: 1 },
+  title: { color: "#1A1A1A", fontSize: 22, lineHeight: 28, fontWeight: "900" },
   errorText: {
     color: "#B3261E",
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: "700",
     textAlign: "center",
   },
-  bottomBar: {
-    flexDirection: "row",
-    gap: 12,
+  footer: {
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingTop: 4,
     paddingBottom: 24,
     backgroundColor: "#FFFFFF",
   },
-  notSureButton: {
-    width: 120,
-    height: 52,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: "#0A5D2C",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notSureText: { color: "#0A5D2C", fontSize: 15, fontWeight: "800" },
-  continueButton: { flex: 1 },
 });

@@ -371,7 +371,7 @@ export default function RimbaQuest() {
       const verified = await useDiscoveryStore
         .getState()
         .submitPhoto(uri, mimeType, currentUser.id, accessToken, expireSession);
-      if (verified) setScreen('category');
+      if (verified) setScreen('species');
     })();
   };
 

@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { DISCOVERY_CATEGORY_IMAGES } from "../../../constants/images";
 import { CATEGORIES, CATEGORY_APPEARANCE } from "../../../constants/seed";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
-import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
+// import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
 import { CategoryOptionCard } from "./components/CategoryOptionCard";
@@ -20,20 +20,18 @@ export function CategoryScreen({
   onBack: () => void;
   onDiscard: () => void;
 }) {
-  const category = useDiscoveryStore((state) => state.category);
-  const [pending, setPending] = useState<string | null>(
-    CATEGORIES.includes(category) ? category : null,
-  );
-  const [requiredMessage, setRequiredMessage] = useState("");
+  const candidates = useDiscoveryStore((state) => state.verificationCandidates);
+
+  const detectedCategory = candidates[0]?.category ?? null;
+
+  useEffect(() => {
+    if (detectedCategory)
+      useDiscoveryStore.getState().setCategory(detectedCategory);
+  }, [detectedCategory]);
 
   const handleNext = () => {
-    if (!pending) {
-      setRequiredMessage("Please choose an animal group before continuing.");
-      return;
-    }
-    const store = useDiscoveryStore.getState();
-    store.setCategory(pending);
-    store.setIdentificationError(null);
+    if (!detectedCategory) return;
+    useDiscoveryStore.getState().setIdentificationError(null);
     onNext();
   };
 
@@ -46,11 +44,13 @@ export function CategoryScreen({
         onDiscard={onDiscard}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        <DiscoveryStepIndicator step={2} />
+        {/* <DiscoveryStepIndicator step={2} /> */}
 
         <View style={styles.intro}>
-          <Text style={styles.title}>Choose a Wildlife Category</Text>
-          <Text style={styles.subtitle}>What type of animal did you see?</Text>
+          <Text style={styles.title}>Wildlife Category</Text>
+          <Text style={styles.subtitle}>
+            Based on your photo, here's the animal group we detected.
+          </Text>
         </View>
 
         <PhotoPreview photo={photo} />
@@ -66,22 +66,24 @@ export function CategoryScreen({
               }
               label={`${item}s`}
               description={CATEGORY_APPEARANCE[item] ?? ""}
-              selected={pending === item}
-              onPress={() => {
-                setPending(item);
-                setRequiredMessage("");
-              }}
+              selected={detectedCategory === item}
+              disabled
+              onPress={() => {}}
             />
           ))}
         </View>
-        {requiredMessage ? (
-          <Text style={styles.requiredMessage}>{requiredMessage}</Text>
+        {!detectedCategory ? (
+          <Text style={styles.requiredMessage}>
+            We couldn't detect an animal group for this photo. Please try
+            another wildlife photo.
+          </Text>
         ) : null}
       </ScrollView>
 
       <DiscoveryBottomNav
         onBack={onBack}
         nextLabel="Next"
+        nextDisabled={!detectedCategory}
         onNext={handleNext}
       />
     </View>

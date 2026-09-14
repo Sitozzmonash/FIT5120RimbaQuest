@@ -11,7 +11,6 @@ import { PhotoPreview } from "./components/PhotoPreview";
 import { InfoCard } from "./components/InfoCard";
 import { LocationEditSheet } from "./components/LocationEditSheet";
 import { AiDetectionNotice } from "./components/AiDetectionNotice";
-import { CandidateCarousel } from "./components/CandidateCarousel";
 import { ConfirmationPrompt } from "./components/ConfirmationPrompt";
 
 export function ConfirmScreen({
@@ -31,7 +30,6 @@ export function ConfirmScreen({
   onBack: () => void;
   onDiscard: () => void;
 }) {
-  const candidates = useDiscoveryStore((state) => state.verificationCandidates);
   const discoveryLocation = useDiscoveryStore(
     (state) => state.discoveryLocation,
   );
@@ -95,15 +93,12 @@ export function ConfirmScreen({
 
         <PhotoPreview photo={photo} />
 
-        <View style={styles.categoryPill}>
-          <Text style={styles.categoryPillText}>{selected.category}</Text>
+        <View style={styles.speciesHeader}>
+          <Text style={styles.speciesName}>{selected.common_name}</Text>
+          <View style={styles.categoryPill}>
+            <Text style={styles.categoryPillText}>{selected.category}</Text>
+          </View>
         </View>
-
-        <Text style={styles.matchTitle}>
-          Your discovery matches this species
-        </Text>
-
-        <CandidateCarousel candidates={candidates} verifiedId={selected.id} />
 
         <View style={styles.infoSection}>
           <InfoCard
@@ -143,6 +138,13 @@ export function ConfirmScreen({
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#FFFFFF" },
   content: { padding: 16, gap: 16 },
+  speciesHeader: { gap: 6 },
+  speciesName: {
+    color: "#1A1A1A",
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: "800",
+  },
   categoryPill: {
     alignSelf: "flex-start",
     backgroundColor: "#E8F5EE",
@@ -151,12 +153,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   categoryPillText: { color: "#12B347", fontSize: 12, fontWeight: "800" },
-  matchTitle: {
-    color: "#1A1A1A",
-    fontSize: 20,
-    lineHeight: 26,
-    fontWeight: "900",
-  },
   infoSection: { gap: 12 },
   errorBox: {
     borderWidth: 1,

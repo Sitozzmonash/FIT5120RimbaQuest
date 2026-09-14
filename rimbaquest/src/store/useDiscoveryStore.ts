@@ -293,11 +293,13 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
           "We couldn't check your wildlife photo right now. Please try again.",
         );
       }
+      const candidates = data.candidates as Species[];
       set({
         verificationId: String(data.verification_id),
-        verificationCandidates: data.candidates as Species[],
+        verificationCandidates: candidates,
         verificationPhotoUrl:
           typeof data.photo_url === "string" ? data.photo_url : null,
+        category: candidates[0]?.category ?? "",
       });
       return true;
     } catch (error) {
