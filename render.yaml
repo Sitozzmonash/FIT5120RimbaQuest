@@ -24,6 +24,15 @@ services:
         value: us-east-2
       - key: DATABASE_STORAGE_BUCKET
         value: image
+      # Epic 6: stored only in Render, never in the Expo client or git.
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: DEEPSEEK_CHAT_MODEL
+        value: deepseek-chat
+      # Public GBIF taxonomy lookup only; other external sources are reviewed
+      # evidence records rather than runtime web scraping.
+      - key: GBIF_API_ENABLED
+        value: "true"
       - key: ZHIPU_API_KEY
         sync: false
       - key: ZHIPU_VISION_MODEL

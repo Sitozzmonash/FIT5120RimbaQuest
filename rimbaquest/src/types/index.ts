@@ -123,11 +123,21 @@ export type SpeciesChatMessage = {
   id: string;
   role: 'assistant' | 'user';
   content: string;
+  citations?: SpeciesChatCitation[];
+};
+
+export type SpeciesChatCitation = {
+  source_id: string;
+  source_name: string;
+  source_url?: string | null;
+  excerpt: string;
 };
 
 export type SpeciesChatResponse = {
+  species_id: string;
   answer: string;
   suggested_questions?: string[];
+  citations?: SpeciesChatCitation[];
 };
 
 export type QuizDifficulty = 'easy' | 'medium' | 'hard';

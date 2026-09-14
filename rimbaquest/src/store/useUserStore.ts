@@ -6,6 +6,7 @@ import {
   GalleryItem,
   RecentCapture,
   Screen,
+  SpeciesChatCitation,
   SpeciesChatResponse,
   UserProfile,
 } from "../types";
@@ -25,6 +26,9 @@ export const GUEST_USER: UserProfile = {
   xp: 0,
   level: 1,
 };
+
+const CHAT_SERVICE_FAILURE_MESSAGE =
+  "I couldn’t answer that right now. Please try again.";
 
 function isHttpPhotoUrl(url?: string | null): boolean {
   return Boolean(url && /^https?:\/\//i.test(url));
@@ -343,7 +347,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
     if (!response.ok) {
       throw new Error(
-        apiMessage(data, "I couldn't answer that right now. Please try again."),
+        apiMessage(data, CHAT_SERVICE_FAILURE_MESSAGE),
       );
     }
     if (
@@ -351,18 +355,53 @@ export const useUserStore = create<UserStore>((set, get) => ({
       typeof data !== "object" ||
       !("answer" in data) ||
       typeof data.answer !== "string" ||
-      !data.answer.trim()
+      !data.answer.trim() ||
+      !("species_id" in data) ||
+      typeof data.species_id !== "string" ||
+      data.species_id !== speciesId
     ) {
-      throw new Error("I couldn't answer that right now. Please try again.");
+      // A mismatched response must never appear on the Wildlife Card that is
+      // currently open, even if a proxy/cache ever sends the wrong payload.
+      throw new Error(CHAT_SERVICE_FAILURE_MESSAGE);
     }
     void get().refreshRecentCaptures();
     const suggestions =
       "suggested_questions" in data ? data.suggested_questions : undefined;
+    const rawCitations = "citations" in data ? data.citations : undefined;
+    const citations: SpeciesChatCitation[] | undefined = Array.isArray(rawCitations)
+      ? rawCitations
+          .slice(0, 3)
+          .filter(
+            (item): item is Record<string, unknown> =>
+              Boolean(item) && typeof item === "object",
+          )
+          .map((item) => ({
+            source_id:
+              typeof item.source_id === "string"
+                ? item.source_id.trim().slice(0, 40)
+                : "",
+            source_name:
+              typeof item.source_name === "string"
+                ? item.source_name.trim().slice(0, 200)
+                : "",
+            source_url:
+              typeof item.source_url === "string" && /^https:\/\//i.test(item.source_url)
+                ? item.source_url
+                : null,
+            excerpt:
+              typeof item.excerpt === "string"
+                ? item.excerpt.trim().slice(0, 700)
+                : "",
+          }))
+          .filter((item) => item.source_id && item.source_name && item.excerpt)
+      : undefined;
     return {
+      species_id: data.species_id,
       answer: data.answer,
       suggested_questions: Array.isArray(suggestions)
         ? suggestions.filter((item): item is string => typeof item === "string")
         : undefined,
+      citations,
     };
   },
 }));

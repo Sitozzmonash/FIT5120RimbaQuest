@@ -14,6 +14,7 @@ from app.services.activity import record_species_activity
 from app.services.chatbot import (
     DeepSeekChatUnavailable,
     EMPTY_QUESTION_MESSAGE,
+    ExternalEvidenceUnavailable,
     SERVICE_FAILURE_MESSAGE,
     answer_species_question,
 )
@@ -62,14 +63,42 @@ def chat_about_discovered_species(
                     WHERE is_active=TRUE AND id <> :species_id"""),
             {"species_id": species_id},
         ))
+        # The team has confirmed that the Iteration 2 facts are reviewed.
+        # Keep the status predicate here as a second layer of protection: a
+        # future draft cannot enter the provider context merely because it is
+        # linked to the right species.
+        fun_facts = rows(connection.execute(
+            text("""SELECT id, fact_text, verification_status, verified_by
+                    FROM species_fun_facts
+                    WHERE species_id=:species_id
+                      AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
+                    ORDER BY display_order ASC"""),
+            {"species_id": species_id},
+        ))
+        external_evidence = rows(connection.execute(
+            text("""SELECT id, source_id, source_url, topic, excerpt,
+                           verification_status, verified_by, verified_at
+                    FROM species_chat_evidence
+                    WHERE species_id=:species_id
+                      AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
+                    ORDER BY verified_at DESC, id DESC"""),
+            {"species_id": species_id},
+        ))
 
     try:
-        reply = answer_species_question(payload.question, dict(current), other_species, trace_id=trace_id)
+        reply = answer_species_question(
+            payload.question,
+            dict(current),
+            other_species,
+            fun_facts=fun_facts,
+            external_evidence=external_evidence,
+            trace_id=trace_id,
+        )
     except ValueError as error:
         if str(error) == "empty_question":
             raise HTTPException(status.HTTP_400_BAD_REQUEST, EMPTY_QUESTION_MESSAGE) from error
         raise
-    except DeepSeekChatUnavailable as error:
+    except (DeepSeekChatUnavailable, ExternalEvidenceUnavailable) as error:
         logger.warning("species_chat_failed trace_id=%s child_id=%s species_id=%s reason=%s", trace_id, child_id, species_id, error)
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, SERVICE_FAILURE_MESSAGE) from error
 
@@ -83,4 +112,13 @@ def chat_about_discovered_species(
         answer=reply.answer,
         source=reply.source,
         fallback=reply.fallback,
+        citations=[
+            {
+                "source_id": citation.source_id,
+                "source_name": citation.source_name,
+                "source_url": citation.source_url,
+                "excerpt": citation.excerpt,
+            }
+            for citation in reply.citations
+        ],
     )

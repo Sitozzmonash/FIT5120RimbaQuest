@@ -9,12 +9,13 @@ from typing import Any
 
 from sqlalchemy import Connection, Table, select
 
-from app.core.config import ITERATION_2_FUN_FACTS_PILOT, SEED_SQL
+from app.core.config import ITERATION_2_CHAT_EVIDENCE, ITERATION_2_FUN_FACTS_PILOT, SEED_SQL
 from app.core.schema import (
     app_metadata,
     locations,
     quizzes,
     species,
+    species_chat_evidence,
     species_fun_facts,
     species_fun_fact_sources,
     species_images,
@@ -157,25 +158,83 @@ def seed_iteration_one(connection: Connection) -> None:
         )
 
 
-def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
-    """Load the reviewable Iteration 2 fun-fact pilot without changing I1 data.
+def _set_metadata(connection: Connection, key: str, value: str) -> None:
+    """Upsert a small seeding marker without relying on database-specific SQL."""
+    existing = connection.execute(
+        select(app_metadata.c.key).where(app_metadata.c.key == key)
+    ).first()
+    if existing:
+        connection.execute(app_metadata.update().where(app_metadata.c.key == key).values(value=value))
+    else:
+        connection.execute(app_metadata.insert().values(key=key, value=value))
 
-    The facts deliberately retain ``source-linked-draft`` status.  A team
-    member must approve them before a future child-facing endpoint exposes
-    them as verified content.
+
+def _seed_key(*parts: object) -> str:
+    """Use JSON rather than a delimiter so URLs cannot make ambiguous keys."""
+    return json.dumps(list(parts), ensure_ascii=False, separators=(",", ":"))
+
+
+def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
+    raw_value = connection.execute(
+        select(app_metadata.c.value).where(app_metadata.c.key == key)
+    ).scalar_one_or_none()
+    if not raw_value:
+        return set()
+    try:
+        decoded = json.loads(raw_value)
+    except (TypeError, json.JSONDecodeError):
+        return set()
+    return {item for item in decoded if isinstance(item, str)} if isinstance(decoded, list) else set()
+
+
+def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
+    """Load team-verified Fun Facts and revoke removed seed-owned records.
+
+    The team has confirmed the existing corpus as reviewed.  Individual
+    verification dates were not supplied, so we retain null dates rather than
+    manufacturing historical audit data; the group reviewer is recorded in
+    the source JSON.
     """
     if not ITERATION_2_FUN_FACTS_PILOT.exists():
         return
 
     seed_version = hashlib.sha256(ITERATION_2_FUN_FACTS_PILOT.read_bytes()).hexdigest()
     version_key = "iteration_2_fun_facts_pilot_sha256"
+    keys_key = "iteration_2_fun_facts_pilot_seed_keys"
     current_version = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == version_key)
     ).scalar_one_or_none()
+    records = json.loads(ITERATION_2_FUN_FACTS_PILOT.read_text(encoding="utf-8"))
+    current_keys = {
+        _seed_key(record["species_id"], record["display_order"])
+        for record in records
+    }
+
+    # A database first deployed before this reconciliation feature has no key
+    # list.  Establish its baseline without treating all historic rows as
+    # withdrawn; later seed revisions can safely revoke removed records.
     if current_version == seed_version:
+        if not connection.execute(select(app_metadata.c.key).where(app_metadata.c.key == keys_key)).first():
+            _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))
         return
 
-    records = json.loads(ITERATION_2_FUN_FACTS_PILOT.read_text(encoding="utf-8"))
+    previous_keys = _previous_seed_keys(connection, keys_key)
+    for stale_key in previous_keys - current_keys:
+        try:
+            species_id, display_order = json.loads(stale_key)
+        except (TypeError, ValueError):
+            continue
+        if not isinstance(species_id, str) or not isinstance(display_order, int):
+            continue
+        connection.execute(
+            species_fun_facts.update()
+            .where(
+                (species_fun_facts.c.species_id == species_id)
+                & (species_fun_facts.c.display_order == display_order)
+            )
+            .values(verification_status="revoked")
+        )
+
     for record in records:
         values = {
             **{key: value for key, value in record.items() if key != "additional_sources"},
@@ -214,7 +273,76 @@ def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
             else:
                 connection.execute(species_fun_fact_sources.insert().values(**source_values))
 
-    if connection.execute(select(app_metadata.c.key).where(app_metadata.c.key == version_key)).first():
-        connection.execute(app_metadata.update().where(app_metadata.c.key == version_key).values(value=seed_version))
-    else:
-        connection.execute(app_metadata.insert().values(key=version_key, value=seed_version))
+    _set_metadata(connection, version_key, seed_version)
+    _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))
+
+
+def seed_iteration_two_chat_evidence(connection: Connection) -> None:
+    """Load reviewed whitelist excerpts and revoke records removed from JSON.
+
+    The repository starts with an empty list because every externally sourced
+    excerpt needs a named reviewer and review timestamp. This is a data-review
+    workflow, not arbitrary runtime web scraping.
+    """
+    if not ITERATION_2_CHAT_EVIDENCE.exists():
+        return
+
+    seed_version = hashlib.sha256(ITERATION_2_CHAT_EVIDENCE.read_bytes()).hexdigest()
+    version_key = "iteration_2_chat_evidence_sha256"
+    keys_key = "iteration_2_chat_evidence_seed_keys"
+    current_version = connection.execute(
+        select(app_metadata.c.value).where(app_metadata.c.key == version_key)
+    ).scalar_one_or_none()
+    records = json.loads(ITERATION_2_CHAT_EVIDENCE.read_text(encoding="utf-8"))
+    current_keys = {
+        _seed_key(record["species_id"], record["source_id"], record["source_url"], record["topic"])
+        for record in records
+    }
+    if current_version == seed_version:
+        if not connection.execute(select(app_metadata.c.key).where(app_metadata.c.key == keys_key)).first():
+            _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))
+        return
+
+    previous_keys = _previous_seed_keys(connection, keys_key)
+    for stale_key in previous_keys - current_keys:
+        try:
+            species_id, source_id, source_url, topic = json.loads(stale_key)
+        except (TypeError, ValueError):
+            continue
+        if not all(isinstance(value, str) for value in (species_id, source_id, source_url, topic)):
+            continue
+        connection.execute(
+            species_chat_evidence.update()
+            .where(
+                (species_chat_evidence.c.species_id == species_id)
+                & (species_chat_evidence.c.source_id == source_id)
+                & (species_chat_evidence.c.source_url == source_url)
+                & (species_chat_evidence.c.topic == topic)
+            )
+            .values(verification_status="revoked")
+        )
+
+    for record in records:
+        values = {
+            **record,
+            "retrieved_at": datetime.fromisoformat(record["retrieved_at"].replace("Z", "+00:00")),
+            "verified_at": (
+                datetime.fromisoformat(record["verified_at"].replace("Z", "+00:00"))
+                if record.get("verified_at")
+                else None
+            ),
+        }
+        predicate = (
+            (species_chat_evidence.c.species_id == values["species_id"])
+            & (species_chat_evidence.c.source_id == values["source_id"])
+            & (species_chat_evidence.c.source_url == values["source_url"])
+            & (species_chat_evidence.c.topic == values["topic"])
+        )
+        existing = connection.execute(select(species_chat_evidence.c.id).where(predicate)).first()
+        if existing:
+            connection.execute(species_chat_evidence.update().where(predicate).values(**values))
+        else:
+            connection.execute(species_chat_evidence.insert().values(**values))
+
+    _set_metadata(connection, version_key, seed_version)
+    _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))

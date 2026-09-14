@@ -8,7 +8,11 @@ from sqlalchemy.engine import Engine
 
 from app.core.config import DATABASE_URL
 from app.core.schema import metadata
-from app.core.seed import seed_iteration_one, seed_iteration_two_fun_facts_pilot
+from app.core.seed import (
+    seed_iteration_one,
+    seed_iteration_two_chat_evidence,
+    seed_iteration_two_fun_facts_pilot,
+)
 
 
 def _engine() -> Engine:
@@ -41,6 +45,7 @@ def initialise_database() -> None:
     with engine.begin() as connection:
         seed_iteration_one(connection)
         seed_iteration_two_fun_facts_pilot(connection)
+        seed_iteration_two_chat_evidence(connection)
 
 
 initialise_database()
