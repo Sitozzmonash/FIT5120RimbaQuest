@@ -16,6 +16,7 @@ import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { useUserStore } from "../../../store/useUserStore";
 import { useAbilityQuizStore } from "../../../store/useAbilityQuizStore";
+import { useContinueLearningStore } from "../../../store/useContinueLearningStore";
 import { Tap } from "../../common/Tap";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
@@ -57,6 +58,16 @@ export function SpeciesDetailScreen() {
   useEffect(() => {
     void useAbilityQuizStore.getState().fetchProgression(species.id);
   }, [species.id, token]);
+
+  useEffect(() => {
+    useContinueLearningStore.getState().recordActivity(childId, species.id, "view");
+  }, [species.id, childId]);
+
+  useEffect(() => {
+    if (screen === "facts") {
+      useContinueLearningStore.getState().recordActivity(childId, species.id, "fun_facts");
+    }
+  }, [species.id, screen, childId]);
 
   useEffect(() => {
     if (pageWidth > 0 && activeIndex >= 0) {

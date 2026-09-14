@@ -10,6 +10,7 @@ import {
   UserProfile,
 } from "../types";
 import { apiMessage } from "../utils/authApi";
+import { useContinueLearningStore } from "./useContinueLearningStore";
 import { useLocationsStore } from "./useLocationsStore";
 import { useLoginStore } from "./useLoginStore";
 import { useNavigationStore } from "./useNavigationStore";
@@ -121,6 +122,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       });
       useNavigationStore.getState().resetTo("home");
       void get().refreshProfile();
+      void useContinueLearningStore.getState().loadForChild(saved.user.id);
     } else {
       set({ bootstrapped: true });
       useNavigationStore.getState().resetTo("account_entry");
@@ -138,6 +140,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
     resetAuthForm();
     useNavigationStore.getState().resetTo(nextScreen);
     void get().refreshProfile();
+    void useContinueLearningStore.getState().loadForChild(user.id);
   },
 
   expire: async () => {
@@ -155,6 +158,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       .getState()
       .setAuthError("Your session is no longer valid. Please sign in again.");
     useNavigationStore.getState().resetTo("login");
+    useContinueLearningStore.getState().clear();
   },
 
   logout: () => {
@@ -170,6 +174,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
     });
     resetAuthForm();
     useNavigationStore.getState().resetTo("account_entry");
+    useContinueLearningStore.getState().clear();
   },
 
   updateCurrentUser: (patch) => {
@@ -296,6 +301,9 @@ export const useUserStore = create<UserStore>((set, get) => ({
     if (result.first_discovery && typeof result.total_xp === "number") {
       get().updateCurrentUser({ xp: result.total_xp });
     }
+    useContinueLearningStore
+      .getState()
+      .recordActivity(get().currentUser.id, speciesId, "discovery");
   },
 
   loadSpeciesGallery: async (speciesId) => {
@@ -356,6 +364,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       throw new Error("I couldn't answer that right now. Please try again.");
     }
     void get().refreshRecentCaptures();
+    useContinueLearningStore.getState().recordActivity(currentUser.id, speciesId, "chat");
     const suggestions =
       "suggested_questions" in data ? data.suggested_questions : undefined;
     return {

@@ -1,22 +1,45 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { avatarImageFor, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
 import { useDisplayProgress } from '../../hooks/useDisplayProgress';
+import { useContinueLearningStore } from '../../store/useContinueLearningStore';
 import { useDiscoveryStore } from '../../store/useDiscoveryStore';
 import { useNavigationStore } from '../../store/useNavigationStore';
+import { useSelectedSpeciesStore } from '../../store/useSelectedSpeciesStore';
+import { useSpeciesCatalogStore } from '../../store/useSpeciesCatalogStore';
 import { useUserStore } from '../../store/useUserStore';
+import { RecentCapture } from '../../types';
 import { Tap } from '../common/Tap';
 import { styles } from '../../styles/theme';
+
+function openWildlifeCard(capture: RecentCapture) {
+  useSelectedSpeciesStore.getState().setSelected(capture);
+  void useUserStore.getState().loadSpeciesGallery(capture.id);
+  useNavigationStore.getState().open('about');
+}
 
 export function HomeScreen() {
   const insets = useSafeAreaInsets();
   const currentUser = useUserStore((state) => state.currentUser);
-  const recentCaptures = useUserStore((state) => state.recentCaptures);
   const notice = useUserStore((state) => state.notice);
   const displayProgress = useDisplayProgress();
+
+  const activityEntries = useContinueLearningStore((state) => state.entries);
+  const catalog = useSpeciesCatalogStore((state) => state.species);
+  const recentCaptures = useMemo<RecentCapture[]>(() => {
+    const bySpeciesId = new Map(catalog.map((item) => [item.id, item]));
+    return activityEntries
+      .slice(0, 5)
+      .map((entry): RecentCapture | null => {
+        const species = bySpeciesId.get(entry.speciesId);
+        if (!species) return null;
+        return { ...species, recorded_at: new Date(entry.lastInteractedAt).toISOString() };
+      })
+      .filter((item): item is RecentCapture => item !== null);
+  }, [activityEntries, catalog]);
 
   const open = useNavigationStore.getState().open;
   const collectedPercent = displayProgress.total
@@ -142,7 +165,12 @@ export function HomeScreen() {
 
           {recentCaptures.length ? (
             recentCaptures.map((capture) => (
-              <View key={`${capture.id}-${capture.recorded_at}`} style={styles.learnCard}>
+              <Tap
+                key={`${capture.id}-${capture.recorded_at}`}
+                label={`Continue learning about ${capture.common_name}`}
+                style={styles.learnCard}
+                onPress={() => openWildlifeCard(capture)}
+              >
                 <LinearGradient colors={['#FFFFFF', '#F4FCF6']} style={styles.learnCardGradient} />
                 <Image source={imageFor(capture) ?? IMAGES.recent} style={styles.learnThumb} />
                 <View style={styles.learnInfo}>
@@ -157,15 +185,12 @@ export function HomeScreen() {
                       • {capture.location_label || 'Kuala Lumpur, Malaysia'}
                     </Text>
                   </View>
-                  <View style={styles.learnProgressTrack}>
-                    <View style={[styles.learnProgressFill, { width: '100%' }]} />
-                  </View>
                 </View>
-              </View>
+              </Tap>
             ))
           ) : (
             <View style={styles.learnEmpty}>
-              <Text style={styles.muted}>Your latest confirmed discoveries will appear here.</Text>
+              <Text style={styles.muted}>No wildlife yet! Discover an animal to start learning.</Text>
             </View>
           )}
         </View>

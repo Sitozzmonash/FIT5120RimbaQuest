@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { API_BASE } from "../constants/config";
 import { QuizDifficulty, QuizQuestion, QuizResult, Species } from "../types";
+import { useContinueLearningStore } from "./useContinueLearningStore";
 import { useNavigationStore } from "./useNavigationStore";
 import { useUserStore } from "./useUserStore";
 
@@ -242,6 +243,11 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       );
       const data = await res.json();
       set({ result: data, submitting: false });
+      if (res.ok) {
+        useContinueLearningStore
+          .getState()
+          .recordActivity(useUserStore.getState().currentUser.id, activeSpecies.id, "quiz");
+      }
       if (data.passed) {
         await get().fetchProgression(activeSpecies.id);
       }
