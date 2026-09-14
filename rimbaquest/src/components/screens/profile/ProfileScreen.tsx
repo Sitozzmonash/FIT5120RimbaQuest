@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WILDLIFE_FILTERS } from "../../../constants/seed";
@@ -39,10 +39,10 @@ export function ProfileScreen() {
       <View style={[styles.decoCircle1, { pointerEvents: "none" }]} />
       <View style={[styles.decoCircle2, { pointerEvents: "none" }]} />
 
-      <ScrollView
-        contentContainerStyle={[
+      <View
+        style={[
           styles.content,
-          { paddingTop: insets.top + 8, paddingBottom: 32 + insets.bottom },
+          { paddingTop: insets.top + 8, paddingBottom: 16 + insets.bottom },
         ]}
       >
         <ProfileHeader title="My Profile" />
@@ -59,7 +59,7 @@ export function ProfileScreen() {
         />
 
         <ProfileActions />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -87,5 +87,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFC314",
     opacity: 0.08,
   },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
+  content: { flex: 1, paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
 });
