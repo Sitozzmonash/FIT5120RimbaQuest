@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { DiscardPhotoModal } from "./DiscardPhotoModal";
 
 export function DiscoveryHeader({
   title,
-  onBack,
   confirmDiscard = false,
   onDiscard,
   disabled = false,
 }: {
   title: string;
-  onBack: () => void;
   confirmDiscard?: boolean;
   onDiscard?: () => void;
   disabled?: boolean;
 }) {
   const [confirming, setConfirming] = useState(false);
+  const goBack = () => useNavigationStore.getState().goBack();
 
   return (
     <>
@@ -26,7 +26,7 @@ export function DiscoveryHeader({
           label="Go back"
           style={[styles.backBtn, disabled && styles.backBtnDisabled]}
           disabled={disabled}
-          onPress={() => (confirmDiscard ? setConfirming(true) : onBack())}
+          onPress={() => (confirmDiscard ? setConfirming(true) : goBack())}
         >
           <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
         </Tap>
@@ -41,7 +41,7 @@ export function DiscoveryHeader({
           onCancel={() => setConfirming(false)}
           onConfirm={() => {
             setConfirming(false);
-            (onDiscard ?? onBack)();
+            (onDiscard ?? goBack)();
           }}
         />
       )}

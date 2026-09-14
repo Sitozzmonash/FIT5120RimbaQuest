@@ -1,39 +1,24 @@
 import React from "react";
-import {
-  ActivityIndicator,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { LocationItem, LocationMode } from "../../../../types";
+import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
+import { LocationAutoSection } from "./LocationAutoSection";
+import { LocationManualSection } from "./LocationManualSection";
 
 export function LocationEditSheet({
   visible,
   onClose,
-  discoveryLocation,
-  setDiscoveryLocation,
-  locationMode,
-  setLocationMode,
-  resolvingLocation,
-  locationOptions,
-  locationNotice,
 }: {
   visible: boolean;
   onClose: () => void;
-  discoveryLocation: string;
-  setDiscoveryLocation: (s: string) => void;
-  locationMode: LocationMode;
-  setLocationMode: (m: LocationMode) => void;
-  resolvingLocation?: boolean;
-  locationOptions: LocationItem[];
-  locationNotice: string | null;
 }) {
+  const locationMode = useDiscoveryStore((state) => state.locationMode);
+  const setLocationMode = useDiscoveryStore((state) => state.setLocationMode);
+
+  const locationNotice = useDiscoveryStore((state) => state.locationNotice);
+
   return (
     <Modal
       visible={visible}
@@ -101,60 +86,9 @@ export function LocationEditSheet({
           ) : null}
 
           {locationMode === "auto" ? (
-            resolvingLocation ? (
-              <View style={styles.detectingRow}>
-                <ActivityIndicator size="small" color="#087B35" />
-                <Text style={styles.muted}>Detecting your location...</Text>
-              </View>
-            ) : discoveryLocation ? (
-              <View style={styles.detectedRow}>
-                <MaterialIcons name="my-location" size={16} color="#087B35" />
-                <Text style={styles.detectedText} numberOfLines={2}>
-                  {discoveryLocation}
-                </Text>
-              </View>
-            ) : (
-              <Text style={styles.muted}>
-                RimbaQuest will use this device's current location when you
-                save the discovery.
-              </Text>
-            )
+            <LocationAutoSection />
           ) : (
-            <>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chips}
-              >
-                {locationOptions.map((loc) => (
-                  <Tap
-                    key={loc.id}
-                    label={loc.name}
-                    style={[
-                      styles.chip,
-                      discoveryLocation === loc.name && styles.chipActive,
-                    ]}
-                    onPress={() => setDiscoveryLocation(loc.name)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        discoveryLocation === loc.name && styles.chipTextActive,
-                      ]}
-                    >
-                      {loc.name}
-                    </Text>
-                  </Tap>
-                ))}
-              </ScrollView>
-              <TextInput
-                style={styles.input}
-                value={discoveryLocation}
-                onChangeText={setDiscoveryLocation}
-                placeholder="Or type a location name"
-                placeholderTextColor="#879089"
-              />
-            </>
+            <LocationManualSection />
           )}
 
           <PrimaryButton label="Done" style={styles.doneBtn} onPress={onClose} />
@@ -208,41 +142,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     fontSize: 12,
-  },
-  muted: { color: "#707872", fontSize: 12, lineHeight: 18 },
-  detectingRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  detectedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#EDF5EF",
-    borderRadius: 12,
-    padding: 10,
-  },
-  detectedText: {
-    flex: 1,
-    color: "#0A4D26",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  chips: { gap: 8, paddingVertical: 4 },
-  chip: {
-    borderRadius: 16,
-    backgroundColor: "#F0F4F1",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  chipActive: { backgroundColor: "#0A4D26" },
-  chipText: { fontSize: 12, color: "#607068", fontWeight: "700" },
-  chipTextActive: { color: "#FFFFFF" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#C8D1CA",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    fontSize: 14,
-    color: "#1B211C",
   },
   doneBtn: { marginTop: 4 },
 });

@@ -3,33 +3,22 @@ import { Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { RecentCapture, UserProfile } from '../../types';
 import { avatarImageFor, HOME_IMAGES, IMAGES, imageFor } from '../../constants/images';
+import { useDisplayProgress } from '../../hooks/useDisplayProgress';
+import { useDiscoveryStore } from '../../store/useDiscoveryStore';
+import { useNavigationStore } from '../../store/useNavigationStore';
+import { useUserStore } from '../../store/useUserStore';
 import { Tap } from '../common/Tap';
 import { styles } from '../../styles/theme';
 
-export function HomeScreen({
-  currentUser,
-  displayProgress,
-  recentCaptures,
-  notice,
-  onOpenProfile,
-  onOpenCollection,
-  onOpenLocations,
-  onStartDiscovery,
-  onOpenBattle,
-}: {
-  currentUser: UserProfile;
-  displayProgress: { found: number; total: number; xp: number; level?: number };
-  recentCaptures: RecentCapture[];
-  notice: string | null;
-  onOpenProfile: () => void;
-  onOpenCollection: () => void;
-  onOpenLocations: () => void;
-  onStartDiscovery: () => void;
-  onOpenBattle: () => void;
-}) {
+export function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const currentUser = useUserStore((state) => state.currentUser);
+  const recentCaptures = useUserStore((state) => state.recentCaptures);
+  const notice = useUserStore((state) => state.notice);
+  const displayProgress = useDisplayProgress();
+
+  const open = useNavigationStore.getState().open;
   const collectedPercent = displayProgress.total
     ? Math.round((displayProgress.found / displayProgress.total) * 1000) / 10
     : 0;
@@ -59,7 +48,7 @@ export function HomeScreen({
         {notice && <Text style={styles.notice}>{notice}</Text>}
 
         <View style={styles.profileCardWrap}>
-          <Tap label="View Profile" style={styles.profileCard} onPress={onOpenProfile}>
+          <Tap label="View Profile" style={styles.profileCard} onPress={() => open('progress')}>
             <LinearGradient colors={['#FFFFFF', '#F4FCF6']} style={styles.profileCardGradient} />
             <View style={styles.profileRow}>
               <View style={styles.avatarFrame}>
@@ -96,7 +85,7 @@ export function HomeScreen({
           <Text style={styles.sectionHeading}>Explore Nature</Text>
 
           <View style={styles.collectionTileWrap}>
-            <Tap label="Open your collection" style={styles.collectionTile} onPress={onOpenCollection}>
+            <Tap label="Open your collection" style={styles.collectionTile} onPress={() => open('collection')}>
               <LinearGradient colors={['#FFFBE8', '#FFF2C0']} style={styles.collectionTileGradient} />
               <Image source={HOME_IMAGES.collectionBook} style={styles.collectionBookImage} resizeMode="cover" />
               <View style={styles.collectionContent}>
@@ -125,17 +114,17 @@ export function HomeScreen({
           </View>
 
           <View style={styles.tileRow}>
-            <Tap label="Discover wildlife locations" style={styles.actionTile} onPress={onOpenLocations}>
+            <Tap label="Discover wildlife locations" style={styles.actionTile} onPress={() => open('locations')}>
               <LinearGradient colors={['#FFF5EE', '#FFE4D0']} style={styles.actionTileGradient} />
               <Image source={HOME_IMAGES.tileDiscover} style={styles.actionTileIcon} resizeMode="contain" />
               <Text style={styles.actionTileLabel}>Discover</Text>
             </Tap>
-            <Tap label="Capture a wildlife sighting" style={styles.actionTile} onPress={onStartDiscovery}>
+            <Tap label="Capture a wildlife sighting" style={styles.actionTile} onPress={() => useDiscoveryStore.getState().start()}>
               <LinearGradient colors={['#EDFAD0', '#D8F0A8']} style={styles.actionTileGradient} />
               <Image source={HOME_IMAGES.tileCapture} style={styles.actionTileIcon} resizeMode="contain" />
               <Text style={styles.actionTileLabel}>Capture</Text>
             </Tap>
-            <Tap label="Wildlife card battles" style={styles.actionTile} onPress={onOpenBattle}>
+            <Tap label="Wildlife card battles" style={styles.actionTile} onPress={() => open('battle_select')}>
               <LinearGradient colors={['#EEF5FF', '#D8E8F8']} style={styles.actionTileGradient} />
               <Image source={HOME_IMAGES.tileBattle} style={styles.actionTileIcon} resizeMode="contain" />
               <Text style={styles.actionTileLabel}>Battle</Text>
@@ -146,7 +135,7 @@ export function HomeScreen({
         <View style={styles.continueSection}>
           <View style={styles.continueHeaderRow}>
             <Text style={styles.sectionHeading}>Continue Learning</Text>
-            <Tap label="See all discoveries" style={styles.seeAllTap} onPress={onOpenCollection}>
+            <Tap label="See all discoveries" style={styles.seeAllTap} onPress={() => open('collection')}>
               <Text style={styles.seeAllOrange}>See all</Text>
             </Tap>
           </View>

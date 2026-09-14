@@ -2,22 +2,14 @@ import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function BattleOutcomePanel({
-  visible,
-  outcome,
-  xpAwarded,
-  onBattleAgain,
-  onSelectAnotherCard,
-}: {
-  visible: boolean;
-  outcome: "win" | "lose";
-  xpAwarded?: number | null;
-  onBattleAgain: () => void;
-  onSelectAnotherCard: () => void;
-}) {
+export function BattleOutcomePanel() {
+  const outcome = useBattleStore((state) => state.outcome);
+  const xpAwarded = useBattleStore((state) => state.xpAwarded);
+  const visible = outcome === "win" || outcome === "lose";
   const win = outcome === "win";
 
   return (
@@ -58,8 +50,16 @@ export function BattleOutcomePanel({
             </View>
           ) : null}
 
-          <PrimaryButton label="Battle Again" style={styles.primaryBtn} onPress={onBattleAgain} />
-          <Tap label="Choose Another Card" style={styles.secondaryBtn} onPress={onSelectAnotherCard}>
+          <PrimaryButton
+            label="Battle Again"
+            style={styles.primaryBtn}
+            onPress={() => useBattleStore.getState().battleAgain()}
+          />
+          <Tap
+            label="Choose Another Card"
+            style={styles.secondaryBtn}
+            onPress={() => useBattleStore.getState().selectAnotherCard()}
+          >
             <Text style={styles.secondaryText}>Choose Another Card</Text>
           </Tap>
         </View>

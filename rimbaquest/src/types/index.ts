@@ -99,6 +99,26 @@ export type GalleryItem = {
 
 export type LocationMode = 'auto' | 'manual';
 
+export type BattleAbilityItem = {
+  slot: number;
+  name: string;
+  multiplier?: number;
+  heal_amount?: number;
+  description?: string;
+};
+
+export type BattleOpponent = {
+  species_id: string;
+  name: string;
+  category: string;
+  hp: number;
+  max_hp: number;
+  base_attack: number;
+  abilities?: BattleAbilityItem[];
+};
+
+export type BattleOutcome = 'playing' | 'win' | 'lose' | null;
+
 export type SpeciesChatMessage = {
   id: string;
   role: 'assistant' | 'user';
@@ -108,4 +128,27 @@ export type SpeciesChatMessage = {
 export type SpeciesChatResponse = {
   answer: string;
   suggested_questions?: string[];
+};
+
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+
+export type QuizQuestion = {
+  id: string;
+  question: string;
+  options: string[];
+};
+
+export type QuizProgression = {
+  easy_passed: boolean;
+  medium_passed: boolean;
+  hard_passed: boolean;
+  unlocked_abilities: number[];
+};
+
+export type QuizResult = {
+  score: number;
+  total: number;
+  passed: boolean;
+  ability_unlocked?: number | null;
+  message: string;
 };

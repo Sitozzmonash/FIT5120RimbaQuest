@@ -1,8 +1,10 @@
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
@@ -16,27 +18,15 @@ function formatDate(iso: string | null): string {
   });
 }
 
-// Step 5 / end of flow: confirms the save. Matches Figma exactly with two
-// actions (View New Card, Record Another Discovery) — Battle and Collection
-// shortcuts were intentionally dropped from this screen; they remain
-// reachable from Home/Collection as before.
-export function SuccessScreen({
-  selected,
-  discoveryLocation,
-  firstDiscovery,
-  xpAwarded,
-  recordedAt,
-  onViewCard,
-  onRecordAnother,
-}: {
-  selected: Species;
-  discoveryLocation: string;
-  firstDiscovery: boolean;
-  xpAwarded: number;
-  recordedAt: string | null;
-  onViewCard: () => void;
-  onRecordAnother: () => void;
-}) {
+export function SuccessScreen() {
+  const selected = useSelectedSpeciesStore((state) => state.selected);
+  const discoveryLocation = useDiscoveryStore(
+    (state) => state.discoveryLocation,
+  );
+  const firstDiscovery = useDiscoveryStore((state) => state.firstDiscovery);
+  const xpAwarded = useDiscoveryStore((state) => state.discoveryXpAwarded);
+  const recordedAt = useDiscoveryStore((state) => state.discoveryRecordedAt);
+
   return (
     <View style={styles.page}>
       <View style={styles.header}>
@@ -95,12 +85,12 @@ export function SuccessScreen({
           <PrimaryButton
             label="View New Card"
             style={styles.primaryBtn}
-            onPress={onViewCard}
+            onPress={() => useNavigationStore.getState().open("about")}
           />
           <Tap
             label="Record another discovery"
             style={styles.secondaryBtn}
-            onPress={onRecordAnother}
+            onPress={() => useDiscoveryStore.getState().start()}
           >
             <Text style={styles.secondaryText}>Record Another Discovery</Text>
           </Tap>

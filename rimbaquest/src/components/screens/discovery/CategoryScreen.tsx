@@ -1,54 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { DISCOVERY_CATEGORY_IMAGES } from "../../../constants/images";
-import { CATEGORY_APPEARANCE } from "../../../constants/seed";
+import { CATEGORIES, CATEGORY_APPEARANCE } from "../../../constants/seed";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { DiscoveryHeader } from "./components/DiscoveryHeader";
-import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
+// import { DiscoveryStepIndicator } from "./components/DiscoveryStepIndicator";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
 import { PhotoPreview } from "./components/PhotoPreview";
 import { CategoryOptionCard } from "./components/CategoryOptionCard";
 
-// Step 2: pick a wildlife category
-export function CategoryScreen({
-  photo,
-  categories,
-  category,
-  onSelectCategory,
-  onBack,
-  onDiscard,
-}: {
-  photo: { uri: string };
-  categories: string[];
-  category: string;
-  onSelectCategory: (cat: string) => void;
-  onBack: () => void;
-  onDiscard: () => void;
-}) {
-  const [pending, setPending] = useState<string | null>(
-    categories.includes(category) ? category : null,
-  );
-  const [requiredMessage, setRequiredMessage] = useState("");
+export function CategoryScreen() {
+  const candidates = useDiscoveryStore((state) => state.verificationCandidates);
+
+  const detectedCategory = candidates[0]?.category ?? null;
+
+  useEffect(() => {
+    if (detectedCategory)
+      useDiscoveryStore.getState().setCategory(detectedCategory);
+  }, [detectedCategory]);
+
+  const goBack = () => useNavigationStore.getState().goBack();
+
+  const handleNext = () => {
+    if (!detectedCategory) return;
+    useDiscoveryStore.getState().setIdentificationError(null);
+    useNavigationStore.getState().open("species");
+  };
 
   return (
     <View style={styles.page}>
       <DiscoveryHeader
         title="Record a Discovery"
-        onBack={onBack}
         confirmDiscard
-        onDiscard={onDiscard}
+        onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
       />
       <ScrollView contentContainerStyle={styles.content}>
-        <DiscoveryStepIndicator step={2} />
+        {/* <DiscoveryStepIndicator step={2} /> */}
 
         <View style={styles.intro}>
-          <Text style={styles.title}>Choose a Wildlife Category</Text>
-          <Text style={styles.subtitle}>What type of animal did you see?</Text>
+          <Text style={styles.title}>Wildlife Category</Text>
+          <Text style={styles.subtitle}>
+            Based on your photo, here's the animal group we detected.
+          </Text>
         </View>
 
-        <PhotoPreview photo={photo} />
+        <PhotoPreview />
 
         <View style={styles.list}>
-          {categories.map((item) => (
+          {CATEGORIES.map((item) => (
             <CategoryOptionCard
               key={item}
               image={
@@ -58,27 +58,25 @@ export function CategoryScreen({
               }
               label={`${item}s`}
               description={CATEGORY_APPEARANCE[item] ?? ""}
-              selected={pending === item}
-              onPress={() => {
-                setPending(item);
-                setRequiredMessage("");
-              }}
+              selected={detectedCategory === item}
+              disabled
+              onPress={() => {}}
             />
           ))}
         </View>
-        {requiredMessage ? <Text style={styles.requiredMessage}>{requiredMessage}</Text> : null}
+        {!detectedCategory ? (
+          <Text style={styles.requiredMessage}>
+            We couldn't detect an animal group for this photo. Please try
+            another wildlife photo.
+          </Text>
+        ) : null}
       </ScrollView>
 
       <DiscoveryBottomNav
-        onBack={onBack}
+        onBack={goBack}
         nextLabel="Next"
-        onNext={() => {
-          if (!pending) {
-            setRequiredMessage("Please choose an animal group before continuing.");
-            return;
-          }
-          onSelectCategory(pending);
-        }}
+        nextDisabled={!detectedCategory}
+        onNext={handleNext}
       />
     </View>
   );

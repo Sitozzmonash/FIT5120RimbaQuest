@@ -1,6 +1,8 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { LocationItem } from "../../../types";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useLocationsStore } from "../../../store/useLocationsStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { Info } from "../../common/CommonUI";
@@ -8,32 +10,34 @@ import { styles as globalStyles } from "../../../styles/theme";
 import { LocationDetailHeader } from "./components/LocationDetailHeader";
 import { LocationFacilities } from "./components/LocationFacilities";
 
-export function LocationDetailScreen({
-  location,
-  error,
-  onRetry,
-  onBack,
-  onRecordHere,
-}: {
-  location: LocationItem;
-  error: string | null;
-  onRetry: () => void;
-  onBack: () => void;
-  onRecordHere: (name: string) => void;
-}) {
+export function LocationDetailScreen() {
+  const location = useLocationsStore((state) => state.selectedLocation);
+  const error = useLocationsStore((state) => state.detailError);
+  const loadLocationDetail = useLocationsStore(
+    (state) => state.loadLocationDetail,
+  );
+
+  if (!location) return null;
+
+  const goBack = () => useNavigationStore.getState().goBack();
+
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <LocationDetailHeader title="Location Detail" onBack={onBack} />
+      <LocationDetailHeader onBack={goBack} />
       <ScrollView contentContainerStyle={globalStyles.content}>
         {error ? (
           <View style={globalStyles.searchEmpty}>
             <Text style={globalStyles.searchEmptyTitle}>{error}</Text>
-            <PrimaryButton label="Try Again" onPress={onRetry} />
-            <Tap label="Back" style={globalStyles.secondary} onPress={onBack}>
+            <PrimaryButton
+              label="Try Again"
+              onPress={() => void loadLocationDetail(location)}
+            />
+            <Tap label="Back" style={globalStyles.secondary} onPress={goBack}>
               <Text style={globalStyles.secondaryText}>Back</Text>
             </Tap>
           </View>
         ) : null}
+
         {!error || location.description ? (
           <>
             <Text style={globalStyles.pageTitle}>{location.name}</Text>
@@ -50,15 +54,18 @@ export function LocationDetailScreen({
             {location.description ? (
               <Info label="ABOUT THIS LOCATION" value={location.description} />
             ) : null}
+
             {location.why_recommended ? (
               <Info
                 label="WILDLIFE / NATURE CONTEXT"
                 value={location.why_recommended}
               />
             ) : null}
+
             {location.best_time ? (
               <Info label="BEST TIME TO VISIT" value={location.best_time} />
             ) : null}
+
             {location.typical_wildlife ? (
               <Info
                 label="WILDLIFE YOU MAY ENCOUNTER"
@@ -73,7 +80,7 @@ export function LocationDetailScreen({
             <PrimaryButton
               label="Record Wildlife Sighting Here"
               style={styles.recordBtn}
-              onPress={() => onRecordHere(location.name)}
+              onPress={() => useDiscoveryStore.getState().start(location.name)}
             />
           </>
         ) : null}

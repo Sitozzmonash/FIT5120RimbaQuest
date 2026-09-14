@@ -1,24 +1,19 @@
 import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function GiveUpConfirmModal({
-  visible,
-  onCancel,
-  onConfirm,
-}: {
-  visible: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
+export function GiveUpConfirmModal() {
+  const visible = useBattleStore((state) => state.giveUpConfirmVisible);
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={() => useBattleStore.getState().closeGiveUpConfirm()}
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
@@ -31,11 +26,14 @@ export function GiveUpConfirmModal({
             will end right away.
           </Text>
           <View style={styles.actions}>
-            <PrimaryButton label="Keep Battling" onPress={onCancel} />
+            <PrimaryButton
+              label="Keep Battling"
+              onPress={() => useBattleStore.getState().closeGiveUpConfirm()}
+            />
             <Tap
               label="Give up battle"
               style={styles.giveUpBtn}
-              onPress={onConfirm}
+              onPress={() => useBattleStore.getState().giveUp()}
             >
               <Text style={styles.giveUpText}>Yes, Give Up</Text>
             </Tap>

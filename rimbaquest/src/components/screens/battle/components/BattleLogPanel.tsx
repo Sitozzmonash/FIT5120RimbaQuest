@@ -1,14 +1,12 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useBattleStore } from "../../../../store/useBattleStore";
 
-export function BattleLogPanel({
-  round,
-  log,
-}: {
-  round: number;
-  log: string[];
-}) {
+export function BattleLogPanel() {
+  const round = useBattleStore((state) => state.round);
+  const log = useBattleStore((state) => state.log);
+
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
