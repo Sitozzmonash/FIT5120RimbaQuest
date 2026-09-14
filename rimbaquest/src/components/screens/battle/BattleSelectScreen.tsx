@@ -18,7 +18,10 @@ export function BattleSelectScreen() {
 
   return (
     <View style={styles.root}>
-      <BattleHeaderBar title="Wildlife Card Battles" />
+      <BattleHeaderBar
+        title="Wildlife Card Battles"
+        onBack={() => useNavigationStore.getState().goBack()}
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

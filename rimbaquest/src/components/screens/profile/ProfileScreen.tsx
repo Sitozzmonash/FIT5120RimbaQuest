@@ -10,7 +10,7 @@ import { useUserStore } from "../../../store/useUserStore";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { OverallProgressCard } from "./components/OverallProgressCard";
-import { LogoutButton } from "./components/LogoutButton";
+import { ProfileActions } from "./components/ProfileActions";
 
 export function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -58,7 +58,7 @@ export function ProfileScreen() {
           categories={categories}
         />
 
-        <LogoutButton />
+        <ProfileActions />
       </ScrollView>
     </View>
   );

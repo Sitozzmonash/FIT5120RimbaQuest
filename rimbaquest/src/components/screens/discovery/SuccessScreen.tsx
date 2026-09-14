@@ -24,7 +24,7 @@ export function SuccessScreen() {
     (state) => state.discoveryLocation,
   );
   const firstDiscovery = useDiscoveryStore((state) => state.firstDiscovery);
-  const xpAwarded = useDiscoveryStore((state) => state.discoveryXpAwarded);
+  // const xpAwarded = useDiscoveryStore((state) => state.discoveryXpAwarded);
   const recordedAt = useDiscoveryStore((state) => state.discoveryRecordedAt);
 
   return (
@@ -83,7 +83,7 @@ export function SuccessScreen() {
 
         <View style={styles.actions}>
           <PrimaryButton
-            label="View New Card"
+            label="View Card"
             style={styles.primaryBtn}
             onPress={() => useNavigationStore.getState().open("about")}
           />

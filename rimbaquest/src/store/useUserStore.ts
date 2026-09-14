@@ -46,10 +46,13 @@ type UserState = {
   recentCaptures: RecentCapture[];
   galleryPhotos: Record<string, GalleryItem[]>;
   notice: string | null;
-  
+
   // True once the app has finished trying to restore a saved session, so
   // the app shell knows when to stop showing its boot spinner.
   bootstrapped: boolean;
+  // True while refreshProfile()'s collection/profile/recent-captures/
+  // locations fetch is in flight
+  profileLoading: boolean;
 };
 
 type UserActions = {
@@ -103,6 +106,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
   galleryPhotos: {},
   notice: null,
   bootstrapped: false,
+  profileLoading: false,
 
   authHeaders: () => {
     const { accessToken } = get();
@@ -208,6 +212,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       set({ bootstrapped: true });
       return;
     }
+    set({ profileLoading: true });
     try {
       const [collectionRes, profileRes, recentRes] = await Promise.all([
         fetch(`${API_BASE}/api/v1/children/${childId}/collection`, {
@@ -253,7 +258,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
           "You are exploring in offline demo mode. Discoveries will sync when the backend connects.",
       });
     } finally {
-      set({ bootstrapped: true });
+      set({ bootstrapped: true, profileLoading: false });
     }
   },
 

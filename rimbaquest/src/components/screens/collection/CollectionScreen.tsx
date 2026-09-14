@@ -11,6 +11,7 @@ import { useCollectionSpeciesList } from "../../../hooks/useCollectionSpeciesLis
 import { CollectionGridRow } from "./components/CollectionGridRow";
 import { CollectionHeaderBar } from "./components/CollectionHeaderBar";
 import { CollectionHeroSection } from "./components/CollectionHeroSection";
+import { CollectionSearchBar } from "./components/CollectionSearchBar";
 import { WildlifeFilterChips } from "./components/WildlifeFilterChips";
 
 const HERO_GAP = 21;
@@ -36,7 +37,12 @@ export function CollectionScreen() {
     setStuck((prev) => (prev === next ? prev : next));
   };
 
-  const chipsRow = <WildlifeFilterChips />;
+  const stickyRow = (
+    <>
+      <CollectionSearchBar />
+      <WildlifeFilterChips />
+    </>
+  );
 
   const rows = useMemo(() => {
     const chunked: Species[][] = [];
@@ -77,7 +83,7 @@ export function CollectionScreen() {
               style={styles.collectionTabsSticky}
               pointerEvents={stuck ? "none" : "auto"}
             >
-              <View style={stuck ? { opacity: 0 } : undefined}>{chipsRow}</View>
+              <View style={stuck ? { opacity: 0 } : undefined}>{stickyRow}</View>
             </View>
             <View style={styles.collectionGridTopSpacer} />
           </>
@@ -97,7 +103,7 @@ export function CollectionScreen() {
             { top: headerHeight },
           ]}
         >
-          {chipsRow}
+          {stickyRow}
         </View>
       )}
     </View>

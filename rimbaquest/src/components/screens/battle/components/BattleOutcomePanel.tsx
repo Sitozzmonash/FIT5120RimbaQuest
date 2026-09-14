@@ -3,13 +3,15 @@ import { Modal, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useBattleStore } from "../../../../store/useBattleStore";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
 export function BattleOutcomePanel() {
   const outcome = useBattleStore((state) => state.outcome);
-  const xpAwarded = useBattleStore((state) => state.xpAwarded);
-  const visible = outcome === "win" || outcome === "lose";
+  // const xpAwarded = useBattleStore((state) => state.xpAwarded);
+  const preparingBattle = useBattleStore((state) => state.preparingBattle);
+  const visible = (outcome === "win" || outcome === "lose") && !preparingBattle;
   const win = outcome === "win";
 
   return (
@@ -41,14 +43,14 @@ export function BattleOutcomePanel() {
               : "Your Wildlife Card was defeated. Try another card or battle again."}
           </Text>
 
-          {xpAwarded ? (
+          {/* {xpAwarded ? (
             <View style={styles.xpBadge}>
               <LinearGradient colors={["#FFD940", "#FFC314"]} style={styles.xpBadgeGradient}>
                 <MaterialIcons name="star" size={13} color="#0A4D26" />
                 <Text style={styles.xpBadgeText}>+{xpAwarded} Explorer XP</Text>
               </LinearGradient>
             </View>
-          ) : null}
+          ) : null} */}
 
           <PrimaryButton
             label="Battle Again"
@@ -61,6 +63,13 @@ export function BattleOutcomePanel() {
             onPress={() => useBattleStore.getState().selectAnotherCard()}
           >
             <Text style={styles.secondaryText}>Choose Another Card</Text>
+          </Tap>
+          <Tap
+            label="Leave to Home"
+            style={styles.leaveBtn}
+            onPress={() => useNavigationStore.getState().resetTo("home")}
+          >
+            <Text style={styles.leaveText}>Back to Home</Text>
           </Tap>
         </View>
       </View>
@@ -129,4 +138,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryText: { color: "#0A4D26", fontSize: 14, fontWeight: "800" },
+  leaveBtn: { width: "100%", paddingVertical: 10, alignItems: "center", justifyContent: "center" },
+  leaveText: { color: "#879089", fontSize: 13, fontWeight: "700" },
 });

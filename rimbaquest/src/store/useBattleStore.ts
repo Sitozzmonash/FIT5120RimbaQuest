@@ -134,10 +134,8 @@ type BattleState = {
   outcome: BattleOutcome;
   xpAwarded: number | null;
   isAttacking: boolean;
-  // Owned here (rather than as local component state) so the "Give Up"
-  // button and its confirmation modal can each read/drive it without a
-  // prop passed between them through BattleArenaScreen.
   giveUpConfirmVisible: boolean;
+  preparingBattle: boolean;
 };
 
 type BattleActions = {
@@ -170,13 +168,20 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
   xpAwarded: null,
   isAttacking: false,
   giveUpConfirmVisible: false,
+  preparingBattle: false,
 
   selectCard: (card) => set({ playerCard: card }),
   resetCardSelection: () => set({ playerCard: null }),
 
   startBattle: async (card) => {
+    if (get().preparingBattle) return;
     resultRecorded = false;
-    set({ playerCard: card, xpAwarded: null, giveUpConfirmVisible: false });
+    set({
+      playerCard: card,
+      xpAwarded: null,
+      giveUpConfirmVisible: false,
+      preparingBattle: true,
+    });
 
     const { currentUser: user, authHeaders } = useUserStore.getState();
 
@@ -242,6 +247,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       ],
       round: 1,
       outcome: "playing",
+      preparingBattle: false,
     });
     useNavigationStore.getState().open("battle_arena");
   },

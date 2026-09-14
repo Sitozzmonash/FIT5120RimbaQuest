@@ -15,7 +15,8 @@ import {
   SuccessScreen,
 } from '../components/screens/discovery';
 import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
-import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
+import { BattleArenaScreen, BattlePreparingModal, BattleSelectScreen } from '../components/screens/battle';
+import { AppLoadingModal } from '../components/common/AppLoadingModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -114,6 +115,9 @@ export default function RimbaQuest() {
 
         {screen === 'progress' && <ProfileScreen />}
       </View>
+
+      <BattlePreparingModal />
+      <AppLoadingModal />
     </SafeAreaView>
   );
 }
