@@ -83,7 +83,7 @@ export function ConfirmScreen() {
 
       <DiscoveryBottomNav
         onBack={() => void handleReport()}
-        backLabel={reporting ? "Sending..." : "No, That's Wrong"}
+        backLabel={reporting ? "Sending..." : "No"}
         backDisabled={finalizing || reporting}
         nextLabel={finalizing ? "Saving..." : "Yes, Save It"}
         nextDisabled={finalizing || reporting}
