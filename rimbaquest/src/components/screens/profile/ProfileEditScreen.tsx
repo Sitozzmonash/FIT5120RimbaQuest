@@ -11,6 +11,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_CHOICES } from "../../../constants/images";
+import { API_BASE } from "../../../constants/config";
+import { UserProfile } from "../../../types";
+import { useProfileEditStore } from "../../../store/useProfileEditStore";
+import { apiMessage } from "../../../utils/authApi";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 import { ProfileHeader } from "./components/ProfileHeader";
@@ -23,30 +27,30 @@ function formatAge(age: string): string {
 }
 
 export function ProfileEditScreen({
-  displayName,
-  setDisplayName,
   email,
-  age,
-  setAge,
-  avatar,
-  setAvatar,
-  onSave,
+  childId,
+  token,
+  onSaved,
   onBack,
-  isDirty,
-  error,
 }: {
-  displayName: string;
-  setDisplayName: (s: string) => void;
   email: string;
-  age: string;
-  setAge: (s: string) => void;
-  avatar: string;
-  setAvatar: (s: string) => void;
-  onSave: () => void;
+  childId: number;
+  token: string;
+  onSaved: (data: Partial<UserProfile>, submittedUsername: string) => void;
   onBack: () => void;
-  isDirty: boolean;
-  error: string | null;
 }) {
+  const displayName = useProfileEditStore((state) => state.displayName);
+  const avatar = useProfileEditStore((state) => state.avatar);
+  const age = useProfileEditStore((state) => state.age);
+  const originalUsername = useProfileEditStore(
+    (state) => state.originalUsername,
+  );
+  const originalAvatar = useProfileEditStore((state) => state.originalAvatar);
+  const error = useProfileEditStore((state) => state.error);
+  const saving = useProfileEditStore((state) => state.saving);
+
+  const isDirty = displayName !== originalUsername || avatar !== originalAvatar;
+
   const insets = useSafeAreaInsets();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
 
@@ -56,6 +60,50 @@ export function ProfileEditScreen({
       return;
     }
     setConfirmingLeave(true);
+  };
+
+  const handleSave = async () => {
+    const store = useProfileEditStore.getState();
+    const username = store.displayName.trim() || store.originalUsername;
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+      store.setError(
+        "Username must be 3–20 letters, numbers, hyphens, or underscores, with no spaces.",
+      );
+      return;
+    }
+    store.setError(null);
+    store.setSaving(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/v1/children/${childId}/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            username,
+            avatar: store.avatar,
+            age: parseInt(store.age, 10),
+          }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        store.setError(
+          apiMessage(data, "We could not save your profile changes."),
+        );
+        return;
+      }
+      onSaved(data, username);
+    } catch {
+      store.setError(
+        "We couldn't reach RimbaQuest. Your profile was not changed.",
+      );
+    } finally {
+      store.setSaving(false);
+    }
   };
 
   return (
@@ -85,7 +133,9 @@ export function ProfileEditScreen({
             <TextInput
               style={styles.input}
               value={displayName}
-              onChangeText={setDisplayName}
+              onChangeText={(text) =>
+                useProfileEditStore.getState().setDisplayName(text)
+              }
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -94,7 +144,9 @@ export function ProfileEditScreen({
             This is also the name you use to sign in.
           </Text>
 
-          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>EMAIL</Text>
+          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>
+            EMAIL
+          </Text>
           <View style={[styles.inputBox, styles.inputBoxDisabled]}>
             <MaterialIcons name="mail-outline" size={18} color="#8A968E" />
             <TextInput
@@ -129,7 +181,7 @@ export function ProfileEditScreen({
                   styles.avatarChoice,
                   avatar === key && styles.avatarChoiceActive,
                 ]}
-                onPress={() => setAvatar(key)}
+                onPress={() => useProfileEditStore.getState().setAvatar(key)}
               >
                 <Image
                   source={image}
@@ -154,9 +206,11 @@ export function ProfileEditScreen({
         ) : null}
 
         <PrimaryButton
-          label="Save Profile Changes"
+          label={saving ? "Saving..." : "Save Profile Changes"}
+          loading={saving}
+          disabled={saving}
           style={styles.saveBtn}
-          onPress={onSave}
+          onPress={() => void handleSave()}
         />
       </ScrollView>
 

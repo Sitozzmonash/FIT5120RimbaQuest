@@ -40,6 +40,7 @@ import { SaveDiscoveryResult, useDiscoveryStore } from '../store/useDiscoverySto
 import { useForgotPasswordStore } from '../store/useForgotPasswordStore';
 import { useLocationsStore } from '../store/useLocationsStore';
 import { useLoginStore } from '../store/useLoginStore';
+import { useProfileEditStore } from '../store/useProfileEditStore';
 import { apiMessage } from '../utils/authApi';
 
 const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
@@ -139,11 +140,6 @@ export default function RimbaQuest() {
   const selectedLocation = useLocationsStore((state) => state.selectedLocation);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
-
-  const [editDisplayName, setEditDisplayName] = useState('');
-  const [editAvatar, setEditAvatar] = useState(DEFAULT_AVATAR);
-  const [editAge, setEditAge] = useState('10');
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
 
   const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
   const [battlePlayerHp, setBattlePlayerHp] = useState(120);
@@ -414,38 +410,13 @@ export default function RimbaQuest() {
     setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
   };
 
-  const handleSaveProfile = async () => {
-    const username = editDisplayName.trim() || currentUser.username;
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      setProfileSaveError('Username must be 3–20 letters, numbers, hyphens, or underscores, with no spaces.');
-      return;
-    }
-    setProfileSaveError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-        body: JSON.stringify({
-          username,
-          avatar: editAvatar,
-          age: parseInt(editAge, 10) || currentUser.age,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setProfileSaveError(apiMessage(data, 'We could not save your profile changes.'));
-        return;
-      }
-      setCurrentUser((prev) => {
-        const updatedUsername = String(data.username || username || prev.username);
-        const next = { ...prev, ...data, username: updatedUsername, display_name: String(data.display_name || updatedUsername) };
-        void saveSession({ user: next, accessToken });
-        return next;
-      });
-    } catch {
-      setProfileSaveError("We couldn't reach RimbaQuest. Your profile was not changed.");
-      return;
-    }
+  const handleProfileSaved = (data: Partial<UserProfile>, submittedUsername: string) => {
+    setCurrentUser((prev) => {
+      const updatedUsername = String(data.username || submittedUsername || prev.username);
+      const next = { ...prev, ...data, username: updatedUsername, display_name: String(data.display_name || updatedUsername) };
+      void saveSession({ user: next, accessToken });
+      return next;
+    });
     goBack();
   };
 
@@ -756,11 +727,6 @@ export default function RimbaQuest() {
     token: accessToken,
     onSessionExpired: expireSession,
   };
-  const profileDirty =
-    editDisplayName !== currentUser.username ||
-    editAvatar !== currentUser.avatar ||
-    editAge !== String(currentUser.age);
-
   if (loading) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -981,17 +947,11 @@ export default function RimbaQuest() {
 
         {screen === 'profile_edit' && (
           <ProfileEditScreen
-            displayName={editDisplayName}
-            setDisplayName={setEditDisplayName}
             email={currentUser.email}
-            age={editAge}
-            setAge={setEditAge}
-            avatar={editAvatar}
-            setAvatar={setEditAvatar}
-            onSave={() => void handleSaveProfile()}
+            childId={currentUser.id}
+            token={accessToken}
+            onSaved={handleProfileSaved}
             onBack={goBack}
-            isDirty={profileDirty}
-            error={profileSaveError}
           />
         )}
 
@@ -1005,10 +965,7 @@ export default function RimbaQuest() {
               return { found, total: items.length };
             }}
             onOpenEdit={() => {
-            setEditDisplayName(currentUser.username);
-            setEditAvatar(currentUser.avatar);
-            setEditAge(String(currentUser.age));
-            setProfileSaveError(null);
+              useProfileEditStore.getState().startEditing(currentUser);
               open('profile_edit');
             }}
             onLogout={handleLogout}
