@@ -35,7 +35,64 @@ class FakeResponse:
 def clear_provider_keys(monkeypatch):
     monkeypatch.setattr(vision, "GEMINI_API_KEY", "")
     monkeypatch.setattr(vision, "GROQ_API_KEY", "")
+    monkeypatch.setattr(vision, "PIC_DEEPSEEK_API_KEY", "")
     monkeypatch.setattr(vision, "ZHIPU_API_KEY", "")
+    monkeypatch.setattr(vision, "VISION_PROVIDER_SEQUENCE", "groq,zhipu,gemini")
+
+
+def test_vision_uses_deepseek_when_first_in_configured_sequence(monkeypatch):
+    monkeypatch.setattr(vision, "PIC_DEEPSEEK_API_KEY", "deepseek-test-key")
+    monkeypatch.setattr(vision, "VISION_PROVIDER_SEQUENCE", "deepseek,groq,zhipu")
+    requests: list[tuple[str, dict]] = []
+
+    def fake_post(url, **kwargs):
+        requests.append((url, kwargs["json"]))
+        return FakeResponse(json.dumps({
+            "supported": True,
+            "species_id": "sp_common_marmoset",
+            "confidence": 0.94,
+        }))
+
+    monkeypatch.setattr(vision.httpx, "post", fake_post)
+    result = vision.identify_supported_species(b"image", "image/jpeg", CATALOGUE)
+
+    assert result == {
+        "species_id": "sp_common_marmoset",
+        "confidence": 0.94,
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+    }
+    assert len(requests) == 1
+    assert requests[0][0] == "https://api.deepseek.com/chat/completions"
+    assert requests[0][1]["model"] == "deepseek-flash"
+    assert requests[0][1]["response_format"] == {"type": "json_object"}
+    image_url = requests[0][1]["messages"][0]["content"][0]["image_url"]["url"]
+    assert image_url.startswith("data:image/jpeg;base64,")
+
+
+def test_vision_falls_back_in_configured_sequence_order(monkeypatch):
+    monkeypatch.setattr(vision, "PIC_DEEPSEEK_API_KEY", "deepseek-test-key")
+    monkeypatch.setattr(vision, "GEMINI_API_KEY", "gemini-test-key")
+    monkeypatch.setattr(vision, "VISION_PROVIDER_SEQUENCE", "deepseek,gemini,zhipu")
+    requested_models: list[str] = []
+
+    def fake_post(url, **kwargs):
+        requested_models.append(kwargs["json"]["model"])
+        if "api.deepseek.com" in url:
+            request = httpx.Request("POST", url)
+            return httpx.Response(503, request=request, json={"error": {"code": "busy"}})
+        return FakeResponse(json.dumps({
+            "supported": True,
+            "species_id": "sp_common_marmoset",
+            "confidence": 0.91,
+        }))
+
+    monkeypatch.setattr(vision.httpx, "post", fake_post)
+    result = vision.identify_supported_species(b"image", "image/jpeg", CATALOGUE)
+
+    assert result is not None
+    assert result["provider"] == "gemini"
+    assert requested_models == ["deepseek-flash", "gemini-3.8-flash"]
 
 
 def test_vision_uses_groq_as_primary_provider(monkeypatch):

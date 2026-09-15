@@ -68,13 +68,48 @@ GROQ_API_BASE_URL = os.getenv(
     "GROQ_API_BASE_URL", "https://api.groq.com/openai/v1"
 ).strip().rstrip("/")
 GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "qwen/qwen3.8-27b").strip()
+PIC_DEEPSEEK_API_KEY = os.getenv("PIC_DEEPSEEK_API_KEY", "").strip()
+PIC_DEEPSEEK_API_BASE_URL = os.getenv(
+    "PIC_DEEPSEEK_API_BASE_URL", "https://api.deepseek.com"
+).strip().rstrip("/")
+PIC_DEEPSEEK_VISION_MODEL = os.getenv(
+    "PIC_DEEPSEEK_VISION_MODEL", "deepseek-flash"
+).strip()
 ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "").strip()
 ZHIPU_API_URL = os.getenv(
     "ZHIPU_API_URL", "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 ).strip()
 ZHIPU_VISION_MODEL = os.getenv("ZHIPU_VISION_MODEL", "glm-4.6v-flash").strip()
-PRIMARY_VISION_MODEL = GROQ_VISION_MODEL
-VISION_PROVIDER_ORDER = "groq,zhipu,gemini"
+# ``SCEQUENCE`` is the user-facing compatibility spelling already used in the
+# deployment environment. ``VISION_PROVIDER_SEQUENCE`` is accepted as the
+# clearer alias for future deployments. Values are comma-separated provider
+# names, for example ``deepseek,groq,zhipu``.
+VISION_PROVIDER_SEQUENCE = (
+    os.getenv("SCEQUENCE", "").strip()
+    or os.getenv("VISION_PROVIDER_SEQUENCE", "").strip()
+    or "deepseek,groq,zhipu"
+)
+VISION_PROVIDER_ORDER = VISION_PROVIDER_SEQUENCE
+_PRIMARY_PROVIDER_ALIASES = {
+    "pic_deepseek": "deepseek",
+    "pic-deepseek": "deepseek",
+    "deepseek_flash": "deepseek",
+    "deepseek-flash": "deepseek",
+}
+_PRIMARY_PROVIDER_NAME = next(
+    (
+        _PRIMARY_PROVIDER_ALIASES.get(name.strip().casefold(), name.strip().casefold())
+        for name in VISION_PROVIDER_SEQUENCE.split(",")
+        if name.strip()
+    ),
+    "",
+)
+PRIMARY_VISION_MODEL = {
+    "deepseek": PIC_DEEPSEEK_VISION_MODEL,
+    "gemini": GEMINI_VISION_MODEL,
+    "groq": GROQ_VISION_MODEL,
+    "zhipu": ZHIPU_VISION_MODEL,
+}.get(_PRIMARY_PROVIDER_NAME, "configured_sequence")
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
 VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "45"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))

@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Groq-first, cross-provider failover chain.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a configurable cross-provider failover chain.
 
 Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, Wildlife Card battles, and the Epic 6 species-specific chatbot. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
@@ -24,8 +24,8 @@ The primary discovery flow is:
 ```text
 Home
   → Take a photo
-  → Gemini verifies the photo against the supported catalogue
-  → Groq Qwen3.8 or GLM is used only if an earlier provider fails
+  → The first model in SCEQUENCE verifies the photo against the supported catalogue
+  → The next configured model is used only if the earlier provider fails
   → Choose Mammal / Bird / Butterfly / Reptile
   → Choose one of four species without seeing the AI answer
   → Submit both answers and receive Correct / Incorrect feedback
@@ -39,7 +39,7 @@ Implemented behaviour includes:
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Server-side Gemini 3.8 Flash analysis restricted to supported species with reference images, with Groq Qwen3.8-27B and GLM-4.6V-Flash provider-failure fallbacks.
+- Server-side DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash verification restricted to supported species with reference images; `SCEQUENCE` controls the provider-failure order.
 - Four plausible species choices containing one hidden AI-verified answer and three distractors, independent of the child's category answer.
 - Correct/Incorrect feedback only after submission, including the verified category, species, and identifying features.
 - A child-owned, expiring verification record that binds the photo to the AI result and prevents the client from substituting another species.
@@ -53,8 +53,8 @@ Implemented behaviour includes:
 
 Current Iteration 2 boundaries:
 
-- Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification.
-- DeepSeek is active only for the Epic 6 current-card chatbot; it is not used for photo verification and is never treated as a factual source.
+- DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification according to `SCEQUENCE`.
+- `DEEPSEEK_API_KEY` is separately used for the Epic 6 current-card chatbot; it is never exposed to Expo and is never treated as a factual source.
 - The team-confirmed 10 Fun Facts per supported species are child-facing, team-verified RimbaQuest evidence. The dataset records the group reviewer as `RimbaQuest content team`; no historical per-fact date is invented where one was not supplied.
 - Epic 6 uses an evidence-first retrieval flow: approved card material and team-reviewed Fun Facts first, then approved source excerpts and a limited GBIF taxonomy lookup when relevant. Evidence removed from a later reviewed seed is marked `revoked` on deployment and cannot be used in a reply.
 - Iteration 3 social and expanded gameplay features are out of scope.
@@ -118,12 +118,8 @@ Authorization: Bearer <child JWT>
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
-    A -->|1. Base64 image + constrained catalogue| G[Gemini 3.8 Flash]
-    G -.->|Provider failure| Q[Groq Qwen3.8-27B]
-    Q -.->|Provider failure| V[GLM-4.6V-Flash]
-    G -->|Supported species ID + confidence| A
-    Q -->|Supported species ID + confidence| A
-    V -->|Supported species ID + confidence| A
+    A -->|1. Base64 image + constrained catalogue| O[Provider selected by SCEQUENCE]
+    O -->|DeepSeek Flash / Gemini / Groq / GLM| A
     A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
     A -->|S3 API with signed URLs| S[(Private Neon Storage)]
     P -->|Accounts, profiles, sightings, cards, progress| A
@@ -138,9 +134,7 @@ flowchart LR
 |---|---|
 | Expo client | Screens, navigation, camera/gallery access, guided category/species questions, feedback, and presentation across Web/Android/iOS |
 | FastAPI service | Authentication, ownership checks, multi-provider vision orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
-| Gemini 3.8 Flash | Primary server-side visual matcher through Google's OpenAI-compatible endpoint |
-| Groq Qwen3.8-27B | Second provider, used when Gemini is unavailable or returns an invalid provider/model response |
-| GLM-4.6V-Flash | Final provider fallback through the Zhipu AI Open Platform |
+| Configured vision providers | DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are attempted in the exact `SCEQUENCE` order after provider failures |
 | Neon PostgreSQL | Durable production storage for accounts, child profiles, AI verification records, sightings, collections, quizzes, and static catalogue data |
 | Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
@@ -149,8 +143,8 @@ flowchart LR
 ### Discovery data flow
 
 1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
-2. FastAPI first supplies Groq-hosted Qwen3.8-27B with the image and an explicit allow-list of supported catalogue IDs.
-3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to GLM-4.6V-Flash and then Gemini 3.8 Flash. Missing provider keys are skipped.
+2. FastAPI first supplies the first provider named by `SCEQUENCE` with the image and an explicit allow-list of supported catalogue IDs.
+3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through to the next `SCEQUENCE` provider. Missing provider keys are skipped.
 4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
 5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
 6. The client receives four shuffled candidates but not the verified species ID.
@@ -170,7 +164,7 @@ flowchart LR
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
 | Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
-| AI verification | Gemini 3.8 Flash primary; Groq Qwen3.8-27B and Zhipu GLM-4.6V-Flash fallbacks; constrained JSON result; 0.65 default confidence threshold |
+| AI verification | DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and Zhipu GLM-4.6V-Flash; `SCEQUENCE` selects the priority/failover order; constrained JSON result; 0.65 default confidence threshold |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -302,13 +296,17 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `GEMINI_API_KEY` | Recommended for final failover | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_API_KEY` | Required only when `SCEQUENCE` contains `gemini` | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
 | `GEMINI_VISION_MODEL` | No | Defaults to `gemini-3.8-flash`; legacy `MODEL_NAME` is also accepted |
 | `GEMINI_API_BASE_URL` | No | Defaults to Google's OpenAI-compatible base URL; legacy `MODEL_BASE_URL` is also accepted |
-| `GROQ_API_KEY` | Yes for primary AI verification | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
+| `GROQ_API_KEY` | Required only when `SCEQUENCE` contains `groq` | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
 | `GROQ_VISION_MODEL` | No | Defaults to `qwen/qwen3.8-27b` |
-| `ZHIPU_API_KEY` | Recommended for failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `PIC_DEEPSEEK_API_KEY` | Required only when `SCEQUENCE` contains `deepseek` | Server-only DeepSeek Flash vision credential; never use an `EXPO_PUBLIC_` name |
+| `PIC_DEEPSEEK_VISION_MODEL` | No | Defaults to `deepseek-flash` |
+| `PIC_DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
+| `ZHIPU_API_KEY` | Required only when `SCEQUENCE` contains `zhipu` | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
+| `SCEQUENCE` | No | Comma-separated image-recognition priority order, for example `deepseek,groq,zhipu`; `VISION_PROVIDER_SEQUENCE` is also accepted |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
 | `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
 | `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
@@ -357,6 +355,9 @@ GEMINI_API_KEY=<server-side Google Gemini API key>
 GEMINI_VISION_MODEL=gemini-3.8-flash
 GROQ_API_KEY=<server-side Groq API key>
 GROQ_VISION_MODEL=qwen/qwen3.8-27b
+PIC_DEEPSEEK_API_KEY=<server-side DeepSeek Flash vision key>
+PIC_DEEPSEEK_VISION_MODEL=deepseek-flash
+SCEQUENCE=deepseek,groq,zhipu
 ZHIPU_API_KEY=<server-side Zhipu API key>
 ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```

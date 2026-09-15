@@ -15,7 +15,11 @@ from app.core.config import (
     GROQ_API_BASE_URL,
     GROQ_API_KEY,
     GROQ_VISION_MODEL,
+    PIC_DEEPSEEK_API_BASE_URL,
+    PIC_DEEPSEEK_API_KEY,
+    PIC_DEEPSEEK_VISION_MODEL,
     VISION_MIN_CONFIDENCE,
+    VISION_PROVIDER_SEQUENCE,
     VISION_TIMEOUT_SECONDS,
     ZHIPU_API_KEY,
     ZHIPU_API_URL,
@@ -53,30 +57,71 @@ def _chat_completions_url(base_url: str) -> str:
 
 
 def _providers() -> tuple[VisionProvider, ...]:
-    """Return the fixed failover order: Groq, then Zhipu, then Gemini."""
-    return (
-        VisionProvider(
+    """Return configured providers in the ``SCEQUENCE`` failover order.
+
+    Unknown and duplicate names are ignored with a safe diagnostic. A missing
+    API key is deliberately handled by the caller so the log records that the
+    configured provider was skipped.
+    """
+    registry = {
+        "groq": VisionProvider(
             name="groq",
             api_key=GROQ_API_KEY,
             model=GROQ_VISION_MODEL,
             url=_chat_completions_url(GROQ_API_BASE_URL),
             use_data_uri=True,
         ),
-        VisionProvider(
+        "deepseek": VisionProvider(
+            name="deepseek",
+            api_key=PIC_DEEPSEEK_API_KEY,
+            model=PIC_DEEPSEEK_VISION_MODEL,
+            url=_chat_completions_url(PIC_DEEPSEEK_API_BASE_URL),
+            use_data_uri=True,
+        ),
+        "zhipu": VisionProvider(
             name="zhipu",
             api_key=ZHIPU_API_KEY,
             model=ZHIPU_VISION_MODEL,
             url=ZHIPU_API_URL,
             use_data_uri=False,
         ),
-        VisionProvider(
+        "gemini": VisionProvider(
             name="gemini",
             api_key=GEMINI_API_KEY,
             model=GEMINI_VISION_MODEL,
             url=_chat_completions_url(GEMINI_API_BASE_URL),
             use_data_uri=True,
         ),
-    )
+    }
+    aliases = {
+        "pic_deepseek": "deepseek",
+        "pic-deepseek": "deepseek",
+        "deepseek_flash": "deepseek",
+        "deepseek-flash": "deepseek",
+    }
+    providers: list[VisionProvider] = []
+    seen: set[str] = set()
+    for raw_name in VISION_PROVIDER_SEQUENCE.split(","):
+        requested_name = raw_name.strip().casefold()
+        provider_name = aliases.get(requested_name, requested_name)
+        if not provider_name:
+            continue
+        if provider_name in seen:
+            logger.warning(
+                "vision_provider_sequence_ignored provider=%s reason=duplicate",
+                requested_name,
+            )
+            continue
+        provider = registry.get(provider_name)
+        if provider is None:
+            logger.warning(
+                "vision_provider_sequence_ignored provider=%s reason=unknown",
+                requested_name,
+            )
+            continue
+        seen.add(provider_name)
+        providers.append(provider)
+    return tuple(providers)
 
 
 def _json_object(content: Any) -> dict[str, Any]:
@@ -153,8 +198,9 @@ def _request_provider(
         ],
         "temperature": 0,
     }
-    if provider.name == "groq":
+    if provider.name in {"groq", "deepseek"}:
         payload["response_format"] = {"type": "json_object"}
+    if provider.name == "groq":
         payload["reasoning_effort"] = "none"
     elif provider.name == "zhipu":
         payload["thinking"] = {"type": "disabled"}
@@ -232,7 +278,7 @@ def identify_supported_species(
     *,
     trace_id: str = "-",
 ) -> dict[str, Any] | None:
-    """Select one supported species using Groq, then Zhipu, then Gemini.
+    """Select one supported species using the configured provider sequence.
 
     Provider failures fall through to the next configured provider. A valid
     provider response that says the photo is unsupported, unclear, or below
