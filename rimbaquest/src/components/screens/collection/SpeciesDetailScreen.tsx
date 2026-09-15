@@ -185,7 +185,7 @@ export function SpeciesDetailScreen() {
             >
               {key === "about" && <AboutTab item={species} />}
               {key === "battle_stats" && <BattleStatsTab item={species} />}
-              {key === "facts" && <FactsTab item={species} />}
+              {key === "facts" && <FactsTab speciesId={species.id} />}
               {key === "gallery" && <GalleryTab photos={photos} />}
             </ScrollView>
           ))}

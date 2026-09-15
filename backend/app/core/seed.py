@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 import sqlite3
 from datetime import datetime
 from functools import lru_cache
@@ -174,6 +175,27 @@ def _seed_key(*parts: object) -> str:
     return json.dumps(list(parts), ensure_ascii=False, separators=(",", ":"))
 
 
+FUN_FACT_CONTENT_POLICY_VERSION = "child-facing-fun-facts-v2"
+FUN_FACT_BLOCKED_PATTERNS = (
+    r"\brimbaquest\s+catalogue\b",
+    r"\bcatalogue\s+links?\b",
+    r"^from wikipedia, the free encyclopedia",
+    r"\byou can help wikipedia\b",
+    r"\bthis article\b.*\bis a stub\b",
+    r"^life-history note:",
+    r"lifespan.*\b(unknown|uncertain)\b",
+    r"lifespan.*not well documented",
+)
+
+
+def _is_child_facing_fun_fact(fact_text: object) -> bool:
+    """Reject scraped page text and preparation notes, not ordinary source-linked facts."""
+    text = str(fact_text or "").strip()
+    return bool(text) and not any(
+        re.search(pattern, text, re.IGNORECASE) for pattern in FUN_FACT_BLOCKED_PATTERNS
+    )
+
+
 def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
     raw_value = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == key)
@@ -188,17 +210,18 @@ def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
 
 
 def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
-    """Load team-verified Fun Facts and revoke removed seed-owned records.
+    """Load source-linked Fun Facts and reject non-child-facing seed records.
 
-    The team has confirmed the existing corpus as reviewed.  Individual
-    verification dates were not supplied, so we retain null dates rather than
-    manufacturing historical audit data; the group reviewer is recorded in
-    the source JSON.
+    Source-linked facts can be displayed without individual reviewer metadata.
+    Scraped page artefacts, RimbaQuest system statements, and uncertainty-only
+    placeholders remain traceable but do not enter the public feed.
     """
     if not ITERATION_2_FUN_FACTS_PILOT.exists():
         return
 
-    seed_version = hashlib.sha256(ITERATION_2_FUN_FACTS_PILOT.read_bytes()).hexdigest()
+    seed_version = hashlib.sha256(
+        ITERATION_2_FUN_FACTS_PILOT.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
+    ).hexdigest()
     version_key = "iteration_2_fun_facts_pilot_sha256"
     keys_key = "iteration_2_fun_facts_pilot_seed_keys"
     current_version = connection.execute(
@@ -245,6 +268,8 @@ def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
                 else None
             ),
         }
+        if not _is_child_facing_fun_fact(values["fact_text"]):
+            values["verification_status"] = "rejected"
         predicate = (
             (species_fun_facts.c.species_id == values["species_id"])
             & (species_fun_facts.c.display_order == values["display_order"])

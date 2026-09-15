@@ -63,15 +63,15 @@ def chat_about_discovered_species(
                     WHERE is_active=TRUE AND id <> :species_id"""),
             {"species_id": species_id},
         ))
-        # The team has confirmed that the Iteration 2 facts are reviewed.
-        # Keep the status predicate here as a second layer of protection: a
-        # future draft cannot enter the provider context merely because it is
-        # linked to the right species.
+        # Keep the full approval predicate here as a second layer of
+        # protection: a source-linked draft must never enter provider context.
         fun_facts = rows(connection.execute(
-            text("""SELECT id, fact_text, verification_status, verified_by
+            text("""SELECT id, fact_text, verification_status, verified_by, verified_at
                     FROM species_fun_facts
                     WHERE species_id=:species_id
                       AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
+                      AND NULLIF(TRIM(verified_by), '') IS NOT NULL
+                      AND verified_at IS NOT NULL
                     ORDER BY display_order ASC"""),
             {"species_id": species_id},
         ))

@@ -274,10 +274,12 @@ def _verified_fun_fact_evidence(fun_facts: Iterable[dict[str, Any]]) -> list[Evi
     for fact in fun_facts:
         if str(fact.get("verification_status") or "").casefold() not in APPROVED_EVIDENCE_STATUSES:
             continue
-        # The team confirmed the existing Fun Facts as a reviewed corpus. A
-        # group reviewer is recorded rather than inventing individual names or
-        # dates that were not supplied with the original pilot data.
+        # Do not treat a group label as a substitute for an auditable review.
+        # A source-linked draft cannot become chatbot evidence until a named
+        # reviewer has supplied an approval timestamp.
         if not str(fact.get("verified_by") or "").strip():
+            continue
+        if not fact.get("verified_at"):
             continue
         fact_id = fact.get("id")
         fact_text = str(fact.get("fact_text") or "").strip()

@@ -97,6 +97,13 @@ export type GalleryItem = {
   recorded_at?: string | null;
 };
 
+export type FunFact = {
+  display_order: number;
+  fact_text: string;
+  source_name: string;
+  source_url: string | null;
+};
+
 export type LocationMode = 'auto' | 'manual';
 
 export type BattleAbilityItem = {
