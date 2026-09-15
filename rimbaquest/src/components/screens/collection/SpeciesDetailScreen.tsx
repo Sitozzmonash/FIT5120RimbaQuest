@@ -196,7 +196,7 @@ export function SpeciesDetailScreen() {
         style={styles.chatLauncher}
         onPress={() => setChatVisible(true)}
       >
-        <MaterialIcons name="chat-bubble-outline" size={23} color="#FFFFFF" />
+        <MaterialIcons name="smart-toy" size={23} color="#FFFFFF" />
       </Tap>
       <SpeciesChatDrawer
         visible={chatVisible}

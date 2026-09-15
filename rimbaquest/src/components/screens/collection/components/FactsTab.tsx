@@ -55,7 +55,7 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
             <Text style={styles.factNumber}>{idx + 1}</Text>
             <View style={styles.factContent}>
               <Text style={styles.detailFactText}>{fact.fact_text}</Text>
-              <Text style={styles.sourceText}>Source: {fact.source_name}</Text>
+              {/* <Text style={styles.sourceText}>Source: {fact.source_name}</Text> */}
             </View>
           </View>
           {idx < facts.length - 1 && <View style={styles.detailDivider} />}
