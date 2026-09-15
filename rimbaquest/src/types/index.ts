@@ -100,6 +100,8 @@ export type GalleryItem = {
 export type FunFact = {
   display_order: number;
   fact_text: string;
+  source_name: string;
+  source_url: string | null;
 };
 
 export type LocationMode = 'auto' | 'manual';

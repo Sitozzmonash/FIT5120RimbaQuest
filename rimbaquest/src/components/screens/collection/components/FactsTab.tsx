@@ -53,7 +53,10 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
         <React.Fragment key={fact.display_order}>
           <View style={styles.detailFactRow}>
             <Text style={styles.factNumber}>{idx + 1}</Text>
-            <Text style={styles.detailFactText}>{fact.fact_text}</Text>
+            <View style={styles.factContent}>
+              <Text style={styles.detailFactText}>{fact.fact_text}</Text>
+              <Text style={styles.sourceText}>Source: {fact.source_name}</Text>
+            </View>
           </View>
           {idx < facts.length - 1 && <View style={styles.detailDivider} />}
         </React.Fragment>
@@ -65,7 +68,9 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
 const styles = StyleSheet.create({
   detailFactRow: { paddingVertical: 14, flexDirection: "row", gap: 10 },
   factNumber: { color: "#0B7A35", fontWeight: "800", fontSize: 14 },
-  detailFactText: { color: "#1A1A1A", fontSize: 14, lineHeight: 20, flex: 1 },
+  factContent: { flex: 1, gap: 5 },
+  detailFactText: { color: "#1A1A1A", fontSize: 14, lineHeight: 20 },
+  sourceText: { color: "#566159", fontSize: 12, lineHeight: 16 },
   detailDivider: { height: 1, backgroundColor: "#E6E6E6" },
   state: { paddingVertical: 28, alignItems: "center", gap: 10 },
   stateText: { color: "#566159", fontSize: 14, lineHeight: 20, textAlign: "center" },

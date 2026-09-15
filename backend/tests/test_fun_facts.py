@@ -53,6 +53,8 @@ def test_fun_facts_endpoint_returns_source_linked_but_not_rejected_facts():
     assert facts[0] == {
         "display_order": 1,
         "fact_text": "Asian elephants use their trunks to pick up food.",
+        "source_name": "Test wildlife source",
+        "source_url": "https://example.org/elephant",
     }
     assert all(fact["fact_text"] != "This rejected record must stay private." for fact in facts)
     assert len(facts) <= 10
