@@ -14,6 +14,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Species,
+  SpeciesChatCitation,
   SpeciesChatMessage,
   SpeciesChatResponse,
 } from "../../../../types";
@@ -24,19 +25,21 @@ const EMPTY_QUESTION_MESSAGE = "Please type a question.";
 const UNAVAILABLE_MESSAGE =
   "WildGuide cannot chat right now. Please try again soon.";
 const REQUEST_ERROR_MESSAGE =
-  "I couldn't answer that question. Please try again.";
+  "I couldn’t answer that right now. Please try again.";
 
 let messageSequence = 0;
 
 function makeMessage(
   role: SpeciesChatMessage["role"],
   content: string,
+  citations?: SpeciesChatCitation[],
 ): SpeciesChatMessage {
   messageSequence += 1;
   return {
     id: `${role}-${Date.now()}-${messageSequence}`,
     role,
     content,
+    citations,
   };
 }
 
@@ -145,14 +148,18 @@ export function SpeciesChatDrawer({
       if (requestVersion !== requestVersionRef.current) return;
       setMessages((current) => [
         ...current,
-        makeMessage("assistant", answer),
+        makeMessage("assistant", answer, response.citations),
       ]);
       setSuggestions(
         usableSuggestions(response.suggested_questions, defaultSuggestions),
       );
-    } catch {
+    } catch (requestError) {
       if (requestVersion !== requestVersionRef.current) return;
-      setError(REQUEST_ERROR_MESSAGE);
+      setError(
+        requestError instanceof Error && requestError.message === REQUEST_ERROR_MESSAGE
+          ? requestError.message
+          : REQUEST_ERROR_MESSAGE,
+      );
       setFailedQuestion(trimmedQuestion);
     } finally {
       if (requestVersion === requestVersionRef.current) {
@@ -240,6 +247,23 @@ export function SpeciesChatDrawer({
                 >
                   {message.content}
                 </Text>
+                {message.role === "assistant" && message.citations?.length ? (
+                  <View style={styles.citationsBlock}>
+                    {message.citations.map((citation, index) => (
+                      <View
+                        key={`${message.id}-${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
+                        style={styles.citationItem}
+                      >
+                        <Text style={styles.citationLabel}>
+                          Source: {citation.source_name}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.citationExcerpt}>
+                          {citation.excerpt}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
               </View>
             ))}
 
@@ -426,6 +450,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   userMessageText: { color: "#FFFFFF" },
+  citationsBlock: {
+    marginTop: 9,
+    gap: 7,
+    borderTopWidth: 1,
+    borderTopColor: "#C9E3CF",
+    paddingTop: 8,
+  },
+  citationItem: { gap: 2 },
+  citationLabel: { color: "#286341", fontSize: 10, fontWeight: "900" },
+  citationExcerpt: { color: "#526258", fontSize: 10, lineHeight: 14 },
   loadingBubble: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { color: "#28734A", fontSize: 13, fontWeight: "700" },
   suggestionsBlock: { marginTop: 3, gap: 7 },

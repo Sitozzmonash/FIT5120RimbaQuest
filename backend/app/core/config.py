@@ -22,6 +22,9 @@ SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
 ITERATION_2_FUN_FACTS_PILOT = Path(
     os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
 )
+ITERATION_2_CHAT_EVIDENCE = Path(
+    os.getenv("ITERATION_2_CHAT_EVIDENCE_PATH", "./data/iteration2_chat_evidence.json")
+)
 
 
 def _database_url() -> str:
@@ -83,7 +86,17 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 DEEPSEEK_API_BASE_URL = os.getenv("DEEPSEEK_API_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
 DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat").strip()
 CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
+# The model returns only a small JSON evidence-ID list, not prose.
 CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
+
+# Epic 6 evidence retrieval. GBIF's public taxonomy API needs no key and is
+# only used for taxonomy questions. Other sources are reviewed and stored in
+# the database; this avoids scraping arbitrary web pages at runtime.
+# Opt in explicitly outside the Render blueprint. This prevents local tests
+# and unconfigured development environments from making a live request.
+GBIF_API_ENABLED = os.getenv("GBIF_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
+GBIF_API_BASE_URL = os.getenv("GBIF_API_BASE_URL", "https://api.gbif.org/v1").strip().rstrip("/")
+GBIF_TIMEOUT_SECONDS = float(os.getenv("GBIF_TIMEOUT_SECONDS", "8"))
 
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"
