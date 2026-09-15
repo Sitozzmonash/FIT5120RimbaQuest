@@ -1342,7 +1342,7 @@
   {
     "species_id": "sp_malayan_pangolin",
     "display_order": 2,
-    "fact_text": "Its lifespan in the wild is currently unknown.",
+    "fact_text": "It uses a long, sticky tongue to eat ants and termites.",
     "source_name": "Save Vietnam's Wildlife: Sunda Pangolin Husbandry Guidelines",
     "source_url": "https://www.pangolinsg.org/wp-content/uploads/sites/4/2018/06/SVW_Sunda-Pangolin-Husbandry-Guidelines-2014.pdf",
     "source_license": "Source document terms apply",
@@ -1462,7 +1462,7 @@
   {
     "species_id": "sp_green_sea_turtle",
     "display_order": 2,
-    "fact_text": "Its lifespan is uncertain, but it is estimated to be 70 years or more.",
+    "fact_text": "Adults mostly eat seagrass and algae.",
     "source_name": "NOAA Fisheries: Green Turtle",
     "source_url": "https://www.fisheries.noaa.gov/species/green-turtle",
     "source_license": "Public-domain U.S. government work",
@@ -1474,7 +1474,7 @@
   {
     "species_id": "sp_green_sea_turtle",
     "display_order": 3,
-    "fact_text": "Adults mostly eat seagrass and algae.",
+    "fact_text": "Wildlife researchers use the scientific name Chelonia mydas for the Green Sea Turtle.",
     "source_name": "Wikipedia: Green sea turtle",
     "source_url": "https://en.wikipedia.org/wiki/Green_sea_turtle",
     "source_license": "CC BY-SA 4.0",
@@ -2550,7 +2550,7 @@
   {
     "species_id": "sp_great_argus",
     "display_order": 2,
-    "fact_text": "Its lifespan in the wild is not well documented, while zoo records report individuals living to about 20 years.",
+    "fact_text": "Male Great Argus birds have exceptionally long tail feathers.",
     "source_name": "Wikipedia: Great argus",
     "source_url": "https://en.wikipedia.org/wiki/Great_argus",
     "source_license": "CC BY-SA 4.0",
@@ -2570,7 +2570,7 @@
   {
     "species_id": "sp_great_argus",
     "display_order": 3,
-    "fact_text": "Male Great Argus birds have exceptionally long tail feathers.",
+    "fact_text": "Wildlife researchers use the scientific name Argusianus argus for the Great Argus.",
     "source_name": "Wikipedia: Great argus",
     "source_url": "https://en.wikipedia.org/wiki/Great_argus",
     "source_license": "CC BY-SA 4.0",
@@ -3770,7 +3770,7 @@
   {
     "species_id": "sp_long_tailed_sibia",
     "display_order": 7,
-    "fact_text": "Long-tailed Sibia is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Long-tailed Sibia is a bird known by the scientific name Heterophasia picaoides.",
     "source_name": "Wikipedia: Long-tailed sibia",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_sibia",
     "source_license": "CC BY-SA 4.0",
@@ -3806,7 +3806,7 @@
   {
     "species_id": "sp_long_tailed_sibia",
     "display_order": 10,
-    "fact_text": "The catalogue links this record to a source page for Heterophasia picaoides.",
+    "fact_text": "Long-tailed Sibia belongs to the bird group of animals.",
     "source_name": "Wikipedia: Long-tailed sibia",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_sibia",
     "source_license": "CC BY-SA 4.0",
@@ -4130,7 +4130,7 @@
   {
     "species_id": "sp_bornean_banded_pitta",
     "display_order": 5,
-    "fact_text": "You can help Wikipedia by adding missing information .",
+    "fact_text": "Bornean Banded Pitta is a bird known by the scientific name Hydrornis schwaneri.",
     "source_name": "Wikipedia: Bornean banded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_banded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -4142,7 +4142,7 @@
   {
     "species_id": "sp_bornean_banded_pitta",
     "display_order": 6,
-    "fact_text": "Bornean Banded Pitta is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "It is found only on the island of Borneo.",
     "source_name": "Wikipedia: Bornean banded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_banded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -4178,7 +4178,7 @@
   {
     "species_id": "sp_bornean_banded_pitta",
     "display_order": 9,
-    "fact_text": "The catalogue links this record to a source page for Hydrornis schwaneri.",
+    "fact_text": "Wildlife researchers use the scientific name Hydrornis schwaneri for the Bornean Banded Pitta.",
     "source_name": "Wikipedia: Bornean banded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_banded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -4934,7 +4934,7 @@
   {
     "species_id": "sp_sunda_laughingthrush",
     "display_order": 8,
-    "fact_text": "Sunda Laughingthrush is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Sunda Laughingthrush is a bird known by the scientific name Garrulax palliatus.",
     "source_name": "Wikipedia: Sunda laughingthrush",
     "source_url": "https://en.wikipedia.org/wiki/Sunda_laughingthrush",
     "source_license": "CC BY-SA 4.0",
@@ -6434,7 +6434,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 5,
-    "fact_text": "This article about an Old World flycatcher is a stub .",
+    "fact_text": "Rufous-tailed shama is a bird known by the scientific name Copsychus pyrropygus.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -6446,7 +6446,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 6,
-    "fact_text": "You can help Wikipedia by adding missing information .",
+    "fact_text": "Wildlife researchers use the scientific name Copsychus pyrropygus for the Rufous-tailed shama.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -6458,7 +6458,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 7,
-    "fact_text": "Rufous-tailed shama is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "It lives in moist lowland forests and tropical swamps.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -6494,7 +6494,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 10,
-    "fact_text": "The catalogue links this record to a source page for Copsychus pyrropygus.",
+    "fact_text": "Rufous-tailed shama belongs to the bird group of animals.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -7482,7 +7482,7 @@
   {
     "species_id": "sp_thick_spined_porcupine",
     "display_order": 7,
-    "fact_text": "You can help Wikipedia by adding missing information .",
+    "fact_text": "Thick-spined Porcupine is a mammal known by the scientific name Hystrix crassispinis.",
     "source_name": "Wikipedia: Thick-spined porcupine",
     "source_url": "https://en.wikipedia.org/wiki/Thick-spined_porcupine",
     "source_license": "CC BY-SA 4.0",
@@ -7494,7 +7494,7 @@
   {
     "species_id": "sp_thick_spined_porcupine",
     "display_order": 8,
-    "fact_text": "Thick-spined Porcupine is listed in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Thick-spined Porcupine is part of the wildlife of Southeast Asia.",
     "source_name": "Wikipedia: Thick-spined porcupine",
     "source_url": "https://en.wikipedia.org/wiki/Thick-spined_porcupine",
     "source_license": "CC BY-SA 4.0",
@@ -7586,7 +7586,7 @@
   {
     "species_id": "sp_striped_wren_babbler",
     "display_order": 5,
-    "fact_text": "Striped Wren-babbler is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Striped Wren-babbler is a bird known by the scientific name Kenopia striata.",
     "source_name": "Wikipedia: Striped wren-babbler",
     "source_url": "https://en.wikipedia.org/wiki/Striped_wren-babbler",
     "source_license": "CC BY-SA 4.0",
@@ -7622,7 +7622,7 @@
   {
     "species_id": "sp_striped_wren_babbler",
     "display_order": 8,
-    "fact_text": "The catalogue links this record to a source page for Kenopia striata.",
+    "fact_text": "Striped Wren-babbler is part of the wildlife of Southeast Asia.",
     "source_name": "Wikipedia: Striped wren-babbler",
     "source_url": "https://en.wikipedia.org/wiki/Striped_wren-babbler",
     "source_license": "CC BY-SA 4.0",
@@ -8354,7 +8354,7 @@
   {
     "species_id": "sp_sooty_capped_babbler",
     "display_order": 5,
-    "fact_text": "Sooty-capped Babbler is listed in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Sooty-capped Babbler is a bird known by the scientific name Malacopteron affine.",
     "source_name": "Wikipedia: Sooty-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Sooty-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -8390,7 +8390,7 @@
   {
     "species_id": "sp_sooty_capped_babbler",
     "display_order": 8,
-    "fact_text": "The catalogue links this record to a source page for Malacopteron affine.",
+    "fact_text": "Sooty-capped Babbler is part of the wildlife of Southeast Asia.",
     "source_name": "Wikipedia: Sooty-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Sooty-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -8658,7 +8658,7 @@
   {
     "species_id": "sp_bornean_yellow_muntjac",
     "display_order": 9,
-    "fact_text": "This article about an even-toed ungulate is a stub .",
+    "fact_text": "Bornean Yellow Muntjac is a mammal known by the scientific name Muntiacus atherodes.",
     "source_name": "Wikipedia: Bornean yellow muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_yellow_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -8670,7 +8670,7 @@
   {
     "species_id": "sp_bornean_yellow_muntjac",
     "display_order": 10,
-    "fact_text": "You can help Wikipedia by adding missing information .",
+    "fact_text": "Bornean Yellow Muntjac belongs to the mammal group of animals.",
     "source_name": "Wikipedia: Bornean yellow muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_yellow_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -9334,7 +9334,7 @@
   {
     "species_id": "sp_banded_leaf_monkey",
     "display_order": 2,
-    "fact_text": "Life-history note: Males leave their natal group before reaching maturity, at about 4 years old.",
+    "fact_text": "Males leave their natal group before reaching maturity, at about 4 years old.",
     "source_name": "Wikipedia: Raffles' banded langur",
     "source_url": "https://en.wikipedia.org/wiki/Raffles%27_banded_langur",
     "source_license": "CC BY-SA 4.0",
@@ -10298,7 +10298,7 @@
   {
     "species_id": "sp_shrew_faced_squirrel",
     "display_order": 7,
-    "fact_text": "You can help Wikipedia by adding missing information .",
+    "fact_text": "Shrew-faced Squirrel is a mammal known by the scientific name Rhinosciurus laticaudatus.",
     "source_name": "Wikipedia: Shrew-faced squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Shrew-faced_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -10310,7 +10310,7 @@
   {
     "species_id": "sp_shrew_faced_squirrel",
     "display_order": 8,
-    "fact_text": "Shrew-faced Squirrel is listed in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Shrew-faced Squirrel is part of the wildlife of Southeast Asia.",
     "source_name": "Wikipedia: Shrew-faced squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Shrew-faced_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -10614,7 +10614,7 @@
   {
     "species_id": "sp_northern_treeshrew",
     "display_order": 2,
-    "fact_text": "Life-history note: The maximum longevity of the northern treeshrew is 11 years.",
+    "fact_text": "The maximum longevity of the northern treeshrew is 11 years.",
     "source_name": "Wikipedia: Northern treeshrew",
     "source_url": "https://en.wikipedia.org/wiki/Northern_treeshrew",
     "source_license": "CC BY-SA 4.0",
@@ -11242,7 +11242,7 @@
   {
     "species_id": "sp_green_billed_coucal",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **green-billed coucal** (_**Centropus chlororhynchos**_) is a member of the [cuckoos].",
+    "fact_text": "Green-billed Coucal is a bird known by the scientific name Centropus chlororhynchos.",
     "source_name": "Wikipedia: Green-billed coucal",
     "source_url": "https://en.wikipedia.org/wiki/Green-billed_coucal",
     "source_license": "CC BY-SA 4.0",
@@ -11766,7 +11766,7 @@
   {
     "species_id": "sp_lesser_dog_faced_fruit_bat",
     "display_order": 2,
-    "fact_text": "Life-history note: Medway observed that breeding was non-seasonal in Peninsular Malaysia and that a single young was produced and carried by the female during the early stage of its life.",
+    "fact_text": "Medway observed that breeding was non-seasonal in Peninsular Malaysia and that a single young was produced and carried by the female during the early stage of its life.",
     "source_name": "Wikipedia: Lesser short-nosed fruit bat",
     "source_url": "https://en.wikipedia.org/wiki/Lesser_short-nosed_fruit_bat",
     "source_license": "CC BY-SA 4.0",
@@ -12010,7 +12010,7 @@
   {
     "species_id": "sp_hose_s_civet",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia **Hose's palm civet** (_**Diplogale hosei**_), also known as **Hose's civet**, is a [viverrid][species][endemic] to the island of [Borneo].",
+    "fact_text": "Hose's Civet is a mammal known by the scientific name Diplogale hosei.",
     "source_name": "Wikipedia: Hose's palm civet",
     "source_url": "https://en.wikipedia.org/wiki/Hose%27s_palm_civet",
     "source_license": "CC BY-SA 4.0",
@@ -12266,7 +12266,7 @@
   {
     "species_id": "sp_moonrat",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **moonrat** (_**Echinosorex gymnura**_) is a fairly small and primarily carnivorous [mammal] native to [Southeast Asia].",
+    "fact_text": "Moonrat is a mammal known by the scientific name Echinosorex gymnura.",
     "source_name": "Wikipedia: Moonrat",
     "source_url": "https://en.wikipedia.org/wiki/Moonrat",
     "source_license": "CC BY-SA 4.0",
@@ -12522,7 +12522,7 @@
   {
     "species_id": "sp_black_crowned_pitta",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia Not to be confused with the [graceful pitta], also sometimes known as the black-crowned pitta.",
+    "fact_text": "Black-crowned Pitta is a bird known by the scientific name Erythropitta ussheri.",
     "source_name": "Wikipedia: Black-crowned pitta",
     "source_url": "https://en.wikipedia.org/wiki/Black-crowned_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -12906,7 +12906,7 @@
   {
     "species_id": "sp_cinereous_bulbul",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia (Redirected from [Hemixos cinereus]) The **cinereous bulbul** (_**Hemixos cinereus**_) is a species of [songbird] in the [bulbul] family, Pycnonotidae.",
+    "fact_text": "Cinereous Bulbul is a bird known by the scientific name Hemixos cinereus.",
     "source_name": "Wikipedia: Cinereous bulbul",
     "source_url": "https://en.wikipedia.org/wiki/Cinereous_bulbul",
     "source_license": "CC BY-SA 4.0",
@@ -12998,7 +12998,7 @@
   {
     "species_id": "sp_cinereous_bulbul",
     "display_order": 8,
-    "fact_text": "Cinereous Bulbul is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Cinereous Bulbul is part of the wildlife of Southeast Asia.",
     "source_name": "Wikipedia: Cinereous bulbul",
     "source_url": "https://en.wikipedia.org/wiki/Cinereous_bulbul",
     "source_license": "CC BY-SA 4.0",
@@ -13278,7 +13278,7 @@
   {
     "species_id": "sp_short_tailed_mongoose",
     "display_order": 10,
-    "fact_text": "Short-tailed Mongoose is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Short-tailed Mongoose is a mammal known by the scientific name Herpestes brachyurus.",
     "source_name": "Wikipedia: Short-tailed mongoose",
     "source_url": "https://en.wikipedia.org/wiki/Short-tailed_mongoose",
     "source_license": "CC BY-SA 4.0",
@@ -13418,7 +13418,7 @@
   {
     "species_id": "sp_lar_gibbon",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **lar gibbon** (_**Hylobates lar**_), also known as the **white-handed gibbon**, is an endangered [primate] in the [gibbon] family, Hylobatidae.",
+    "fact_text": "Lar Gibbon is a mammal known by the scientific name Hylobates lar.",
     "source_name": "Wikipedia: Lar gibbon",
     "source_url": "https://en.wikipedia.org/wiki/Lar_gibbon",
     "source_license": "CC BY-SA 4.0",
@@ -13558,7 +13558,7 @@
   {
     "species_id": "sp_malayan_porcupine",
     "display_order": 2,
-    "fact_text": "Life-history note: They may also dig out and live in burrows, from which a network of trails penetrate into surrounding habitat.",
+    "fact_text": "They may also dig out and live in burrows, from which a network of trails penetrate into surrounding habitat.",
     "source_name": "Wikipedia: Malayan porcupine",
     "source_url": "https://en.wikipedia.org/wiki/Malayan_porcupine",
     "source_license": "CC BY-SA 4.0",
@@ -13790,7 +13790,7 @@
   {
     "species_id": "sp_four_striped_ground_squirrel",
     "display_order": 10,
-    "fact_text": "Four-striped Ground Squirrel is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Four-striped Ground Squirrel is a mammal known by the scientific name Lariscus hosei.",
     "source_name": "Wikipedia: Four-striped ground squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Four-striped_ground_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -13906,7 +13906,7 @@
   {
     "species_id": "sp_three_striped_ground_squirrel",
     "display_order": 9,
-    "fact_text": "Three-striped Ground Squirrel is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Three-striped Ground Squirrel is a mammal known by the scientific name Lariscus insignis.",
     "source_name": "Wikipedia: Three-striped ground squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Three-striped_ground_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -14022,7 +14022,7 @@
   {
     "species_id": "sp_noisy_rat",
     "display_order": 8,
-    "fact_text": "Noisy Rat is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Noisy Rat is a mammal known by the scientific name Leopoldamys sabanus.",
     "source_name": "Wikipedia: Long-tailed giant rat",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_giant_rat",
     "source_license": "CC BY-SA 4.0",
@@ -14254,7 +14254,7 @@
   {
     "species_id": "sp_rufous_tailed_pheasant",
     "display_order": 6,
-    "fact_text": "Rufous-tailed Pheasant is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Rufous-tailed Pheasant is a bird known by the scientific name Lophura erythrophthalma.",
     "source_name": "Wikipedia: Malayan crestless fireback",
     "source_url": "https://en.wikipedia.org/wiki/Malayan_crestless_fireback",
     "source_license": "CC BY-SA 4.0",
@@ -14522,7 +14522,7 @@
   {
     "species_id": "sp_malay_crested_fireback",
     "display_order": 7,
-    "fact_text": "Malay Crested Fireback is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Malay Crested Fireback is a bird known by the scientific name Lophura rufa.",
     "source_name": "Wikipedia: Malayan crested fireback",
     "source_url": "https://en.wikipedia.org/wiki/Malayan_crested_fireback",
     "source_license": "CC BY-SA 4.0",
@@ -14790,7 +14790,7 @@
   {
     "species_id": "sp_stump_tailed_macaque",
     "display_order": 8,
-    "fact_text": "Stump-tailed Macaque is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "Stump-tailed Macaque is a mammal known by the scientific name Macaca arctoides.",
     "source_name": "Wikipedia: Stump-tailed macaque",
     "source_url": "https://en.wikipedia.org/wiki/Stump-tailed_macaque",
     "source_license": "CC BY-SA 4.0",
@@ -14826,7 +14826,7 @@
   {
     "species_id": "sp_southern_red_muntjac",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **southern red muntjac** (_**Muntiacus muntjak**_) is a [deer] species native to [Southeast Asia].",
+    "fact_text": "Southern Red Muntjac is a mammal known by the scientific name Muntiacus muntjak.",
     "source_name": "Wikipedia: Southern red muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Southern_red_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -15094,7 +15094,7 @@
   {
     "species_id": "sp_sunda_stink_badger",
     "display_order": 2,
-    "fact_text": "Life-history note: H., ed. (1989). _Henry Jacob Victor Sody (1892-1959): His life and work.",
+    "fact_text": "Sunda Stink-badger is a mammal known by the scientific name Mydaus javanensis.",
     "source_name": "Wikipedia: Sunda stink badger",
     "source_url": "https://en.wikipedia.org/wiki/Sunda_stink_badger",
     "source_license": "CC BY-SA 4.0",
@@ -15222,7 +15222,7 @@
   {
     "species_id": "sp_sunda_clouded_leopard",
     "display_order": 2,
-    "fact_text": "Life-history note: Between 2011 and 2019, body parts of 32 individuals were seized including 17 live individuals, six skins, several canines and claws.",
+    "fact_text": "Between 2011 and 2019, body parts of 32 individuals were seized including 17 live individuals, six skins, several canines and claws.",
     "source_name": "Wikipedia: Sunda clouded leopard",
     "source_url": "https://en.wikipedia.org/wiki/Sunda_clouded_leopard",
     "source_license": "CC BY-SA 4.0",
@@ -15582,7 +15582,7 @@
   {
     "species_id": "sp_blyth_s_hawk_eagle",
     "display_order": 10,
-    "fact_text": "Blyth's Hawk-Eagle is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Blyth's Hawk-Eagle is a bird known by the scientific name Nisaetus alboniger.",
     "source_name": "Wikipedia: Blyth's hawk-eagle",
     "source_url": "https://en.wikipedia.org/wiki/Blyth%27s_hawk-eagle",
     "source_license": "CC BY-SA 4.0",
@@ -15606,7 +15606,7 @@
   {
     "species_id": "sp_changeable_hawk_eagle",
     "display_order": 2,
-    "fact_text": "Life-history note: Cornell University Press. 41. [↑]Steyn, P. (1983). _Birds of prey of southern Africa: Their identification and life histories_.",
+    "fact_text": "Changeable Hawk-eagle is a bird known by the scientific name Nisaetus cirrhatus.",
     "source_name": "Wikipedia: Changeable hawk-eagle",
     "source_url": "https://en.wikipedia.org/wiki/Changeable_hawk-eagle",
     "source_license": "CC BY-SA 4.0",
@@ -15802,7 +15802,7 @@
   {
     "species_id": "sp_dark_necked_tailorbird",
     "display_order": 7,
-    "fact_text": "Dark-necked Tailorbird is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Dark-necked Tailorbird is a bird known by the scientific name Orthotomus atrogularis.",
     "source_name": "Wikipedia: Dark-necked tailorbird",
     "source_url": "https://en.wikipedia.org/wiki/Dark-necked_tailorbird",
     "source_license": "CC BY-SA 4.0",
@@ -15850,7 +15850,7 @@
   {
     "species_id": "sp_rufous_browed_babbler",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **Javan black-capped babbler** (_**Pellorneum capistratum**_) is a species of [bird] in the family [Pellorneidae].",
+    "fact_text": "Rufous-browed Babbler is a bird known by the scientific name Pellorneum capistratum.",
     "source_name": "Wikipedia: Javan black-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Javan_black-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -15930,7 +15930,7 @@
   {
     "species_id": "sp_rufous_browed_babbler",
     "display_order": 7,
-    "fact_text": "Rufous-browed Babbler is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Rufous-browed Babbler belongs to the bird group of animals.",
     "source_name": "Wikipedia: Javan black-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Javan_black-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -16466,7 +16466,7 @@
   {
     "species_id": "sp_crimson_winged_woodpecker",
     "display_order": 9,
-    "fact_text": "Crimson-winged Woodpecker is recorded in the RimbaQuest catalogue as a bird.",
+    "fact_text": "Crimson-winged Woodpecker is a bird known by the scientific name Picus puniceus.",
     "source_name": "Wikipedia: Crimson-winged woodpecker",
     "source_url": "https://en.wikipedia.org/wiki/Crimson-winged_woodpecker",
     "source_license": "CC BY-SA 4.0",
@@ -16490,7 +16490,7 @@
   {
     "species_id": "sp_western_hooded_pitta",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia (Redirected from [Pitta sordida]) The **western hooded pitta** (_**Pitta sordida**_) is a [passerine] bird in the family [Pittidae].",
+    "fact_text": "Western Hooded Pitta is a bird known by the scientific name Pitta sordida.",
     "source_name": "Wikipedia: Western hooded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Western_hooded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -16758,7 +16758,7 @@
   {
     "species_id": "sp_bornean_orangutan",
     "display_order": 2,
-    "fact_text": "Life-history note: During the first year of its life, the young clings to its mother's abdomen by entwining its fingers in and gripping her hair.",
+    "fact_text": "During the first year of its life, the young clings to its mother's abdomen by entwining its fingers in and gripping her hair.",
     "source_name": "Wikipedia: Bornean orangutan",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_orangutan",
     "source_license": "CC BY-SA 4.0",
@@ -16874,7 +16874,7 @@
   {
     "species_id": "sp_white_thighed_surili",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **white-thighed surili** (_**Presbytis siamensis**_) is a species of [primate] from the family of old world monkeys ([Cercopithecidae]).",
+    "fact_text": "White-thighed Surili is a mammal known by the scientific name Presbytis siamensis.",
     "source_name": "Wikipedia: White-thighed surili",
     "source_url": "https://en.wikipedia.org/wiki/White-thighed_surili",
     "source_license": "CC BY-SA 4.0",
@@ -16954,7 +16954,7 @@
   {
     "species_id": "sp_white_thighed_surili",
     "display_order": 7,
-    "fact_text": "White-thighed Surili is recorded in the RimbaQuest catalogue as a mammal.",
+    "fact_text": "White-thighed Surili belongs to the mammal group of animals.",
     "source_name": "Wikipedia: White-thighed surili",
     "source_url": "https://en.wikipedia.org/wiki/White-thighed_surili",
     "source_license": "CC BY-SA 4.0",
@@ -17130,7 +17130,7 @@
   {
     "species_id": "sp_flat_headed_cat",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **flat-headed cat** (_**Prionailurus planiceps**_) is a [small wild cat] with short reddish-brown fur.",
+    "fact_text": "Flat-headed Cat is a mammal known by the scientific name Prionailurus planiceps.",
     "source_name": "Wikipedia: Flat-headed cat",
     "source_url": "https://en.wikipedia.org/wiki/Flat-headed_cat",
     "source_license": "CC BY-SA 4.0",
@@ -17398,7 +17398,7 @@
   {
     "species_id": "sp_brown_rat",
     "display_order": 2,
-    "fact_text": "Life-history note: With rare exceptions, the brown rat lives wherever humans live, particularly in urban areas.",
+    "fact_text": "With rare exceptions, the brown rat lives wherever humans live, particularly in urban areas.",
     "source_name": "Wikipedia: Brown rat",
     "source_url": "https://en.wikipedia.org/wiki/Brown_rat",
     "source_license": "CC BY-SA 4.0",
@@ -17910,7 +17910,7 @@
   {
     "species_id": "sp_sambar",
     "display_order": 2,
-    "fact_text": "Life-history note: The males live alone for much of the year, and the females live in small herds of up to 16 individuals.",
+    "fact_text": "The males live alone for much of the year, and the females live in small herds of up to 16 individuals.",
     "source_name": "Wikipedia: Sambar deer",
     "source_url": "https://en.wikipedia.org/wiki/Sambar_deer",
     "source_license": "CC BY-SA 4.0",
@@ -18026,7 +18026,7 @@
   {
     "species_id": "sp_crested_serpent_eagle",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **crested serpent eagle** (_**Spilornis cheela**_) is a medium-sized [bird of prey] that is found in forested habitats across [tropical][Asia].",
+    "fact_text": "Crested Serpent-eagle is a bird known by the scientific name Spilornis cheela.",
     "source_name": "Wikipedia: Crested serpent eagle",
     "source_url": "https://en.wikipedia.org/wiki/Crested_serpent_eagle",
     "source_license": "CC BY-SA 4.0",
@@ -18550,7 +18550,7 @@
   {
     "species_id": "sp_asian_blue_quail",
     "display_order": 2,
-    "fact_text": "Life-history note: They have orange feet that are hard and able to withstand a continuous life on the ground like many other game birds.",
+    "fact_text": "They have orange feet that are hard and able to withstand a continuous life on the ground like many other game birds.",
     "source_name": "Wikipedia: King quail",
     "source_url": "https://en.wikipedia.org/wiki/King_quail",
     "source_license": "CC BY-SA 4.0",
@@ -18666,7 +18666,7 @@
   {
     "species_id": "sp_asiatic_striped_squirrels",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **Cambodian striped squirrel** (_**Tamiops rodolphii**_) is a species of [rodent] in the family [Sciuridae].",
+    "fact_text": "Asiatic Striped Squirrels is a mammal known by the scientific name Tamiops rodolphii.",
     "source_name": "Wikipedia: Cambodian striped squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Cambodian_striped_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -18794,7 +18794,7 @@
   {
     "species_id": "sp_chestnut_capped_babbler",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **chestnut-capped babbler** (_**Timalia pileata**_) is a [passerine bird] of the family [Timaliidae].",
+    "fact_text": "Chestnut-capped Babbler is a bird known by the scientific name Timalia pileata.",
     "source_name": "Wikipedia: Chestnut-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Chestnut-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -19178,7 +19178,7 @@
   {
     "species_id": "sp_large_indian_civet",
     "display_order": 1,
-    "fact_text": "From Wikipedia, the free encyclopedia The **large Indian civet** (_**Viverra zibetha**_) is a [viverrid] native to [South] and [Southeast Asia].",
+    "fact_text": "Large Indian Civet is a mammal known by the scientific name Viverra zibetha.",
     "source_name": "Wikipedia: Large Indian civet",
     "source_url": "https://en.wikipedia.org/wiki/Large_Indian_civet",
     "source_license": "CC BY-SA 4.0",
