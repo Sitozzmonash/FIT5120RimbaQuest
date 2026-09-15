@@ -25,6 +25,53 @@ LIFESPAN_REPLACEMENTS = {
     "sp_green_sea_turtle": "Its front flippers work like paddles for swimming.",
     "sp_great_argus": "A male clears a patch of forest floor before its courtship display.",
 }
+CHILD_FRIENDLY_REPLACEMENTS = {
+    ("sp_green_sea_turtle", 3): "Green Sea Turtles use their strong flippers to swim through the sea.",
+    ("sp_great_argus", 3): "Male Great Argus birds spread their long feathers in a fan during courtship.",
+    ("sp_long_tailed_sibia", 7): "Long-tailed Sibias live in the forests of Southeast Asia.",
+    ("sp_long_tailed_sibia", 10): "Its long tail helps make the Long-tailed Sibia easy to recognise.",
+    ("sp_bornean_banded_pitta", 5): "The Bornean Banded Pitta is found only on the island of Borneo.",
+    ("sp_bornean_banded_pitta", 9): "Pittas are forest birds that usually search for food near the ground.",
+    ("sp_sunda_laughingthrush", 8): "Sunda Laughingthrushes live on the islands of Sumatra and Borneo.",
+    ("sp_rufous_tailed_shama", 5): "Rufous-tailed Shamas live in moist forests and swamps.",
+    ("sp_rufous_tailed_shama", 6): "The Rufous-tailed Shama belongs to the Old World flycatcher family.",
+    ("sp_rufous_tailed_shama", 10): "Its rufous, or reddish-brown, tail gives this bird its name.",
+    ("sp_thick_spined_porcupine", 7): "Thick-spined Porcupines live in habitats from forests to farmland.",
+    ("sp_striped_wren_babbler", 5): "Striped Wren-babblers are found in Brunei, Indonesia, Malaysia, and Thailand.",
+    ("sp_sooty_capped_babbler", 5): "Sooty-capped Babblers are small birds that live in Southeast Asian forests.",
+    ("sp_bornean_yellow_muntjac", 9): "The Bornean Yellow Muntjac lives in the moist forests of Borneo.",
+    ("sp_bornean_yellow_muntjac", 10): "Its short antlers are much smaller than those of the common muntjac.",
+    ("sp_shrew_faced_squirrel", 7): "Shrew-faced Squirrels mainly eat insects and earthworms.",
+    ("sp_green_billed_coucal", 1): "The Green-billed Coucal has maroon wings and a long dark-green tail.",
+    ("sp_hose_s_civet", 1): "Hose's Civet is a small mammal that lives in Borneo's forests.",
+    ("sp_moonrat", 1): "Moonrats feed on earthworms and other small animals.",
+    ("sp_black_crowned_pitta", 1): "Black-crowned Pittas are colourful forest birds of Southeast Asia.",
+    ("sp_cinereous_bulbul", 1): "Cinereous Bulbuls are birds found in Southeast Asia and Indonesia.",
+    ("sp_short_tailed_mongoose", 10): "Short-tailed Mongooses live in evergreen forests and sometimes visit rural gardens.",
+    ("sp_lar_gibbon", 1): "Lar Gibbons swing through trees using their very long arms.",
+    ("sp_four_striped_ground_squirrel", 10): "Four-striped Ground Squirrels have four dark stripes along their backs.",
+    ("sp_three_striped_ground_squirrel", 9): "Three-striped Ground Squirrels have three dark stripes along their backs.",
+    ("sp_noisy_rat", 8): "Noisy Rats are forest mammals found in Southeast Asia.",
+    ("sp_rufous_tailed_pheasant", 6): "The Rufous-tailed Pheasant is a forest bird of Borneo.",
+    ("sp_malay_crested_fireback", 7): "Male Malay Crested Firebacks have a tall crest of feathers on their heads.",
+    ("sp_stump_tailed_macaque", 8): "Stump-tailed Macaques have short tails and often live in groups.",
+    ("sp_southern_red_muntjac", 1): "Southern Red Muntjacs are also called barking deer because of their calls.",
+    ("sp_sunda_stink_badger", 2): "The Sunda Stink-badger has a white stripe running from its head to its tail.",
+    ("sp_blyth_s_hawk_eagle", 10): "Blyth's Hawk-Eagles are birds of prey with strong feet for catching food.",
+    ("sp_changeable_hawk_eagle", 2): "Changeable Hawk-Eagles can raise a crest of feathers on their heads.",
+    ("sp_dark_necked_tailorbird", 7): "Tailorbirds use plant fibres to stitch leaves together for their nests.",
+    ("sp_rufous_browed_babbler", 1): "Rufous-browed Babblers are small birds that search for food near the forest floor.",
+    ("sp_rufous_browed_babbler", 7): "Its rufous, or reddish-brown, eyebrow stripe helps identify this babbler.",
+    ("sp_crimson_winged_woodpecker", 9): "Crimson-winged Woodpeckers use their strong bills to tap and search tree trunks.",
+    ("sp_western_hooded_pitta", 1): "Western Hooded Pittas live in forests and can also be found near plantations.",
+    ("sp_white_thighed_surili", 1): "White-thighed Surilis are leaf-eating monkeys that live in trees.",
+    ("sp_white_thighed_surili", 7): "The white fur on its thighs helps give the White-thighed Surili its name.",
+    ("sp_flat_headed_cat", 1): "Flat-headed Cats have low, flattened heads and are good swimmers.",
+    ("sp_crested_serpent_eagle", 1): "Crested Serpent-Eagles have long feathers at the back of the head that form a crest.",
+    ("sp_asiatic_striped_squirrels", 1): "Asiatic Striped Squirrels have dark stripes running along their backs.",
+    ("sp_chestnut_capped_babbler", 1): "Chestnut-capped Babblers have a warm chestnut-coloured cap on their heads.",
+    ("sp_large_indian_civet", 1): "Large Indian Civets have tails with black and white rings.",
+}
 
 
 def species_catalogue() -> dict[str, tuple[str, str, str]]:
@@ -69,6 +116,13 @@ def main() -> None:
         text = str(record.get("fact_text") or "")
         if any(re.search(pattern, text, re.IGNORECASE) for pattern in FUN_FACT_BLOCKED_PATTERNS):
             record["fact_text"] = replacement_for(record, catalogue[str(record["species_id"])])
+            record["verification_status"] = "source-linked-draft"
+            changed += 1
+        replacement = CHILD_FRIENDLY_REPLACEMENTS.get(
+            (str(record["species_id"]), int(record["display_order"]))
+        )
+        if replacement and record["fact_text"] != replacement:
+            record["fact_text"] = replacement
             record["verification_status"] = "source-linked-draft"
             changed += 1
     seen: dict[str, set[str]] = {}

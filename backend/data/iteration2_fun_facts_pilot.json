@@ -1474,7 +1474,7 @@
   {
     "species_id": "sp_green_sea_turtle",
     "display_order": 3,
-    "fact_text": "Wildlife researchers use the scientific name Chelonia mydas for the Green Sea Turtle.",
+    "fact_text": "Green Sea Turtles use their strong flippers to swim through the sea.",
     "source_name": "Wikipedia: Green sea turtle",
     "source_url": "https://en.wikipedia.org/wiki/Green_sea_turtle",
     "source_license": "CC BY-SA 4.0",
@@ -2570,7 +2570,7 @@
   {
     "species_id": "sp_great_argus",
     "display_order": 3,
-    "fact_text": "Wildlife researchers use the scientific name Argusianus argus for the Great Argus.",
+    "fact_text": "Male Great Argus birds spread their long feathers in a fan during courtship.",
     "source_name": "Wikipedia: Great argus",
     "source_url": "https://en.wikipedia.org/wiki/Great_argus",
     "source_license": "CC BY-SA 4.0",
@@ -3770,7 +3770,7 @@
   {
     "species_id": "sp_long_tailed_sibia",
     "display_order": 7,
-    "fact_text": "Long-tailed Sibia is a bird known by the scientific name Heterophasia picaoides.",
+    "fact_text": "Long-tailed Sibias live in the forests of Southeast Asia.",
     "source_name": "Wikipedia: Long-tailed sibia",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_sibia",
     "source_license": "CC BY-SA 4.0",
@@ -3806,7 +3806,7 @@
   {
     "species_id": "sp_long_tailed_sibia",
     "display_order": 10,
-    "fact_text": "Long-tailed Sibia belongs to the bird group of animals.",
+    "fact_text": "Its long tail helps make the Long-tailed Sibia easy to recognise.",
     "source_name": "Wikipedia: Long-tailed sibia",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_sibia",
     "source_license": "CC BY-SA 4.0",
@@ -4130,7 +4130,7 @@
   {
     "species_id": "sp_bornean_banded_pitta",
     "display_order": 5,
-    "fact_text": "Bornean Banded Pitta is a bird known by the scientific name Hydrornis schwaneri.",
+    "fact_text": "The Bornean Banded Pitta is found only on the island of Borneo.",
     "source_name": "Wikipedia: Bornean banded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_banded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -4178,7 +4178,7 @@
   {
     "species_id": "sp_bornean_banded_pitta",
     "display_order": 9,
-    "fact_text": "Wildlife researchers use the scientific name Hydrornis schwaneri for the Bornean Banded Pitta.",
+    "fact_text": "Pittas are forest birds that usually search for food near the ground.",
     "source_name": "Wikipedia: Bornean banded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_banded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -4934,7 +4934,7 @@
   {
     "species_id": "sp_sunda_laughingthrush",
     "display_order": 8,
-    "fact_text": "Sunda Laughingthrush is a bird known by the scientific name Garrulax palliatus.",
+    "fact_text": "Sunda Laughingthrushes live on the islands of Sumatra and Borneo.",
     "source_name": "Wikipedia: Sunda laughingthrush",
     "source_url": "https://en.wikipedia.org/wiki/Sunda_laughingthrush",
     "source_license": "CC BY-SA 4.0",
@@ -6434,7 +6434,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 5,
-    "fact_text": "Rufous-tailed shama is a bird known by the scientific name Copsychus pyrropygus.",
+    "fact_text": "Rufous-tailed Shamas live in moist forests and swamps.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -6446,7 +6446,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 6,
-    "fact_text": "Wildlife researchers use the scientific name Copsychus pyrropygus for the Rufous-tailed shama.",
+    "fact_text": "The Rufous-tailed Shama belongs to the Old World flycatcher family.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -6494,7 +6494,7 @@
   {
     "species_id": "sp_rufous_tailed_shama",
     "display_order": 10,
-    "fact_text": "Rufous-tailed shama belongs to the bird group of animals.",
+    "fact_text": "Its rufous, or reddish-brown, tail gives this bird its name.",
     "source_name": "Wikipedia: Rufous-tailed shama",
     "source_url": "https://en.wikipedia.org/wiki/Rufous-tailed_shama",
     "source_license": "CC BY-SA 4.0",
@@ -7482,7 +7482,7 @@
   {
     "species_id": "sp_thick_spined_porcupine",
     "display_order": 7,
-    "fact_text": "Thick-spined Porcupine is a mammal known by the scientific name Hystrix crassispinis.",
+    "fact_text": "Thick-spined Porcupines live in habitats from forests to farmland.",
     "source_name": "Wikipedia: Thick-spined porcupine",
     "source_url": "https://en.wikipedia.org/wiki/Thick-spined_porcupine",
     "source_license": "CC BY-SA 4.0",
@@ -7586,7 +7586,7 @@
   {
     "species_id": "sp_striped_wren_babbler",
     "display_order": 5,
-    "fact_text": "Striped Wren-babbler is a bird known by the scientific name Kenopia striata.",
+    "fact_text": "Striped Wren-babblers are found in Brunei, Indonesia, Malaysia, and Thailand.",
     "source_name": "Wikipedia: Striped wren-babbler",
     "source_url": "https://en.wikipedia.org/wiki/Striped_wren-babbler",
     "source_license": "CC BY-SA 4.0",
@@ -8354,7 +8354,7 @@
   {
     "species_id": "sp_sooty_capped_babbler",
     "display_order": 5,
-    "fact_text": "Sooty-capped Babbler is a bird known by the scientific name Malacopteron affine.",
+    "fact_text": "Sooty-capped Babblers are small birds that live in Southeast Asian forests.",
     "source_name": "Wikipedia: Sooty-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Sooty-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -8658,7 +8658,7 @@
   {
     "species_id": "sp_bornean_yellow_muntjac",
     "display_order": 9,
-    "fact_text": "Bornean Yellow Muntjac is a mammal known by the scientific name Muntiacus atherodes.",
+    "fact_text": "The Bornean Yellow Muntjac lives in the moist forests of Borneo.",
     "source_name": "Wikipedia: Bornean yellow muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_yellow_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -8670,7 +8670,7 @@
   {
     "species_id": "sp_bornean_yellow_muntjac",
     "display_order": 10,
-    "fact_text": "Bornean Yellow Muntjac belongs to the mammal group of animals.",
+    "fact_text": "Its short antlers are much smaller than those of the common muntjac.",
     "source_name": "Wikipedia: Bornean yellow muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Bornean_yellow_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -10298,7 +10298,7 @@
   {
     "species_id": "sp_shrew_faced_squirrel",
     "display_order": 7,
-    "fact_text": "Shrew-faced Squirrel is a mammal known by the scientific name Rhinosciurus laticaudatus.",
+    "fact_text": "Shrew-faced Squirrels mainly eat insects and earthworms.",
     "source_name": "Wikipedia: Shrew-faced squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Shrew-faced_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -11242,7 +11242,7 @@
   {
     "species_id": "sp_green_billed_coucal",
     "display_order": 1,
-    "fact_text": "Green-billed Coucal is a bird known by the scientific name Centropus chlororhynchos.",
+    "fact_text": "The Green-billed Coucal has maroon wings and a long dark-green tail.",
     "source_name": "Wikipedia: Green-billed coucal",
     "source_url": "https://en.wikipedia.org/wiki/Green-billed_coucal",
     "source_license": "CC BY-SA 4.0",
@@ -12010,7 +12010,7 @@
   {
     "species_id": "sp_hose_s_civet",
     "display_order": 1,
-    "fact_text": "Hose's Civet is a mammal known by the scientific name Diplogale hosei.",
+    "fact_text": "Hose's Civet is a small mammal that lives in Borneo's forests.",
     "source_name": "Wikipedia: Hose's palm civet",
     "source_url": "https://en.wikipedia.org/wiki/Hose%27s_palm_civet",
     "source_license": "CC BY-SA 4.0",
@@ -12266,7 +12266,7 @@
   {
     "species_id": "sp_moonrat",
     "display_order": 1,
-    "fact_text": "Moonrat is a mammal known by the scientific name Echinosorex gymnura.",
+    "fact_text": "Moonrats feed on earthworms and other small animals.",
     "source_name": "Wikipedia: Moonrat",
     "source_url": "https://en.wikipedia.org/wiki/Moonrat",
     "source_license": "CC BY-SA 4.0",
@@ -12522,7 +12522,7 @@
   {
     "species_id": "sp_black_crowned_pitta",
     "display_order": 1,
-    "fact_text": "Black-crowned Pitta is a bird known by the scientific name Erythropitta ussheri.",
+    "fact_text": "Black-crowned Pittas are colourful forest birds of Southeast Asia.",
     "source_name": "Wikipedia: Black-crowned pitta",
     "source_url": "https://en.wikipedia.org/wiki/Black-crowned_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -12906,7 +12906,7 @@
   {
     "species_id": "sp_cinereous_bulbul",
     "display_order": 1,
-    "fact_text": "Cinereous Bulbul is a bird known by the scientific name Hemixos cinereus.",
+    "fact_text": "Cinereous Bulbuls are birds found in Southeast Asia and Indonesia.",
     "source_name": "Wikipedia: Cinereous bulbul",
     "source_url": "https://en.wikipedia.org/wiki/Cinereous_bulbul",
     "source_license": "CC BY-SA 4.0",
@@ -13278,7 +13278,7 @@
   {
     "species_id": "sp_short_tailed_mongoose",
     "display_order": 10,
-    "fact_text": "Short-tailed Mongoose is a mammal known by the scientific name Herpestes brachyurus.",
+    "fact_text": "Short-tailed Mongooses live in evergreen forests and sometimes visit rural gardens.",
     "source_name": "Wikipedia: Short-tailed mongoose",
     "source_url": "https://en.wikipedia.org/wiki/Short-tailed_mongoose",
     "source_license": "CC BY-SA 4.0",
@@ -13418,7 +13418,7 @@
   {
     "species_id": "sp_lar_gibbon",
     "display_order": 1,
-    "fact_text": "Lar Gibbon is a mammal known by the scientific name Hylobates lar.",
+    "fact_text": "Lar Gibbons swing through trees using their very long arms.",
     "source_name": "Wikipedia: Lar gibbon",
     "source_url": "https://en.wikipedia.org/wiki/Lar_gibbon",
     "source_license": "CC BY-SA 4.0",
@@ -13790,7 +13790,7 @@
   {
     "species_id": "sp_four_striped_ground_squirrel",
     "display_order": 10,
-    "fact_text": "Four-striped Ground Squirrel is a mammal known by the scientific name Lariscus hosei.",
+    "fact_text": "Four-striped Ground Squirrels have four dark stripes along their backs.",
     "source_name": "Wikipedia: Four-striped ground squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Four-striped_ground_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -13906,7 +13906,7 @@
   {
     "species_id": "sp_three_striped_ground_squirrel",
     "display_order": 9,
-    "fact_text": "Three-striped Ground Squirrel is a mammal known by the scientific name Lariscus insignis.",
+    "fact_text": "Three-striped Ground Squirrels have three dark stripes along their backs.",
     "source_name": "Wikipedia: Three-striped ground squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Three-striped_ground_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -14022,7 +14022,7 @@
   {
     "species_id": "sp_noisy_rat",
     "display_order": 8,
-    "fact_text": "Noisy Rat is a mammal known by the scientific name Leopoldamys sabanus.",
+    "fact_text": "Noisy Rats are forest mammals found in Southeast Asia.",
     "source_name": "Wikipedia: Long-tailed giant rat",
     "source_url": "https://en.wikipedia.org/wiki/Long-tailed_giant_rat",
     "source_license": "CC BY-SA 4.0",
@@ -14254,7 +14254,7 @@
   {
     "species_id": "sp_rufous_tailed_pheasant",
     "display_order": 6,
-    "fact_text": "Rufous-tailed Pheasant is a bird known by the scientific name Lophura erythrophthalma.",
+    "fact_text": "The Rufous-tailed Pheasant is a forest bird of Borneo.",
     "source_name": "Wikipedia: Malayan crestless fireback",
     "source_url": "https://en.wikipedia.org/wiki/Malayan_crestless_fireback",
     "source_license": "CC BY-SA 4.0",
@@ -14522,7 +14522,7 @@
   {
     "species_id": "sp_malay_crested_fireback",
     "display_order": 7,
-    "fact_text": "Malay Crested Fireback is a bird known by the scientific name Lophura rufa.",
+    "fact_text": "Male Malay Crested Firebacks have a tall crest of feathers on their heads.",
     "source_name": "Wikipedia: Malayan crested fireback",
     "source_url": "https://en.wikipedia.org/wiki/Malayan_crested_fireback",
     "source_license": "CC BY-SA 4.0",
@@ -14790,7 +14790,7 @@
   {
     "species_id": "sp_stump_tailed_macaque",
     "display_order": 8,
-    "fact_text": "Stump-tailed Macaque is a mammal known by the scientific name Macaca arctoides.",
+    "fact_text": "Stump-tailed Macaques have short tails and often live in groups.",
     "source_name": "Wikipedia: Stump-tailed macaque",
     "source_url": "https://en.wikipedia.org/wiki/Stump-tailed_macaque",
     "source_license": "CC BY-SA 4.0",
@@ -14826,7 +14826,7 @@
   {
     "species_id": "sp_southern_red_muntjac",
     "display_order": 1,
-    "fact_text": "Southern Red Muntjac is a mammal known by the scientific name Muntiacus muntjak.",
+    "fact_text": "Southern Red Muntjacs are also called barking deer because of their calls.",
     "source_name": "Wikipedia: Southern red muntjac",
     "source_url": "https://en.wikipedia.org/wiki/Southern_red_muntjac",
     "source_license": "CC BY-SA 4.0",
@@ -15094,7 +15094,7 @@
   {
     "species_id": "sp_sunda_stink_badger",
     "display_order": 2,
-    "fact_text": "Sunda Stink-badger is a mammal known by the scientific name Mydaus javanensis.",
+    "fact_text": "The Sunda Stink-badger has a white stripe running from its head to its tail.",
     "source_name": "Wikipedia: Sunda stink badger",
     "source_url": "https://en.wikipedia.org/wiki/Sunda_stink_badger",
     "source_license": "CC BY-SA 4.0",
@@ -15582,7 +15582,7 @@
   {
     "species_id": "sp_blyth_s_hawk_eagle",
     "display_order": 10,
-    "fact_text": "Blyth's Hawk-Eagle is a bird known by the scientific name Nisaetus alboniger.",
+    "fact_text": "Blyth's Hawk-Eagles are birds of prey with strong feet for catching food.",
     "source_name": "Wikipedia: Blyth's hawk-eagle",
     "source_url": "https://en.wikipedia.org/wiki/Blyth%27s_hawk-eagle",
     "source_license": "CC BY-SA 4.0",
@@ -15606,7 +15606,7 @@
   {
     "species_id": "sp_changeable_hawk_eagle",
     "display_order": 2,
-    "fact_text": "Changeable Hawk-eagle is a bird known by the scientific name Nisaetus cirrhatus.",
+    "fact_text": "Changeable Hawk-Eagles can raise a crest of feathers on their heads.",
     "source_name": "Wikipedia: Changeable hawk-eagle",
     "source_url": "https://en.wikipedia.org/wiki/Changeable_hawk-eagle",
     "source_license": "CC BY-SA 4.0",
@@ -15802,7 +15802,7 @@
   {
     "species_id": "sp_dark_necked_tailorbird",
     "display_order": 7,
-    "fact_text": "Dark-necked Tailorbird is a bird known by the scientific name Orthotomus atrogularis.",
+    "fact_text": "Tailorbirds use plant fibres to stitch leaves together for their nests.",
     "source_name": "Wikipedia: Dark-necked tailorbird",
     "source_url": "https://en.wikipedia.org/wiki/Dark-necked_tailorbird",
     "source_license": "CC BY-SA 4.0",
@@ -15850,7 +15850,7 @@
   {
     "species_id": "sp_rufous_browed_babbler",
     "display_order": 1,
-    "fact_text": "Rufous-browed Babbler is a bird known by the scientific name Pellorneum capistratum.",
+    "fact_text": "Rufous-browed Babblers are small birds that search for food near the forest floor.",
     "source_name": "Wikipedia: Javan black-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Javan_black-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -15930,7 +15930,7 @@
   {
     "species_id": "sp_rufous_browed_babbler",
     "display_order": 7,
-    "fact_text": "Rufous-browed Babbler belongs to the bird group of animals.",
+    "fact_text": "Its rufous, or reddish-brown, eyebrow stripe helps identify this babbler.",
     "source_name": "Wikipedia: Javan black-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Javan_black-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -16466,7 +16466,7 @@
   {
     "species_id": "sp_crimson_winged_woodpecker",
     "display_order": 9,
-    "fact_text": "Crimson-winged Woodpecker is a bird known by the scientific name Picus puniceus.",
+    "fact_text": "Crimson-winged Woodpeckers use their strong bills to tap and search tree trunks.",
     "source_name": "Wikipedia: Crimson-winged woodpecker",
     "source_url": "https://en.wikipedia.org/wiki/Crimson-winged_woodpecker",
     "source_license": "CC BY-SA 4.0",
@@ -16490,7 +16490,7 @@
   {
     "species_id": "sp_western_hooded_pitta",
     "display_order": 1,
-    "fact_text": "Western Hooded Pitta is a bird known by the scientific name Pitta sordida.",
+    "fact_text": "Western Hooded Pittas live in forests and can also be found near plantations.",
     "source_name": "Wikipedia: Western hooded pitta",
     "source_url": "https://en.wikipedia.org/wiki/Western_hooded_pitta",
     "source_license": "CC BY-SA 4.0",
@@ -16874,7 +16874,7 @@
   {
     "species_id": "sp_white_thighed_surili",
     "display_order": 1,
-    "fact_text": "White-thighed Surili is a mammal known by the scientific name Presbytis siamensis.",
+    "fact_text": "White-thighed Surilis are leaf-eating monkeys that live in trees.",
     "source_name": "Wikipedia: White-thighed surili",
     "source_url": "https://en.wikipedia.org/wiki/White-thighed_surili",
     "source_license": "CC BY-SA 4.0",
@@ -16954,7 +16954,7 @@
   {
     "species_id": "sp_white_thighed_surili",
     "display_order": 7,
-    "fact_text": "White-thighed Surili belongs to the mammal group of animals.",
+    "fact_text": "The white fur on its thighs helps give the White-thighed Surili its name.",
     "source_name": "Wikipedia: White-thighed surili",
     "source_url": "https://en.wikipedia.org/wiki/White-thighed_surili",
     "source_license": "CC BY-SA 4.0",
@@ -17130,7 +17130,7 @@
   {
     "species_id": "sp_flat_headed_cat",
     "display_order": 1,
-    "fact_text": "Flat-headed Cat is a mammal known by the scientific name Prionailurus planiceps.",
+    "fact_text": "Flat-headed Cats have low, flattened heads and are good swimmers.",
     "source_name": "Wikipedia: Flat-headed cat",
     "source_url": "https://en.wikipedia.org/wiki/Flat-headed_cat",
     "source_license": "CC BY-SA 4.0",
@@ -18026,7 +18026,7 @@
   {
     "species_id": "sp_crested_serpent_eagle",
     "display_order": 1,
-    "fact_text": "Crested Serpent-eagle is a bird known by the scientific name Spilornis cheela.",
+    "fact_text": "Crested Serpent-Eagles have long feathers at the back of the head that form a crest.",
     "source_name": "Wikipedia: Crested serpent eagle",
     "source_url": "https://en.wikipedia.org/wiki/Crested_serpent_eagle",
     "source_license": "CC BY-SA 4.0",
@@ -18666,7 +18666,7 @@
   {
     "species_id": "sp_asiatic_striped_squirrels",
     "display_order": 1,
-    "fact_text": "Asiatic Striped Squirrels is a mammal known by the scientific name Tamiops rodolphii.",
+    "fact_text": "Asiatic Striped Squirrels have dark stripes running along their backs.",
     "source_name": "Wikipedia: Cambodian striped squirrel",
     "source_url": "https://en.wikipedia.org/wiki/Cambodian_striped_squirrel",
     "source_license": "CC BY-SA 4.0",
@@ -18794,7 +18794,7 @@
   {
     "species_id": "sp_chestnut_capped_babbler",
     "display_order": 1,
-    "fact_text": "Chestnut-capped Babbler is a bird known by the scientific name Timalia pileata.",
+    "fact_text": "Chestnut-capped Babblers have a warm chestnut-coloured cap on their heads.",
     "source_name": "Wikipedia: Chestnut-capped babbler",
     "source_url": "https://en.wikipedia.org/wiki/Chestnut-capped_babbler",
     "source_license": "CC BY-SA 4.0",
@@ -19178,7 +19178,7 @@
   {
     "species_id": "sp_large_indian_civet",
     "display_order": 1,
-    "fact_text": "Large Indian Civet is a mammal known by the scientific name Viverra zibetha.",
+    "fact_text": "Large Indian Civets have tails with black and white rings.",
     "source_name": "Wikipedia: Large Indian civet",
     "source_url": "https://en.wikipedia.org/wiki/Large_Indian_civet",
     "source_license": "CC BY-SA 4.0",
