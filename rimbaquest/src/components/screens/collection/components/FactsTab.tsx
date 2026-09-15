@@ -41,7 +41,7 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
     return (
       <View style={styles.state}>
         <Text style={styles.stateText}>
-          Our wildlife team is reviewing more facts for this animal.
+          More wildlife facts for this animal are coming soon.
         </Text>
       </View>
     );

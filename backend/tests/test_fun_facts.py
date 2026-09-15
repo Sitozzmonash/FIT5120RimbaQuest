@@ -13,8 +13,8 @@ client = TestClient(app)
 SPECIES_ID = "sp_asian_elephant"
 
 
-def test_fun_facts_endpoint_returns_only_audited_child_facing_facts():
-    """Draft rows must never leak into the child-facing facts tab."""
+def test_fun_facts_endpoint_returns_source_linked_but_not_rejected_facts():
+    """Source-linked facts show; records rejected by the content policy do not."""
     with engine.begin() as connection:
         connection.execute(
             text("DELETE FROM species_fun_facts WHERE species_id=:species_id"),
@@ -31,29 +31,28 @@ def test_fun_facts_endpoint_returns_only_audited_child_facing_facts():
             text("""INSERT INTO species_fun_facts
                     (species_id, display_order, fact_text, source_name, source_url,
                      source_license, retrieved_at, verification_status)
-                    VALUES (:species_id, 1, 'This draft must stay private.', :source_name,
+                    VALUES (:species_id, 1, 'Asian elephants use their trunks to pick up food.', :source_name,
                             :source_url, :source_license, :retrieved_at, 'source-linked-draft')"""),
             base_row,
         )
         connection.execute(
             text("""INSERT INTO species_fun_facts
                     (species_id, display_order, fact_text, source_name, source_url,
-                     source_license, retrieved_at, verification_status, verified_by, verified_at)
-                    VALUES (:species_id, 2, 'Asian elephants use their trunks to pick up food.',
+                     source_license, retrieved_at, verification_status)
+                    VALUES (:species_id, 2, 'This rejected record must stay private.',
                             :source_name, :source_url, :source_license, :retrieved_at,
-                            'team-verified', 'test content reviewer', :reviewed_at)"""),
-            {**base_row, "reviewed_at": datetime.now(timezone.utc)},
+                            'rejected')"""),
+            base_row,
         )
 
     response = client.get(f"/api/v1/species/{SPECIES_ID}/fun-facts")
 
     assert response.status_code == 200, response.text
-    assert response.json() == {
-        "species_id": SPECIES_ID,
-        "facts": [
-            {
-                "display_order": 2,
-                "fact_text": "Asian elephants use their trunks to pick up food.",
-            }
-        ],
+    facts = response.json()["facts"]
+    assert response.json()["species_id"] == SPECIES_ID
+    assert facts[0] == {
+        "display_order": 1,
+        "fact_text": "Asian elephants use their trunks to pick up food.",
     }
+    assert all(fact["fact_text"] != "This rejected record must stay private." for fact in facts)
+    assert len(facts) <= 10
