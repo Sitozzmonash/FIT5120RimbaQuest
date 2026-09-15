@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
+from collections.abc import Awaitable, Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any
 
@@ -36,6 +39,10 @@ class VisionServiceUnavailable(RuntimeError):
     """Raised when no configured provider can complete a trustworthy response."""
 
 
+class VisionRequestCancelled(RuntimeError):
+    """Raised when the app has abandoned an in-progress photo check."""
+
+
 class _ProviderFailure(RuntimeError):
     """Internal, sanitized reason for moving to the next vision provider."""
 
@@ -47,6 +54,9 @@ class VisionProvider:
     model: str
     url: str
     use_data_uri: bool
+
+
+CancellationCheck = Callable[[], Awaitable[bool]]
 
 
 def _chat_completions_url(base_url: str) -> str:
@@ -172,13 +182,61 @@ def _provider_error_metadata(response: httpx.Response) -> tuple[str, str]:
     return provider_code[:80], provider_request_id[:120]
 
 
-def _request_provider(
+async def _raise_if_cancelled(
+    cancellation_check: CancellationCheck | None,
+) -> None:
+    if cancellation_check is not None and await cancellation_check():
+        raise VisionRequestCancelled("vision_request_cancelled")
+
+
+async def _send_provider_request(
+    provider: VisionProvider,
+    payload: dict[str, Any],
+) -> httpx.Response:
+    """Send one non-blocking provider request and close its connection safely."""
+    async with httpx.AsyncClient(timeout=VISION_TIMEOUT_SECONDS) as client:
+        return await client.post(
+            provider.url,
+            headers={
+                "Authorization": f"Bearer {provider.api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+
+
+async def _await_provider_response(
+    provider: VisionProvider,
+    payload: dict[str, Any],
+    cancellation_check: CancellationCheck | None,
+) -> httpx.Response:
+    """Await a provider while promptly cancelling it after a client disconnect."""
+    request_task = asyncio.create_task(_send_provider_request(provider, payload))
+    try:
+        while True:
+            done, _ = await asyncio.wait({request_task}, timeout=0.25)
+            if done:
+                return request_task.result()
+            await _raise_if_cancelled(cancellation_check)
+    except VisionRequestCancelled:
+        request_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await request_task
+        raise
+    finally:
+        if not request_task.done():
+            request_task.cancel()
+
+
+async def _request_provider(
     provider: VisionProvider,
     image_bytes: bytes,
     content_type: str,
     prompt: str,
     trace_id: str,
+    cancellation_check: CancellationCheck | None,
 ) -> dict[str, Any]:
+    await _raise_if_cancelled(cancellation_check)
     encoded_image = base64.b64encode(image_bytes).decode("ascii")
     image_url = (
         f"data:{content_type};base64,{encoded_image}"
@@ -206,18 +264,22 @@ def _request_provider(
         payload["thinking"] = {"type": "disabled"}
 
     try:
-        response = httpx.post(
-            provider.url,
-            headers={
-                "Authorization": f"Bearer {provider.api_key}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=VISION_TIMEOUT_SECONDS,
+        response = await _await_provider_response(
+            provider,
+            payload,
+            cancellation_check,
         )
         response.raise_for_status()
         body = response.json()
         content = body["choices"][0]["message"]["content"]
+    except VisionRequestCancelled:
+        logger.info(
+            "vision_request_cancelled trace_id=%s provider=%s model=%s",
+            trace_id,
+            provider.name,
+            provider.model,
+        )
+        raise
     except httpx.TimeoutException as error:
         logger.warning(
             "vision_timeout trace_id=%s provider=%s model=%s timeout_seconds=%s",
@@ -271,12 +333,13 @@ def _request_provider(
         raise error
 
 
-def identify_supported_species(
+async def identify_supported_species(
     image_bytes: bytes,
     content_type: str,
     catalogue: list[dict[str, Any]],
     *,
     trace_id: str = "-",
+    cancellation_check: CancellationCheck | None = None,
 ) -> dict[str, Any] | None:
     """Select one supported species using the configured provider sequence.
 
@@ -310,6 +373,7 @@ def identify_supported_species(
     attempted: list[str] = []
     failures: list[str] = []
     for provider in _providers():
+        await _raise_if_cancelled(cancellation_check)
         if not provider.api_key:
             logger.info(
                 "vision_provider_skipped trace_id=%s provider=%s model=%s reason=missing_api_key",
@@ -328,13 +392,16 @@ def identify_supported_species(
             len(attempted),
         )
         try:
-            result = _request_provider(
+            result = await _request_provider(
                 provider,
                 image_bytes,
                 content_type,
                 prompt,
                 trace_id,
+                cancellation_check,
             )
+        except VisionRequestCancelled:
+            raise
         except _ProviderFailure as error:
             failures.append(f"{provider.name}:{error}")
             logger.info(

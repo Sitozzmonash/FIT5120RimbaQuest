@@ -146,10 +146,11 @@ flowchart LR
 2. FastAPI first supplies the first provider named by `SCEQUENCE` with the image and an explicit allow-list of supported catalogue IDs.
 3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through to the next `SCEQUENCE` provider. Missing provider keys are skipped.
 4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
-5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
-6. The client receives four shuffled candidates but not the verified species ID.
-7. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
-8. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+5. Retaking, discarding, or cancelling the check aborts the client request. FastAPI detects the disconnect, cancels the active provider request, and does not store a photo or verification record.
+6. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
+7. The client receives four shuffled candidates but not the verified species ID.
+8. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+9. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
 9. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
@@ -308,7 +309,7 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
 | `SCEQUENCE` | No | Comma-separated image-recognition priority order, for example `deepseek,groq,zhipu`; `VISION_PROVIDER_SEQUENCE` is also accepted |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
-| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
+| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `20` |
 | `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
 | `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
@@ -358,6 +359,7 @@ GROQ_VISION_MODEL=qwen/qwen3.8-27b
 PIC_DEEPSEEK_API_KEY=<server-side DeepSeek Flash vision key>
 PIC_DEEPSEEK_VISION_MODEL=deepseek-flash
 SCEQUENCE=deepseek,groq,zhipu
+VISION_TIMEOUT_SECONDS=20
 ZHIPU_API_KEY=<server-side Zhipu API key>
 ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```

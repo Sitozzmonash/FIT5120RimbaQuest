@@ -111,7 +111,7 @@ PRIMARY_VISION_MODEL = {
     "zhipu": ZHIPU_VISION_MODEL,
 }.get(_PRIMARY_PROVIDER_NAME, "configured_sequence")
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
-VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "45"))
+VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "20"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))
 
 # Epic 6: server-side only.  No Expo environment variable may contain this

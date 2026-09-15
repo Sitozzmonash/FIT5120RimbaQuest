@@ -84,6 +84,13 @@ type DiscoveryActions = {
 
 export type DiscoveryStore = DiscoveryState & DiscoveryActions;
 
+let activePhotoVerification: AbortController | null = null;
+
+function cancelActivePhotoVerification(): void {
+  activePhotoVerification?.abort();
+  activePhotoVerification = null;
+}
+
 const initialState: DiscoveryState = {
   photoUri: null,
   photoMimeType: null,
@@ -170,7 +177,8 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set({ locationMode: mode, locationNotice: null });
   },
 
-  resetSelections: () =>
+  resetSelections: () => {
+    cancelActivePhotoVerification();
     set({
       category: "",
       chosenSpeciesId: null,
@@ -185,9 +193,11 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       identificationError: null,
       evaluatingIdentification: false,
       reportingVerification: false,
-    }),
+    });
+  },
 
-  retake: () =>
+  retake: () => {
+    cancelActivePhotoVerification();
     set((state) => ({
       verificationAttempt: state.verificationAttempt + 1,
       photoUri: null,
@@ -199,17 +209,24 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       verificationPhotoUrl: null,
       identificationFeedback: null,
       identificationError: null,
-    })),
+      verifyingPhoto: false,
+    }));
+  },
 
-  discard: () =>
+  discard: () => {
+    cancelActivePhotoVerification();
     set((state) => ({
       ...initialState,
       verificationAttempt: state.verificationAttempt + 1,
-    })),
+    }));
+  },
 
   submitPhoto: async (uri, mimeType) => {
     const { currentUser, authHeaders } = useUserStore.getState();
     const childId = currentUser.id;
+    cancelActivePhotoVerification();
+    const controller = new AbortController();
+    activePhotoVerification = controller;
     const attempt = get().verificationAttempt + 1;
     set({
       verificationAttempt: attempt,
@@ -243,6 +260,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       } as unknown as Blob);
     }
 
+    if (controller.signal.aborted || attempt !== get().verificationAttempt) {
+      return false;
+    }
+
     try {
       const response = await fetch(
         `${API_BASE}/api/v1/children/${childId}/discovery-verifications`,
@@ -250,6 +271,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
           method: "POST",
           headers: authHeaders(),
           body: form,
+          signal: controller.signal,
         },
       );
       const data = await response.json().catch(() => ({}));
@@ -292,7 +314,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       });
       return true;
     } catch (error) {
-      if (attempt !== get().verificationAttempt) return false;
+      if (controller.signal.aborted || attempt !== get().verificationAttempt) {
+        return false;
+      }
       set({
         verificationError: {
           kind: "failed",
@@ -304,6 +328,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       });
       return false;
     } finally {
+      if (activePhotoVerification === controller) {
+        activePhotoVerification = null;
+      }
       if (attempt === get().verificationAttempt) set({ verifyingPhoto: false });
     }
   },

@@ -44,7 +44,11 @@ export function PhotoPreviewScreen() {
       <View style={styles.photoShade} />
 
       <View style={styles.header}>
-        <Tap label="Go back" style={styles.backButton} onPress={handleRetake}>
+        <Tap
+          label={verifying ? "Cancel photo check" : "Go back"}
+          style={styles.backButton}
+          onPress={handleRetake}
+        >
           <MaterialIcons name="chevron-left" size={24} color="#FFFFFF" />
         </Tap>
         <Text style={styles.brand}>
@@ -66,6 +70,15 @@ export function PhotoPreviewScreen() {
           </View>
           <Text style={styles.progressText}>{progress}%</Text>
         </View>
+        {verifying ? (
+          <Tap
+            label="Cancel photo check"
+            style={styles.cancelCheckButton}
+            onPress={handleRetake}
+          >
+            <Text style={styles.cancelCheckText}>Cancel</Text>
+          </Tap>
+        ) : null}
       </View>
 
       <Modal
@@ -166,6 +179,18 @@ const styles = StyleSheet.create({
     width: 34,
     fontSize: 13,
     fontWeight: "800",
+  },
+  cancelCheckButton: {
+    alignSelf: "flex-start",
+    minHeight: 32,
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  cancelCheckText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    textDecorationLine: "underline",
   },
   modalBackdrop: {
     flex: 1,

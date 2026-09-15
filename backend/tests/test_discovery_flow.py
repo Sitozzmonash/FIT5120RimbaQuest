@@ -244,14 +244,17 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
         "app.routers.discoveries.signed_photo_url",
         lambda path: signed_url if path else None,
     )
-    monkeypatch.setattr(
-        "app.routers.discoveries.identify_supported_species",
-        lambda content, content_type, catalogue, **_kwargs: {
+    async def verified_provider(content, content_type, catalogue, **_kwargs):
+        return {
             "species_id": species_item["id"],
             "confidence": 0.97,
             "provider": "gemini",
             "model": "gemini-3.8-flash",
-        },
+        }
+
+    monkeypatch.setattr(
+        "app.routers.discoveries.identify_supported_species",
+        verified_provider,
     )
 
     verified = client.post(
@@ -389,9 +392,12 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
         raise AssertionError("An uncertain photo must not be stored")
 
     monkeypatch.setattr("app.routers.discoveries.upload_discovery_photo", unexpected_upload)
+    async def unverified_provider(*_args, **_kwargs):
+        return None
+
     monkeypatch.setattr(
         "app.routers.discoveries.identify_supported_species",
-        lambda *_args, **_kwargs: None,
+        unverified_provider,
     )
     uncertain = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
@@ -404,7 +410,7 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
 
     from app.services.vision import VisionServiceUnavailable
 
-    def fail_provider(*_args, **_kwargs):
+    async def fail_provider(*_args, **_kwargs):
         raise VisionServiceUnavailable("timeout")
 
     monkeypatch.setattr("app.routers.discoveries.identify_supported_species", fail_provider)

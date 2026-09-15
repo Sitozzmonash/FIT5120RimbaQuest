@@ -7,7 +7,7 @@ import random
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy import text
 
 from app.core.auth import AuthenticatedUser, require_child_access
@@ -28,7 +28,11 @@ from app.services.storage import (
     signed_photo_url,
     upload_discovery_photo,
 )
-from app.services.vision import VisionServiceUnavailable, identify_supported_species
+from app.services.vision import (
+    VisionRequestCancelled,
+    VisionServiceUnavailable,
+    identify_supported_species,
+)
 
 
 router = APIRouter(tags=["Discoveries & Collection"])
@@ -36,6 +40,24 @@ router = APIRouter(tags=["Discoveries & Collection"])
 logger = logging.getLogger("uvicorn.error")
 UNVERIFIED_MESSAGE = "We couldn't verify this animal. Please try another wildlife photo."
 VERIFICATION_FAILED_MESSAGE = "We couldn't check your wildlife photo right now. Please try again."
+
+
+async def _ensure_photo_check_connected(
+    request: Request,
+    *,
+    trace_id: str,
+    child_id: int,
+    phase: str,
+) -> None:
+    """Do not persist an AI result after the app cancels the photo check."""
+    if await request.is_disconnected():
+        logger.info(
+            "discovery_verification_cancelled trace_id=%s child_id=%s phase=%s",
+            trace_id,
+            child_id,
+            phase,
+        )
+        raise HTTPException(499, "Photo check cancelled.")
 
 
 def _species_payload(item: dict) -> dict:
@@ -114,6 +136,7 @@ async def upload_photo(
 @router.post("/api/v1/children/{child_id}/discovery-verifications")
 async def verify_discovery_photo(
     child_id: int,
+    request: Request,
     _: Annotated[AuthenticatedUser, Depends(require_child_access)],
     photo: UploadFile = File(...),
 ):
@@ -146,12 +169,20 @@ async def verify_discovery_photo(
             WHERE is_active=TRUE AND image_url IS NOT NULL AND image_url <> ''
             ORDER BY common_name""")))
     try:
-        match = identify_supported_species(
+        match = await identify_supported_species(
             content,
             content_type,
             catalogue,
             trace_id=trace_id,
+            cancellation_check=request.is_disconnected,
         )
+    except VisionRequestCancelled as error:
+        logger.info(
+            "discovery_verification_cancelled trace_id=%s child_id=%s phase=vision",
+            trace_id,
+            child_id,
+        )
+        raise HTTPException(499, "Photo check cancelled.") from error
     except VisionServiceUnavailable as error:
         logger.warning(
             "discovery_verification_failed trace_id=%s child_id=%s phase=vision reason=%s",
@@ -171,6 +202,13 @@ async def verify_discovery_photo(
             child_id,
         )
         return {"status": "unverified", "message": UNVERIFIED_MESSAGE}
+
+    await _ensure_photo_check_connected(
+        request,
+        trace_id=trace_id,
+        child_id=child_id,
+        phase="before_storage",
+    )
 
     by_id = {item["id"]: item for item in catalogue}
     verified = by_id.get(match["species_id"])
@@ -204,6 +242,13 @@ async def verify_discovery_photo(
             str(error),
             headers={"X-RimbaQuest-Trace-ID": trace_id},
         ) from error
+
+    await _ensure_photo_check_connected(
+        request,
+        trace_id=trace_id,
+        child_id=child_id,
+        phase="before_persistence",
+    )
 
     verification_id = str(uuid4())
     created_at = datetime.now(timezone.utc)
