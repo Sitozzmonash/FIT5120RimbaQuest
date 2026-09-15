@@ -24,7 +24,7 @@ export function CameraScreen() {
     } catch {
       useDiscoveryStore
         .getState()
-        .setPhotoError("Your photo couldn't be uploaded. Please try again.");
+        .setPhotoError("We couldn't use that photo. Please try again.");
     }
   };
 
@@ -43,7 +43,7 @@ export function CameraScreen() {
     } catch {
       useDiscoveryStore
         .getState()
-        .setPhotoError("Your photo couldn't be uploaded. Please try again.");
+        .setPhotoError("We couldn't use that photo. Please try again.");
     }
   };
 

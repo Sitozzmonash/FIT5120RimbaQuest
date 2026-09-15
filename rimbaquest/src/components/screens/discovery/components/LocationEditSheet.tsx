@@ -32,7 +32,7 @@ export function LocationEditSheet({
         </Tap>
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Discovery Location</Text>
+          <Text style={styles.title}>Where Did You Find It?</Text>
 
           <View style={styles.modeRow}>
             <Tap
@@ -76,7 +76,7 @@ export function LocationEditSheet({
                   locationMode === "manual" && styles.modeTextActive,
                 ]}
               >
-                Manual
+                Type a Place
               </Text>
             </Tap>
           </View>

@@ -23,11 +23,11 @@ export function OverallProgressCard({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>OVERALL COLLECTION PROGRESS</Text>
+      <Text style={styles.label}>YOUR ANIMAL CARDS</Text>
 
       <View style={styles.topRow}>
         <Text style={styles.value} numberOfLines={1} ellipsizeMode="tail">
-          {progress.found} / {progress.total} Discovered
+          {progress.found} / {progress.total} Found
         </Text>
         <Text style={styles.badgeText} numberOfLines={1}>
           {percentage}%
@@ -38,7 +38,7 @@ export function OverallProgressCard({
         <View style={[styles.fill, { width: `${percentage}%` }]} />
       </View>
 
-      <Text style={styles.categoryHeading}>CATEGORY COLLECTION PROGRESS</Text>
+      <Text style={styles.categoryHeading}>ANIMALS BY GROUP</Text>
 
       {categories.map((item, index) => {
         const categoryPercent = percentOf(item.found, item.total);

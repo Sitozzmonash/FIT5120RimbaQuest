@@ -8,7 +8,7 @@ import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
 import { useLoginStore } from "../../../store/useLoginStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useUserStore } from "../../../store/useUserStore";
-import { apiMessage, profileFromAuth } from "../../../utils/authApi";
+import { profileFromAuth } from "../../../utils/authApi";
 import { PasswordField } from "./components/PasswordField";
 import { UsernameField } from "./components/UsernameField";
 import { Tap } from "../../common/Tap";
@@ -25,7 +25,7 @@ export function LoginScreen() {
     store.setAuthError(null);
     const errors: Record<string, string> = {};
     if (!store.username.trim())
-      errors.username = "Please enter your username or email.";
+      errors.username = "Please enter your explorer name or email.";
     if (!store.password) errors.password = "Please enter your password.";
     store.setFieldErrors(errors);
     if (Object.keys(errors).length) return;
@@ -48,7 +48,7 @@ export function LoginScreen() {
           );
         else
           store.setAuthError(
-            apiMessage(data, "Invalid username or password. Please try again."),
+            "That name, email, or password does not match. Try again.",
           );
         return;
       }

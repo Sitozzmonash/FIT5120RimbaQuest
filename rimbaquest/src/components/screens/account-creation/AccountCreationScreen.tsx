@@ -58,18 +58,31 @@ export function AccountCreationScreen() {
       if (!res.ok) {
         let message = apiMessage(
           data,
-          "Registration was unsuccessful. Please try again.",
+          "We couldn't make your account. Please try again.",
         );
 
         message = message.replace(
           /^String should have at least (\d+) characters?$/i,
-          "Password should have at least $1 characters",
+          "Use at least $1 letters, numbers, or symbols for your password.",
         );
+
+        if (/email.*(already|registered|exists)/i.test(message)) {
+          message = "That email already has an account. Try logging in.";
+        }
+
+        if (/username.*(space|letter|number|hyphen|underscore|between)/i.test(message)) {
+          message =
+            "Use 3 to 20 letters or numbers for your explorer name. You can also use - or _ with no spaces.";
+        }
+
+        if (/string should|validation|field required/i.test(message)) {
+          message = "Please check each box and try again.";
+        }
 
         if (/already taken/i.test(message)) {
           form.setError("username", {
             type: "server",
-            message: "That username is already taken. Try another one.",
+            message: "Someone already uses that explorer name. Try another one.",
           });
           setStep(1);
         } else {
@@ -87,7 +100,7 @@ export function AccountCreationScreen() {
 
       useUserStore.getState().applyUser(profileFromAuth(data), token);
     } catch {
-      setAuthError("Registration was unsuccessful. Please try again.");
+      setAuthError("We couldn't make your account. Please try again.");
     }
   });
 
@@ -117,7 +130,7 @@ export function AccountCreationScreen() {
         ]}
       >
         <View style={styles.createBrandIntro}>
-          <Text style={styles.createTitle}>Create Your Explorer Account</Text>
+          <Text style={styles.createTitle}>Make Your Explorer Account</Text>
         </View>
 
         <View style={styles.createCenterWrap}>

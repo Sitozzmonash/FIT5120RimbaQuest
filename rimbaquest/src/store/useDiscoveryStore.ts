@@ -9,13 +9,13 @@ import {
   VerificationError,
 } from "../types";
 import { OFFLINE_SPECIES } from "../constants/seed";
-import { apiMessage } from "../utils/authApi";
 import { useNavigationStore } from "./useNavigationStore";
 import { useSelectedSpeciesStore } from "./useSelectedSpeciesStore";
 import { useUserStore } from "./useUserStore";
 
 type DiscoveryState = {
   photoUri: string | null;
+  photoMimeType: string | null;
   photoError: string | null;
   verifyingPhoto: boolean;
   verificationError: VerificationError | null;
@@ -62,6 +62,7 @@ type DiscoveryActions = {
   discard: () => void;
 
   submitPhoto: (uri: string, mimeType: string) => Promise<boolean>;
+  retryPhoto: () => Promise<void>;
 
   evaluateIdentification: (item: Species) => Promise<void>;
 
@@ -85,6 +86,7 @@ export type DiscoveryStore = DiscoveryState & DiscoveryActions;
 
 const initialState: DiscoveryState = {
   photoUri: null,
+  photoMimeType: null,
   photoError: null,
   verifyingPhoto: false,
   verificationError: null,
@@ -189,6 +191,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set((state) => ({
       verificationAttempt: state.verificationAttempt + 1,
       photoUri: null,
+      photoMimeType: null,
       photoError: null,
       verificationError: null,
       verificationId: null,
@@ -211,9 +214,13 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set({
       verificationAttempt: attempt,
       photoUri: uri,
+      photoMimeType: mimeType,
       photoError: null,
       verificationError: null,
       verifyingPhoto: true,
+      verificationId: null,
+      verificationCandidates: [],
+      verificationPhotoUrl: null,
       identificationFeedback: null,
       identificationError: null,
     });
@@ -252,10 +259,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       }
       if (!response.ok) {
         throw new Error(
-          apiMessage(
-            data,
-            "We couldn't check your wildlife photo right now. Please try again.",
-          ),
+          "We couldn't check your wildlife photo right now. Please try again.",
         );
       }
       if (attempt !== get().verificationAttempt) return false;
@@ -263,10 +267,8 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         set({
           verificationError: {
             kind: "unverified",
-            message: String(
-              data.message ||
-                "We couldn't verify this animal. Please try another wildlife photo.",
-            ),
+            message:
+              "We couldn't find an animal in this photo. Please try a clearer wildlife photo.",
           },
         });
         return false;
@@ -306,6 +308,17 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     }
   },
 
+  retryPhoto: async () => {
+    const state = get();
+    if (!state.photoUri || state.verifyingPhoto) return;
+
+    const verified = await get().submitPhoto(
+      state.photoUri,
+      state.photoMimeType ?? "image/jpeg",
+    );
+    if (verified) useNavigationStore.getState().setScreen("species");
+  },
+
   evaluateIdentification: async (item) => {
     const { currentUser, authHeaders } = useUserStore.getState();
     const childId = currentUser.id;
@@ -338,10 +351,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       }
       if (!response.ok)
         throw new Error(
-          apiMessage(
-            data,
-            "We couldn't check your answer right now. Please try again.",
-          ),
+          "We couldn't check your answer right now. Please try again.",
         );
       set({ identificationFeedback: data as IdentificationFeedback });
     } catch (error) {
@@ -393,17 +403,14 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         `${API_BASE}/api/v1/children/${childId}/discovery-verifications/${state.verificationId}/report`,
         { method: "POST", headers: authHeaders() },
       );
-      const data = await response.json().catch(() => ({}));
+      await response.json().catch(() => ({}));
       if (response.status === 401 || response.status === 403) {
         await useUserStore.getState().expire();
         return false;
       }
       if (!response.ok)
         throw new Error(
-          apiMessage(
-            data,
-            "We couldn't report this result right now. Please try again.",
-          ),
+          "We couldn't send your answer right now. Please try again.",
         );
       return true;
     } catch (error) {
@@ -411,7 +418,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         saveError:
           error instanceof Error
             ? error.message
-            : "We couldn't report this result right now. Please try again.",
+            : "We couldn't send your answer right now. Please try again.",
       });
       return false;
     } finally {
@@ -428,7 +435,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     if (!state.verificationId) {
       set({
         saveError:
-          "This photo has not been verified. Please try another wildlife photo.",
+          "We haven't checked this photo. Please try another wildlife photo.",
       });
       return null;
     }
@@ -439,7 +446,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       if (!locationLabel) {
         set({
           locationNotice:
-            "Your current location cannot be accessed. You can enter or select the location manually.",
+            "We can't find where you are. Please choose or type a place.",
           locationMode: "manual",
         });
         return null;
@@ -447,7 +454,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       set({ discoveryLocation: locationLabel });
     }
     if (!locationLabel) {
-      set({ saveError: "Please choose or enter a discovery location." });
+      set({ saveError: "Please choose or type where you found the animal." });
       return null;
     }
 
@@ -473,12 +480,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         return null;
       }
       if (!response.ok)
-        throw new Error(
-          apiMessage(
-            responseData,
-            "Your discovery wasn't saved. Please try again.",
-          ),
-        );
+        throw new Error("We couldn't save your animal. Please try again.");
 
       const result: SaveDiscoveryResult = {
         speciesId,
@@ -506,7 +508,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         saveError:
           error instanceof Error
             ? error.message
-            : "Your discovery wasn't saved. Please try again.",
+            : "We couldn't save your animal. Please try again.",
       });
       return null;
     } finally {
@@ -558,7 +560,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     useUserStore
       .getState()
       .setNotice(
-        "Thanks for reporting the AI result. No discovery or Wildlife Card was saved.",
+        "Thanks for telling us. We did not save the photo or add a card.",
       );
     return true;
   },

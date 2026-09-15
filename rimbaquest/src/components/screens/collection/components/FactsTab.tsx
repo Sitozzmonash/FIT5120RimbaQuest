@@ -5,8 +5,8 @@ import { Species } from "../../../../types";
 export function FactsTab({ item }: { item: Species }) {
   const facts = [
     item.fun_fact,
-    "Wild animals need peaceful space to thrive in their natural habitat.",
-    "Watch from a respectful distance and never feed or touch wildlife.",
+    "Wild animals need quiet space in their homes.",
+    "Watch from far away. Never feed or touch a wild animal.",
   ].filter(Boolean) as string[];
 
   return (

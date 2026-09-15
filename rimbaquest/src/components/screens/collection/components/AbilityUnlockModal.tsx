@@ -30,7 +30,7 @@ export function AbilityUnlockModal() {
           <View style={styles.iconWrap}>
             <MaterialIcons name="lock" size={36} color="#0A4D26" />
           </View>
-          <Text style={styles.title}>Unlock This Ability</Text>
+          <Text style={styles.title}>Earn This Ability</Text>
           <View style={styles.abilityBadge}>
             <Text style={styles.abilityBadgeText}>{abilityName}</Text>
           </View>
@@ -42,15 +42,15 @@ export function AbilityUnlockModal() {
             </View>
           )}
           <Text style={styles.message}>
-            First, get to know this animal before unlocking its abilities for battle!
+            Answer a few questions about this animal to earn its battle ability!
           </Text>
           <View style={styles.actions}>
             <Tap
-              label="Begin Challenge"
+              label="Start Quiz"
               style={styles.beginBtn}
               onPress={() => void useAbilityQuizStore.getState().beginChallenge()}
             >
-              <Text style={styles.beginBtnText}>Begin Challenge</Text>
+              <Text style={styles.beginBtnText}>Start Quiz</Text>
               <MaterialIcons name="arrow-forward" size={18} color="#FFFFFF" />
             </Tap>
             <Tap

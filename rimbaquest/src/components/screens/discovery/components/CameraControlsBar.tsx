@@ -19,7 +19,7 @@ export function CameraControlsBar({
   return (
     <View style={styles.bottomBar}>
       <Tap
-        label="Open device gallery"
+        label="Choose a photo"
         style={styles.thumbBtn}
         onPress={onPickFromGallery}
       >

@@ -11,9 +11,9 @@ export function BattleIntroBanner() {
         <MaterialIcons name="bolt" size={26} color="#B36200" />
       </View>
       <View style={styles.copyWrap}>
-        <Text style={styles.title}>Card Battle Arena</Text>
+        <Text style={styles.title}>Animal Card Battle</Text>
         <Text style={styles.copy}>
-          Choose one discovered Wildlife Card, then start a simple battle.
+          Choose one animal card, then start the battle.
         </Text>
       </View>
     </View>

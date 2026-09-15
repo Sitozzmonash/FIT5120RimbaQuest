@@ -2,16 +2,9 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigationStore } from "../../../../store/useNavigationStore";
-import { useProfileEditStore } from "../../../../store/useProfileEditStore";
-import { useUserStore } from "../../../../store/useUserStore";
 import { Tap } from "../../../common/Tap";
 
 export function ProfileHeader({ title }: { title: string }) {
-  const openEdit = () => {
-    useProfileEditStore.getState().startEditing(useUserStore.getState().currentUser);
-    useNavigationStore.getState().open("profile_edit");
-  };
-
   return (
     <View style={styles.wrap}>
       <Tap
@@ -24,9 +17,7 @@ export function ProfileHeader({ title }: { title: string }) {
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
-      <Tap label="Edit Profile" style={styles.navBtn} onPress={openEdit}>
-        <MaterialIcons name="edit" size={18} color="#0A4D26" />
-      </Tap>
+      <View style={styles.navBtnSpacer} />
     </View>
   );
 }
@@ -59,4 +50,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
   },
+  navBtnSpacer: { width: 40, height: 40 },
 });

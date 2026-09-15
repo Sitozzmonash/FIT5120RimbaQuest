@@ -4,7 +4,7 @@ import { StyleSheet, Text } from "react-native";
 export function CategoryCaptureBanner({ category }: { category: string }) {
   return (
     <Text style={styles.caption} numberOfLines={1} adjustsFontSizeToFit>
-      Nice Catch! You've captured a{" "}
+      Nice Catch! We found a{" "}
       <Text style={styles.categoryName}>{category.toUpperCase()}</Text>!
     </Text>
   );

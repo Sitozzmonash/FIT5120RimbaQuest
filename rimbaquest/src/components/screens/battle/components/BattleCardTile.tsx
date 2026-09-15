@@ -12,7 +12,7 @@ export function BattleCardTile({ species }: { species: Species }) {
 
   return (
     <Tap
-      label={`Select ${species.common_name}`}
+      label={`Choose ${species.common_name}`}
       style={[styles.tile, selected && styles.tileSelected]}
       onPress={() => useBattleStore.getState().selectCard(species)}
     >
@@ -39,7 +39,7 @@ export function BattleCardTile({ species }: { species: Species }) {
       <View style={[styles.cta, !selected && styles.ctaIdle]}>
         {selected && <MaterialIcons name="check-circle" size={13} color="#FFFFFF" />}
         <Text style={[styles.ctaText, !selected && styles.ctaTextIdle]}>
-          {selected ? "Selected" : "Tap to select"}
+          {selected ? "Chosen" : "Tap to choose"}
         </Text>
       </View>
     </Tap>

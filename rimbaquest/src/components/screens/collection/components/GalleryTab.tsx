@@ -5,7 +5,7 @@ import { GalleryItem } from "../../../../types";
 import { Tap } from "../../../common/Tap";
 
 function formatPhotoLocation(item: GalleryItem): string {
-  return item.location_label?.trim() || "Unknown location";
+  return item.location_label?.trim() || "Place not saved";
 }
 
 export function GalleryTab({ photos }: { photos: GalleryItem[] }) {
@@ -20,7 +20,7 @@ export function GalleryTab({ photos }: { photos: GalleryItem[] }) {
         >
           {item.photo_url ? (
             <Tap
-              label={`Enlarge photo from ${item.location_label || "this discovery"}`}
+              label={`Make photo from ${item.location_label || "this animal find"} bigger`}
               style={styles.detailGalleryTap}
               onPress={() => setEnlarged(item)}
             >
@@ -47,7 +47,7 @@ export function GalleryTab({ photos }: { photos: GalleryItem[] }) {
         onRequestClose={() => setEnlarged(null)}
       >
         <Tap
-          label="Close enlarged photo"
+          label="Close big photo"
           style={styles.lightboxBackdrop}
           onPress={() => setEnlarged(null)}
         >
@@ -80,7 +80,7 @@ export function GalleryTab({ photos }: { photos: GalleryItem[] }) {
     <View style={styles.galleryEmpty}>
       <Text style={styles.galleryEmptyTitle}>No personal photos yet</Text>
       <Text style={styles.muted}>
-        Each saved observation of this species will appear here.
+        Photos you save of this animal will appear here.
       </Text>
     </View>
   );

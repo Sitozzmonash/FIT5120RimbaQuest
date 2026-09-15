@@ -15,7 +15,7 @@ export function UsernameField() {
         <MaterialIcons name="mail-outline" size={20} color="#0A4D26" />
         <TextInput
           style={styles.loginInput}
-          placeholder="Username or Email Address *"
+          placeholder="Explorer name or email *"
           placeholderTextColor="#0A4D26"
           value={username}
           onChangeText={setUsername}

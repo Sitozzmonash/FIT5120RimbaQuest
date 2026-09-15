@@ -23,8 +23,18 @@ export function ResetPasswordScreen() {
     const store = useForgotPasswordStore.getState();
     if (store.submitting) return;
     store.setFieldError(null);
+    if (store.token.trim().length !== 6) {
+      store.setFormError("Please type all 6 letters or numbers from the email.");
+      return;
+    }
     if (!store.newPassword) {
       store.setFormError("Please create a password.");
+      return;
+    }
+    if (store.newPassword.length < 6) {
+      store.setFormError(
+        "Use at least 6 letters, numbers, or symbols for your password.",
+      );
       return;
     }
     if (store.newPassword !== store.confirmPassword) {
@@ -45,15 +55,21 @@ export function ResetPasswordScreen() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const message = apiMessage(data, "Invalid or expired recovery code.");
+        const apiError = apiMessage(
+          data,
+          "That secret code is wrong or too old.",
+        );
+        const message = /invalid|expired|recovery|token/i.test(apiError)
+          ? "That secret code is wrong or too old."
+          : apiError;
         store.setFormError(
           /expired/i.test(message)
-            ? `${message} Please request a new code.`
+            ? `${message} Please ask for a new code.`
             : message,
         );
         return;
       }
-      Alert.alert("Success", "Password successfully updated!");
+      Alert.alert("All done!", "Your new password is ready.");
       store.setToken("");
       store.setNewPassword("");
       store.setConfirmPassword("");
@@ -95,9 +111,9 @@ export function ResetPasswordScreen() {
             style={[styles.resetForm, { paddingBottom: 48 + insets.bottom }]}
           >
             <View style={styles.resetTextGroup}>
-              <Text style={styles.resetTitle}>Reset Password</Text>
+              <Text style={styles.resetTitle}>Make a New Password</Text>
               <Text style={styles.resetSubtitle}>
-                Create a new password for your account.
+                Type the secret code from the email, then choose a new password.
               </Text>
             </View>
 
@@ -107,7 +123,7 @@ export function ResetPasswordScreen() {
 
             <View style={styles.resetFields}>
               <View style={styles.resetField}>
-                <Text style={styles.resetFieldLabel}>Verification Code *</Text>
+                <Text style={styles.resetFieldLabel}>Secret Code *</Text>
                 <VerificationCodeField />
               </View>
 
@@ -118,7 +134,7 @@ export function ResetPasswordScreen() {
 
               <View style={styles.resetField}>
                 <Text style={styles.resetFieldLabel}>
-                  Confirm New Password *
+                  Type New Password Again *
                 </Text>
                 <ConfirmNewPasswordField />
               </View>
@@ -126,8 +142,8 @@ export function ResetPasswordScreen() {
 
             <View style={styles.resetActions}>
               <PrimaryButton
-                label="Reset Password"
-                displayText={submitting ? "Updating..." : "Reset Password"}
+                label="Save New Password"
+                displayText={submitting ? "Saving..." : "Save New Password"}
                 loading={submitting}
                 style={styles.resetSubmitBtn}
                 onPress={() => void handleResetPassword()}
