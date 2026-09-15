@@ -38,14 +38,19 @@ export function ForgotPasswordScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: store.email.trim() }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as {
+        dev_code?: string;
+        simulated_token?: string;
+        [key: string]: unknown;
+      };
       if (!res.ok) {
         store.setFieldError(
           apiMessage(data, "We could not find an account with that email."),
         );
         return;
       }
-      store.setToken("");
+      const token = data.dev_code || data.simulated_token || "";
+      store.setToken(token);
       useNavigationStore.getState().open("reset_password");
     } catch {
       store.setFormError(

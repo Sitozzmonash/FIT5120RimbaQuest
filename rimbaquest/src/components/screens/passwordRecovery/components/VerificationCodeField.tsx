@@ -22,9 +22,12 @@ export function VerificationCodeField() {
         placeholder="Type all 6 letters or numbers"
         placeholderTextColor="#88A693"
         value={code}
-        onChangeText={(val) => setCode(val.toUpperCase())}
+        onChangeText={(val) => {
+          const clean = val.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6);
+          setCode(clean);
+        }}
         autoCapitalize="characters"
-        maxLength={6}
+        maxLength={12}
       />
     </View>
   );

@@ -6,7 +6,17 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+from dotenv import load_dotenv
+
+from app.core.config import BACKEND_ROOT, REPOSITORY_ROOT
+
 logger = logging.getLogger(__name__)
+
+
+def _ensure_env_loaded() -> None:
+    if not (os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD") and os.getenv("SMTP_HOST")):
+        load_dotenv(REPOSITORY_ROOT / ".env")
+        load_dotenv(BACKEND_ROOT / ".env")
 
 
 def send_password_reset_email(to_email: str, code: str) -> bool:
@@ -15,6 +25,8 @@ def send_password_reset_email(to_email: str, code: str) -> bool:
     If SMTP credentials are not configured, logs a simulated message
     and returns True for development mode.
     """
+    _ensure_env_loaded()
+
     smtp_host = os.getenv("SMTP_HOST")
     smtp_port_raw = os.getenv("SMTP_PORT", "587")
     smtp_user = os.getenv("SMTP_USER")
@@ -75,5 +87,5 @@ def send_password_reset_email(to_email: str, code: str) -> bool:
 
         return True
     except Exception as exc:
-        logger.error("Failed to send password reset email to %s: %s", to_email, exc)
+        logger.exception("Failed to send password reset email to %s: %s", to_email, exc)
         return False

@@ -1,7 +1,16 @@
 import React from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { MaterialIcons } from "@expo/vector-icons";
 import { AUTH_IMAGES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
 import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
@@ -16,6 +25,8 @@ import { PrimaryButton } from "../../common/PrimaryButton";
 export function ResetPasswordScreen() {
   const insets = useSafeAreaInsets();
 
+  const email = useForgotPasswordStore((state) => state.email);
+  const setEmail = useForgotPasswordStore((state) => state.setEmail);
   const formError = useForgotPasswordStore((state) => state.formError);
   const submitting = useForgotPasswordStore((state) => state.submitting);
 
@@ -23,7 +34,12 @@ export function ResetPasswordScreen() {
     const store = useForgotPasswordStore.getState();
     if (store.submitting) return;
     store.setFieldError(null);
-    if (store.token.trim().length !== 6) {
+    if (!store.email.trim()) {
+      store.setFormError("Please enter your account email address.");
+      return;
+    }
+    const cleanToken = store.token.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (cleanToken.length !== 6) {
       store.setFormError("Please type all 6 letters or numbers from the email.");
       return;
     }
@@ -49,7 +65,7 @@ export function ResetPasswordScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: store.email.trim(),
-          recovery_token: store.token.trim().toUpperCase(),
+          recovery_token: cleanToken,
           new_password: store.newPassword,
         }),
       });
@@ -121,7 +137,34 @@ export function ResetPasswordScreen() {
               <Text style={styles.resetErrorBanner}>{formError}</Text>
             )}
 
+            {email.trim() ? (
+              <View style={styles.emailBanner}>
+                <Text style={styles.emailBannerText}>
+                  Resetting password for:{" "}
+                  <Text style={styles.emailBannerBold}>{email.trim()}</Text>
+                </Text>
+              </View>
+            ) : null}
+
             <View style={styles.resetFields}>
+              {!email.trim() ? (
+                <View style={styles.resetField}>
+                  <Text style={styles.resetFieldLabel}>Account Email *</Text>
+                  <View style={styles.resetInputBox}>
+                    <MaterialIcons name="mail-outline" size={20} color="#0A4D26" />
+                    <TextInput
+                      style={styles.resetInput}
+                      placeholder="Enter your account email"
+                      placeholderTextColor="#88A693"
+                      value={email}
+                      onChangeText={(val) => setEmail(val.trim())}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                    />
+                  </View>
+                </View>
+              ) : null}
+
               <View style={styles.resetField}>
                 <Text style={styles.resetFieldLabel}>Secret Code *</Text>
                 <VerificationCodeField />
@@ -222,9 +265,43 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
   },
+  emailBanner: {
+    backgroundColor: "rgba(209, 232, 213, 0.4)",
+    borderColor: "#D1E8D5",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  emailBannerText: {
+    color: "#2D5A3E",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  emailBannerBold: {
+    color: "#0A4D26",
+    fontWeight: "700",
+  },
   resetFields: { gap: 16 },
   resetField: { gap: 6 },
   resetFieldLabel: { color: "#0A4D26", fontSize: 13, fontWeight: "700" },
+  resetInputBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#D1E8D5",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+  },
+  resetInput: {
+    flex: 1,
+    color: "#0A4D26",
+    fontSize: 15,
+    paddingVertical: 0,
+  },
   resetActions: { gap: 16, alignItems: "center" },
   resetSubmitBtn: { width: "100%" },
   resetLinkBack: {

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 
 ALLOWED_AVATARS = frozenset({"hornbill", "tiger", "panda"})
+EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 
 
 def _validate_username_value(value: str) -> str:
@@ -15,6 +16,13 @@ def _validate_username_value(value: str) -> str:
     if not re.match(r"^[a-zA-Z0-9_-]+$", value):
         raise ValueError("Username can only contain letters, numbers, hyphens and underscores")
     return value
+
+
+def _validate_email_value(value: str) -> str:
+    clean = value.lower().strip()
+    if not EMAIL_REGEX.match(clean):
+        raise ValueError("Please enter a valid email address")
+    return clean
 
 
 class RegisterIn(BaseModel):
@@ -45,9 +53,7 @@ class RegisterIn(BaseModel):
     @field_validator("email")
     @classmethod
     def validate_email(cls, v: str) -> str:
-        if "@" not in v or "." not in v.split("@")[-1]:
-            raise ValueError("Please enter a valid email address")
-        return v.lower().strip()
+        return _validate_email_value(v)
 
 
 class LoginIn(BaseModel):
@@ -58,11 +64,21 @@ class LoginIn(BaseModel):
 class ForgotPasswordIn(BaseModel):
     email: str = Field(min_length=5, max_length=120)
 
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return _validate_email_value(v)
+
 
 class ResetPasswordIn(BaseModel):
     email: str = Field(min_length=5, max_length=120)
     recovery_token: str = Field(min_length=4, max_length=50)
     new_password: str = Field(min_length=6, max_length=100)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        return _validate_email_value(v)
 
 
 class ProfileUpdateIn(BaseModel):

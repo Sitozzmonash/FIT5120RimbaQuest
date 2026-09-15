@@ -54,7 +54,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
                 useAbilityQuizStore.getState().openUnlockModal(item, slot)
               }
             />
-          );v
+          );
         })
       )}
 
