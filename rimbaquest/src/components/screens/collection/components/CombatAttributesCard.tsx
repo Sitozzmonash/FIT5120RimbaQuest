@@ -28,12 +28,12 @@ export function CombatAttributesCard({ hp, damage }: { hp: number; damage: numbe
       <Text style={styles.battleStatHeaderTitle}>Card Power</Text>
       <View style={styles.stats}>
         <StatCard
-          label="HEALTH"
+          label="Health"
           value={hp}
           icon={<MaterialIcons name="favorite" size={26} color="#D9383A" />}
         />
         <StatCard
-          label="ATTACK POWER"
+          label="Attack Power"
           value={damage}
           icon={<MaterialCommunityIcons name="sword-cross" size={22} color="#4A554D" />}
         />
@@ -49,9 +49,9 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     backgroundColor: "#FFFFFF",
-    gap: 10,
+    gap: 8,
   },
-  battleStatHeaderTitle: { fontSize: 16, fontWeight: "600", color: "#000000" },
+  battleStatHeaderTitle: { fontSize: 14, fontWeight: "500", color: "#000000" },
   stats: { flexDirection: "row", gap: 10 },
   statCard: {
     flex: 1,
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     padding: 12,
     gap: 2,
   },
-  statCardLabel: { fontSize: 14, fontWeight: "700", color: "#000000" },
+  statCardLabel: { fontSize: 12, fontWeight: "700", color: "#000000" },
   statCardValueRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  statCardValue: { fontSize: 24, fontWeight: "500", color: "#12B347" },
+  statCardValue: { fontSize: 18, fontWeight: "500", color: "#12B347" },
 });

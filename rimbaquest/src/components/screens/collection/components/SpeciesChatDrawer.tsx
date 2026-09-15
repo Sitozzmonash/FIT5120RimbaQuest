@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -95,6 +96,53 @@ export function SpeciesChatDrawer({
   const [failedQuestion, setFailedQuestion] = useState<string | null>(null);
 
   const chatAvailable = Boolean(childId && onSendQuestion);
+  const [webKeyboardInset, setWebKeyboardInset] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible) {
+      setWebKeyboardInset(0);
+      return;
+    }
+    const viewport =
+      typeof window !== "undefined" ? window.visualViewport : undefined;
+    if (!viewport) return;
+
+    const handleResize = () => {
+      const inset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+      setWebKeyboardInset(inset);
+      setIsKeyboardVisible(inset > 0);
+    };
+
+    handleResize();
+    viewport.addEventListener("resize", handleResize);
+    viewport.addEventListener("scroll", handleResize);
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+      viewport.removeEventListener("scroll", handleResize);
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () =>
+      setIsKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(hideEvent, () =>
+      setIsKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // Never show a reply from a previous wildlife card after switching cards.
@@ -182,7 +230,7 @@ export function SpeciesChatDrawer({
     >
       <KeyboardAvoidingView
         style={styles.modalRoot}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <Tap
           label="Close WildGuide chat"
@@ -195,7 +243,11 @@ export function SpeciesChatDrawer({
         <View
           style={[
             styles.drawer,
-            { paddingBottom: Math.max(insets.bottom, 16) },
+            {
+              paddingBottom: isKeyboardVisible
+                ? insets.bottom + webKeyboardInset
+                : 0,
+            },
           ]}
         >
           <View style={styles.handle} />

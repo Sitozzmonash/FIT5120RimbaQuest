@@ -30,7 +30,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
         damage={item.base_attack || 25}
       />
 
-      <Text style={styles.sectionTitle}>SPECIAL ABILITIES</Text>
+      <Text style={styles.sectionTitle}>Special Abilities</Text>
       {!isProgressionKnown ? (
         <View style={styles.loadingRow}>
           <ActivityIndicator size="small" color="#0A4D26" />
@@ -54,7 +54,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
                 useAbilityQuizStore.getState().openUnlockModal(item, slot)
               }
             />
-          );
+          );v
         })
       )}
 
@@ -71,14 +71,14 @@ export function BattleStatsTab({ item }: { item: Species }) {
 
 const styles = StyleSheet.create({
   container: { gap: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: "500", color: "#000000" },
+  sectionTitle: { fontSize: 14, fontWeight: "500", color: "#000000" },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
     paddingVertical: 14,
   },
-  loadingText: { fontSize: 13, color: "#667085", fontWeight: "600" },
+  loadingText: { fontSize: 12, color: "#667085", fontWeight: "600" },
   primary: {
     minHeight: 48,
     marginTop: 6,
@@ -88,5 +88,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+  primaryText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
 });

@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "#F8FAF7",
-    marginBottom: 6,
+    marginBottom: 0,
   },
   cardUnlocked: {
     backgroundColor: "#3FBE00",
@@ -67,9 +67,9 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  name: { fontSize: 16, fontWeight: "500", color: "#667085" },
+  name: { fontSize: 14, fontWeight: "500", color: "#667085" },
   nameUnlocked: { color: "#FFFFFF", fontWeight: "700" },
-  hint: { fontSize: 14, color: "#667085", marginTop: 2 },
+  hint: { fontSize: 12, color: "#667085", marginTop: 2 },
   hintUnlocked: { color: "#FFFFFF", fontWeight: "600" },
   unlockBtn: {
     borderRadius: 99,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
-  unlockBtnText: { color: "#FFFFFF", fontSize: 13, fontWeight: "800" },
+  unlockBtnText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
   lockedIconWrap: {
     width: 40,
     height: 40,
