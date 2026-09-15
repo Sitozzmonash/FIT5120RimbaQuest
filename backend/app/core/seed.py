@@ -188,12 +188,11 @@ def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
 
 
 def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
-    """Load team-verified Fun Facts and revoke removed seed-owned records.
+    """Load source-linked Fun Facts and revoke removed seed-owned records.
 
-    The team has confirmed the existing corpus as reviewed.  Individual
-    verification dates were not supplied, so we retain null dates rather than
-    manufacturing historical audit data; the group reviewer is recorded in
-    the source JSON.
+    A fact is not child-facing until its source, named reviewer, and review
+    timestamp meet the API approval predicate.  This importer preserves draft
+    records for the content-review workflow without presenting them as facts.
     """
     if not ITERATION_2_FUN_FACTS_PILOT.exists():
         return

@@ -138,6 +138,15 @@ def test_mock_answers_current_card_only_and_applies_guardrails():
 def test_team_verified_fun_facts_are_available_as_chat_evidence():
     child_id, token = register_child("chat_facts")
     unlock(child_id, CURRENT_SPECIES_ID)
+    with engine.begin() as connection:
+        connection.execute(
+            text("""UPDATE species_fun_facts
+                    SET verification_status='team-verified',
+                        verified_by='test content reviewer',
+                        verified_at=:now
+                    WHERE species_id=:species_id AND display_order=1"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        )
 
     response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me a fun fact")
     assert response.status_code == 200, response.text

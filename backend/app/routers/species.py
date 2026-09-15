@@ -39,6 +39,30 @@ def get_species(species_id: str):
     return item
 
 
+@router.get("/api/v1/species/{species_id}/fun-facts")
+def list_approved_fun_facts(species_id: str):
+    """Return only reviewed, child-facing facts in their curated order."""
+    with engine.connect() as connection:
+        exists = connection.execute(
+            text("SELECT 1 FROM species WHERE id=:id AND is_active=TRUE"),
+            {"id": species_id},
+        ).first()
+        if not exists:
+            raise HTTPException(404, "Species not found")
+        facts = rows(connection.execute(
+            text("""SELECT display_order, fact_text
+                    FROM species_fun_facts
+                    WHERE species_id=:species_id
+                      AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
+                      AND NULLIF(TRIM(verified_by), '') IS NOT NULL
+                      AND verified_at IS NOT NULL
+                    ORDER BY display_order ASC
+                    LIMIT 10"""),
+            {"species_id": species_id},
+        ))
+    return {"species_id": species_id, "facts": facts}
+
+
 @router.get("/api/v1/species/{species_id}/legacy-quiz")
 def get_species_quiz(species_id: str):
     with engine.connect() as connection:
