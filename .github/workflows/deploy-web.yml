@@ -33,8 +33,8 @@ jobs:
           EXPO_PUBLIC_API_BASE_URL: https://fit5120rimbaquest-master.onrender.com
         run: npx expo export --platform web
 
-      - name: Deploy to Expo hosting (production)
+      - name: Deploy to Expo hosting (preview alias)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: 1
-        run: npx -y eas-cli@latest deploy --prod --non-interactive
+        run: npx -y eas-cli@latest deploy --non-interactive
