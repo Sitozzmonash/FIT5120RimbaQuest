@@ -5,7 +5,7 @@ import logging
 import re
 from dataclasses import dataclass
 from typing import Any, Iterable
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import httpx
 
@@ -18,6 +18,9 @@ from app.core.config import (
     GBIF_API_BASE_URL,
     GBIF_API_ENABLED,
     GBIF_TIMEOUT_SECONDS,
+    WIKIPEDIA_API_BASE_URL,
+    WIKIPEDIA_API_ENABLED,
+    WIKIPEDIA_TIMEOUT_SECONDS,
 )
 
 
@@ -54,12 +57,10 @@ APPROVED_FIELD_LABELS: dict[str, str] = {
     "act716_status": "protection status",
 }
 
-# White-listed external sources. MyBIS and PERHILITAN material is stored as
-# reviewed excerpts because they do not expose a stable public species-content
-# API. GBIF is the only narrowly scoped live retrieval integration: taxonomy
-# fields for an exact scientific-name match. IUCN is accepted for reviewed
-# evidence but deliberately not queried until the team has confirmed that its
-# API terms cover the production deployment.
+# White-listed external sources. GBIF taxonomy and the restricted Wikipedia
+# overview below are the only live integrations; all other material is stored
+# as a reviewed excerpt. This permits the content team to audit wording and
+# provenance before a source can appear in a child's answer.
 SOURCE_POLICIES: dict[str, tuple[str, tuple[str, ...]]] = {
     "mybis": (
         "Malaysia Biodiversity Information System (MyBIS)",
@@ -76,6 +77,21 @@ SOURCE_POLICIES: dict[str, tuple[str, tuple[str, ...]]] = {
     "iucn": (
         "IUCN Red List of Threatened Species",
         ("iucnredlist.org", "api.iucnredlist.org"),
+    ),
+    "eaza": (
+        "EAZA Elephant Best Practice Guidelines",
+        ("elephantmedicine.info",),
+    ),
+    "dale_2010": (
+        "Dale (2010), Zoo Biology",
+        ("digitalcommons.butler.edu", "doi.org"),
+    ),
+    # Wikipedia is a restricted supplementary source. The live retriever only
+    # gets a current species' overview, never a user-supplied page or query.
+    # It is excluded for numerical, medical, legal, and conservation claims.
+    "wikipedia": (
+        "Wikipedia (live supplementary reference)",
+        ("en.wikipedia.org", "zh.wikipedia.org"),
     ),
 }
 APPROVED_EVIDENCE_STATUSES = frozenset({"team-verified", "approved", "verified"})
@@ -98,6 +114,15 @@ FIELD_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
 GBIF_TAXONOMY_PATTERNS = (
     "taxonomy", "taxonomic", "family", "order", "genus", "class", "kingdom", "what group",
 )
+HEIGHT_QUESTION_TERMS = ("how tall", "height", "tall", "shoulder height")
+NEWBORN_QUESTION_TERMS = ("born", "birth", "newborn", "calf", "baby")
+WIKIPEDIA_RESTRICTED_QUESTION_TERMS = (
+    "how tall", "height", "tall", "weight", "weigh", "how much", "number", "population",
+    "born", "birth", "newborn", "calf", "baby", "pregnan", "medicine", "disease", "ill",
+    "sick", "legal", "law", "act 716", "protect", "conservation", "endangered", "threat",
+    "status",
+)
+WIKIPEDIA_USER_AGENT = "RimbaQuest/2.0 (https://github.com/Sitozzmonash/FIT5120RimbaQuest; educational project)"
 INAPPROPRIATE_OR_INJECTION_PATTERNS = (
     "ignore previous", "ignore all", "system prompt", "developer message", "jailbreak",
     "make up a fact", "invent a fact", "how to kill", "how can i kill", "how do i kill",
@@ -420,6 +445,99 @@ def fetch_gbif_taxonomy_evidence(species: dict[str, Any], *, trace_id: str) -> l
     ]
 
 
+def _is_wikipedia_eligible_question(question: str, context: dict[str, str]) -> bool:
+    """Allow only a general, current-species overview from Wikipedia.
+
+    Exact numbers and high-stakes subjects stay with card data or reviewed
+    evidence. This also avoids a network request when the card or GBIF flow
+    already has a specific answer.
+    """
+    return (
+        not any(term in question for term in WIKIPEDIA_RESTRICTED_QUESTION_TERMS)
+        and _field_for_question(question, context) is None
+        and not _is_gbif_taxonomy_question(question)
+    )
+
+
+def _trim_excerpt(value: str, *, limit: int = MAX_EXTERNAL_EXCERPT_CHARS) -> str:
+    value = re.sub(r"\s+", " ", value).strip()
+    if len(value) <= limit:
+        return value
+    return value[:limit].rsplit(" ", 1)[0].rstrip(".,;:") + "…"
+
+
+def fetch_wikipedia_summary_evidence(
+    species: dict[str, Any],
+    question: str,
+    context: dict[str, str],
+    *,
+    trace_id: str,
+) -> list[Evidence]:
+    """Fetch a plain-text overview for the current species only.
+
+    The child question never becomes a Wikipedia search query and no content
+    from another card can be fetched. A network/content failure simply omits
+    this optional supplementary source and leaves the normal fallback intact.
+    """
+    if not _is_wikipedia_eligible_question(question, context):
+        return []
+    common_name = str(species.get("common_name") or "").strip()
+    scientific_name = str(species.get("scientific_name") or "").strip()
+    if not common_name:
+        return []
+    try:
+        response = httpx.get(
+            WIKIPEDIA_API_BASE_URL,
+            params={
+                "action": "query",
+                "format": "json",
+                "prop": "extracts",
+                "explaintext": "1",
+                "exintro": "1",
+                "redirects": "1",
+                "titles": common_name,
+            },
+            headers={"User-Agent": WIKIPEDIA_USER_AGENT},
+            timeout=WIKIPEDIA_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        pages = payload.get("query", {}).get("pages", {}) if isinstance(payload, dict) else {}
+        page = next(
+            (
+                item
+                for item in pages.values()
+                if isinstance(item, dict) and not item.get("missing")
+            ),
+            None,
+        )
+        if not page:
+            return []
+        title = str(page.get("title") or "").strip()
+        allowed_titles = {_normalise(value) for value in (common_name, scientific_name) if value}
+        if _normalise(title) not in allowed_titles:
+            return []
+        excerpt = _trim_excerpt(str(page.get("extract") or ""))
+    except (httpx.RequestError, httpx.HTTPStatusError, TypeError, ValueError, AttributeError) as error:
+        logger.warning("wikipedia_summary_unavailable trace_id=%s type=%s", trace_id, type(error).__name__)
+        return []
+    if not excerpt:
+        return []
+    source_url = f"https://en.wikipedia.org/wiki/{quote(title.replace(' ', '_'), safe='()')}"
+    if not _is_whitelisted_url("wikipedia", source_url):
+        return []
+    return [
+        Evidence(
+            id="wikipedia:summary",
+            topic="current species overview",
+            source_id="wikipedia",
+            source_name=SOURCE_POLICIES["wikipedia"][0],
+            source_url=source_url,
+            excerpt=excerpt,
+        )
+    ]
+
+
 def _render_card_answer(species: dict[str, Any], evidence: Evidence) -> str:
     name = str(species["common_name"])
     field = evidence.topic
@@ -465,6 +583,35 @@ def _mock_reply(question: str, species: dict[str, Any], evidence: list[Evidence]
         selected = next((item for item in evidence if item.id == "gbif:taxonomy"), None)
         if selected:
             return ChatReply(selected.excerpt, "mock", citations=(selected.citation(),))
+    # Keep the no-provider experience useful without making the fallback a
+    # general-purpose fact generator. This exact, reviewed topic answers the
+    # supported calf-height question using only the seeded EAZA/Dale excerpt.
+    if (
+        any(term in question for term in HEIGHT_QUESTION_TERMS)
+        and any(term in question for term in NEWBORN_QUESTION_TERMS)
+    ):
+        selected = next(
+            (
+                item
+                for item in evidence
+                if item.source_id == "eaza"
+                and item.topic.casefold() == "newborn calf shoulder height"
+            ),
+            None,
+        )
+        if selected:
+            return ChatReply(
+                _render_selected_evidence(species, [selected]),
+                "mock",
+                citations=(selected.citation(),),
+            )
+    selected = next((item for item in evidence if item.id == "wikipedia:summary"), None)
+    if selected:
+        return ChatReply(
+            _render_selected_evidence(species, [selected]),
+            "mock",
+            citations=(selected.citation(),),
+        )
     return ChatReply(RELIABLE_INFO_UNAVAILABLE_MESSAGE, "mock", "unsupported")
 
 
@@ -599,6 +746,15 @@ def answer_species_question(
     ]
     if GBIF_API_ENABLED and _is_gbif_taxonomy_question(question):
         evidence.extend(fetch_gbif_taxonomy_evidence(current_species, trace_id=trace_id))
+    if WIKIPEDIA_API_ENABLED:
+        evidence.extend(
+            fetch_wikipedia_summary_evidence(
+                current_species,
+                question,
+                context,
+                trace_id=trace_id,
+            )
+        )
     if not evidence:
         return ChatReply(RELIABLE_INFO_UNAVAILABLE_MESSAGE, "guardrail", "unsupported")
     if not DEEPSEEK_API_KEY:
