@@ -33,7 +33,7 @@ export function ProfileActions() {
 }
 
 const styles = StyleSheet.create({
-  primary: { marginTop: 24 },
+  primary: { marginTop: 8 },
   secondary: {
     minHeight: 50,
     marginTop: 10,
