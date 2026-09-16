@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
     borderColor: "#DFE7E1",
     borderWidth: 1,
     borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
+    padding: 12,
+    marginBottom: 8,
     backgroundColor: "#FFFFFF",
   },
   label: {
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#E8EEEA",
     borderRadius: 4,
     overflow: "hidden",
-    marginTop: 12,
+    marginTop: 10,
   },
   fill: { height: "100%", backgroundColor: "#0BA84A", borderRadius: 4 },
   categoryHeading: {
@@ -123,12 +123,12 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 0.4,
-    marginTop: 18,
+    marginTop: 12,
   },
   categoryRow: {
     borderBottomWidth: 1,
     borderBottomColor: "#EEF2EF",
-    paddingVertical: 12,
+    paddingVertical: 8,
   },
   categoryRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
   categoryTopRow: {
