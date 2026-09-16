@@ -56,11 +56,11 @@ export function BattleActionBar() {
                         </Text>
                       ) : null}
                     </View>
-                    {ability?.multiplier ? (
+                    {/* {ability?.multiplier ? (
                       <View style={styles.multiplierBadge}>
                         <Text style={styles.multiplierText}>{ability.multiplier}x</Text>
                       </View>
-                    ) : null}
+                    ) : null} */}
                   </View>
                 </Tap>
               );

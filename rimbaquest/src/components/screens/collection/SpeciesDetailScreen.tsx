@@ -53,6 +53,7 @@ export function SpeciesDetailScreen() {
   const [heroEnlarged, setHeroEnlarged] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
   const pagerRef = useRef<ScrollView>(null);
+  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeIndex = DETAIL_TABS.findIndex(([key]) => key === screen);
 
   useEffect(() => {
@@ -80,13 +81,28 @@ export function SpeciesDetailScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, pageWidth]);
 
-  const handleSwipeEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const syncTabToOffset = (x: number) => {
     if (!pageWidth) return;
-    const index = Math.round(e.nativeEvent.contentOffset.x / pageWidth);
+    const index = Math.round(x / pageWidth);
     const clamped = Math.min(DETAIL_TABS.length - 1, Math.max(0, index));
     const next = DETAIL_TABS[clamped][0];
     if (next !== screen) onTabChange(next);
   };
+
+  const handleSwipeEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
+    syncTabToOffset(e.nativeEvent.contentOffset.x);
+
+  const handlePagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
+    scrollEndTimer.current = setTimeout(() => syncTabToOffset(x), 60);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
+    };
+  }, []);
 
   return (
     <View style={styles.detailRoot}>
@@ -174,6 +190,9 @@ export function SpeciesDetailScreen() {
         decelerationRate="fast"
         onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
         onMomentumScrollEnd={handleSwipeEnd}
+        onScrollEndDrag={handleSwipeEnd}
+        onScroll={handlePagerScroll}
+        scrollEventThrottle={16}
       >
         {pageWidth > 0 &&
           DETAIL_TABS.map(([key]) => (

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { ActivityIndicator, StatusBar, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, BackHandler, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screen } from '../types';
 import { styles } from '../styles/theme';
@@ -17,6 +17,7 @@ import {
 import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
 import { BattleArenaScreen, BattlePreparingModal, BattleSelectScreen } from '../components/screens/battle';
 import { AppLoadingModal } from '../components/common/AppLoadingModal';
+import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -47,6 +48,25 @@ export default function RimbaQuest() {
   useEffect(() => {
     useNavigationStore.getState().setFallbackScreen(isLoggedIn ? 'home' : 'account_entry');
   }, [isLoggedIn]);
+
+  const [exitConfirmVisible, setExitConfirmVisible] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onHardwareBackPress = () => {
+      const { history, goBack } = useNavigationStore.getState();
+      if (history.length > 0) {
+        goBack();
+        return true;
+      }
+
+      setExitConfirmVisible(true);
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, []);
 
   const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
 
@@ -118,6 +138,11 @@ export default function RimbaQuest() {
 
       <BattlePreparingModal />
       <AppLoadingModal />
+      <ExitConfirmModal
+        visible={exitConfirmVisible}
+        onStay={() => setExitConfirmVisible(false)}
+        onLeave={() => BackHandler.exitApp()}
+      />
     </SafeAreaView>
   );
 }

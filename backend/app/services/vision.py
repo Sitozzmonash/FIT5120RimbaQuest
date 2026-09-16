@@ -56,7 +56,25 @@ class VisionProvider:
     use_data_uri: bool
 
 
+UnverifiedReason = str
+"""One of: "no_animal_detected", "low_confidence", "species_not_in_catalog"."""
+
+
+@dataclass(frozen=True)
+class IdentificationOutcome:
+    """The result of a photo check: either a confident catalogue match, or an
+    unverified outcome with a specific, child-facing reason why."""
+
+    matched: bool
+    reason: UnverifiedReason | None = None
+    species_id: str | None = None
+    confidence: float | None = None
+    provider: str | None = None
+    model: str | None = None
+
+
 CancellationCheck = Callable[[], Awaitable[bool]]
+StageCallback = Callable[[str, int], None]
 
 
 def _chat_completions_url(base_url: str) -> str:
@@ -340,7 +358,8 @@ async def identify_supported_species(
     *,
     trace_id: str = "-",
     cancellation_check: CancellationCheck | None = None,
-) -> dict[str, Any] | None:
+    on_stage: StageCallback | None = None,
+) -> IdentificationOutcome:
     """Select one supported species using the configured provider sequence.
 
     Provider failures fall through to the next configured provider. A valid
@@ -391,6 +410,8 @@ async def identify_supported_species(
             provider.model,
             len(attempted),
         )
+        if on_stage is not None:
+            on_stage("identifying", len(attempted))
         try:
             result = await _request_provider(
                 provider,
@@ -419,7 +440,7 @@ async def identify_supported_species(
                 provider.name,
                 provider.model,
             )
-            return None
+            return IdentificationOutcome(matched=False, reason="no_animal_detected")
         if result.get("supported") is not True:
             failures.append(f"{provider.name}:invalid_supported_flag")
             logger.warning(
@@ -469,7 +490,7 @@ async def identify_supported_species(
                 confidence,
                 VISION_MIN_CONFIDENCE,
             )
-            return None
+            return IdentificationOutcome(matched=False, reason="low_confidence")
 
         logger.info(
             "vision_provider_succeeded trace_id=%s provider=%s model=%s confidence=%.3f",
@@ -478,16 +499,27 @@ async def identify_supported_species(
             provider.model,
             confidence,
         )
-        return {
-            "species_id": species_id,
-            "confidence": confidence,
-            "provider": provider.name,
-            "model": provider.model,
-        }
+        return IdentificationOutcome(
+            matched=True,
+            species_id=species_id,
+            confidence=confidence,
+            provider=provider.name,
+            model=provider.model,
+        )
 
     if configured_count == 0:
         logger.error("vision_not_configured trace_id=%s", trace_id)
         raise VisionServiceUnavailable("vision_not_configured")
+
+    if attempted and len(failures) == len(attempted) and all(
+        failure.endswith(":species_outside_catalogue") for failure in failures
+    ):
+        logger.info(
+            "vision_unverified trace_id=%s attempted=%s reason=species_not_in_catalog",
+            trace_id,
+            ",".join(attempted),
+        )
+        return IdentificationOutcome(matched=False, reason="species_not_in_catalog")
 
     logger.error(
         "vision_all_providers_failed trace_id=%s attempted=%s failures=%s",
