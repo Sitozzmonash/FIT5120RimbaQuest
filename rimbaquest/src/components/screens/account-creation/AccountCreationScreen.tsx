@@ -164,7 +164,7 @@ export function AccountCreationScreen() {
 }
 
 const styles = StyleSheet.create({
-  createRoot: { flex: 1 },
+  createRoot: { flex: 1, overflow: "hidden" },
   createBackground: {
     position: "absolute",
     top: 0,

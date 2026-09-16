@@ -65,7 +65,7 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, overflow: "hidden" },
   gradientBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
   decoCircle1: {
     position: "absolute",

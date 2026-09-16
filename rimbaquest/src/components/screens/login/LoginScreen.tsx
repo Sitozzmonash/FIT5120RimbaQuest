@@ -145,7 +145,7 @@ export function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  loginRoot: { flex: 1 },
+  loginRoot: { flex: 1, overflow: "hidden" },
   loginBackground: {
     position: "absolute",
     top: 0,

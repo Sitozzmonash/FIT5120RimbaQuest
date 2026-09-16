@@ -164,7 +164,7 @@ export function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  resetRoot: { flex: 1 },
+  resetRoot: { flex: 1, overflow: "hidden" },
   resetBackground: {
     position: "absolute",
     top: 0,
