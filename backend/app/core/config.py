@@ -18,10 +18,23 @@ REPOSITORY_ROOT = BACKEND_ROOT.parent
 load_dotenv(REPOSITORY_ROOT / ".env")
 load_dotenv(BACKEND_ROOT / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
+def _default_fun_facts_path() -> Path:
+    env_override = os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH") or os.getenv("FUN_FACTS_PATH")
+    if env_override:
+        return Path(env_override)
+    for candidate in (
+        Path("./data/fun_facts.json"),
+        BACKEND_ROOT / "data" / "fun_facts.json",
+        Path("./data/iteration2_fun_facts_pilot.json"),
+        BACKEND_ROOT / "data" / "iteration2_fun_facts_pilot.json",
+    ):
+        if candidate.exists():
+            return candidate
+    return Path("./data/fun_facts.json")
+
+
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
-ITERATION_2_FUN_FACTS_PILOT = Path(
-    os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
-)
+ITERATION_2_FUN_FACTS_PILOT = _default_fun_facts_path()
 ITERATION_2_CHAT_EVIDENCE = Path(
     os.getenv("ITERATION_2_CHAT_EVIDENCE_PATH", "./data/iteration2_chat_evidence.json")
 )
