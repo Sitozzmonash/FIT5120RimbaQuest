@@ -6,6 +6,26 @@ from sqlalchemy import create_engine, select
 
 from app.core import seed
 from app.core.schema import metadata, species_chat_evidence, species_fun_facts
+from app.services import chatbot
+
+
+def test_committed_eaza_and_dale_evidence_is_reviewed_and_uses_whitelisted_hosts():
+    records = json.loads(seed.ITERATION_2_CHAT_EVIDENCE.read_text(encoding="utf-8"))
+    by_source = {record["source_id"]: record for record in records}
+
+    assert set(("eaza", "dale_2010")) <= set(by_source)
+    assert by_source["eaza"]["topic"] == "newborn calf shoulder height"
+    assert "95.9" in by_source["eaza"]["excerpt"]
+    for source_id in ("eaza", "dale_2010"):
+        record = by_source[source_id]
+        assert record["verification_status"] == "team-verified"
+        assert record["verified_by"] == "RimbaQuest content team"
+        assert record["verified_at"]
+        assert chatbot._is_whitelisted_url(source_id, record["source_url"])
+
+    assert chatbot._is_whitelisted_url("wikipedia", "https://en.wikipedia.org/wiki/Asian_elephant")
+    assert chatbot._is_whitelisted_url("wikipedia", "https://zh.wikipedia.org/zh-hans/%E4%BA%9A%E6%B4%B2%E8%B1%A1")
+    assert not chatbot._is_whitelisted_url("wikipedia", "https://wikipedia.example.org/wiki/Asian_elephant")
 
 
 def test_removed_seeded_chat_evidence_and_fun_fact_are_revoked(tmp_path, monkeypatch):

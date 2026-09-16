@@ -33,6 +33,10 @@ services:
       # evidence records rather than runtime web scraping.
       - key: GBIF_API_ENABLED
         value: "true"
+      # Narrow live Wikipedia overview lookup for safe, general questions
+      # about the current discovered species only.
+      - key: WIKIPEDIA_API_ENABLED
+        value: "true"
       - key: ZHIPU_API_KEY
         sync: false
       - key: ZHIPU_VISION_MODEL

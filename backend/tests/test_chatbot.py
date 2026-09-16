@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.core import seed
 from app.core.database import engine
 from app.main import app
 from app.services import chatbot
@@ -62,6 +63,7 @@ def chat(child_id: int, token: str, species_id: str, question: str):
 def use_deterministic_chat_fallback(monkeypatch):
     # No test can accidentally use a developer's live provider credential.
     monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "")
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", False)
 
 
 def test_chat_requires_the_authenticated_childs_discovered_card():
@@ -147,6 +149,100 @@ def test_team_verified_fun_facts_are_available_as_chat_evidence():
     assert body["citations"][0]["source_id"] == "rimbaquest-fun-facts"
     assert body["citations"][0]["source_name"] == "RimbaQuest team-verified Fun Facts"
     assert body["citations"][0]["source_url"] is None
+
+
+def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
+    child_id, token = register_child("chat_eaza")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    # Test against the committed review data, not a hand-written row, so a
+    # source or review-metadata change cannot silently remove this capability.
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+
+    response = chat(
+        child_id,
+        token,
+        CURRENT_SPECIES_ID,
+        "How tall is an Asian Elephant calf when it is born?",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert "about 94 cm overall" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "eaza",
+            "source_name": "EAZA Elephant Best Practice Guidelines",
+            "source_url": "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf",
+            "excerpt": (
+                "EAZA's table, citing Dale (2010), reports Asian elephant newborn shoulder "
+                "heights in human care: 95.9 ± 1.2 cm for males (n=19) and 91.9 ± 1.3 "
+                "cm for females (n=23). That is about 94 cm overall; individual calves vary."
+            ),
+        }
+    ]
+
+
+def test_wikipedia_live_lookup_is_current_species_only_and_cited(monkeypatch):
+    child_id, token = register_child("chat_wikipedia")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+    requests: list[dict] = []
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "query": {
+                    "pages": {
+                        "1": {
+                            "title": "Asian elephant",
+                            "extract": "The Asian elephant is the only living species in the genus Elephas.",
+                        }
+                    }
+                }
+            }
+
+    def fake_get(url, **kwargs):
+        requests.append({"url": url, **kwargs})
+        return FakeResponse()
+
+    monkeypatch.setattr(chatbot.httpx, "get", fake_get)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me more about the Asian Elephant.")
+
+    assert response.status_code == 200, response.text
+    assert requests[0]["params"]["titles"] == "Asian Elephant"
+    assert "Tell me more" not in str(requests[0]["params"])
+    assert requests[0]["headers"]["User-Agent"] == chatbot.WIKIPEDIA_USER_AGENT
+    assert response.json()["answer"].startswith("According to Wikipedia")
+    assert response.json()["citations"] == [
+        {
+            "source_id": "wikipedia",
+            "source_name": "Wikipedia (live supplementary reference)",
+            "source_url": "https://en.wikipedia.org/wiki/Asian_elephant",
+            "excerpt": "The Asian elephant is the only living species in the genus Elephas.",
+        }
+    ]
+
+
+def test_wikipedia_is_not_requested_for_newborn_height(monkeypatch):
+    child_id, token = register_child("chat_wikipedia_limits")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+
+    def no_network(*_args, **_kwargs):
+        raise AssertionError("newborn-height questions must not use Wikipedia")
+
+    monkeypatch.setattr(chatbot.httpx, "get", no_network)
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "How tall is an Asian Elephant calf when it is born?")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["citations"][0]["source_id"] == "eaza"
 
 
 def test_configured_deepseek_must_cite_server_selected_evidence(monkeypatch):

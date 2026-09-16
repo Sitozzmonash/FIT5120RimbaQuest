@@ -90,13 +90,17 @@ CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
 CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
 
 # Epic 6 evidence retrieval. GBIF's public taxonomy API needs no key and is
-# only used for taxonomy questions. Other sources are reviewed and stored in
-# the database; this avoids scraping arbitrary web pages at runtime.
+# only used for taxonomy questions. Wikipedia's Action API may provide a
+# current-species overview for safe, general questions. Other source material
+# is reviewed and stored in the database; this avoids arbitrary web scraping.
 # Opt in explicitly outside the Render blueprint. This prevents local tests
 # and unconfigured development environments from making a live request.
 GBIF_API_ENABLED = os.getenv("GBIF_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
 GBIF_API_BASE_URL = os.getenv("GBIF_API_BASE_URL", "https://api.gbif.org/v1").strip().rstrip("/")
 GBIF_TIMEOUT_SECONDS = float(os.getenv("GBIF_TIMEOUT_SECONDS", "8"))
+WIKIPEDIA_API_ENABLED = os.getenv("WIKIPEDIA_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
+WIKIPEDIA_API_BASE_URL = os.getenv("WIKIPEDIA_API_BASE_URL", "https://en.wikipedia.org/w/api.php").strip()
+WIKIPEDIA_TIMEOUT_SECONDS = float(os.getenv("WIKIPEDIA_TIMEOUT_SECONDS", "8"))
 
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"

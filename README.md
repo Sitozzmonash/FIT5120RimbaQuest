@@ -66,15 +66,15 @@ An authenticated child can open the **WildGuide** drawer from an already discove
 - The endpoint verifies the child's ownership of the current discovered card before answering.
 - Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
 - DeepSeek receives only evidence IDs, topics, and excerpts for the current card. It selects the evidence IDs to use; the backend rejects unknown IDs, resolves citations itself, and renders the child-facing factual text from the approved excerpt rather than trusting provider-written claims.
-- The only permitted external source families are MyBIS, PERHILITAN, GBIF, and IUCN. Stored excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. MyBIS, PERHILITAN, and IUCN excerpts must be team-reviewed before storage. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only; arbitrary webpage scraping is not implemented.
+- The permitted external source families are MyBIS, PERHILITAN, GBIF, IUCN, the EAZA Elephant Best Practice Guidelines, Dale (2010), and the English/Chinese Wikipedia editions. Stored excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. EAZA/Dale material is team-reviewed before storage. Wikipedia can also supply a tightly bounded live overview of the current species for a general question; it is supplementary and cannot be used for numerical, medical, legal, or conservation claims. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only; arbitrary webpage scraping is not implemented.
 - If information is unavailable, the chatbot returns the controlled reliable-information fallback rather than guessing. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
 - Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
 
 ### Epic 6 evidence review workflow
 
-`backend/data/iteration2_chat_evidence.json` is intentionally empty until a
-team member approves a source excerpt. Each record must use one of
-`mybis`, `perhilitan`, `gbif`, or `iucn`, match that source's domain, and have
+`backend/data/iteration2_chat_evidence.json` contains only team-approved
+source excerpts. Each record must use one of `mybis`, `perhilitan`, `gbif`,
+`iucn`, `eaza`, `dale_2010`, or `wikipedia`, match that source's domain, and have
 `verification_status: "team-verified"` (or `approved` / `verified`). It must
 include `species_id`, `source_id`, an HTTPS `source_url`, `topic`, a concise
 child-appropriate `excerpt`, `retrieved_at`, `verified_by`, and `verified_at`.
@@ -85,9 +85,20 @@ IUCN is stored as an allowed reviewed source but is not queried live: its API
 terms must be confirmed for the team's production deployment before adding an
 IUCN retriever.
 
+EAZA/Dale evidence currently supports the Asian-elephant newborn-calf shoulder
+height question. Wikipedia is live only for a safe, general overview of the
+current species: the server sends its fixed card name to Wikipedia's Action API
+and never sends a child question, identifier, URL, or another species' name.
+It is not used for numeric, medical, legal, or conservation answers; EAZA/Dale
+or other team-reviewed evidence remains required for those claims.
+
 GBIF retrieval defaults to off for local development and tests. Render enables
 it explicitly through `GBIF_API_ENABLED=true`; it does not require a key and
 is still bounded to the taxonomy flow above.
+
+Wikipedia retrieval also defaults to off outside the Render blueprint. Render
+enables it through `WIKIPEDIA_API_ENABLED=true`; it is limited to the plain-text
+introductory extract of the exact current-card article.
 
 Example review record (replace every placeholder only after the content team
 has checked the source and wording):
@@ -321,6 +332,9 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `GBIF_API_ENABLED` | No | Enables the restricted public GBIF taxonomy lookup; defaults to `false` outside the Render blueprint |
 | `GBIF_API_BASE_URL` | No | Defaults to `https://api.gbif.org/v1` |
 | `GBIF_TIMEOUT_SECONDS` | No | Defaults to `8` |
+| `WIKIPEDIA_API_ENABLED` | No | Enables the constrained live Wikipedia overview lookup; defaults to `false` outside the Render blueprint |
+| `WIKIPEDIA_API_BASE_URL` | No | Defaults to `https://en.wikipedia.org/w/api.php` |
+| `WIKIPEDIA_TIMEOUT_SECONDS` | No | Defaults to `8` |
 
 Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
@@ -352,6 +366,7 @@ DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
 GBIF_API_ENABLED=true
+WIKIPEDIA_API_ENABLED=true
 CORS_ALLOWED_ORIGINS=*
 GEMINI_API_KEY=<server-side Google Gemini API key>
 GEMINI_VISION_MODEL=gemini-3.8-flash
