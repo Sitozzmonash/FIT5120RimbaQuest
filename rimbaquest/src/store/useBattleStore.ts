@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { Vibration } from "react-native";
 import { API_BASE } from "../constants/config";
 import { BattleAbilityItem, BattleOpponent, BattleOutcome, Species } from "../types";
 import { useNavigationStore } from "./useNavigationStore";
@@ -274,6 +275,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
       outcome: "playing",
       preparingBattle: false,
     });
+    Vibration.vibrate(200);
     useNavigationStore.getState().open("battle_arena");
   },
 
@@ -309,6 +311,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         }));
       }
       const nextPlayerHp = Math.max(0, playerHp - botAction.damage);
+      if (botAction.damage > 0) Vibration.vibrate(150);
       newLogs.push(botAction.log);
       if (nextPlayerHp <= 0) {
         newLogs.push(`${playerCard.common_name} is too tired to continue.`);
@@ -372,6 +375,7 @@ export const useBattleStore = create<BattleStore>((set, get) => ({
         }));
       }
       const afterBotPlayerHp = Math.max(0, nextPlayerHp - botAction.damage);
+      if (botAction.damage > 0) Vibration.vibrate(150);
       newLogs.push(botAction.log);
       if (afterBotPlayerHp <= 0) {
         newLogs.push(`${playerCard.common_name} is too tired to continue.`);

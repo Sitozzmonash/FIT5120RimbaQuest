@@ -52,8 +52,15 @@ export type IdentificationFeedback = {
   explanation?: string | null;
 };
 
+export type VerificationErrorKind =
+  | 'unsupported_file'
+  | 'no_animal_detected'
+  | 'low_confidence'
+  | 'species_not_in_catalog'
+  | 'failed';
+
 export type VerificationError = {
-  kind: 'unverified' | 'failed';
+  kind: VerificationErrorKind;
   message: string;
 };
 

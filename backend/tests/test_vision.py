@@ -68,12 +68,13 @@ def test_vision_uses_deepseek_when_first_in_configured_sequence(monkeypatch):
     _mock_provider_requests(monkeypatch, fake_post)
     result = _identify(b"image", "image/jpeg", CATALOGUE)
 
-    assert result == {
-        "species_id": "sp_common_marmoset",
-        "confidence": 0.94,
-        "provider": "deepseek",
-        "model": "deepseek-flash",
-    }
+    assert result == vision.IdentificationOutcome(
+        matched=True,
+        species_id="sp_common_marmoset",
+        confidence=0.94,
+        provider="deepseek",
+        model="deepseek-flash",
+    )
     assert len(requests) == 1
     assert requests[0][0] == "https://api.deepseek.com/chat/completions"
     assert requests[0][1]["model"] == "deepseek-flash"
@@ -102,8 +103,8 @@ def test_vision_falls_back_in_configured_sequence_order(monkeypatch):
     _mock_provider_requests(monkeypatch, fake_post)
     result = _identify(b"image", "image/jpeg", CATALOGUE)
 
-    assert result is not None
-    assert result["provider"] == "gemini"
+    assert result.matched is True
+    assert result.provider == "gemini"
     assert requested_models == ["deepseek-flash", "gemini-3.8-flash"]
 
 
@@ -122,8 +123,8 @@ def test_vision_uses_groq_as_primary_provider(monkeypatch):
     _mock_provider_requests(monkeypatch, fake_post)
     result = _identify(b"image", "image/jpeg", CATALOGUE)
 
-    assert result is not None
-    assert result["provider"] == "groq"
+    assert result.matched is True
+    assert result.provider == "groq"
     assert requests[0][0].endswith("/openai/v1/chat/completions")
     assert requests[0][1]["reasoning_effort"] == "none"
 
@@ -152,27 +153,72 @@ def test_vision_falls_back_from_groq_to_zhipu(monkeypatch, caplog):
     _mock_provider_requests(monkeypatch, fake_post)
     result = _identify(b"image", "image/png", CATALOGUE, trace_id="trace-fallback")
 
-    assert result is not None
-    assert result["provider"] == "zhipu"
+    assert result.matched is True
+    assert result.provider == "zhipu"
     assert requested_models == ["qwen/qwen3.8-27b", "glm-4.6v-flash"]
     assert zhipu_payload["thinking"] == {"type": "disabled"}
     assert "failed_provider=groq reason=http_429" in caplog.text
 
 
 @pytest.mark.parametrize(
-    "provider_result",
+    "provider_result,expected_reason",
     [
-        {"supported": True, "species_id": "sp_common_marmoset", "confidence": 0.3},
-        {"supported": False, "species_id": None, "confidence": 0.2},
+        (
+            {"supported": True, "species_id": "sp_common_marmoset", "confidence": 0.3},
+            "low_confidence",
+        ),
+        (
+            {"supported": False, "species_id": None, "confidence": 0.2},
+            "no_animal_detected",
+        ),
     ],
 )
-def test_vision_rejects_uncertain_or_unsupported_results(monkeypatch, provider_result):
+def test_vision_rejects_uncertain_or_unsupported_results(
+    monkeypatch, provider_result, expected_reason
+):
     monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
     _mock_provider_requests(
         monkeypatch,
         lambda *_args, **_kwargs: FakeResponse(f"```json\n{json.dumps(provider_result)}\n```"),
     )
-    assert _identify(b"image", "image/jpeg", CATALOGUE) is None
+    result = _identify(b"image", "image/jpeg", CATALOGUE)
+    assert result.matched is False
+    assert result.reason == expected_reason
+
+
+def test_vision_reports_species_not_in_catalog_when_every_provider_agrees(monkeypatch):
+    monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
+    monkeypatch.setattr(vision, "ZHIPU_API_KEY", "zhipu-test-key")
+    _mock_provider_requests(
+        monkeypatch,
+        lambda *_args, **_kwargs: FakeResponse(json.dumps({
+            "supported": True,
+            "species_id": "sp_not_in_catalogue",
+            "confidence": 0.9,
+        })),
+    )
+
+    result = _identify(b"image", "image/jpeg", CATALOGUE)
+
+    assert result.matched is False
+    assert result.reason == "species_not_in_catalog"
+
+
+def test_vision_still_fails_generically_when_catalog_gap_is_not_unanimous(monkeypatch):
+    monkeypatch.setattr(vision, "GROQ_API_KEY", "groq-test-key")
+    monkeypatch.setattr(vision, "ZHIPU_API_KEY", "zhipu-test-key")
+    responses = iter([
+        FakeResponse(json.dumps({
+            "supported": True,
+            "species_id": "sp_not_in_catalogue",
+            "confidence": 0.9,
+        })),
+        FakeResponse("not-json"),
+    ])
+    _mock_provider_requests(monkeypatch, lambda *_args, **_kwargs: next(responses))
+
+    with pytest.raises(vision.VisionServiceUnavailable, match="vision_all_providers_failed"):
+        _identify(b"image", "image/jpeg", CATALOGUE)
 
 
 def test_invalid_primary_response_falls_back_to_next_provider(monkeypatch, caplog):
@@ -191,8 +237,8 @@ def test_invalid_primary_response_falls_back_to_next_provider(monkeypatch, caplo
 
     result = _identify(b"image", "image/jpeg", CATALOGUE, trace_id="trace-invalid")
 
-    assert result is not None
-    assert result["provider"] == "gemini"
+    assert result.matched is True
+    assert result.provider == "gemini"
     assert "vision_invalid_model_response trace_id=trace-invalid provider=groq" in caplog.text
 
 

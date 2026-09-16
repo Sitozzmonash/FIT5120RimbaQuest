@@ -44,7 +44,7 @@ export const WILDLIFE_FILTERS = [
   { id: 'All', label: 'All Wildlife' },
   { id: 'Mammal', label: 'Mammals' },
   { id: 'Bird', label: 'Birds' },
-  { id: 'Butterfly', label: 'Butterflies / Insects' },
+  { id: 'Butterfly', label: 'Butterflies' },
   { id: 'Reptile', label: 'Reptiles' },
 ];
 
