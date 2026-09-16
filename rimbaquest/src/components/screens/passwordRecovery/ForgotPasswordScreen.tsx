@@ -121,7 +121,7 @@ export function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  forgotRoot: { flex: 1 },
+  forgotRoot: { flex: 1, overflow: "hidden" },
   forgotBackground: {
     position: "absolute",
     top: 0,
