@@ -37,4 +37,4 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           CI: 1
-        run: npx -y eas-cli@latest deploy --non-interactive
+        run: npx -y eas-cli@latest deploy --alias latest --non-interactive
