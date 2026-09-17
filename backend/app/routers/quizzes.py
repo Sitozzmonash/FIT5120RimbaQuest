@@ -5,7 +5,7 @@ import random
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import text
 
 from app.core.auth import AuthenticatedUser, get_current_user, get_optional_current_user
@@ -16,6 +16,7 @@ router = APIRouter(tags=["Species Quizzes & Progression"])
 
 PRESETS_PATH = Path(__file__).resolve().parents[2] / "data" / "species_quiz_presets.json"
 _cached_presets: dict[str, Any] | None = None
+DISCOVERED_CARD_NOT_FOUND = "Discovered Wildlife Card not found"
 
 
 def get_quiz_presets() -> dict[str, Any]:
@@ -72,6 +73,27 @@ def get_or_create_progress(connection: Any, child_id: int, species_id: str) -> d
     }
 
 
+def require_discovered_species(connection: Any, child_id: int, species_id: str) -> None:
+    found = connection.execute(
+        text(
+            """
+            SELECT 1 FROM collection_entries
+            WHERE child_id=:child_id AND species_id=:species_id
+            """
+        ),
+        {"child_id": child_id, "species_id": species_id},
+    ).first()
+    if not found:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, DISCOVERED_CARD_NOT_FOUND)
+
+
+def require_difficulty_unlocked(progress: dict[str, Any], difficulty: str) -> None:
+    if difficulty == "medium" and not progress["easy_passed"]:
+        raise HTTPException(400, "Medium quiz is locked. Pass Easy with 5/5 first.")
+    if difficulty == "hard" and not progress["medium_passed"]:
+        raise HTTPException(400, "Hard quiz is locked. Pass Medium with 5/5 first.")
+
+
 @router.get("/api/v1/species/{species_id}/quiz-progression")
 def get_quiz_progression(
     species_id: str,
@@ -118,6 +140,7 @@ def get_quiz(
     falls back to easy set 0 or legacy quizzes if not authenticated, returning questions format.
 
     When difficulty is specified (easy, medium, hard):
+    - Requires the authenticated child's discovered Wildlife Card.
     - Validates sequential progression locking:
       - medium requires easy_passed
       - hard requires medium_passed
@@ -157,13 +180,10 @@ def get_quiz(
         raise HTTPException(404, f"No quizzes found for difficulty '{difficulty}'")
 
     with engine.begin() as connection:
+        require_discovered_species(connection, user.child_id, species_id)
         progress = get_or_create_progress(connection, user.child_id, species_id)
 
-    # Check sequential locking
-    if difficulty == "medium" and not progress["easy_passed"]:
-        raise HTTPException(400, "Medium quiz is locked. Pass Easy with 5/5 first.")
-    if difficulty == "hard" and not progress["medium_passed"]:
-        raise HTTPException(400, "Hard quiz is locked. Pass Medium with 5/5 first.")
+    require_difficulty_unlocked(progress, difficulty)
 
     # Pick a set index (0, 1, or 2)
     available_sets = [0, 1, 2]
@@ -204,6 +224,7 @@ def submit_quiz(
 ):
     """
     Accepts: { "difficulty": str, "set_index": int, "answers": { "easy_s0_q1": "...", ... } }
+    Requires a discovered Wildlife Card and sequential difficulty unlock.
     Graded against validated presets.
     Score 5/5 = Passed -> ability unlocked, mark passed in database.
     Score < 5 = Not Passed -> record last_failed_set.
@@ -222,24 +243,26 @@ def submit_quiz(
     questions = species_quizzes[difficulty][set_idx]
     total = len(questions)
 
-    # Grade
-    correct_count = 0
-    for idx, q in enumerate(questions):
-        q_id = q["id"]
-        # Accept answer keyed either by question id or by "q{idx}" / index
-        selected = payload.answers.get(q_id)
-        if selected is None:
-            selected = payload.answers.get(f"q{idx}")
-        if selected is None:
-            selected = payload.answers.get(str(idx))
-
-        if selected is not None and selected.strip() == q["correct_answer"].strip():
-            correct_count += 1
-
-    passed = (correct_count == total)
-
     with engine.begin() as connection:
+        require_discovered_species(connection, user.child_id, species_id)
         progress = get_or_create_progress(connection, user.child_id, species_id)
+        require_difficulty_unlocked(progress, difficulty)
+
+        # Grade only after the card and difficulty are eligible.
+        correct_count = 0
+        for idx, q in enumerate(questions):
+            q_id = q["id"]
+            # Accept answer keyed either by question id or by "q{idx}" / index
+            selected = payload.answers.get(q_id)
+            if selected is None:
+                selected = payload.answers.get(f"q{idx}")
+            if selected is None:
+                selected = payload.answers.get(str(idx))
+
+            if selected is not None and selected.strip() == q["correct_answer"].strip():
+                correct_count += 1
+
+        passed = (correct_count == total)
         last_failed = dict(progress.get("last_failed_set") or {})
 
         if passed:
