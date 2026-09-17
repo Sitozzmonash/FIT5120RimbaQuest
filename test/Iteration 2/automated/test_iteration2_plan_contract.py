@@ -6,8 +6,8 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run --no-project --with-requirements \
 requirements.txt python /absolute/path/to/test_iteration2_plan_contract.py
 
 This test artefact creates its own SQLite database and prints non-sensitive
-evidence only. AC4.5.1 and AC4.5.10 now assert the repaired server-side
-gates; AC4.5.6 remains the amended client check.
+evidence only. It asserts the repaired AC4.4.1, AC4.5.1 and AC4.5.10 flows;
+AC4.5.6 remains the amended client check.
 """
 
 from __future__ import annotations
@@ -20,7 +20,11 @@ from collections import defaultdict
 from pathlib import Path
 
 
-REPO = Path(__file__).resolve().parents[3]
+REPO = Path(os.environ.get("RIMBAQUEST_REPO", Path.cwd().parent)).resolve()
+if not (REPO / "backend").is_dir():
+    raise RuntimeError(
+        "Run this script from the repository backend directory or set RIMBAQUEST_REPO."
+    )
 sys.path.insert(0, str(REPO / "backend"))
 _tmp_dir = tempfile.mkdtemp(prefix="rimbaquest-i2-contract-")
 os.environ["DATABASE_URL"] = f"sqlite:///{Path(_tmp_dir, 'i2.db').as_posix()}"
@@ -88,7 +92,7 @@ def main() -> None:
 
     quiz_screen = (REPO / "rimbaquest/src/components/screens/collection/AbilityQuizScreen.tsx").read_text()
     assert "disabled={!selected || submitting}" in quiz_screen
-    print("AC4.5.6 retest Pass: Next is disabled until an answer is selected; the amended AC does not require a message")
+    print("AC4.5.6 Pass: Next is disabled until an answer is selected")
 
     malformed = []
     cross_level_duplicates = []
@@ -121,7 +125,7 @@ def main() -> None:
     ]
     assert len(presets) == 152 and not malformed and not cross_level_duplicates
     assert len(grouped) == 152 and not invalid
-    print("AC4.5.2/4.5.3 data trace: 152 preset species valid with no cross-difficulty duplicates; 152 source species each have 10 team-verified facts")
+    print("AC4.5.2/4.5.3 data trace: 152 preset species valid with no cross-difficulty duplicates; 152 source species each have 10 ordered facts")
 
 
 if __name__ == "__main__":
