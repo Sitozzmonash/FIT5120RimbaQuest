@@ -1,0 +1,24 @@
+Iteration 2 final manual retest summary
+Date: 15 September 2026
+Build: local web build from commit f4cf76386f76a3d11abbee85db602fbbc22b0185
+Final result: 41 Pass / 3 Fail / 0 Not Run
+
+AC4.5.6 amended acceptance criterion
+Given a quiz question, when no answer is selected, the Next button must be disabled and the child must remain on the current question until an answer is selected.
+Observed: question 1 remained visible and Next exposed disabled=true before an option was selected.
+Result: Pass.
+Screenshot: ../screenshots/AC4.5.6-no-answer-next-disabled-pass.png
+
+Chatbot representative passing evidence
+Question: What does an Asian Elephant eat?
+Check: the Asian Elephant's ten team-verified Fun Facts do not contain the card diet string.
+Observed: WildGuide answered with the verified Wildlife Card diet and displayed its citation.
+Result: Pass.
+Screenshot: ../screenshots/CHAT-01-question-beyond-fun-facts.png
+
+Open defects and their reproducible automated evidence are recorded in automated-retest-15sep-2026.txt.
+The Fun Facts UI retest screenshot is ../screenshots/AC4.4.1-fun-facts-not-ten-fail.png.
+
+Follow-up chatbot evidence, 16 September 2026
+The database log chatbot-beyond-displayed-content-16sep-2026.txt records the complete Asian Elephant About data and all 10 team-verified Fun Facts. The currently displayed page did not contain Fun Fact 1. WildGuide answered the question “Tell me an interesting fun fact about the Asian Elephant.” with Fun Fact 1 and showed the RimbaQuest team-verified Fun Facts citation.
+Screenshot: ../screenshots/CHAT-02-beyond-displayed-content-pass.png
