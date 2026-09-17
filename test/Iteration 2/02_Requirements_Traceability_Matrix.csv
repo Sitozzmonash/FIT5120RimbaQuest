@@ -1,45 +1,48 @@
 Acceptance Criterion,Requirement summary,Result,Evidence / rationale,Test Case ID,Defect ID,Commit,Test Date
-AC4.3.1,Recent activity descending order,Pass,E-I2-04: six local card interactions rendered in descending order; latest Hornbill first,TC-I2-01,,f4cf763,15 September 2026
-AC4.3.2,No duplicate recent species,Pass,E-I2-04 and tests/test_chatbot.py::test_continue_learning_is_deduplicated_and_orders_by_chat_activity,TC-I2-01,,f4cf763,15 September 2026
-AC4.3.3,Continue Learning opens card,Pass,E-I2-04: selected Malayan Tiger entry opened the Malayan Tiger card,TC-I2-01,,f4cf763,15 September 2026
-AC4.3.4,Show only five recent entries,Pass,E-I2-04: six interactions produced exactly five home entries,TC-I2-01,,f4cf763,15 September 2026
-AC4.3.5,Empty state,Pass,E-I2-04: no-discovery state displayed accepted LeanKit wording,TC-I2-01,,f4cf763,15 September 2026
-AC4.4.1,Verified information and 10 facts,Fail,"DEF-I2-003 / E-I2-04: discovered cards display only 3 facts, not 10",TC-I2-02,DEF-I2-003,f4cf763,15 September 2026
-AC4.4.2,Undiscovered content restricted,Pass,E-I2-04: Ashy Tailorbird showed Not Found Yet without card learning/quiz/chat content,TC-I2-02,,f4cf763,15 September 2026
-AC4.4.3,Age appropriate content,Pass,"E-I2-04: sampled card facts and chatbot replies are short, clear 9–12 language",TC-I2-02,,f4cf763,15 September 2026
-AC4.4.4,Information and facts distinct,Pass,E-I2-04: About and Fun Facts are separate labelled card tabs,TC-I2-02,,f4cf763,15 September 2026
-AC4.5.1,Quiz only for discovered cards,Fail,DEF-I2-001 / E-I2-02: undiscovered-card Easy quiz returned HTTP 200,TC-I2-03,DEF-I2-001,f4cf763,15 September 2026
-AC4.5.2,"Three sets, five questions, no cross-level duplicates",Pass,E-I2-02: 155 preset species structural check passed; existing preset validity test passed,TC-I2-03,,f4cf763,15 September 2026
-AC4.5.3,AI quiz validation before use,Pass,E-I2-02: deterministic generator uses 152 species × 10 team-verified source facts; no runtime unvalidated AI output is presented,TC-I2-03,,f4cf763,15 September 2026
-AC4.5.4,"Three options, one choice",Pass,E-I2-04 and tests/test_quizzes.py::test_quiz_presets_file_validity,TC-I2-03,,f4cf763,15 September 2026
-AC4.5.5,Sequential five questions,Pass,E-I2-04: five numbered steps; one question visible at a time,TC-I2-04,,f4cf763,15 September 2026
-AC4.5.6,Answer required before continuing,Pass,E-I2-05 / AC4.5.6-no-answer-next-disabled-pass.png: Next is disabled without an answer and the child remains on question 1; the amended AC does not require a message,TC-I2-04,,f4cf763,15 September 2026
-AC4.5.7,Score quiz out of five,Pass,E-I2-04 displayed 2 out of 5; tests/test_quizzes.py::test_quiz_progression_flow,TC-I2-05,,f4cf763,15 September 2026
-AC4.5.8,Pass/fail and ability status,Pass,E-I2-04 failed-result message plus tests/test_quizzes.py::test_quiz_progression_flow,TC-I2-05,,f4cf763,15 September 2026
-AC4.5.9,Different set after failure,Pass,E-I2-04: retry first question differed from the failed set,TC-I2-05,,f4cf763,15 September 2026
-AC4.5.10,Sequential difficulty enforcement,Fail,DEF-I2-002 / E-I2-02: direct Medium 5/5 succeeded while Easy remained false,TC-I2-06,DEF-I2-002,f4cf763,15 September 2026
-AC4.5.11,Unlock slot by difficulty,Pass,E-I2-04: valid Easy progression showed Ability 1 Ready to Use; existing progression test covers Easy/Medium/Hard mapping,TC-I2-06,,f4cf763,15 September 2026
-AC4.5.12,Persist per child/card,Pass,tests/test_quizzes.py::test_quiz_progression_flow,TC-I2-05,,f4cf763,15 September 2026
-AC4.5.13,Abilities available in battle,Pass,E-I2-04: saved Easy state made Swift Pounce available in Tiger battle,TC-I2-07,,f4cf763,15 September 2026
-AC4.5.14,No correctness until submit,Pass,E-I2-04: choice enabled Next with no correctness feedback until final Check My Answers,TC-I2-04,,f4cf763,15 September 2026
-AC5.1.1,Four-option identification question,Pass,E-I2-03: mocked photo-verification integration returned exactly four candidates,TC-I2-08,,f4cf763,15 September 2026
-AC5.1.2,One selection; hidden answer,Pass,E-I2-03: candidate-only response omitted verified_species_id; server validates selected candidate,TC-I2-08,,f4cf763,15 September 2026
-AC5.1.3,Record child selection,Pass,E-I2-03: integration evaluates and records wrong/right selected candidate,TC-I2-08,,f4cf763,15 September 2026
-AC5.2.1,Feedback and reveal after submit,Pass,E-I2-03: evaluation returned correct/category/species result and revealed verified species,TC-I2-09,,f4cf763,15 September 2026
-AC5.2.2,Approved identifying explanation,Pass,E-I2-03: evaluation returned distinctive-feature or approved fun-fact explanation,TC-I2-09,,f4cf763,15 September 2026
-AC5.2.3,Save only AI species,Pass,E-I2-03: wrong selection still saved AI-verified species; incorrect card remained locked,TC-I2-09,,f4cf763,15 September 2026
-AC5.2.4,Unlock despite wrong child answer,Pass,E-I2-03: wrong selection was evaluated then the verified card was eligible for save/unlock,TC-I2-09,,f4cf763,15 September 2026
-AC5.2.5,Uncertain AI prevents unlock,Pass,E-I2-03: targeted uncertain/failed-verification test passed,TC-I2-10,,f4cf763,15 September 2026
-AC5.2.6,AI failure prevents unlock,Pass,E-I2-03: targeted uncertain/failed-verification test passed,TC-I2-10,,f4cf763,15 September 2026
-AC6.1.1,Chat only from discovered card,Pass,E-I2-03 and E-I2-04: discovered-card launcher; undiscovered access denied,TC-I2-11,,f4cf763,15 September 2026
-AC6.1.2,Question required,Pass,E-I2-04: empty send displayed Please type a question,TC-I2-11,,f4cf763,15 September 2026
-AC6.1.3,Current-species restriction,Pass,E-I2-04: elephant question on Tiger card returned the controlled Tiger-only response,TC-I2-11,,f4cf763,15 September 2026
-AC6.1.4,Reliable response/fallback,Pass,E-I2-04 returned verified-card diet with citation; E-I2-03 covers fallback,TC-I2-12,,f4cf763,15 September 2026
-AC6.1.5,Unrelated/inappropriate guardrail,Pass,E-I2-04 injection prompt returned the controlled learning redirect,TC-I2-12,,f4cf763,15 September 2026
-AC6.1.6,Age appropriate response,Pass,E-I2-04: sampled answer uses concise child-friendly language and verified-card citation,TC-I2-12,,f4cf763,15 September 2026
-AC6.1.7,Service failure response,Pass,E-I2-03: provider failure returned controlled 503 without activity write,TC-I2-12,,f4cf763,15 September 2026
-AC6.1.8,Chat updates recent activity,Pass,E-I2-04: Tiger moved first after chat; backend dedupe/order test passed,TC-I2-11,,f4cf763,15 September 2026
-AC8.2.1,Slots reflect progression,Pass,E-I2-04: one Ready to Use slot and two Not Earned slots reflected seeded valid Easy pass,TC-I2-13,,f4cf763,15 September 2026
-AC8.2.2,Only unlocked ability usable,Pass,E-I2-04: Swift Pounce button available; slots 2/3 non-actionable Not Earned cards,TC-I2-13,,f4cf763,15 September 2026
-AC8.2.3,Effect updates state,Pass,E-I2-04: Swift Pounce reduced opponent HP 145 to 109 and then bot state updated,TC-I2-13,,f4cf763,15 September 2026
-AC8.2.4,Ability feedback,Pass,E-I2-04: battle log named Swift Pounce and stated Opponent lost 36 HP,TC-I2-13,,f4cf763,15 September 2026
+AC4.3.1,Recent activity descending order,Pass,"E-I2-17-04: local web observed Asian Elephant above Malayan Tiger after latest activity",TC-I2-01,,1489a8b,17 September 2026
+AC4.3.2,No duplicate recent species,Pass,"E-I2-17-01: test_chatbot.py validates deduplication and chat ordering",TC-I2-01,,1489a8b,17 September 2026
+AC4.3.3,Continue Learning opens card,Pass,E-I2-17-04: selected discovered entries opened the matching Wildlife Card,TC-I2-01,,1489a8b,17 September 2026
+AC4.3.4,Show only five recent entries,Pass,E-I2-17-01: activity regression covers five-entry limit,TC-I2-01,,1489a8b,17 September 2026
+AC4.3.5,Empty state,Pass,E-I2-17-04: home displayed approved no-animals message before activity,TC-I2-01,,1489a8b,17 September 2026
+AC4.4.1,Verified information and 10 facts,Pass,E-I2-17-02 and E-I2-17-04: API and discovered cards returned ten facts,TC-I2-02,,1489a8b,17 September 2026
+AC4.4.2,Undiscovered content restricted,Pass,E-I2-17-04: undiscovered card remained restricted without discovered-only learning or quiz,TC-I2-02,,1489a8b,17 September 2026
+AC4.4.3,Age appropriate content,Pass,E-I2-17-04: sampled card facts and chatbot response were concise child-appropriate language,TC-I2-02,,1489a8b,17 September 2026
+AC4.4.4,Information and facts distinct,Pass,E-I2-17-04: About and Fun Facts were separately labelled,TC-I2-02,,1489a8b,17 September 2026
+AC4.5.1,Quiz only for discovered cards,Pass,E-I2-17-02: undiscovered-card Easy request returned controlled 404,TC-I2-03,,1489a8b,17 September 2026
+AC4.5.2,"Three sets and five questions",Pass,E-I2-17-02: all 152 supported species have three five-question sets per difficulty,TC-I2-03,,1489a8b,17 September 2026
+AC4.5.3,AI quiz preparation uses approved material,Pass,E-I2-17-02: preset data trace uses the verified-facts source,TC-I2-03,,1489a8b,17 September 2026
+AC4.5.4,"Three options and one selection",Pass,E-I2-17-01 and E-I2-17-04: presets and live UI showed three options,TC-I2-03,,1489a8b,17 September 2026
+AC4.5.5,Sequential five questions,Pass,E-I2-17-04: Easy quiz showed five numbered steps and one question at a time,TC-I2-04,,1489a8b,17 September 2026
+AC4.5.6,Answer required before continuing,Pass,E-I2-17-04: Next was disabled without a selection and question 1 remained current,TC-I2-04,,1489a8b,17 September 2026
+AC4.5.7,Score quiz out of five,Pass,E-I2-17-01: progression-flow regression verifies score calculation,TC-I2-05,,1489a8b,17 September 2026
+AC4.5.8,Pass fail and ability status,Pass,E-I2-17-01: failed and 5/5 paths verify status and ability result,TC-I2-05,,1489a8b,17 September 2026
+AC4.5.9,Different set after failure,Pass,E-I2-17-01: failed Easy retry selected a different preset set,TC-I2-05,,1489a8b,17 September 2026
+AC4.5.10,Sequential difficulty enforcement,Pass,E-I2-17-02: direct Medium 5/5 was rejected and progress remained locked,TC-I2-06,,1489a8b,17 September 2026
+AC4.5.11,Unlock slot by difficulty,Pass,E-I2-17-01: Easy Medium and Hard map to abilities 1 2 and 3,TC-I2-06,,1489a8b,17 September 2026
+AC4.5.12,Persist per child and card,Pass,E-I2-17-01: progression-flow regression verifies child and card-scoped persistence,TC-I2-05,,1489a8b,17 September 2026
+AC4.5.13,Abilities available in battle,Pass,E-I2-17-01: battle-card regression exposes legitimately unlocked ability,TC-I2-07,,1489a8b,17 September 2026
+AC4.5.14,No correctness until submit,Pass,E-I2-17-04 and E-I2-17-01: selection shows no immediate correctness feedback,TC-I2-04,,1489a8b,17 September 2026
+AC5.1.1,Four-option identification question,Pass,E-I2-17-01: discovery flow returns one verified candidate plus three plausible choices,TC-I2-08,,1489a8b,17 September 2026
+AC5.1.2,One selection and hidden answer,Pass,E-I2-17-01: candidate response hides verified species before evaluation,TC-I2-08,,1489a8b,17 September 2026
+AC5.1.3,Record child selection,Pass,E-I2-17-01: discovery evaluation records the child selection,TC-I2-08,,1489a8b,17 September 2026
+AC5.2.1,Feedback and reveal after submit,Pass,E-I2-17-01: evaluation returns feedback and reveals verified category and species after submission,TC-I2-09,,1489a8b,17 September 2026
+AC5.2.2,Approved identifying explanation,Pass,E-I2-17-01: evaluation returns verified identifying explanation,TC-I2-09,,1489a8b,17 September 2026
+AC5.2.3,Save only AI species,Pass,E-I2-17-01: incorrect child choice cannot save or unlock wrong card,TC-I2-09,,1489a8b,17 September 2026
+AC5.2.4,Unlock despite wrong child answer,Pass,E-I2-17-01: verified card remains eligible after incorrect child choice,TC-I2-09,,1489a8b,17 September 2026
+AC5.2.5,Uncertain AI prevents unlock,Pass,E-I2-17-01: low-confidence or unsupported verification leaves no discovery or unlock,TC-I2-10,,1489a8b,17 September 2026
+AC5.2.6,AI failure prevents unlock,Pass,E-I2-17-01: provider failure invalid response and timeout leave no verified discovery or unlock,TC-I2-10,,1489a8b,17 September 2026
+AC6.1.1,Chat only from discovered card,Pass,E-I2-17-01 and E-I2-17-04: discovered chat access and undiscovered denial tested,TC-I2-11,,1489a8b,17 September 2026
+AC6.1.2,Question required,Pass,E-I2-17-04: empty send displayed Please type a question,TC-I2-11,,1489a8b,17 September 2026
+AC6.1.3,Current-species restriction,Pass,E-I2-17-01: other-species question returned controlled current-card response,TC-I2-11,,1489a8b,17 September 2026
+AC6.1.4,Reliable additional information or fallback,Pass,E-I2-17-04: EAZA and Dale cited additional Asian Elephant answer and controlled fallback tested,TC-I2-12,,1489a8b,17 September 2026
+AC6.1.5,Unrelated and inappropriate guardrail,Pass,E-I2-17-01: unrelated and injection prompts returned controlled redirect,TC-I2-12,,1489a8b,17 September 2026
+AC6.1.6,Age appropriate response,Pass,E-I2-17-04: sampled cited response was concise child-appropriate language,TC-I2-12,,1489a8b,17 September 2026
+AC6.1.7,Service failure response,Pass,E-I2-17-01: provider failure returns controlled response with no activity write,TC-I2-12,,1489a8b,17 September 2026
+AC6.1.8,Chat updates recent activity,Pass,E-I2-17-01 and E-I2-17-04: chat activity reordered current species in Continue Learning,TC-I2-11,,1489a8b,17 September 2026
+AC8.2.1,Slots reflect progression,Pass,E-I2-17-01: battle-card state reflects child-scoped unlocked ability list,TC-I2-13,,1489a8b,17 September 2026
+AC8.2.2,Only unlocked ability usable,Pass,E-I2-17-01: locked slots unavailable and unlocked slot actionable,TC-I2-13,,1489a8b,17 September 2026
+AC8.2.3,Effect updates state,Pass,E-I2-17-01: ability action updates opponent HP and battle state,TC-I2-13,,1489a8b,17 September 2026
+AC8.2.4,Ability feedback,Pass,E-I2-17-01: battle log names ability and resulting effect,TC-I2-13,,1489a8b,17 September 2026
+AC1.3.2,Valid recovery request,Pass,"Regression retest E-I1-01: production request accepted and owner confirmed receipt of six-character verification code; no personal data retained",REG-I1-001,,3cc8904,17 September 2026
+AC1.3.4,Expired recovery token,Pass,Regression retest E-I1-01: expired recovery code rejected with controlled invalid-or-expired message,REG-I1-002,,3cc8904,17 September 2026
+AC1.3.5,Successful password reset,Pass,Regression retest E-I1-01: valid code changed password and preserved card quiz progression and XP,REG-I1-003,,3cc8904,17 September 2026

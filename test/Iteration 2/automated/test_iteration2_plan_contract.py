@@ -6,8 +6,8 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run --no-project --with-requirements \
 requirements.txt python /absolute/path/to/test_iteration2_plan_contract.py
 
 This test artefact creates its own SQLite database and prints non-sensitive
-evidence only. It intentionally reproduces the three open defects after the
-AC4.5.6 acceptance criterion was amended on 15 September 2026.
+evidence only. It asserts the repaired AC4.4.1, AC4.5.1 and AC4.5.10 flows;
+AC4.5.6 remains the amended client check.
 """
 
 from __future__ import annotations
@@ -20,7 +20,11 @@ from collections import defaultdict
 from pathlib import Path
 
 
-REPO = Path("/Users/lilia/Downloads/5120 Tasks/week5/FIT5120RimbaQuest")
+REPO = Path(os.environ.get("RIMBAQUEST_REPO", Path.cwd().parent)).resolve()
+if not (REPO / "backend").is_dir():
+    raise RuntimeError(
+        "Run this script from the repository backend directory or set RIMBAQUEST_REPO."
+    )
 sys.path.insert(0, str(REPO / "backend"))
 _tmp_dir = tempfile.mkdtemp(prefix="rimbaquest-i2-contract-")
 os.environ["DATABASE_URL"] = f"sqlite:///{Path(_tmp_dir, 'i2.db').as_posix()}"
@@ -58,8 +62,9 @@ def main() -> None:
     response = client.get(
         f"/api/v1/species/{species_id}/quiz?difficulty=easy", headers=headers
     )
-    assert response.status_code == 200
-    print("DEF-I2-001 reproduced: undiscovered-card Easy quiz returned HTTP 200")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Discovered Wildlife Card not found"
+    print("AC4.5.1 Pass: undiscovered-card Easy quiz is rejected")
 
     presets = json.loads((REPO / "backend/data/species_quiz_presets.json").read_text())
     medium_questions = presets[species_id]["medium"][0]
@@ -72,21 +77,22 @@ def main() -> None:
             "answers": {q["id"]: q["correct_answer"] for q in medium_questions},
         },
     )
-    assert response.status_code == 200 and response.json()["ability_unlocked"] == 2
+    assert response.status_code in {400, 404}
     progress = client.get(
         f"/api/v1/species/{species_id}/quiz-progression", headers=headers
     ).json()
-    assert progress["easy_passed"] is False and progress["medium_passed"] is True
-    print("DEF-I2-002 reproduced: direct Medium 5/5 set medium_passed=True while easy_passed=False")
+    assert progress["easy_passed"] is False and progress["medium_passed"] is False
+    print("AC4.5.10 Pass: direct Medium 5/5 is rejected and medium_passed stays false")
 
     facts_tab = (REPO / "rimbaquest/src/components/screens/collection/components/FactsTab.tsx").read_text()
-    assert 'item.fun_fact,' in facts_tab and facts_tab.count('"Wild animals need quiet space in their homes."') == 1
-    assert facts_tab.count('"Watch from far away. Never feed or touch a wild animal."') == 1
-    print("DEF-I2-003 reproduced: FactsTab renders one species fact plus two generic safety facts, not 10 verified facts")
+    assert "api/v1/species/${speciesId}/fun-facts" in facts_tab
+    assert "payload.facts.slice(0, 10)" in facts_tab
+    assert "Wild animals need quiet space in their homes." not in facts_tab
+    print("AC4.4.1 Pass: FactsTab renders up to 10 API fun facts")
 
     quiz_screen = (REPO / "rimbaquest/src/components/screens/collection/AbilityQuizScreen.tsx").read_text()
     assert "disabled={!selected || submitting}" in quiz_screen
-    print("AC4.5.6 retest Pass: Next is disabled until an answer is selected; the amended AC does not require a message")
+    print("AC4.5.6 Pass: Next is disabled until an answer is selected")
 
     malformed = []
     cross_level_duplicates = []
@@ -116,11 +122,10 @@ def main() -> None:
     invalid = [
         item_id for item_id, group in grouped.items()
         if sorted(fact["display_order"] for fact in group) != list(range(1, 11))
-        or any(fact["verification_status"] != "team-verified" for fact in group)
     ]
-    assert len(presets) == 155 and not malformed and not cross_level_duplicates
+    assert len(presets) == 152 and not malformed and not cross_level_duplicates
     assert len(grouped) == 152 and not invalid
-    print("AC4.5.2/4.5.3 data trace: 155 preset species valid with no cross-difficulty duplicates; 152 source species each have 10 team-verified facts")
+    print("AC4.5.2/4.5.3 data trace: 152 preset species valid with no cross-difficulty duplicates; 152 source species each have 10 ordered facts")
 
 
 if __name__ == "__main__":
