@@ -1,113 +1,92 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { Species } from "../../../../types";
+import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
-import { Section, Stat } from "../../../common/CommonUI";
+import { CombatAttributesCard } from "./CombatAttributesCard";
+import { AbilityCard } from "./AbilityCard";
 
-export function BattleStatsTab({
-  item,
-  unlockedAbilities = [],
-  onBattle,
-}: {
-  item: Species;
-  unlockedAbilities?: number[];
-  onBattle: () => void;
-}) {
+const EMPTY_ABILITIES: number[] = [];
+
+export function BattleStatsTab({ item }: { item: Species }) {
+  const unlockedAbilities = useAbilityQuizStore(
+    (state) => state.progressionBySpecies[item.id] ?? EMPTY_ABILITIES,
+  );
+  const isProgressionKnown = useAbilityQuizStore(
+    (state) => item.id in state.progressionBySpecies,
+  );
+
+  const abilities = [
+    item.ability_1 || "Ability 1",
+    item.ability_2 || "Ability 2",
+    item.ability_3 || "Ability 3",
+  ];
+
   return (
-    <View style={styles.battleStatsContainer}>
-      <View style={styles.battleStatHeader}>
-        <Text style={styles.battleStatHeaderTitle}>Card Combat Attributes</Text>
-        <View style={styles.stats}>
-          <Stat value={`❤️ ${item.hp || 120}`} label="HP" />
-          <Stat value={`⚔️ ${item.base_attack || 25}`} label="Base Attack" />
+    <View style={styles.container}>
+      <CombatAttributesCard
+        hp={item.hp || 120}
+        damage={item.base_attack || 25}
+      />
+
+      <Text style={styles.sectionTitle}>Special Abilities</Text>
+      {!isProgressionKnown ? (
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color="#0A4D26" />
+          <Text style={styles.loadingText}>Checking your ability progress…</Text>
         </View>
-      </View>
+      ) : (
+        abilities.map((name, idx) => {
+          const slot = idx + 1;
+          const isUnlocked = unlockedAbilities.includes(slot);
+          const isNextToUnlock =
+            !isUnlocked && slot === unlockedAbilities.length + 1;
 
-      <Section title="SPECIAL ABILITIES" />
-      {[
-        item.ability_1 || "Ability 1",
-        item.ability_2 || "Ability 2",
-        item.ability_3 || "Ability 3",
-      ].map((ability, idx) => {
-        const slot = idx + 1;
-        const isUnlocked = unlockedAbilities.includes(slot);
-        return (
-          <View
-            key={idx}
-            style={[
-              styles.abilitySlotLocked,
-              isUnlocked && styles.abilitySlotUnlocked,
-            ]}
-          >
-            <Text style={styles.abilitySlotIcon}>{isUnlocked ? "⚡" : "🔒"}</Text>
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  styles.abilitySlotName,
-                  isUnlocked && styles.abilitySlotNameUnlocked,
-                ]}
-              >
-                Ability {slot}: {ability}
-              </Text>
-              <Text
-                style={[
-                  styles.abilitySlotHint,
-                  isUnlocked && styles.abilitySlotHintUnlocked,
-                ]}
-              >
-                {isUnlocked ? "Unlocked (Ready for Battle)" : "Locked (Pass Quiz to unlock)"}
-              </Text>
-            </View>
-          </View>
-        );
-      })}
+          return (
+            <AbilityCard
+              key={slot}
+              slot={slot}
+              name={name}
+              isUnlocked={isUnlocked}
+              isNextToUnlock={isNextToUnlock}
+              onUnlock={() =>
+                useAbilityQuizStore.getState().openUnlockModal(item, slot)
+              }
+            />
+          );v
+        })
+      )}
 
-      <Tap label="Battle with Card" style={styles.primary} onPress={onBattle}>
-        <Text style={styles.primaryText}>Enter Card Battle</Text>
+      <Tap
+        label="Battle with this card"
+        style={styles.primary}
+        onPress={() => void useBattleStore.getState().startBattle(item)}
+      >
+        <Text style={styles.primaryText}>Battle with This Card</Text>
       </Tap>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  stats: { flexDirection: "row", gap: 12, marginVertical: 16 },
-  battleStatsContainer: { gap: 10 },
-  battleStatHeader: {
-    borderWidth: 1,
-    borderColor: "#DFE7E1",
-    borderRadius: 16,
-    padding: 14,
-    backgroundColor: "#FFFFFF",
-  },
-  battleStatHeaderTitle: { fontSize: 14, fontWeight: "800", color: "#1B211C" },
-  abilitySlotLocked: {
+  container: { gap: 16 },
+  sectionTitle: { fontSize: 14, fontWeight: "500", color: "#000000" },
+  loadingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    borderWidth: 1,
-    borderColor: "#E1E8E3",
-    borderRadius: 12,
-    padding: 10,
-    backgroundColor: "#F8FAF8",
-    marginBottom: 6,
+    paddingVertical: 14,
   },
-  abilitySlotUnlocked: {
-    backgroundColor: "#EBF7F0",
-    borderColor: "#2C6B4F",
-  },
-  abilitySlotIcon: { fontSize: 16 },
-  abilitySlotName: { fontSize: 12, fontWeight: "800", color: "#566159" },
-  abilitySlotNameUnlocked: { color: "#2C6B4F" },
-  abilitySlotHint: { fontSize: 10, color: "#879089", marginTop: 2 },
-  abilitySlotHintUnlocked: { color: "#1E583E", fontWeight: "700" },
+  loadingText: { fontSize: 12, color: "#667085", fontWeight: "600" },
   primary: {
     minHeight: 48,
-    marginTop: 14,
+    marginTop: 6,
     borderRadius: 24,
     backgroundColor: "#0BA84A",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+  primaryText: { color: "#FFFFFF", fontSize: 12, fontWeight: "800" },
 });

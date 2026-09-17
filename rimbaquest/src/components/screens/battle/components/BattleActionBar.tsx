@@ -3,47 +3,29 @@ import { StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 import { Tap } from "../../../common/Tap";
+import { useBattleStore } from "../../../../store/useBattleStore";
 
-export type BattleAbilityItem = {
-  slot: number;
-  name: string;
-  multiplier?: number;
-  heal_amount?: number;
-  description?: string;
-};
-
-export function BattleActionBar({
-  isAttacking,
-  onAttack,
-  onGiveUp,
-  unlockedAbilities = [],
-  abilities,
-  onUseAbility,
-}: {
-  isAttacking: boolean;
-  onAttack: () => void;
-  onGiveUp: () => void;
-  unlockedAbilities?: number[];
-  abilities?: BattleAbilityItem[];
-  onUseAbility?: (slot: number) => void;
-}) {
+export function BattleActionBar() {
+  const isAttacking = useBattleStore((state) => state.isAttacking);
+  const unlockedAbilities = useBattleStore((state) => state.unlockedAbilities);
+  const abilities = useBattleStore((state) => state.abilities);
   const slots = [1, 2, 3];
 
   return (
     <View style={styles.wrap}>
       <PrimaryButton
-        label="Basic Attack"
-        displayText={isAttacking ? "Attacking…" : "Basic Attack"}
+        label="Quick Attack"
+        displayText={isAttacking ? "Attacking..." : "Quick Attack"}
         icon="bolt"
         loading={isAttacking}
-        onPress={onAttack}
+        onPress={() => useBattleStore.getState().attack()}
       />
 
       <View style={styles.abilitiesContainer}>
         <Text style={styles.sectionTitle}>Special Abilities</Text>
         <View style={styles.abilitiesList}>
           {slots.map((slot) => {
-            const ability = abilities?.find((a) => a.slot === slot);
+            const ability = abilities.find((a) => a.slot === slot);
             const name = ability?.name || `Ability ${slot}`;
             const isUnlocked = unlockedAbilities.includes(slot);
 
@@ -54,7 +36,7 @@ export function BattleActionBar({
                   label={name}
                   style={[styles.abilityBtnActive, isAttacking && styles.btnDisabled]}
                   disabled={isAttacking}
-                  onPress={() => onUseAbility?.(slot)}
+                  onPress={() => useBattleStore.getState().useAbility(slot)}
                 >
                   <View style={styles.abilityHeader}>
                     <View style={styles.abilityIconBadge}>
@@ -74,11 +56,11 @@ export function BattleActionBar({
                         </Text>
                       ) : null}
                     </View>
-                    {ability?.multiplier ? (
+                    {/* {ability?.multiplier ? (
                       <View style={styles.multiplierBadge}>
                         <Text style={styles.multiplierText}>{ability.multiplier}x</Text>
                       </View>
-                    ) : null}
+                    ) : null} */}
                   </View>
                 </Tap>
               );
@@ -95,11 +77,11 @@ export function BattleActionBar({
                       {name}
                     </Text>
                     <Text style={styles.abilityTooltipText}>
-                      Pass Quiz {slot} to unlock
+                      Finish Quiz {slot} to earn this move
                     </Text>
                   </View>
                   <View style={styles.lockedBadge}>
-                    <Text style={styles.lockedBadgeText}>🔒 Locked</Text>
+                    <Text style={styles.lockedBadgeText}>Not Earned</Text>
                   </View>
                 </View>
               </View>
@@ -109,13 +91,13 @@ export function BattleActionBar({
       </View>
 
       <Tap
-        label="Give Up"
+        label="Stop Battle"
         style={styles.giveUpBtn}
         disabled={isAttacking}
-        onPress={onGiveUp}
+        onPress={() => useBattleStore.getState().openGiveUpConfirm()}
       >
         <MaterialIcons name="flag" size={15} color="#8C1D24" />
-        <Text style={styles.giveUpText}>Give Up</Text>
+        <Text style={styles.giveUpText}>Stop Battle</Text>
       </Tap>
     </View>
   );

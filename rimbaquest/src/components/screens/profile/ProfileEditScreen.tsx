@@ -11,9 +11,14 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AVATAR_CHOICES } from "../../../constants/images";
+import { API_BASE } from "../../../constants/config";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useProfileEditStore } from "../../../store/useProfileEditStore";
+import { useUserStore } from "../../../store/useUserStore";
+import { apiMessage } from "../../../utils/authApi";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
-import { ProfileHeader } from "./components/ProfileHeader";
+import { EditProfileHeader } from "./components/EditProfileHeader";
 import { UnsavedChangesModal } from "./components/UnsavedChangesModal";
 import { styles as globalStyles } from "../../../styles/theme";
 
@@ -22,40 +27,85 @@ function formatAge(age: string): string {
   return Number.isFinite(n) && n >= 18 ? "18+" : age;
 }
 
-export function ProfileEditScreen({
-  displayName,
-  setDisplayName,
-  email,
-  age,
-  setAge,
-  avatar,
-  setAvatar,
-  onSave,
-  onBack,
-  isDirty,
-  error,
-}: {
-  displayName: string;
-  setDisplayName: (s: string) => void;
-  email: string;
-  age: string;
-  setAge: (s: string) => void;
-  avatar: string;
-  setAvatar: (s: string) => void;
-  onSave: () => void;
-  onBack: () => void;
-  isDirty: boolean;
-  error: string | null;
-}) {
+export function ProfileEditScreen() {
+  const email = useUserStore((state) => state.currentUser.email);
+  const displayName = useProfileEditStore((state) => state.displayName);
+  const avatar = useProfileEditStore((state) => state.avatar);
+  const age = useProfileEditStore((state) => state.age);
+  const originalUsername = useProfileEditStore(
+    (state) => state.originalUsername,
+  );
+  const originalAvatar = useProfileEditStore((state) => state.originalAvatar);
+  const error = useProfileEditStore((state) => state.error);
+  const saving = useProfileEditStore((state) => state.saving);
+
+  const isDirty = displayName !== originalUsername || avatar !== originalAvatar;
+
   const insets = useSafeAreaInsets();
   const [confirmingLeave, setConfirmingLeave] = useState(false);
 
   const leave = () => {
     if (!isDirty) {
-      onBack();
+      useNavigationStore.getState().goBack();
       return;
     }
     setConfirmingLeave(true);
+  };
+
+  const handleSave = async () => {
+    const store = useProfileEditStore.getState();
+    const username = store.displayName.trim() || store.originalUsername;
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+      store.setError(
+        "Use 3 to 20 letters or numbers. You can also use - or _ with no spaces.",
+      );
+      return;
+    }
+    store.setError(null);
+    store.setSaving(true);
+    try {
+      const user = useUserStore.getState();
+      const res = await fetch(
+        `${API_BASE}/api/v1/children/${user.currentUser.id}/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...user.authHeaders(),
+          },
+          body: JSON.stringify({
+            username,
+            avatar: store.avatar,
+            age: parseInt(store.age, 10),
+          }),
+        },
+      );
+      if (res.status === 401 || res.status === 403) {
+        await user.expire();
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = apiMessage(
+          data,
+          "We could not save your profile changes.",
+        );
+        store.setError(
+          /username.*taken/i.test(message)
+            ? "Someone already uses that explorer name. Try another one."
+            : "We could not save your changes. Please try again.",
+        );
+        return;
+      }
+      useUserStore.getState().applyProfileUpdate(data, username);
+      useNavigationStore.getState().goBack();
+    } catch {
+      store.setError(
+        "We couldn't save your changes. Please try again.",
+      );
+    } finally {
+      store.setSaving(false);
+    }
   };
 
   return (
@@ -69,7 +119,7 @@ export function ProfileEditScreen({
       <View style={[styles.decoCircle2, { pointerEvents: "none" }]} />
 
       <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
-        <ProfileHeader title="Edit Profile" onBack={leave} />
+        <EditProfileHeader onBack={leave} />
       </View>
 
       <ScrollView
@@ -79,22 +129,26 @@ export function ProfileEditScreen({
         ]}
       >
         <View style={styles.card}>
-          <Text style={styles.inputLabel}>USERNAME</Text>
+          <Text style={styles.inputLabel}>EXPLORER NAME</Text>
           <View style={styles.inputBox}>
             <MaterialIcons name="person-outline" size={18} color="#0A4D26" />
             <TextInput
               style={styles.input}
               value={displayName}
-              onChangeText={setDisplayName}
+              onChangeText={(text) =>
+                useProfileEditStore.getState().setDisplayName(text)
+              }
               autoCapitalize="none"
               autoCorrect={false}
             />
           </View>
           <Text style={styles.helpText}>
-            This is also the name you use to sign in.
+            You can use this name when you log in.
           </Text>
 
-          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>EMAIL</Text>
+          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>
+            EMAIL
+          </Text>
           <View style={[styles.inputBox, styles.inputBoxDisabled]}>
             <MaterialIcons name="mail-outline" size={18} color="#8A968E" />
             <TextInput
@@ -103,7 +157,7 @@ export function ProfileEditScreen({
               editable={false}
             />
           </View>
-          <Text style={styles.helpText}>Email address cannot be changed.</Text>
+          <Text style={styles.helpText}>This email cannot be changed here.</Text>
 
           <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>AGE</Text>
           <View style={[styles.inputBox, styles.inputBoxDisabled]}>
@@ -115,7 +169,7 @@ export function ProfileEditScreen({
               keyboardType="numeric"
             />
           </View>
-          <Text style={styles.helpText}>Age cannot be changed here.</Text>
+          <Text style={styles.helpText}>Your age cannot be changed here.</Text>
         </View>
 
         <View style={styles.card}>
@@ -129,7 +183,7 @@ export function ProfileEditScreen({
                   styles.avatarChoice,
                   avatar === key && styles.avatarChoiceActive,
                 ]}
-                onPress={() => setAvatar(key)}
+                onPress={() => useProfileEditStore.getState().setAvatar(key)}
               >
                 <Image
                   source={image}
@@ -154,9 +208,11 @@ export function ProfileEditScreen({
         ) : null}
 
         <PrimaryButton
-          label="Save Profile Changes"
+          label={saving ? "Saving..." : "Save My Changes"}
+          loading={saving}
+          disabled={saving}
           style={styles.saveBtn}
-          onPress={onSave}
+          onPress={() => void handleSave()}
         />
       </ScrollView>
 
@@ -165,7 +221,7 @@ export function ProfileEditScreen({
         onCancel={() => setConfirmingLeave(false)}
         onConfirm={() => {
           setConfirmingLeave(false);
-          onBack();
+          useNavigationStore.getState().goBack();
         }}
       />
     </View>
@@ -173,7 +229,7 @@ export function ProfileEditScreen({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, overflow: "hidden" },
   gradientBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
   headerBar: { paddingHorizontal: 18 },
   decoCircle1: {

@@ -1,8 +1,10 @@
 import React from "react";
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Species } from "../../../types";
 import { imageFor } from "../../../constants/images";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
 
@@ -16,27 +18,15 @@ function formatDate(iso: string | null): string {
   });
 }
 
-// Step 5 / end of flow: confirms the save. Matches Figma exactly with two
-// actions (View New Card, Record Another Discovery) — Battle and Collection
-// shortcuts were intentionally dropped from this screen; they remain
-// reachable from Home/Collection as before.
-export function SuccessScreen({
-  selected,
-  discoveryLocation,
-  firstDiscovery,
-  xpAwarded,
-  recordedAt,
-  onViewCard,
-  onRecordAnother,
-}: {
-  selected: Species;
-  discoveryLocation: string;
-  firstDiscovery: boolean;
-  xpAwarded: number;
-  recordedAt: string | null;
-  onViewCard: () => void;
-  onRecordAnother: () => void;
-}) {
+export function SuccessScreen() {
+  const selected = useSelectedSpeciesStore((state) => state.selected);
+  const discoveryLocation = useDiscoveryStore(
+    (state) => state.discoveryLocation,
+  );
+  const firstDiscovery = useDiscoveryStore((state) => state.firstDiscovery);
+  // const xpAwarded = useDiscoveryStore((state) => state.discoveryXpAwarded);
+  const recordedAt = useDiscoveryStore((state) => state.discoveryRecordedAt);
+
   return (
     <View style={styles.page}>
       <View style={styles.header}>
@@ -45,12 +35,12 @@ export function SuccessScreen({
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.titleBlock}>
           <Text style={styles.title}>
-            {firstDiscovery ? "New Wildlife Discovered!" : "Discovery Logged!"}
+            {firstDiscovery ? "You Found a New Animal!" : "Animal Saved!"}
           </Text>
           <View style={[styles.badge, !firstDiscovery && styles.badgeMuted]}>
             <Text style={styles.badgeText}>
               {firstDiscovery
-                ? "Level 1 - Discovered"
+                ? "New Card Added"
                 : "Already in Your Collection"}
             </Text>
           </View>
@@ -65,7 +55,7 @@ export function SuccessScreen({
 
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>DATE RECORDED</Text>
+            <Text style={styles.summaryLabel}>DATE FOUND</Text>
             <Text style={styles.summaryValue}>{formatDate(recordedAt)}</Text>
           </View>
           <View style={styles.summaryRow}>
@@ -93,16 +83,16 @@ export function SuccessScreen({
 
         <View style={styles.actions}>
           <PrimaryButton
-            label="View New Card"
+            label="View Card"
             style={styles.primaryBtn}
-            onPress={onViewCard}
+            onPress={() => useNavigationStore.getState().open("about")}
           />
           <Tap
-            label="Record another discovery"
+            label="Record another animal"
             style={styles.secondaryBtn}
-            onPress={onRecordAnother}
+            onPress={() => useDiscoveryStore.getState().start()}
           >
-            <Text style={styles.secondaryText}>Record Another Discovery</Text>
+            <Text style={styles.secondaryText}>Record Another Animal</Text>
           </Tap>
         </View>
       </ScrollView>

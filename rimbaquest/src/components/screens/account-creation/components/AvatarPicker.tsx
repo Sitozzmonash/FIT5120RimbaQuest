@@ -1,29 +1,26 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useController } from "react-hook-form";
 import { AVATAR_CHOICES } from "../../../../constants/images";
 import { Tap } from "../../../common/Tap";
+import { AccountFormValues } from "../accountFormTypes";
 
-// Optional avatar selector shown on step 1 of account creation.
-export function AvatarPicker({
-  avatar,
-  setAvatar,
-}: {
-  avatar: string;
-  setAvatar: (s: string) => void;
-}) {
+export function AvatarPicker() {
+  const { field } = useController<AccountFormValues, "avatar">({ name: "avatar" });
+
   return (
     <View style={styles.createAvatarSection}>
       <Text style={styles.createAvatarLabel}>Choose an Avatar</Text>
       <View style={styles.createAvatarRow}>
         {AVATAR_CHOICES.map((choice) => {
-          const active = avatar === choice.key;
+          const active = field.value === choice.key;
           return (
             <Tap
               key={choice.key}
               label={`Choose ${choice.key} avatar`}
               style={styles.createAvatarChoice}
-              onPress={() => setAvatar(choice.key)}
+              onPress={() => field.onChange(choice.key)}
             >
               <View
                 style={[

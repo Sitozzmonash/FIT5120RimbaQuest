@@ -1,43 +1,40 @@
 import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useBattleStore } from "../../../../store/useBattleStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function GiveUpConfirmModal({
-  visible,
-  onCancel,
-  onConfirm,
-}: {
-  visible: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
+export function GiveUpConfirmModal() {
+  const visible = useBattleStore((state) => state.giveUpConfirmVisible);
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onCancel}
+      onRequestClose={() => useBattleStore.getState().closeGiveUpConfirm()}
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
             <MaterialIcons name="warning-amber" size={26} color="#E8541A" />
           </View>
-          <Text style={styles.title}>Give up this battle?</Text>
+          <Text style={styles.title}>Stop this battle?</Text>
           <Text style={styles.message}>
-            Your Wildlife Card will be recorded as defeated and the battle
-            will end right away.
+            Your animal card will lose, and the battle will end now.
           </Text>
           <View style={styles.actions}>
-            <PrimaryButton label="Keep Battling" onPress={onCancel} />
+            <PrimaryButton
+              label="Keep Battling"
+              onPress={() => useBattleStore.getState().closeGiveUpConfirm()}
+            />
             <Tap
-              label="Give up battle"
+              label="Stop battle"
               style={styles.giveUpBtn}
-              onPress={onConfirm}
+              onPress={() => useBattleStore.getState().giveUp()}
             >
-              <Text style={styles.giveUpText}>Yes, Give Up</Text>
+              <Text style={styles.giveUpText}>Yes, Stop</Text>
             </Tap>
           </View>
         </View>

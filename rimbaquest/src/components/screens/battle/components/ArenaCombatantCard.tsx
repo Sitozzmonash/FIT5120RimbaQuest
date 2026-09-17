@@ -65,7 +65,7 @@ export function ArenaCombatantCard({
               {atk != null && (
                 <View style={styles.atkPill}>
                   <MaterialIcons name="bolt" size={11} color="#B36200" />
-                  <Text style={styles.atkPillText}>ATK {atk}</Text>
+                  <Text style={styles.atkPillText}>POWER {atk}</Text>
                 </View>
               )}
             </View>

@@ -18,29 +18,33 @@ export const SEED_SPECIES: Species[] = [
   { id: 'sp_tailed_jay', common_name: 'Tailed Jay', scientific_name: 'Graphium agamemnon', category: 'Butterfly', habitat: 'Gardens and forest edges.', diet: 'Flower nectar.', fun_fact: 'It is a very fast-flying butterfly.', hp: 78, base_attack: 35 },
 ];
 
-export const OFFLINE_LOCATIONS: LocationItem[] = [
-  { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest reserve', area: 'Petaling Jaya, Selangor', description: 'A family-friendly green lung with gentle forest trails. Birds and butterflies have previously been observed here.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: 'Daily, 6:00 AM–7:00 PM', distance_km: 1.2, why_recommended: 'Gentle trails and safe walking paths near the city.', typical_wildlife: 'Butterflies, Birds, Small Mammals' },
-  { id: 'loc_perdana_botanical', name: 'Perdana Botanical Gardens', type: 'Botanical garden', area: 'Kuala Lumpur', description: 'Kuala Lumpur’s main gardens, where butterflies and garden birds may be encountered along open paths.', facilities: ['Paths', 'Parking', 'Restroom', 'Playground'], best_time: 'Daily, 6:30 AM–10:00 PM', distance_km: 2.0, why_recommended: 'Open, family-friendly paths in the city.', typical_wildlife: 'Butterflies, Birds' },
-  { id: 'loc_kl_forest_eco_park', name: 'KL Forest Eco Park', type: 'Forest park', area: 'Kuala Lumpur', description: 'A pocket of rainforest beside the KL Tower. Birds and small mammals have previously been observed here.', facilities: ['Trails', 'Boardwalk', 'Rest area'], best_time: 'Daily, 8:00 AM–4:30 PM', distance_km: 3.5, why_recommended: 'Short city-centre forest walk.', typical_wildlife: 'Birds, Small Mammals, Butterflies' },
-  { id: 'loc_frim', name: 'FRIM (Forest Research Institute Malaysia)', type: 'Research forest', area: 'Kepong, Kuala Lumpur', description: 'A research rainforest with a canopy walkway. Canopy birds and mammals may be encountered on the trails.', facilities: ['Canopy walkway', 'Trails', 'Visitor Centre', 'Parking'], best_time: 'Daily, 6:00 AM–7:00 PM; last entry 6:00 PM', distance_km: 12.0, why_recommended: 'Canopy walkway and rainforest trails.', typical_wildlife: 'Canopy Birds, Mammals, Butterflies' },
-  { id: 'loc_per_paya_indah', name: 'Paya Indah Wetlands', type: 'Wetland reserve', area: 'Dengkil, Selangor', description: 'A wetland reserve with observation towers. Wetland birds and reptiles have previously been recorded around this area.', facilities: ['Wetland trails', 'Observation towers', 'Visitor Centre'], best_time: 'Daily, 8:00 AM–6:00 PM; Friday closed 12:00–2:45 PM', distance_km: 45.0, why_recommended: 'Boardwalks and hides for safe watching.', typical_wildlife: 'Wetland Birds, Crocodiles, Sun Bears, Reptiles' },
-  { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature park', area: 'Kuala Selangor, Selangor', description: 'Mangrove boardwalks where wetland birds and reptiles may be encountered. Sightings are never guaranteed.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 65.0, why_recommended: 'Safe boardwalks over tidal wetlands.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies' },
-];
+export const OFFLINE_SPECIES = Array.from(
+  new Map(SEED_SPECIES.map((item) => [item.id, item])).values(),
+);
+
+// export const OFFLINE_LOCATIONS: LocationItem[] = [
+//   { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest reserve', area: 'Petaling Jaya, Selangor', description: 'A family-friendly green lung with gentle forest trails. Birds and butterflies have previously been observed here.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: 'Daily, 6:00 AM–7:00 PM', distance_km: 1.2, why_recommended: 'Gentle trails and safe walking paths near the city.', typical_wildlife: 'Butterflies, Birds, Small Mammals' },
+//   { id: 'loc_perdana_botanical', name: 'Perdana Botanical Gardens', type: 'Botanical garden', area: 'Kuala Lumpur', description: 'Kuala Lumpur’s main gardens, where butterflies and garden birds may be encountered along open paths.', facilities: ['Paths', 'Parking', 'Restroom', 'Playground'], best_time: 'Daily, 6:30 AM–10:00 PM', distance_km: 2.0, why_recommended: 'Open, family-friendly paths in the city.', typical_wildlife: 'Butterflies, Birds' },
+//   { id: 'loc_kl_forest_eco_park', name: 'KL Forest Eco Park', type: 'Forest park', area: 'Kuala Lumpur', description: 'A pocket of rainforest beside the KL Tower. Birds and small mammals have previously been observed here.', facilities: ['Trails', 'Boardwalk', 'Rest area'], best_time: 'Daily, 8:00 AM–4:30 PM', distance_km: 3.5, why_recommended: 'Short city-centre forest walk.', typical_wildlife: 'Birds, Small Mammals, Butterflies' },
+//   { id: 'loc_frim', name: 'FRIM (Forest Research Institute Malaysia)', type: 'Research forest', area: 'Kepong, Kuala Lumpur', description: 'A research rainforest with a canopy walkway. Canopy birds and mammals may be encountered on the trails.', facilities: ['Canopy walkway', 'Trails', 'Visitor Centre', 'Parking'], best_time: 'Daily, 6:00 AM–7:00 PM; last entry 6:00 PM', distance_km: 12.0, why_recommended: 'Canopy walkway and rainforest trails.', typical_wildlife: 'Canopy Birds, Mammals, Butterflies' },
+//   { id: 'loc_per_paya_indah', name: 'Paya Indah Wetlands', type: 'Wetland reserve', area: 'Dengkil, Selangor', description: 'A wetland reserve with observation towers. Wetland birds and reptiles have previously been recorded around this area.', facilities: ['Wetland trails', 'Observation towers', 'Visitor Centre'], best_time: 'Daily, 8:00 AM–6:00 PM; Friday closed 12:00–2:45 PM', distance_km: 45.0, why_recommended: 'Boardwalks and hides for safe watching.', typical_wildlife: 'Wetland Birds, Crocodiles, Sun Bears, Reptiles' },
+//   { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature park', area: 'Kuala Selangor, Selangor', description: 'Mangrove boardwalks where wetland birds and reptiles may be encountered. Sightings are never guaranteed.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 65.0, why_recommended: 'Safe boardwalks over tidal wetlands.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies' },
+// ];
 
 export const CATEGORIES = ['Mammal', 'Bird', 'Butterfly', 'Reptile'];
 
 export const CATEGORY_APPEARANCE: Record<string, string> = {
-  Mammal: 'Fur or hair on the body, visible ears and nose, and four limbs with a tail.',
-  Bird: 'Feathers, a hard beak, two wings, two legs, and tail feathers at the back.',
-  Butterfly: 'A thin body, six legs, two antennae, and four broad, patterned wings.',
-  Reptile: 'Dry, scaly skin or a hard shell, a long low body, and a long tail.',
+  Mammal: 'Look for fur or hair, ears, a nose, four legs, and often a tail.',
+  Bird: 'Look for feathers, a beak, two wings, two legs, and tail feathers.',
+  Butterfly: 'Look for a small body, six legs, two feelers, and four colourful wings.',
+  Reptile: 'Look for dry scales or a hard shell, a low body, and often a long tail.',
 };
 
 export const WILDLIFE_FILTERS = [
   { id: 'All', label: 'All Wildlife' },
   { id: 'Mammal', label: 'Mammals' },
   { id: 'Bird', label: 'Birds' },
-  { id: 'Butterfly', label: 'Butterflies / Insects' },
+  { id: 'Butterfly', label: 'Butterflies' },
   { id: 'Reptile', label: 'Reptiles' },
 ];
 

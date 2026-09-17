@@ -25,14 +25,14 @@ export function UnsavedChangesModal({
           <View style={styles.iconWrap}>
             <MaterialIcons name="warning-amber" size={26} color="#E8541A" />
           </View>
-          <Text style={styles.title}>Unsaved changes</Text>
+          <Text style={styles.title}>Your Changes Are Not Saved</Text>
           <Text style={styles.message}>
-            You have unsaved changes. Leave this page and lose them?
+            Do you want to leave without saving what you changed?
           </Text>
           <View style={styles.actions}>
-            <PrimaryButton label="Keep Editing" onPress={onCancel} />
+            <PrimaryButton label="Stay Here" onPress={onCancel} />
             <Tap label="Leave without saving" style={styles.leaveBtn} onPress={onConfirm}>
-              <Text style={styles.leaveText}>Leave</Text>
+              <Text style={styles.leaveText}>Leave Anyway</Text>
             </Tap>
           </View>
         </View>

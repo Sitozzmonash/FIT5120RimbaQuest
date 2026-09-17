@@ -1,6 +1,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text } from "react-native";
 import { WILDLIFE_FILTERS } from "../../../../constants/seed";
+import { useCollectionStore } from "../../../../store/useCollectionStore";
 import { Tap } from "../../../common/Tap";
 
 const CHIP_LABELS: Record<string, string> = {
@@ -8,13 +9,10 @@ const CHIP_LABELS: Record<string, string> = {
   Butterfly: "Butterflies",
 };
 
-export function WildlifeFilterChips({
-  filter,
-  onSelect,
-}: {
-  filter: string;
-  onSelect: (id: string) => void;
-}) {
+export function WildlifeFilterChips() {
+  const filter = useCollectionStore((state) => state.filter);
+  const onSelect = useCollectionStore((state) => state.setFilter);
+
   return (
     <ScrollView
       horizontal

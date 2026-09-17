@@ -52,8 +52,15 @@ export type IdentificationFeedback = {
   explanation?: string | null;
 };
 
+export type VerificationErrorKind =
+  | 'unsupported_file'
+  | 'no_animal_detected'
+  | 'low_confidence'
+  | 'species_not_in_catalog'
+  | 'failed';
+
 export type VerificationError = {
-  kind: 'unverified' | 'failed';
+  kind: VerificationErrorKind;
   message: string;
 };
 
@@ -97,15 +104,75 @@ export type GalleryItem = {
   recorded_at?: string | null;
 };
 
+export type FunFact = {
+  display_order: number;
+  fact_text: string;
+  source_name: string;
+  source_url: string | null;
+};
+
 export type LocationMode = 'auto' | 'manual';
+
+export type BattleAbilityItem = {
+  slot: number;
+  name: string;
+  multiplier?: number;
+  heal_amount?: number;
+  description?: string;
+};
+
+export type BattleOpponent = {
+  species_id: string;
+  name: string;
+  category: string;
+  hp: number;
+  max_hp: number;
+  base_attack: number;
+  abilities?: BattleAbilityItem[];
+};
+
+export type BattleOutcome = 'playing' | 'win' | 'lose' | null;
 
 export type SpeciesChatMessage = {
   id: string;
   role: 'assistant' | 'user';
   content: string;
+  citations?: SpeciesChatCitation[];
+};
+
+export type SpeciesChatCitation = {
+  source_id: string;
+  source_name: string;
+  source_url?: string | null;
+  excerpt: string;
 };
 
 export type SpeciesChatResponse = {
+  species_id: string;
   answer: string;
   suggested_questions?: string[];
+  citations?: SpeciesChatCitation[];
+};
+
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+
+export type QuizQuestion = {
+  id: string;
+  question: string;
+  options: string[];
+};
+
+export type QuizProgression = {
+  easy_passed: boolean;
+  medium_passed: boolean;
+  hard_passed: boolean;
+  unlocked_abilities: number[];
+};
+
+export type QuizResult = {
+  score: number;
+  total: number;
+  passed: boolean;
+  ability_unlocked?: number | null;
+  message: string;
 };

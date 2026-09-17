@@ -2,22 +2,16 @@ import React from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useBattleStore } from "../../../../store/useBattleStore";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { PrimaryButton } from "../../../common/PrimaryButton";
 
-export function BattleOutcomePanel({
-  visible,
-  outcome,
-  xpAwarded,
-  onBattleAgain,
-  onSelectAnotherCard,
-}: {
-  visible: boolean;
-  outcome: "win" | "lose";
-  xpAwarded?: number | null;
-  onBattleAgain: () => void;
-  onSelectAnotherCard: () => void;
-}) {
+export function BattleOutcomePanel() {
+  const outcome = useBattleStore((state) => state.outcome);
+  // const xpAwarded = useBattleStore((state) => state.xpAwarded);
+  const preparingBattle = useBattleStore((state) => state.preparingBattle);
+  const visible = (outcome === "win" || outcome === "lose") && !preparingBattle;
   const win = outcome === "win";
 
   return (
@@ -41,26 +35,41 @@ export function BattleOutcomePanel({
             />
           </View>
           <Text style={[styles.title, { color: win ? "#087B35" : "#8C1D24" }]}>
-            {win ? "Victory!" : "Defeat"}
+            {win ? "You Won!" : "Good Try!"}
           </Text>
           <Text style={styles.copy}>
             {win
-              ? "Your Wildlife Card won this battle."
-              : "Your Wildlife Card was defeated. Try another card or battle again."}
+              ? "Your animal card won this battle."
+              : "Your animal card lost this time. Try another card or battle again."}
           </Text>
 
-          {xpAwarded ? (
+          {/* {xpAwarded ? (
             <View style={styles.xpBadge}>
               <LinearGradient colors={["#FFD940", "#FFC314"]} style={styles.xpBadgeGradient}>
                 <MaterialIcons name="star" size={13} color="#0A4D26" />
                 <Text style={styles.xpBadgeText}>+{xpAwarded} Explorer XP</Text>
               </LinearGradient>
             </View>
-          ) : null}
+          ) : null} */}
 
-          <PrimaryButton label="Battle Again" style={styles.primaryBtn} onPress={onBattleAgain} />
-          <Tap label="Choose Another Card" style={styles.secondaryBtn} onPress={onSelectAnotherCard}>
+          <PrimaryButton
+            label="Battle Again"
+            style={styles.primaryBtn}
+            onPress={() => useBattleStore.getState().battleAgain()}
+          />
+          <Tap
+            label="Choose Another Card"
+            style={styles.secondaryBtn}
+            onPress={() => useBattleStore.getState().selectAnotherCard()}
+          >
             <Text style={styles.secondaryText}>Choose Another Card</Text>
+          </Tap>
+          <Tap
+            label="Leave to Home"
+            style={styles.leaveBtn}
+            onPress={() => useNavigationStore.getState().resetTo("home")}
+          >
+            <Text style={styles.leaveText}>Back to Home</Text>
           </Tap>
         </View>
       </View>
@@ -129,4 +138,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryText: { color: "#0A4D26", fontSize: 14, fontWeight: "800" },
+  leaveBtn: { width: "100%", paddingVertical: 10, alignItems: "center", justifyContent: "center" },
+  leaveText: { color: "#879089", fontSize: 13, fontWeight: "700" },
 });

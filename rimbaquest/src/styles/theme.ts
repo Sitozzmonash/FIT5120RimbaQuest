@@ -3,9 +3,6 @@ import { StyleSheet } from 'react-native';
 import { collectionStyles } from './screens/collection.styles';
 import { homeStyles } from './screens/home.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
-import { loginStyles } from './screens/login.styles';
-import { forgotPasswordStyles } from './screens/forgotPassword.styles';
-import { resetPasswordStyles } from './screens/resetPassword.styles';
 import { commonUiStyles } from './common-ui.styles';
 
 // General / shared styles used across multiple screens, plus the app shell
@@ -63,10 +60,8 @@ const general = StyleSheet.create({
   quizOptionTextSelected: { color: '#FFFFFF' },
   pressed: { opacity: 0.72 },
   searchBox: { minHeight: 46, marginBottom: 12, borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF' },
-  searchIcon: { color: '#879089', fontSize: 18, marginRight: 8 },
   searchInput: { flex: 1, color: '#1B211C', fontSize: 13, minHeight: 44, paddingVertical: 0 },
   searchClear: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
-  searchClearText: { color: '#087B35', fontSize: 20, lineHeight: 22, fontWeight: '700' },
   searchEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 18, alignItems: 'center' },
   searchEmptyTitle: { color: '#087B35', fontSize: 15, fontWeight: '800', marginBottom: 4 },
 });
@@ -77,7 +72,4 @@ export const styles: any = {
   ...homeStyles,
   ...collectionStyles,
   ...accountEntryStyles,
-  ...loginStyles,
-  ...forgotPasswordStyles,
-  ...resetPasswordStyles,
 };

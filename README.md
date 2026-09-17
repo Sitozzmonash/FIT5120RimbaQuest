@@ -1,6 +1,6 @@
 # RimbaQuest
 
-RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a Groq-first, cross-provider failover chain.
+RimbaQuest is a child-friendly wildlife discovery application developed for FIT5120. A shared Expo and React Native codebase targets Web, Android, and iOS. The current Iteration 2 architecture runs a Dockerised FastAPI service on Render, uses Neon PostgreSQL plus private S3-compatible Neon Storage for durable data, and performs server-side wildlife verification through a configurable cross-provider failover chain.
 
 Iteration 2 retains the Iteration 1 account, catalogue, discovery, collection, location, and gallery foundations while adding guided AI wildlife verification, progressive species quizzes, ability unlocking, Wildlife Card battles, and the Epic 6 species-specific chatbot. AI results are presented as assistance rather than certainty, and an uncertain, unsupported, or failed verification cannot create a discovery or unlock a card.
 
@@ -24,8 +24,8 @@ The primary discovery flow is:
 ```text
 Home
   → Take a photo
-  → Gemini verifies the photo against the supported catalogue
-  → Groq Qwen3.8 or GLM is used only if an earlier provider fails
+  → The first model in SCEQUENCE verifies the photo against the supported catalogue
+  → The next configured model is used only if the earlier provider fails
   → Choose Mammal / Bird / Butterfly / Reptile
   → Choose one of four species without seeing the AI answer
   → Submit both answers and receive Correct / Incorrect feedback
@@ -39,7 +39,7 @@ Implemented behaviour includes:
 - Account registration, login, prototype recovery-code password reset, and editable child profile.
 - Home dashboard with unique discoveries, Explorer Points, and recent captures.
 - Device-camera capture and photo-library selection.
-- Server-side Gemini 3.8 Flash analysis restricted to supported species with reference images, with Groq Qwen3.8-27B and GLM-4.6V-Flash provider-failure fallbacks.
+- Server-side DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash verification restricted to supported species with reference images; `SCEQUENCE` controls the provider-failure order.
 - Four plausible species choices containing one hidden AI-verified answer and three distractors, independent of the child's category answer.
 - Correct/Incorrect feedback only after submission, including the verified category, species, and identifying features.
 - A child-owned, expiring verification record that binds the photo to the AI result and prevents the client from substituting another species.
@@ -53,10 +53,10 @@ Implemented behaviour includes:
 
 Current Iteration 2 boundaries:
 
-- Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification.
-- DeepSeek is active only for the Epic 6 current-card chatbot; it is not used for photo verification or to generate new wildlife facts.
-- BM25/RAG and live GBIF enrichment are not active runtime components.
-- The source-linked ten-fact dataset remains review-stage content and is not yet exposed as verified child-facing content.
+- DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification according to `SCEQUENCE`.
+- `DEEPSEEK_API_KEY` is separately used for the Epic 6 current-card chatbot; it is never exposed to Expo and is never treated as a factual source.
+- The team-confirmed 10 Fun Facts per supported species are child-facing, team-verified RimbaQuest evidence. The dataset records the group reviewer as `RimbaQuest content team`; no historical per-fact date is invented where one was not supplied.
+- Epic 6 uses an evidence-first retrieval flow: approved card material and team-reviewed Fun Facts first, then approved source excerpts and a limited GBIF taxonomy lookup when relevant. Evidence removed from a later reviewed seed is marked `revoked` on deployment and cannot be used in a reply.
 - Iteration 3 social and expanded gameplay features are out of scope.
 
 ## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
@@ -65,9 +65,57 @@ An authenticated child can open the **WildGuide** drawer from an already discove
 
 - The endpoint verifies the child's ownership of the current discovered card before answering.
 - Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
-- DeepSeek receives only approved fields from the current card and selects an allowed field. The backend, not the model, renders the answer from the approved RimbaQuest value.
-- If information is unavailable, the chatbot uses a controlled fallback rather than inventing an answer. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
+- DeepSeek receives only evidence IDs, topics, and excerpts for the current card. It selects the evidence IDs to use; the backend rejects unknown IDs, resolves citations itself, and renders the child-facing factual text from the approved excerpt rather than trusting provider-written claims.
+- The permitted external source families are MyBIS, PERHILITAN, GBIF, IUCN, the EAZA Elephant Best Practice Guidelines, Dale (2010), and the English/Chinese Wikipedia editions. Stored excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. EAZA/Dale material is team-reviewed before storage. Wikipedia can also supply a tightly bounded live overview of the current species for a general question; it is supplementary and cannot be used for numerical, medical, legal, or conservation claims. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only; arbitrary webpage scraping is not implemented.
+- If information is unavailable, the chatbot returns the controlled reliable-information fallback rather than guessing. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
 - Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
+
+### Epic 6 evidence review workflow
+
+`backend/data/iteration2_chat_evidence.json` contains only team-approved
+source excerpts. Each record must use one of `mybis`, `perhilitan`, `gbif`,
+`iucn`, `eaza`, `dale_2010`, or `wikipedia`, match that source's domain, and have
+`verification_status: "team-verified"` (or `approved` / `verified`). It must
+include `species_id`, `source_id`, an HTTPS `source_url`, `topic`, a concise
+child-appropriate `excerpt`, `retrieved_at`, `verified_by`, and `verified_at`.
+The backend refuses any other source host, non-HTTPS URL, missing review
+metadata, draft row, or revoked row even if it is present in the database.
+
+IUCN is stored as an allowed reviewed source but is not queried live: its API
+terms must be confirmed for the team's production deployment before adding an
+IUCN retriever.
+
+EAZA/Dale evidence currently supports the Asian-elephant newborn-calf shoulder
+height question. Wikipedia is live only for a safe, general overview of the
+current species: the server sends its fixed card name to Wikipedia's Action API
+and never sends a child question, identifier, URL, or another species' name.
+It is not used for numeric, medical, legal, or conservation answers; EAZA/Dale
+or other team-reviewed evidence remains required for those claims.
+
+GBIF retrieval defaults to off for local development and tests. Render enables
+it explicitly through `GBIF_API_ENABLED=true`; it does not require a key and
+is still bounded to the taxonomy flow above.
+
+Wikipedia retrieval also defaults to off outside the Render blueprint. Render
+enables it through `WIKIPEDIA_API_ENABLED=true`; it is limited to the plain-text
+introductory extract of the exact current-card article.
+
+Example review record (replace every placeholder only after the content team
+has checked the source and wording):
+
+```json
+{
+  "species_id": "sp_example",
+  "source_id": "mybis",
+  "source_url": "https://www.mybis.gov.my/...",
+  "topic": "life cycle",
+  "excerpt": "A short, factual explanation written for children.",
+  "verification_status": "team-verified",
+  "verified_by": "reviewer name",
+  "verified_at": "2026-09-15T00:00:00Z",
+  "retrieved_at": "2026-09-15T00:00:00Z"
+}
+```
 
 ```text
 POST /api/v1/children/{child_id}/species/{species_id}/chat
@@ -81,12 +129,8 @@ Authorization: Bearer <child JWT>
 flowchart LR
     U[Child on Web, Android, or iOS] -->|Expo / React Native UI| C[RimbaQuest client]
     C -->|HTTPS REST + Bearer JWT| A[FastAPI on Render]
-    A -->|1. Base64 image + constrained catalogue| G[Gemini 3.8 Flash]
-    G -.->|Provider failure| Q[Groq Qwen3.8-27B]
-    Q -.->|Provider failure| V[GLM-4.6V-Flash]
-    G -->|Supported species ID + confidence| A
-    Q -->|Supported species ID + confidence| A
-    V -->|Supported species ID + confidence| A
+    A -->|1. Base64 image + constrained catalogue| O[Provider selected by SCEQUENCE]
+    O -->|DeepSeek Flash / Gemini / Groq / GLM| A
     A -->|SQLAlchemy + psycopg| P[(Neon PostgreSQL)]
     A -->|S3 API with signed URLs| S[(Private Neon Storage)]
     P -->|Accounts, profiles, sightings, cards, progress| A
@@ -101,9 +145,7 @@ flowchart LR
 |---|---|
 | Expo client | Screens, navigation, camera/gallery access, guided category/species questions, feedback, and presentation across Web/Android/iOS |
 | FastAPI service | Authentication, ownership checks, multi-provider vision orchestration, answer comparison, authoritative discovery rules, XP/card updates, and signed-photo access |
-| Gemini 3.8 Flash | Primary server-side visual matcher through Google's OpenAI-compatible endpoint |
-| Groq Qwen3.8-27B | Second provider, used when Gemini is unavailable or returns an invalid provider/model response |
-| GLM-4.6V-Flash | Final provider fallback through the Zhipu AI Open Platform |
+| Configured vision providers | DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are attempted in the exact `SCEQUENCE` order after provider failures |
 | Neon PostgreSQL | Durable production storage for accounts, child profiles, AI verification records, sightings, collections, quizzes, and static catalogue data |
 | Neon Storage | Private S3-compatible storage for child discovery photos under child-scoped object paths |
 | Seed SQL | Reproducible source catalogue for 152 species, learning fields, quizzes, locations, and image metadata |
@@ -112,13 +154,14 @@ flowchart LR
 ### Discovery data flow
 
 1. The client captures or selects a photo and sends it to the authenticated verification endpoint.
-2. FastAPI first supplies Groq-hosted Qwen3.8-27B with the image and an explicit allow-list of supported catalogue IDs.
-3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through in order to GLM-4.6V-Flash and then Gemini 3.8 Flash. Missing provider keys are skipped.
+2. FastAPI first supplies the first provider named by `SCEQUENCE` with the image and an explicit allow-list of supported catalogue IDs.
+3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through to the next `SCEQUENCE` provider. Missing provider keys are skipped.
 4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
-5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
-6. The client receives four shuffled candidates but not the verified species ID.
-7. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
-8. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+5. Retaking, discarding, or cancelling the check aborts the client request. FastAPI detects the disconnect, cancels the active provider request, and does not store a photo or verification record.
+6. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
+7. The client receives four shuffled candidates but not the verified species ID.
+8. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+9. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
 9. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
@@ -133,7 +176,7 @@ flowchart LR
 | Local/test database | SQLite |
 | Authentication | Backend-issued HS256 JWTs, Argon2 password hashing, legacy SHA-256 login upgrade |
 | Photo storage | Private S3-compatible Neon Storage, 5 MB server-side upload limit, one-hour signed URLs |
-| AI verification | Gemini 3.8 Flash primary; Groq Qwen3.8-27B and Zhipu GLM-4.6V-Flash fallbacks; constrained JSON result; 0.65 default confidence threshold |
+| AI verification | DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and Zhipu GLM-4.6V-Flash; `SCEQUENCE` selects the priority/failover order; constrained JSON result; 0.65 default confidence threshold |
 | Deployment | Docker and Render for the API; EAS Hosting/Build for the client |
 | Testing | Pytest, FastAPI TestClient, TypeScript compiler, Expo static export |
 
@@ -265,22 +308,32 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DATABASE_STORAGE_BUCKET` | No | Overrides the default `image` bucket |
 | `JWT_SECRET` | Yes | Random value of at least 32 bytes used to sign access tokens |
 | `CORS_ALLOWED_ORIGINS` | Yes for Web | Comma-separated browser origins, or `*` for prototype access |
-| `GEMINI_API_KEY` | Recommended for final failover | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
+| `GEMINI_API_KEY` | Required only when `SCEQUENCE` contains `gemini` | Server-only Google Gemini credential; never use an `EXPO_PUBLIC_` name |
 | `GEMINI_VISION_MODEL` | No | Defaults to `gemini-3.8-flash`; legacy `MODEL_NAME` is also accepted |
 | `GEMINI_API_BASE_URL` | No | Defaults to Google's OpenAI-compatible base URL; legacy `MODEL_BASE_URL` is also accepted |
-| `GROQ_API_KEY` | Yes for primary AI verification | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
+| `GROQ_API_KEY` | Required only when `SCEQUENCE` contains `groq` | Server-only Groq credential; existing `Groq_Qwen3` configurations are also accepted |
 | `GROQ_VISION_MODEL` | No | Defaults to `qwen/qwen3.8-27b` |
-| `ZHIPU_API_KEY` | Recommended for failover | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
+| `PIC_DEEPSEEK_API_KEY` | Required only when `SCEQUENCE` contains `deepseek` | Server-only DeepSeek Flash vision credential; never use an `EXPO_PUBLIC_` name |
+| `PIC_DEEPSEEK_VISION_MODEL` | No | Defaults to `deepseek-flash` |
+| `PIC_DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
+| `ZHIPU_API_KEY` | Required only when `SCEQUENCE` contains `zhipu` | Server-only Zhipu AI credential; never use an `EXPO_PUBLIC_` name |
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
+| `SCEQUENCE` | No | Comma-separated image-recognition priority order, for example `deepseek,groq,zhipu`; `VISION_PROVIDER_SEQUENCE` is also accepted |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
-| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
+| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `20` |
 | `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
 | `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
 | `DEEPSEEK_CHAT_MODEL` | No | Defaults to `deepseek-chat` |
 | `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
 | `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
-| `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80` |
+| `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80`; the provider returns only evidence IDs, not answer prose |
+| `GBIF_API_ENABLED` | No | Enables the restricted public GBIF taxonomy lookup; defaults to `false` outside the Render blueprint |
+| `GBIF_API_BASE_URL` | No | Defaults to `https://api.gbif.org/v1` |
+| `GBIF_TIMEOUT_SECONDS` | No | Defaults to `8` |
+| `WIKIPEDIA_API_ENABLED` | No | Enables the constrained live Wikipedia overview lookup; defaults to `false` outside the Render blueprint |
+| `WIKIPEDIA_API_BASE_URL` | No | Defaults to `https://en.wikipedia.org/w/api.php` |
+| `WIKIPEDIA_TIMEOUT_SECONDS` | No | Defaults to `8` |
 
 Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
@@ -311,11 +364,17 @@ AWS_REGION=us-east-2
 DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
+GBIF_API_ENABLED=true
+WIKIPEDIA_API_ENABLED=true
 CORS_ALLOWED_ORIGINS=*
 GEMINI_API_KEY=<server-side Google Gemini API key>
 GEMINI_VISION_MODEL=gemini-3.8-flash
 GROQ_API_KEY=<server-side Groq API key>
 GROQ_VISION_MODEL=qwen/qwen3.8-27b
+PIC_DEEPSEEK_API_KEY=<server-side DeepSeek Flash vision key>
+PIC_DEEPSEEK_VISION_MODEL=deepseek-flash
+SCEQUENCE=deepseek,groq,zhipu
+VISION_TIMEOUT_SECONDS=20
 ZHIPU_API_KEY=<server-side Zhipu API key>
 ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```
@@ -402,7 +461,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the storage secret access key.
 - The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
-- The chat service sends no child data or other-species facts to DeepSeek, and renders answers only from approved current-card fields.
+- The chat service sends no child data, source URLs, or other-species facts to DeepSeek. It supplies only server-selected evidence excerpts and rejects an answer without known evidence IDs.
+- The chat service only returns citations resolved from approved RimbaQuest evidence, reviewed MyBIS/PERHILITAN/GBIF/IUCN excerpts, or the restricted GBIF taxonomy API.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.
