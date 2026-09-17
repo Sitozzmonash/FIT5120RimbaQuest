@@ -4,39 +4,34 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [master]
-  pull_request_review:
-    types: [submitted]
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to approve and merge
+        required: true
+        type: string
 
 permissions:
   contents: write
   pull-requests: write
 
 concurrency:
-  group: automerge-${{ github.event.pull_request.number }}
+  group: automerge-${{ github.event.pull_request.number || inputs.pr_number }}
   cancel-in-progress: true
 
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
     # Fork guard: never run on PRs from forks (defense-in-depth against PAT exposure).
-    # pull_request_review events also carry pull_request payload.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     env:
       GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
-      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      REPO: ${{ github.repository }}
     steps:
-      - name: Checkout PR head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-          token: ${{ secrets.AUTO_MERGE_TOKEN }}
-
       - name: Self-modify guard — block PRs that touch workflows
         run: |
-          git fetch origin master --depth=1
-          CHANGED="$(git diff --name-only origin/master...HEAD)"
+          CHANGED="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
           echo "Changed files:"
           echo "$CHANGED"
           if echo "$CHANGED" | grep -q '^\.github/workflows/'; then
@@ -45,7 +40,7 @@ jobs:
           fi
 
       - name: Auto-approve PR
-        run: gh pr review "$PR_NUMBER" --approve || echo "Approve skipped/failed (may already be approved or author == token owner)"
+        run: gh pr review "$PR_NUMBER" --repo "$REPO" --approve || echo "::warning::approve skipped (already approved, or PR authored by the token owner)"
 
-      - name: Enable auto-merge (squash)
-        run: gh pr merge "$PR_NUMBER" --squash --auto --delete-branch
+      - name: Squash-merge PR
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --delete-branch
