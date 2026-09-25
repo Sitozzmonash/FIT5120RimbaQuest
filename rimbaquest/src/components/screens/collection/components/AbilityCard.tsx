@@ -9,6 +9,7 @@ export function AbilityCard({
   name,
   description,
   effects,
+  energyCost,
   isUnlocked,
   isNextToUnlock,
   onUnlock,
@@ -17,11 +18,12 @@ export function AbilityCard({
   name: string;
   description?: string;
   effects?: BattleEffect[];
+  energyCost: number;
   isUnlocked: boolean;
   isNextToUnlock: boolean;
   onUnlock: () => void;
 }) {
-  const label = slot === 3 ? "Passive" : `Active ${slot}`;
+  const label = `Ability ${slot}`;
   const effectSummary = effects
     ?.map((effect) => `${effect.type.replace(/_/g, " ").toUpperCase()} ${effect.value}`)
     .join(" · ");
@@ -44,10 +46,8 @@ export function AbilityCard({
         ) : null}
         <Text style={[styles.hint, isUnlocked && styles.hintUnlocked]}>
           {isUnlocked
-            ? slot === 3
-              ? "Unlocked · Triggers automatically"
-              : "Unlocked · Available on rolls 4–6"
-            : `Pass the ${slot === 1 ? "Easy" : slot === 2 ? "Medium" : "Hard"} Quiz to unlock`}
+            ? `Unlocked · Costs ${energyCost} Energy`
+            : `Pass the ${slot === 1 ? "Easy" : slot === 2 ? "Medium" : "Hard"} Quiz to unlock · ${energyCost} Energy`}
         </Text>
       </View>
 

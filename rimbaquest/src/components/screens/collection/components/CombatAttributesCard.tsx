@@ -23,11 +23,11 @@ function StatCard({
 }
 
 export function CombatAttributesCard({
-  energy,
+  hp,
   damage,
   role,
 }: {
-  energy: number | string;
+  hp: number | string;
   damage: number | string;
   role: string;
 }) {
@@ -37,9 +37,9 @@ export function CombatAttributesCard({
       <Text style={styles.role}>Role: {role}</Text>
       <View style={styles.stats}>
         <StatCard
-          label="Energy"
-          value={energy}
-          icon={<MaterialIcons name="bolt" size={26} color="#D99C22" />}
+          label="HP"
+          value={hp}
+          icon={<MaterialIcons name="favorite" size={24} color="#D9383A" />}
         />
         <StatCard
           label="Base Attack"
@@ -47,6 +47,7 @@ export function CombatAttributesCard({
           icon={<MaterialCommunityIcons name="sword-cross" size={22} color="#4A554D" />}
         />
       </View>
+      <Text style={styles.energyRule}>Battle Energy starts at 5 of 8. A completed turn restores 2.</Text>
     </View>
   );
 }
@@ -63,6 +64,7 @@ const styles = StyleSheet.create({
   battleStatHeaderTitle: { fontSize: 14, fontWeight: "500", color: "#000000" },
   role: { fontSize: 12, fontWeight: "600", color: "#4A554D" },
   stats: { flexDirection: "row", gap: 10 },
+  energyRule: { fontSize: 11, color: "#4A554D" },
   statCard: {
     flex: 1,
     borderWidth: 1,

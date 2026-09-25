@@ -31,7 +31,7 @@ export function AbilityUnlockModal() {
           <View style={styles.iconWrap}>
             <MaterialIcons name="lock" size={36} color="#0A4D26" />
           </View>
-          <Text style={styles.title}>{slot === 3 ? "Earn This Passive Trait" : "Earn This Ability"}</Text>
+          <Text style={styles.title}>Earn This Ability</Text>
           <View style={styles.abilityBadge}>
             <Text style={styles.abilityBadgeText}>{abilityName}</Text>
           </View>
@@ -44,7 +44,7 @@ export function AbilityUnlockModal() {
           )}
           <Text style={styles.message}>
             {slot === 3
-              ? "Answer a few questions about this animal to earn a trait that activates automatically in battle!"
+              ? "Answer a few questions about this animal to unlock its 4-Energy battle ability!"
               : "Answer a few questions about this animal to earn its battle ability!"}
           </Text>
           <View style={styles.actions}>

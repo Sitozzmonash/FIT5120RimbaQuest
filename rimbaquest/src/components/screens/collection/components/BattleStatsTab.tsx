@@ -2,7 +2,7 @@ import React from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { BattleAbility, BattlePassive, Species } from "../../../../types";
 import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
-import { useBattleStore } from "../../../../store/useBattleStore";
+import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { CombatAttributesCard } from "./CombatAttributesCard";
 import { AbilityCard } from "./AbilityCard";
@@ -24,40 +24,39 @@ export function BattleStatsTab({ item }: { item: Species }) {
       return {
         slot,
         name: ability?.name || item[`ability_${slot}`] || `Ability ${slot}`,
-        description: ability?.description,
+        description: ability?.description?.replace(/Energy/g, "HP"),
         effects: ability?.effects,
+        energyCost: slot,
       };
     }),
     {
       slot: 3,
       name: passive?.name || item.ability_3 || "Wild Instinct",
-      description: passive?.description || "This species trait triggers automatically.",
-      effects: passive?.effects,
+      description: "A species-inspired special move you choose during battle.",
+      effects: undefined,
+      energyCost: 4,
     },
   ];
 
   return (
     <View style={styles.container}>
       <CombatAttributesCard
-        energy={item.max_energy ?? item.hp ?? "—"}
+        hp={item.hp ?? item.max_energy ?? "—"}
         damage={item.base_attack ?? "—"}
         role={item.role || "Unknown"}
       />
 
-      <Text style={styles.sectionTitle}>Base Actions</Text>
+      <Text style={styles.habitat}>Habitat: {item.habitat || "Unknown"}</Text>
+      <Text style={styles.habitatHint}>A matching habitat gives +20% Attack and Defence for the whole battle.</Text>
+
+      <Text style={styles.sectionTitle}>Basic Action</Text>
       <View style={styles.baseActions}>
         <View style={styles.baseAction}>
-          <Text style={styles.baseActionName}>⚡ Basic Attack</Text>
+          <Text style={styles.baseActionName}>⚔️ Basic Attack · 0 Energy</Text>
           <Text style={styles.baseActionDescription}>
             {item.base_attack != null
-              ? `Deal damage based on ${item.base_attack} base attack and your dice roll.`
-              : "Deal damage based on your role and dice roll."}
-          </Text>
-        </View>
-        <View style={styles.baseAction}>
-          <Text style={styles.baseActionName}>🛡️ Brace Defense</Text>
-          <Text style={styles.baseActionDescription}>
-            Gain +6 Shield to absorb incoming damage.
+              ? `Attack using ${item.base_attack} Base Attack.`
+              : "Attack using this card's Base Attack."}
           </Text>
         </View>
       </View>
@@ -69,7 +68,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
           <Text style={styles.loadingText}>Checking your ability progress…</Text>
         </View>
       ) : (
-        abilities.map(({ slot, name, description, effects }) => {
+        abilities.map(({ slot, name, description, effects, energyCost }) => {
           const isUnlocked = unlockedAbilities.includes(slot);
           const isNextToUnlock =
             !isUnlocked && (slot === 1 || unlockedAbilities.includes(slot - 1));
@@ -81,6 +80,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
               name={name}
               description={description}
               effects={effects}
+              energyCost={energyCost}
               isUnlocked={isUnlocked}
               isNextToUnlock={isNextToUnlock}
               onUnlock={() =>
@@ -92,11 +92,11 @@ export function BattleStatsTab({ item }: { item: Species }) {
       )}
 
       <Tap
-        label="Battle with this card"
+        label="Open Wildlife Card Battle"
         style={styles.primary}
-        onPress={() => void useBattleStore.getState().startBattle(item)}
+        onPress={() => useNavigationStore.getState().open("battle_select")}
       >
-        <Text style={styles.primaryText}>Battle with This Card</Text>
+        <Text style={styles.primaryText}>Go to Battle</Text>
       </Tap>
     </View>
   );
@@ -104,6 +104,8 @@ export function BattleStatsTab({ item }: { item: Species }) {
 
 const styles = StyleSheet.create({
   container: { gap: 16 },
+  habitat: { fontSize: 12, color: "#1B4D2E", fontWeight: "700" },
+  habitatHint: { fontSize: 11, color: "#4A554D" },
   sectionTitle: { fontSize: 14, fontWeight: "500", color: "#000000" },
   baseActions: { gap: 8 },
   baseAction: {

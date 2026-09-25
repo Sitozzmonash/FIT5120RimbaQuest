@@ -31,7 +31,7 @@ export function QuizResultModal() {
           <Text style={styles.message}>
             {result?.passed
               ? slot === 3
-                ? "You earned a passive trait that activates automatically in battle!"
+                ? "You earned a new 4-Energy special move for battle!"
                 : "You earned a new special move!"
               : "Try again and get every answer right to earn this ability."}
           </Text>
