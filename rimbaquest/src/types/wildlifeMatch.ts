@@ -68,6 +68,8 @@ export interface WildlifeCardOption {
   habitat_match: boolean;
   rest_remaining: number;
   selectable: boolean;
+  // Every card is resting, so this least-rested card may battle anyway.
+  ready_early?: boolean;
 }
 
 export interface WildlifeLeaderboardEntry {
@@ -80,4 +82,5 @@ export interface WildlifeLeaderboardEntry {
 export interface WildlifeRestCard {
   species_id: string;
   remaining: number;
+  selectable?: boolean;
 }

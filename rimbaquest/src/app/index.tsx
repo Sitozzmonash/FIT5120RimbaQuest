@@ -56,7 +56,7 @@ export default function RimbaQuest() {
     const onHardwareBackPress = () => {
       const { screen: currentScreen, history, goBack } = useNavigationStore.getState();
       // The battle flow confirms a forfeit before leaving an active match.
-      if (currentScreen === 'battle_select' || currentScreen === 'battle_arena') return false;
+      if (currentScreen === 'battle_select') return false;
       if (history.length > 0) {
         goBack();
         return true;
@@ -119,7 +119,7 @@ export default function RimbaQuest() {
 
         {screen === 'locked' && <LockedScreen />}
 
-        {(screen === 'battle_select' || screen === 'battle_arena') && (
+        {screen === 'battle_select' && (
           <WildlifeBattleExperience onBack={() => useNavigationStore.getState().goBack()} />
         )}
 

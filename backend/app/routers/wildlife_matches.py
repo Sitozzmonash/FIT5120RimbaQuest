@@ -173,31 +173,14 @@ def _require_live(row) -> None:
         raise HTTPException(410, "This wildlife match has expired.")
 
 
-def _owned_card(connection, child_id: int, species_id: str) -> tuple[dict, str]:
-    row = connection.execute(
-        select(species.c.habitat).select_from(
-            species.join(collection_entries, collection_entries.c.species_id == species.c.id)
-        ).where(
-            species.c.id == species_id, species.c.is_active.is_(True),
-            collection_entries.c.child_id == child_id,
-        )
-    ).first()
-    if row is None:
-        raise HTTPException(403, "Discover this active species before selecting its card.")
-    remaining = connection.execute(select(wildlife_card_rest.c.remaining).where(
-        wildlife_card_rest.c.child_id == child_id,
-        wildlife_card_rest.c.species_id == species_id,
-    )).scalar_one_or_none()
-    if remaining and remaining > 0:
-        raise HTTPException(409, f"This card must rest for {remaining} more completed battles.")
-    try:
-        definition = get_battle_definition(species_id)
-    except ValueError as error:
-        raise HTTPException(503, "Battle data for this species is unavailable.") from error
-    return definition, row[0] or ""
+def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, int]], set[str]]:
+    """Return owned active cards and the IDs that may enter a battle.
 
-
-def _cards(connection, child_id: int, habitat: str) -> dict:
+    Resting cards normally cannot be selected. Rest only counts down when a
+    battle completes, so an explorer whose every card is resting (fewer than
+    three cards) could never battle again. In that case the least-rested cards
+    stay selectable instead.
+    """
     rows = connection.execute(select(
         species.c.id, species.c.habitat, wildlife_card_rest.c.remaining,
     ).select_from(
@@ -210,14 +193,39 @@ def _cards(connection, child_id: int, habitat: str) -> dict:
         collection_entries.c.child_id == child_id,
         species.c.is_active.is_(True),
     ).order_by(species.c.id)).all()
+    cards = [(species_id, raw_habitat or "", max(0, remaining or 0)) for species_id, raw_habitat, remaining in rows]
+    if not cards:
+        return cards, set()
+    least_rest = min(remaining for _, _, remaining in cards)
+    return cards, {species_id for species_id, _, remaining in cards if remaining == least_rest}
+
+
+def _owned_card(connection, child_id: int, species_id: str) -> tuple[dict, str]:
+    cards, selectable = _rest_status(connection, child_id)
+    card = next((card for card in cards if card[0] == species_id), None)
+    if card is None:
+        raise HTTPException(403, "Discover this active species before selecting its card.")
+    if species_id not in selectable:
+        raise HTTPException(409, f"This card must rest for {card[2]} more completed battles.")
+    try:
+        definition = get_battle_definition(species_id)
+    except ValueError as error:
+        raise HTTPException(503, "Battle data for this species is unavailable.") from error
+    return definition, card[1]
+
+
+def _cards(connection, child_id: int, habitat: str) -> dict:
+    cards, selectable = _rest_status(connection, child_id)
     return {"habitat": habitat, "cards": [
         {
             "species_id": species_id,
-            "habitat_match": wildlife_battle.habitat_matches(raw_habitat or "", habitat),
-            "rest_remaining": remaining or 0,
-            "selectable": not remaining,
+            "habitat_match": wildlife_battle.habitat_matches(raw_habitat, habitat),
+            "rest_remaining": remaining,
+            "selectable": species_id in selectable,
+            # Every card is resting, so this least-rested card may battle now.
+            "ready_early": remaining > 0 and species_id in selectable,
         }
-        for species_id, raw_habitat, remaining in rows
+        for species_id, raw_habitat, remaining in cards
     ]}
 
 
@@ -349,11 +357,16 @@ def create_match(payload: CreateMatchIn, user: Annotated[AuthenticatedUser, Depe
                         return cached
                     raise HTTPException(409, "This request ID was already used.")
             _require_no_other_open_match(connection, user.child_id)
+            cards, selectable = _rest_status(connection, user.child_id)
+            habitat = wildlife_battle.choose_habitat(
+                [raw_habitat for species_id, raw_habitat, _ in cards if species_id in selectable],
+                secrets.SystemRandom(),
+            )
             now = _now()
             match_id = str(uuid4())
             connection.execute(insert(wildlife_matches).values(
                 id=match_id, mode=payload.mode,
-                habitat=secrets.choice(wildlife_battle.HABITATS),
+                habitat=habitat,
                 owner_child_id=user.child_id,
                 invite_code=secrets.token_hex(6).upper() if payload.mode == "friend" else None,
                 create_request_id=payload.client_request_id,
@@ -483,11 +496,8 @@ def join_match(code: str, payload: SelectCardIn, user: Annotated[AuthenticatedUs
             _require_no_other_open_match(connection, row["owner_child_id"], excluding=row["id"])
             _require_no_other_open_match(connection, user.child_id, excluding=row["id"])
             guest_def, guest_habitat = _owned_card(connection, user.child_id, payload.species_id)
-            owner_rest = connection.execute(select(wildlife_card_rest.c.remaining).where(
-                wildlife_card_rest.c.child_id == row["owner_child_id"],
-                wildlife_card_rest.c.species_id == row["owner_species_id"],
-            )).scalar_one_or_none()
-            if owner_rest and owner_rest > 0:
+            _, owner_selectable = _rest_status(connection, row["owner_child_id"])
+            if row["owner_species_id"] not in owner_selectable:
                 raise HTTPException(409, "The host's card is resting. Ask the host to select another card.")
             owner_def = get_battle_definition(row["owner_species_id"])
             owner_habitat = connection.execute(select(species.c.habitat).where(

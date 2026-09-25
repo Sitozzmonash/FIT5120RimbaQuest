@@ -18,25 +18,36 @@ export function BattleStatsTab({ item }: { item: Species }) {
   );
   const structuredAbilities: BattleAbility[] = item.abilities ?? [];
   const passive: BattlePassive | null | undefined = item.passive;
-  const abilities = [
-    ...([1, 2] as const).map((slot) => {
-      const ability = structuredAbilities.find((entry) => entry.slot === slot);
-      return {
-        slot,
-        name: ability?.name || item[`ability_${slot}`] || `Ability ${slot}`,
-        description: ability?.description?.replace(/Energy/g, "HP"),
-        effects: ability?.effects,
-        energyCost: slot,
-      };
-    }),
-    {
-      slot: 3,
-      name: passive?.name || item.ability_3 || "Wild Instinct",
-      description: "A species-inspired special move you choose during battle.",
+  const wildlifeAbilities = item.wildlife_abilities ?? [];
+  // Prefer the server's battle-mode text; the catalogue text still
+  // describes the retired dice rules.
+  const abilities = wildlifeAbilities.length === 3
+    ? wildlifeAbilities.map(({ slot, name, description, cost }) => ({
+      slot,
+      name,
+      description,
       effects: undefined,
-      energyCost: 4,
-    },
-  ];
+      energyCost: cost,
+    }))
+    : [
+      ...([1, 2] as const).map((slot) => {
+        const ability = structuredAbilities.find((entry) => entry.slot === slot);
+        return {
+          slot,
+          name: ability?.name || item[`ability_${slot}`] || `Ability ${slot}`,
+          description: ability?.description?.replace(/Energy/g, "HP"),
+          effects: ability?.effects,
+          energyCost: slot,
+        };
+      }),
+      {
+        slot: 3,
+        name: passive?.name || item.ability_3 || "Wild Instinct",
+        description: "A species-inspired special move you choose during battle.",
+        effects: undefined,
+        energyCost: 4,
+      },
+    ];
 
   return (
     <View style={styles.container}>
