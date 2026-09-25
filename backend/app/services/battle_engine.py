@@ -239,7 +239,16 @@ def calculate_battle_stats(species_id: str, category: str) -> dict[str, Any]:
         ab2_name = details[1]["name"] if len(details) > 1 else "Ability 2"
         ab3_name = details[2]["name"] if len(details) > 2 else "Ability 3"
 
+        # The catalogue text still describes the legacy dice rules; the
+        # Wildlife Card Battle shows the dice-free effects it will resolve.
+        from app.services.wildlife_battle import ability_previews
+        try:
+            wildlife_abilities = ability_previews(cat_entry)
+        except (KeyError, TypeError, ValueError):
+            wildlife_abilities = []
+
         return {
+            "wildlife_abilities": wildlife_abilities,
             "hp": hp,
             "max_energy": hp,
             "energy": hp,

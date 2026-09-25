@@ -134,6 +134,94 @@ def test_bot_forfeit_rest_countdown_and_zero_leaderboard_points():
         )).scalar_one_or_none() is None
 
 
+def _preview(match_id: str, headers: dict[str, str]) -> dict[str, dict]:
+    response = client.get(f"{BASE}/{match_id}/cards-preview", headers=headers)
+    assert response.status_code == 200, response.text
+    return {card["species_id"]: card for card in response.json()["cards"]}
+
+
+def test_small_collections_use_least_rested_card_instead_of_locking_out():
+    # Rest only counts down when a battle completes. Without a fallback, one
+    # or two cards would all be resting and the explorer could never battle.
+    one_id, one = _user("onecard")
+    _own(one_id, CARDS[0])
+    for _ in range(3):
+        setup = _create(one)
+        card = _preview(setup["id"], one)[CARDS[0]]
+        assert card["selectable"] is True
+        assert _forfeit(_select(setup["id"], one, CARDS[0]), one).status_code == 200
+    assert card["rest_remaining"] == 2 and card["ready_early"] is True
+
+    two_id, two = _user("twocard")
+    _own(two_id, CARDS[0], CARDS[1])
+    assert _forfeit(_select(_create(two)["id"], two, CARDS[0]), two).status_code == 200
+    setup = _create(two)
+    cards = _preview(setup["id"], two)
+    # A fully rested card exists, so the resting card stays blocked.
+    assert cards[CARDS[0]]["selectable"] is False and cards[CARDS[0]]["ready_early"] is False
+    assert cards[CARDS[1]]["selectable"] is True and cards[CARDS[1]]["ready_early"] is False
+    assert client.post(f"{BASE}/{setup['id']}/select", json={"species_id": CARDS[0]}, headers=two).status_code == 409
+    assert _forfeit(_select(setup["id"], two, CARDS[1]), two).status_code == 200
+    # Both cards now rest; only the one closest to ready may battle.
+    setup = _create(two)
+    cards = _preview(setup["id"], two)
+    assert (cards[CARDS[0]]["rest_remaining"], cards[CARDS[1]]["rest_remaining"]) == (1, 2)
+    assert cards[CARDS[0]]["selectable"] is True and cards[CARDS[0]]["ready_early"] is True
+    assert cards[CARDS[1]]["selectable"] is False
+    assert client.post(f"{BASE}/{setup['id']}/select", json={"species_id": CARDS[1]}, headers=two).status_code == 409
+    assert _forfeit(_select(setup["id"], two, CARDS[0]), two).status_code == 200
+    rest = {card["species_id"]: card for card in client.get(f"{BASE}/me/rest", headers=two).json()["cards"]}
+    assert (rest[CARDS[0]]["remaining"], rest[CARDS[1]]["remaining"]) == (2, 1)
+    assert rest[CARDS[1]]["selectable"] is True and rest[CARDS[0]]["selectable"] is False
+
+
+def test_friend_join_accepts_host_card_that_is_ready_early():
+    owner, h1 = _user("hostone")
+    guest, h2 = _user("guestone")
+    _own(owner, CARDS[0])
+    _own(guest, CARDS[1])
+    with engine.begin() as connection:
+        connection.execute(insert(wildlife_card_rest).values(
+            child_id=owner, species_id=CARDS[0], remaining=2,
+        ))
+    waiting = _select(_create(h1, "friend")["id"], h1, CARDS[0])
+    joined = client.post(f"{BASE}/invites/{waiting['invite_code']}/join", json={
+        "species_id": CARDS[1], "client_request_id": str(uuid4()),
+    }, headers=h2)
+    assert joined.status_code == 200, joined.text
+    assert joined.json()["match"]["state"]["player"]["species_id"] == CARDS[0]
+    assert guest != owner
+
+
+def test_new_match_habitat_splits_the_explorers_ready_cards():
+    child_id, headers = _user("habitat")
+    forest, coast = "sp_malayan_tiger", "sp_green_sea_turtle"
+    _own(child_id, forest, coast)
+    with engine.connect() as connection:
+        from app.core.schema import species
+        raw = dict(connection.execute(select(species.c.id, species.c.habitat).where(
+            species.c.id.in_([forest, coast]),
+        )).all())
+    for _ in range(8):
+        setup = _create(headers)
+        # One card matches and the other does not, so the choice matters.
+        assert habitat_matches(raw[forest], setup["habitat"]) != habitat_matches(raw[coast], setup["habitat"])
+        canceled = client.post(f"{BASE}/{setup['id']}/cancel", json={
+            "expected_version": setup["version"], "client_request_id": str(uuid4()),
+        }, headers=headers)
+        assert canceled.status_code == 200, canceled.text
+
+
+def test_species_api_describes_battle_mode_abilities_without_dice():
+    response = client.get("/api/v1/species/sp_mouse_deer")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert any("die" in ability["description"] for ability in body["abilities"])
+    previews = body["wildlife_abilities"]
+    assert [(ability["slot"], ability["cost"]) for ability in previews] == [(1, 1), (2, 2), (3, 4)]
+    assert not any("die" in ability["description"] or "roll" in ability["description"] for ability in previews)
+
+
 def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
     owner, h1 = _user("owner")
     guest, h2 = _user("guest")

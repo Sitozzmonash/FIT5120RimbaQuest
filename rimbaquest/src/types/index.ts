@@ -17,7 +17,6 @@ export type Screen =
   | 'locations'
   | 'location_detail'
   | 'battle_select'
-  | 'battle_arena'
   | 'account_entry'
   | 'login'
   | 'create_account'
@@ -59,6 +58,13 @@ export type Species = {
     multiplier?: number;
     heal_amount?: number;
     shield_amount?: number;
+  }>;
+  // Abilities as the Wildlife Card Battle resolves them (dice-free text).
+  wildlife_abilities?: Array<{
+    slot: number;
+    name: string;
+    description: string;
+    cost: number;
   }>;
 };
 

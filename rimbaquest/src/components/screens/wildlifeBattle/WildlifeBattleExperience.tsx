@@ -92,9 +92,13 @@ function CardChoice({ species, option, selected, onPress }: {
   const picture = imageFor(species);
   const rest = Math.max(0, option.rest_remaining);
   const restUnit = rest === 1 ? "battle" : "battles";
+  const readyEarly = Boolean(option.ready_early && option.selectable);
+  const restLabel = readyEarly
+    ? "All your cards are resting, so this one can still battle"
+    : rest ? `Resting for ${rest} more completed ${restUnit}` : "Ready";
   return (
     <Tap
-      label={`${species.common_name}. ${option.habitat_match ? "Habitat match, 20 percent Attack and Defence bonus" : "No habitat bonus"}. ${rest ? `Resting for ${rest} more completed ${restUnit}` : "Ready"}.`}
+      label={`${species.common_name}. ${option.habitat_match ? "Habitat match, 20 percent Attack and Defence bonus" : "No habitat bonus"}. ${restLabel}.`}
       onPress={onPress}
       disabled={!option.selectable}
       style={[styles.cardChoice, selected && styles.cardChoiceSelected, !option.selectable && styles.disabled]}
@@ -106,8 +110,10 @@ function CardChoice({ species, option, selected, onPress }: {
         <Text style={[styles.cardBadge, option.habitat_match && styles.matchBadge]}>
           {option.habitat_match ? "+20% Attack & Defence" : "No habitat boost"}
         </Text>
-        <Text style={[styles.restBadge, rest > 0 && styles.restingBadge]}>
-          {rest > 0 ? `Resting · ${rest} ${restUnit} left` : option.selectable ? "Ready to battle" : "Unavailable"}
+        <Text style={[styles.restBadge, rest > 0 && !readyEarly && styles.restingBadge]}>
+          {readyEarly
+            ? "Tired but ready · all cards resting"
+            : rest > 0 ? `Resting · ${rest} ${restUnit} left` : option.selectable ? "Ready to battle" : "Unavailable"}
         </Text>
       </View>
     </Tap>
@@ -300,7 +306,7 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
             </View>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Play a new match</Text>
-              <Text style={styles.smallText}>A completed match makes its card rest for your next two battles.</Text>
+              <Text style={styles.smallText}>A completed match makes its card rest for your next two battles. If every card is resting, the one closest to ready can still play.</Text>
               <PrimaryButton label="Practice against a bot" icon="smart-toy" onPress={() => void battle.start("bot")} disabled={Boolean(battle.pending)} loading={battle.pending === "Creating match"} />
               <PrimaryButton label="Challenge a friend" icon="people" onPress={() => void battle.start("friend")} disabled={Boolean(battle.pending)} />
               <Text style={styles.mutedText}>Bot practice does not change leaderboard points. Friend wins earn +5; losses cost 3.</Text>
@@ -324,7 +330,8 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
               <Text style={styles.sectionTitle}>Card recovery</Text>
               {battle.restCards === null ? <Text style={styles.mutedText}>{battle.restError ?? "Loading card recovery…"}</Text> : restingCards?.length ? restingCards.map((card) => {
                 const item = species.find((candidate) => candidate.id === card.species_id);
-                return <Text key={card.species_id} style={styles.smallText}>{item?.common_name ?? card.species_id}: {card.remaining} completed {card.remaining === 1 ? "battle" : "battles"} left</Text>;
+                const left = `${card.remaining} completed ${card.remaining === 1 ? "battle" : "battles"} left`;
+                return <Text key={card.species_id} style={styles.smallText}>{item?.common_name ?? card.species_id}: {card.selectable ? `${left} · can still play because all cards are resting` : left}</Text>;
               }) : <Text style={styles.smallText}>All your cards are ready.</Text>}
               {battle.restError ? <InfoButton label="Retry card recovery" onPress={() => void battle.refreshRest()} /> : null}
             </View>

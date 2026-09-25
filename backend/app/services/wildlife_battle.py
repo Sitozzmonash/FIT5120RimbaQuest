@@ -47,6 +47,31 @@ def habitat_matches(habitat_text: str | None, habitat: str) -> bool:
     return re.search(_HABITAT_WORDS[habitat], text) is not None
 
 
+def choose_habitat(card_habitats: list[str | None], rng: Any) -> str:
+    """Randomly pick a habitat that makes the explorer's card choice matter.
+
+    Most catalogued species live in forest, so a uniform draw usually gives
+    every card (Rainforest) or no card (Coastal) the bonus. Habitats where the
+    explorer's ready cards are split between matching and not matching are
+    preferred; otherwise any habitat can be drawn.
+    """
+    mixed = [
+        habitat for habitat in HABITATS
+        if 0 < sum(habitat_matches(text, habitat) for text in card_habitats) < len(card_habitats)
+    ]
+    return rng.choice(mixed or list(HABITATS))
+
+
+def _habitat_attack(value: int) -> int:
+    # +20%, rounded half up in integers so small attacks keep their bonus.
+    return (value * 12 + 5) // 10
+
+
+def _habitat_defence(value: int) -> int:
+    # Incoming damage x0.8, rounded half up to mirror the attack bonus.
+    return (value * 8 + 5) // 10
+
+
 def _other(side: str) -> str:
     if side == "player":
         return "opponent"
@@ -123,17 +148,7 @@ def _third_ability(definition: dict[str, Any], attack: int) -> dict[str, Any]:
     }
 
 
-def _combatant(
-    definition: dict[str, Any], habitat: str, natural_habitat: str | None,
-    unlocked: list[int],
-) -> dict[str, Any]:
-    hp = int(definition["hp"])
-    attack = int(definition["base_attack"])
-    if hp <= 0 or attack <= 0:
-        raise ValueError("Wildlife HP and base attack must be positive")
-    unlocked_set = set(unlocked)
-    if any(slot not in _COSTS for slot in unlocked_set):
-        raise ValueError("Only ability slots 1, 2 and 3 can be unlocked")
+def _abilities(definition: dict[str, Any], attack: int) -> list[dict[str, Any]]:
     abilities = []
     for raw in definition.get("abilities", []):
         slot = int(raw["slot"])
@@ -153,6 +168,29 @@ def _combatant(
     abilities.append(_third_ability(definition, attack))
     if {ability["slot"] for ability in abilities} != {1, 2, 3}:
         raise ValueError("Each wildlife card needs three distinct abilities")
+    return sorted(abilities, key=lambda item: item["slot"])
+
+
+def ability_previews(definition: dict[str, Any]) -> list[dict[str, Any]]:
+    """The three abilities exactly as this battle mode resolves them."""
+    return [
+        {key: ability[key] for key in ("slot", "name", "description", "cost")}
+        for ability in _abilities(definition, int(definition["base_attack"]))
+    ]
+
+
+def _combatant(
+    definition: dict[str, Any], habitat: str, natural_habitat: str | None,
+    unlocked: list[int],
+) -> dict[str, Any]:
+    hp = int(definition["hp"])
+    attack = int(definition["base_attack"])
+    if hp <= 0 or attack <= 0:
+        raise ValueError("Wildlife HP and base attack must be positive")
+    unlocked_set = set(unlocked)
+    if any(slot not in _COSTS for slot in unlocked_set):
+        raise ValueError("Only ability slots 1, 2 and 3 can be unlocked")
+    abilities = _abilities(definition, attack)
     for ability in abilities:
         ability["unlocked"] = ability["slot"] in unlocked_set
     return {
@@ -173,7 +211,7 @@ def _combatant(
         "boost": 0,
         "weaken": 0,
         "unlocked_abilities": sorted(unlocked_set),
-        "abilities": sorted(abilities, key=lambda item: item["slot"]),
+        "abilities": abilities,
     }
 
 
@@ -229,13 +267,13 @@ def _damage(state: dict[str, Any], events: list[dict[str, Any]],
     attack = max(0, base + actor["boost"] - actor["weaken"])
     actor["boost"] = actor["weaken"] = 0
     if actor["habitat_advantage"]:
-        attack = math.floor(attack * 1.2)
+        attack = _habitat_attack(attack)
     after_block = max(0, attack - defender["block"])
     defender["block"] = 0
     after_guard = math.floor(after_block * (100 - min(defender["guard"], 80)) / 100)
     defender["guard"] = 0
     if defender["habitat_advantage"]:
-        after_guard = math.floor(after_guard * 0.8)
+        after_guard = _habitat_defence(after_guard)
     absorbed = min(defender["shield"], after_guard)
     defender["shield"] -= absorbed
     hp_damage = min(defender["hp"], after_guard - absorbed)

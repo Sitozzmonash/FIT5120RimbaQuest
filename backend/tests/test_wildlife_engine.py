@@ -10,8 +10,8 @@ import pytest
 from app.services.battle_catalogue import get_battle_definition, get_catalogue
 from app.services.wildlife_ai import _load_policy, _score_action
 from app.services.wildlife_battle import (
-    HABITATS, choose_ai_action, forfeit, habitat_matches, legal_actions,
-    new_match, perform_action, skip_turn,
+    HABITATS, ability_previews, choose_ai_action, choose_habitat, forfeit,
+    habitat_matches, legal_actions, new_match, perform_action, skip_turn,
 )
 
 
@@ -73,15 +73,58 @@ def test_habitat_attack_and_defence_apply_whole_match():
                   opponent_habitat="tropical forest")
     original = copy.deepcopy(state)
     state, events = perform_action(state, "player", "basic")
-    # floor(13 * 1.2) = 15, then floor(15 * .8) = 12.
-    assert state["opponent"]["hp"] == 38
-    assert next(e for e in events if e["type"] == "damage")["value"] == 12
+    # Half-up rounding: 13 * 1.2 = 15.6 -> 16, then 16 * .8 = 12.8 -> 13.
+    assert state["opponent"]["hp"] == 37
+    assert next(e for e in events if e["type"] == "damage")["value"] == 13
     assert original["opponent"]["hp"] == 50
     state, _ = perform_action(state, "opponent", "basic")
-    # Both match here: floor(10 * 1.2) = 12, floor(12 * .8) = 9.
-    assert state["player"]["hp"] == 41
+    # Both match here: 10 * 1.2 = 12, then 12 * .8 = 9.6 -> 10.
+    assert state["player"]["hp"] == 40
     state, _ = perform_action(state, "player", "basic")
-    assert state["opponent"]["hp"] == 26
+    assert state["opponent"]["hp"] == 24
+
+
+@pytest.mark.parametrize("attack", [11, 12, 13])
+def test_habitat_bonus_rounds_half_up_for_catalogue_attacks(attack):
+    # Plain floor() turned the 20% bonus into about 15% for catalogue attacks
+    # of 11-13 while making the 20% defence cut closer to 25%.
+    bonus = match(player=definition("player", attack=attack), opponent_habitat="coast")
+    damage = next(e for e in perform_action(bonus, "player", "basic")[1] if e["type"] == "damage")
+    assert damage["value"] == round(attack * 1.2)
+    defence = match(player=definition("player", attack=attack), player_habitat="coast",
+                    opponent_habitat="forest")
+    damage = next(e for e in perform_action(defence, "player", "basic")[1] if e["type"] == "damage")
+    assert damage["value"] == round(attack * 0.8)
+
+
+def test_habitat_draw_prefers_habitats_that_split_the_ready_cards():
+    forest, turtle = "Lowland rainforests.", "Coastal waters, seagrass beds and nesting beaches."
+    rng = random.Random(4)
+    # With a forest card and a coastal card, only Rainforest and Coastal make
+    # one card match and the other not.
+    draws = {choose_habitat([forest, turtle], rng) for _ in range(60)}
+    assert draws == {"Rainforest", "Coastal"}
+    # A single card or an all-forest collection has no split, so any habitat
+    # remains possible.
+    assert {choose_habitat([forest], rng) for _ in range(200)} == set(HABITATS)
+    assert {choose_habitat([forest, forest], rng) for _ in range(200)} == set(HABITATS)
+    assert {choose_habitat([], rng) for _ in range(200)} == set(HABITATS)
+
+
+def test_ability_previews_match_the_battle_and_drop_legacy_dice_text():
+    for species in get_catalogue().values():
+        previews = ability_previews(species)
+        state = new_match(
+            species, species, habitat="Rainforest", player_habitat=None,
+            opponent_habitat=None, player_unlocked=[], opponent_unlocked=[],
+            mode="bot", initiative="player",
+        )
+        assert previews == [
+            {key: ability[key] for key in ("slot", "name", "description", "cost")}
+            for ability in state["player"]["abilities"]
+        ]
+        assert [preview["cost"] for preview in previews] == [1, 2, 4]
+        assert not any("die" in p["description"] or "roll" in p["description"] for p in previews)
 
 
 def test_cost_unlock_recharge_and_one_action_per_turn():
@@ -183,10 +226,10 @@ def test_one_hit_defences_and_hp_healing_are_bounded():
     state["opponent"]["block"] = 2
     state["opponent"]["shield"] = 3
     result, events = perform_action(state, "player", "ability_3")
-    # 10+5+4 is one attack; block 2, guard 25%, habitat defence 20%,
-    # then Shield 3. The guard and block are consumed once.
+    # 10+5+4 is one attack; block 2, guard 25% (17 -> 12), habitat defence
+    # 20% (9.6 -> 10), then Shield 3. The guard and block are consumed once.
     damage = next(e for e in events if e["type"] == "damage")
-    assert damage["value"] == 6
+    assert damage["value"] == 7
     assert result["opponent"]["guard"] == 0
     assert result["opponent"]["block"] == 0
     assert result["opponent"]["shield"] == 0
