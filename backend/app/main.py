@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import CORS_ORIGINS, IS_POSTGRES
-from app.routers import auth, battle_sessions, battles, chat, discoveries, locations, quizzes, species
+from app.routers import auth, battle_sessions, battles, chat, discoveries, locations, quizzes, species, wildlife_matches
 
 app = FastAPI(title="RimbaQuest API", version="2.0.0")
 
@@ -30,4 +30,5 @@ app.include_router(quizzes.router)
 app.include_router(discoveries.router)
 app.include_router(battles.router)
 app.include_router(battle_sessions.router)
+app.include_router(wildlife_matches.router)
 app.include_router(chat.router)

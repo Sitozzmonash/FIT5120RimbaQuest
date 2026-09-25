@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -323,4 +324,65 @@ battle_first_wins = Table(
     Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
     Column("battle_id", String(36), ForeignKey("battle_sessions.id", ondelete="CASCADE"), nullable=False),
     UniqueConstraint("child_id", "species_id", name="uq_battle_first_wins_child_species"),
+)
+
+
+# Wildlife Card Battle is a separate mode from the earlier pixel battle.
+# These tables can be added to an existing database by metadata.create_all.
+wildlife_matches = Table(
+    "wildlife_matches",
+    metadata,
+    Column("id", String(36), primary_key=True),
+    Column("mode", String(10), nullable=False),
+    Column("habitat", String(40), nullable=False),
+    Column("owner_child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("guest_child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE")),
+    Column("owner_species_id", String, ForeignKey("species.id")),
+    Column("guest_species_id", String, ForeignKey("species.id")),
+    Column("invite_code", String(16), unique=True),
+    Column("create_request_id", String(100)),
+    Column("status", String(20), nullable=False),
+    Column("state", JSON),
+    Column("version", Integer, nullable=False, default=0),
+    Column("deadline_at", DateTime(timezone=True)),
+    Column("expires_at", DateTime(timezone=True), nullable=False),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    Column("settled", Boolean, nullable=False, default=False),
+    Column("owner_leaderboard_delta", Integer),
+    Column("guest_leaderboard_delta", Integer),
+    UniqueConstraint("owner_child_id", "create_request_id", name="uq_wildlife_match_create_request"),
+    CheckConstraint("mode IN ('bot', 'friend')", name="ck_wildlife_match_mode"),
+)
+Index("ix_wildlife_matches_owner", wildlife_matches.c.owner_child_id)
+Index("ix_wildlife_matches_guest", wildlife_matches.c.guest_child_id)
+Index("ix_wildlife_matches_expires", wildlife_matches.c.expires_at)
+
+wildlife_card_rest = Table(
+    "wildlife_card_rest",
+    metadata,
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), primary_key=True),
+    Column("remaining", Integer, nullable=False, default=0),
+    CheckConstraint("remaining >= 0 AND remaining <= 2", name="ck_wildlife_rest_remaining"),
+)
+
+wildlife_leaderboard = Table(
+    "wildlife_leaderboard",
+    metadata,
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("points", Integer, nullable=False, default=0),
+)
+
+wildlife_requests = Table(
+    "wildlife_requests",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("match_id", String(36), ForeignKey("wildlife_matches.id", ondelete="CASCADE"), nullable=False),
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+    Column("request_id", String(100), nullable=False),
+    Column("operation", String(20), nullable=False),
+    Column("payload", JSON, nullable=False),
+    Column("response", JSON, nullable=False),
+    UniqueConstraint("match_id", "child_id", "request_id", name="uq_wildlife_request_replay"),
 )
