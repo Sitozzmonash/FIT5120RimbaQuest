@@ -57,7 +57,17 @@ Current Iteration 2 boundaries:
 - `DEEPSEEK_API_KEY` is separately used for the Epic 6 current-card chatbot; it is never exposed to Expo and is never treated as a factual source.
 - The team-confirmed 10 Fun Facts per supported species are child-facing, team-verified RimbaQuest evidence. The dataset records the group reviewer as `RimbaQuest content team`; no historical per-fact date is invented where one was not supplied.
 - Epic 6 uses an evidence-first retrieval flow: approved card material and team-reviewed Fun Facts first, then approved source excerpts and a limited GBIF taxonomy lookup when relevant. Evidence removed from a later reviewed seed is marked `revoked` on deployment and cannot be used in a reply.
-- Iteration 3 social and expanded gameplay features are out of scope.
+- Other Iteration 3 social features remain out of scope; the Wildlife Card Battle flow below includes friend matches.
+
+## Wildlife Card Battle
+
+An explorer can start a practice match against the strategic AI Bot or invite another explorer to a friend match. The server picks and shows a habitat before either explorer chooses a discovered Wildlife Card. A card whose species belongs to that habitat gains 20% Attack and Defence for the whole match; unmatched cards use their normal stats. The server verifies card ownership and quiz unlocks before the match begins.
+
+Each card has HP, a Basic Attack, and three quiz-unlocked abilities. Easy, Medium, and Hard quizzes unlock Abilities 1, 2, and 3. A battle begins with 5 Energy out of a maximum of 8. Basic Attack costs 0 Energy; Abilities 1, 2, and 3 cost 1, 2, and 4. Each completed turn restores 2 Energy. A card wins by reducing the opponent's HP to zero. The first turn is chosen randomly. This battle mode adapts the catalogue's former passive third trait into an active move so that the Hard Quiz unlock follows the document's energy rule.
+
+Friend matches use an invitation code and a server-enforced 30-second action window. The client refreshes the match every second; a missed turn is skipped without its Energy recharge. A friend win adds 5 leaderboard points and a loss subtracts 3. AI Bot matches change leaderboard points by 0. Leaderboard points are stored separately from Explorer XP. The AI Bot uses the same combat rules as a child and chooses only legal actions. Its offline training reward is kept separate from player scores.
+
+After a completed match, the used card rests for the next two completed matches by that explorer. Resting cards cannot be selected. Each explorer can have one unfinished match at a time, and the battle screen can recover it after a refresh. The match, rest count, action replay protection, and leaderboard settlement are kept on the server so refreshing or repeating a request cannot grant extra points.
 
 ## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
 

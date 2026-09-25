@@ -83,6 +83,10 @@ npx tsc --noEmit
 npx expo export --platform web
 ```
 
+The Wildlife Card Battle screen supports AI Bot practice and invited friend matches. The backend shows a random habitat before card selection, checks the chosen card's habitat and two-battle rest status, and resolves every action. A friend can join with the displayed code; the screen refreshes the match every second while the backend enforces each 30-second turn. Quiz progress unlocks the three abilities, which cost 1, 2, and 4 Energy. The friend leaderboard is separate from Explorer XP.
+
+For a local end-to-end check, run the FastAPI service alongside the client, sign in with two discovered-card accounts, and follow: `Choose friend match → See habitat → Select card → Share code → Join and select card → Take turns → Check leaderboard and card rest`. AI Bot matches follow the same card and Energy rules without leaderboard changes.
+
 Before release, manually verify:
 
 ```text
