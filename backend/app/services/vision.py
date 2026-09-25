@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import logging
+from collections.abc import Awaitable, Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,7 +18,11 @@ from app.core.config import (
     GROQ_API_BASE_URL,
     GROQ_API_KEY,
     GROQ_VISION_MODEL,
+    PIC_DEEPSEEK_API_BASE_URL,
+    PIC_DEEPSEEK_API_KEY,
+    PIC_DEEPSEEK_VISION_MODEL,
     VISION_MIN_CONFIDENCE,
+    VISION_PROVIDER_SEQUENCE,
     VISION_TIMEOUT_SECONDS,
     ZHIPU_API_KEY,
     ZHIPU_API_URL,
@@ -32,6 +39,10 @@ class VisionServiceUnavailable(RuntimeError):
     """Raised when no configured provider can complete a trustworthy response."""
 
 
+class VisionRequestCancelled(RuntimeError):
+    """Raised when the app has abandoned an in-progress photo check."""
+
+
 class _ProviderFailure(RuntimeError):
     """Internal, sanitized reason for moving to the next vision provider."""
 
@@ -45,6 +56,27 @@ class VisionProvider:
     use_data_uri: bool
 
 
+UnverifiedReason = str
+"""One of: "no_animal_detected", "low_confidence", "species_not_in_catalog"."""
+
+
+@dataclass(frozen=True)
+class IdentificationOutcome:
+    """The result of a photo check: either a confident catalogue match, or an
+    unverified outcome with a specific, child-facing reason why."""
+
+    matched: bool
+    reason: UnverifiedReason | None = None
+    species_id: str | None = None
+    confidence: float | None = None
+    provider: str | None = None
+    model: str | None = None
+
+
+CancellationCheck = Callable[[], Awaitable[bool]]
+StageCallback = Callable[[str, int], None]
+
+
 def _chat_completions_url(base_url: str) -> str:
     normalized = base_url.rstrip("/")
     if normalized.endswith("/chat/completions"):
@@ -53,30 +85,71 @@ def _chat_completions_url(base_url: str) -> str:
 
 
 def _providers() -> tuple[VisionProvider, ...]:
-    """Return the fixed failover order: Groq, then Zhipu, then Gemini."""
-    return (
-        VisionProvider(
+    """Return configured providers in the ``SCEQUENCE`` failover order.
+
+    Unknown and duplicate names are ignored with a safe diagnostic. A missing
+    API key is deliberately handled by the caller so the log records that the
+    configured provider was skipped.
+    """
+    registry = {
+        "groq": VisionProvider(
             name="groq",
             api_key=GROQ_API_KEY,
             model=GROQ_VISION_MODEL,
             url=_chat_completions_url(GROQ_API_BASE_URL),
             use_data_uri=True,
         ),
-        VisionProvider(
+        "deepseek": VisionProvider(
+            name="deepseek",
+            api_key=PIC_DEEPSEEK_API_KEY,
+            model=PIC_DEEPSEEK_VISION_MODEL,
+            url=_chat_completions_url(PIC_DEEPSEEK_API_BASE_URL),
+            use_data_uri=True,
+        ),
+        "zhipu": VisionProvider(
             name="zhipu",
             api_key=ZHIPU_API_KEY,
             model=ZHIPU_VISION_MODEL,
             url=ZHIPU_API_URL,
             use_data_uri=False,
         ),
-        VisionProvider(
+        "gemini": VisionProvider(
             name="gemini",
             api_key=GEMINI_API_KEY,
             model=GEMINI_VISION_MODEL,
             url=_chat_completions_url(GEMINI_API_BASE_URL),
             use_data_uri=True,
         ),
-    )
+    }
+    aliases = {
+        "pic_deepseek": "deepseek",
+        "pic-deepseek": "deepseek",
+        "deepseek_flash": "deepseek",
+        "deepseek-flash": "deepseek",
+    }
+    providers: list[VisionProvider] = []
+    seen: set[str] = set()
+    for raw_name in VISION_PROVIDER_SEQUENCE.split(","):
+        requested_name = raw_name.strip().casefold()
+        provider_name = aliases.get(requested_name, requested_name)
+        if not provider_name:
+            continue
+        if provider_name in seen:
+            logger.warning(
+                "vision_provider_sequence_ignored provider=%s reason=duplicate",
+                requested_name,
+            )
+            continue
+        provider = registry.get(provider_name)
+        if provider is None:
+            logger.warning(
+                "vision_provider_sequence_ignored provider=%s reason=unknown",
+                requested_name,
+            )
+            continue
+        seen.add(provider_name)
+        providers.append(provider)
+    return tuple(providers)
 
 
 def _json_object(content: Any) -> dict[str, Any]:
@@ -127,13 +200,61 @@ def _provider_error_metadata(response: httpx.Response) -> tuple[str, str]:
     return provider_code[:80], provider_request_id[:120]
 
 
-def _request_provider(
+async def _raise_if_cancelled(
+    cancellation_check: CancellationCheck | None,
+) -> None:
+    if cancellation_check is not None and await cancellation_check():
+        raise VisionRequestCancelled("vision_request_cancelled")
+
+
+async def _send_provider_request(
+    provider: VisionProvider,
+    payload: dict[str, Any],
+) -> httpx.Response:
+    """Send one non-blocking provider request and close its connection safely."""
+    async with httpx.AsyncClient(timeout=VISION_TIMEOUT_SECONDS) as client:
+        return await client.post(
+            provider.url,
+            headers={
+                "Authorization": f"Bearer {provider.api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+        )
+
+
+async def _await_provider_response(
+    provider: VisionProvider,
+    payload: dict[str, Any],
+    cancellation_check: CancellationCheck | None,
+) -> httpx.Response:
+    """Await a provider while promptly cancelling it after a client disconnect."""
+    request_task = asyncio.create_task(_send_provider_request(provider, payload))
+    try:
+        while True:
+            done, _ = await asyncio.wait({request_task}, timeout=0.25)
+            if done:
+                return request_task.result()
+            await _raise_if_cancelled(cancellation_check)
+    except VisionRequestCancelled:
+        request_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await request_task
+        raise
+    finally:
+        if not request_task.done():
+            request_task.cancel()
+
+
+async def _request_provider(
     provider: VisionProvider,
     image_bytes: bytes,
     content_type: str,
     prompt: str,
     trace_id: str,
+    cancellation_check: CancellationCheck | None,
 ) -> dict[str, Any]:
+    await _raise_if_cancelled(cancellation_check)
     encoded_image = base64.b64encode(image_bytes).decode("ascii")
     image_url = (
         f"data:{content_type};base64,{encoded_image}"
@@ -153,25 +274,30 @@ def _request_provider(
         ],
         "temperature": 0,
     }
-    if provider.name == "groq":
+    if provider.name in {"groq", "deepseek"}:
         payload["response_format"] = {"type": "json_object"}
+    if provider.name == "groq":
         payload["reasoning_effort"] = "none"
     elif provider.name == "zhipu":
         payload["thinking"] = {"type": "disabled"}
 
     try:
-        response = httpx.post(
-            provider.url,
-            headers={
-                "Authorization": f"Bearer {provider.api_key}",
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=VISION_TIMEOUT_SECONDS,
+        response = await _await_provider_response(
+            provider,
+            payload,
+            cancellation_check,
         )
         response.raise_for_status()
         body = response.json()
         content = body["choices"][0]["message"]["content"]
+    except VisionRequestCancelled:
+        logger.info(
+            "vision_request_cancelled trace_id=%s provider=%s model=%s",
+            trace_id,
+            provider.name,
+            provider.model,
+        )
+        raise
     except httpx.TimeoutException as error:
         logger.warning(
             "vision_timeout trace_id=%s provider=%s model=%s timeout_seconds=%s",
@@ -225,14 +351,16 @@ def _request_provider(
         raise error
 
 
-def identify_supported_species(
+async def identify_supported_species(
     image_bytes: bytes,
     content_type: str,
     catalogue: list[dict[str, Any]],
     *,
     trace_id: str = "-",
-) -> dict[str, Any] | None:
-    """Select one supported species using Groq, then Zhipu, then Gemini.
+    cancellation_check: CancellationCheck | None = None,
+    on_stage: StageCallback | None = None,
+) -> IdentificationOutcome:
+    """Select one supported species using the configured provider sequence.
 
     Provider failures fall through to the next configured provider. A valid
     provider response that says the photo is unsupported, unclear, or below
@@ -264,6 +392,7 @@ def identify_supported_species(
     attempted: list[str] = []
     failures: list[str] = []
     for provider in _providers():
+        await _raise_if_cancelled(cancellation_check)
         if not provider.api_key:
             logger.info(
                 "vision_provider_skipped trace_id=%s provider=%s model=%s reason=missing_api_key",
@@ -281,14 +410,19 @@ def identify_supported_species(
             provider.model,
             len(attempted),
         )
+        if on_stage is not None:
+            on_stage("identifying", len(attempted))
         try:
-            result = _request_provider(
+            result = await _request_provider(
                 provider,
                 image_bytes,
                 content_type,
                 prompt,
                 trace_id,
+                cancellation_check,
             )
+        except VisionRequestCancelled:
+            raise
         except _ProviderFailure as error:
             failures.append(f"{provider.name}:{error}")
             logger.info(
@@ -306,7 +440,7 @@ def identify_supported_species(
                 provider.name,
                 provider.model,
             )
-            return None
+            return IdentificationOutcome(matched=False, reason="no_animal_detected")
         if result.get("supported") is not True:
             failures.append(f"{provider.name}:invalid_supported_flag")
             logger.warning(
@@ -356,7 +490,7 @@ def identify_supported_species(
                 confidence,
                 VISION_MIN_CONFIDENCE,
             )
-            return None
+            return IdentificationOutcome(matched=False, reason="low_confidence")
 
         logger.info(
             "vision_provider_succeeded trace_id=%s provider=%s model=%s confidence=%.3f",
@@ -365,16 +499,27 @@ def identify_supported_species(
             provider.model,
             confidence,
         )
-        return {
-            "species_id": species_id,
-            "confidence": confidence,
-            "provider": provider.name,
-            "model": provider.model,
-        }
+        return IdentificationOutcome(
+            matched=True,
+            species_id=species_id,
+            confidence=confidence,
+            provider=provider.name,
+            model=provider.model,
+        )
 
     if configured_count == 0:
         logger.error("vision_not_configured trace_id=%s", trace_id)
         raise VisionServiceUnavailable("vision_not_configured")
+
+    if attempted and len(failures) == len(attempted) and all(
+        failure.endswith(":species_outside_catalogue") for failure in failures
+    ):
+        logger.info(
+            "vision_unverified trace_id=%s attempted=%s reason=species_not_in_catalog",
+            trace_id,
+            ",".join(attempted),
+        )
+        return IdentificationOutcome(matched=False, reason="species_not_in_catalog")
 
     logger.error(
         "vision_all_providers_failed trace_id=%s attempted=%s failures=%s",

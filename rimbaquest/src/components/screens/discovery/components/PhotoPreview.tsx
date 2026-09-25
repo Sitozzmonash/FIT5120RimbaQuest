@@ -1,15 +1,20 @@
 import React, { useState } from "react";
 import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { Tap } from "../../../common/Tap";
 
-export function PhotoPreview({ photo }: { photo: { uri: string } }) {
+export function PhotoPreview() {
+  const photoUri = useDiscoveryStore((state) => state.photoUri);
   const [enlarged, setEnlarged] = useState(false);
+
+  if (!photoUri) return null;
+  const photo = { uri: photoUri };
 
   return (
     <View style={styles.wrap}>
       <Tap
-        label="Enlarge discovery photo"
+        label="Make photo bigger"
         style={styles.photo}
         onPress={() => setEnlarged(true)}
       >
@@ -18,7 +23,7 @@ export function PhotoPreview({ photo }: { photo: { uri: string } }) {
           <MaterialIcons name="add" size={18} color="#FFFFFF" />
         </View>
       </Tap>
-      <Text style={styles.caption}>Tap photo to enlarge</Text>
+      <Text style={styles.caption}>Tap the photo to make it bigger</Text>
 
       <Modal
         visible={enlarged}
@@ -27,7 +32,7 @@ export function PhotoPreview({ photo }: { photo: { uri: string } }) {
         onRequestClose={() => setEnlarged(false)}
       >
         <Tap
-          label="Close enlarged photo"
+          label="Close big photo"
           style={styles.modalBackdrop}
           onPress={() => setEnlarged(false)}
         >

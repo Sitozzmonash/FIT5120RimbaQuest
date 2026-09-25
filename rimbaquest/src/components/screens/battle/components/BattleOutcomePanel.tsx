@@ -13,6 +13,7 @@ interface BattleOutcomePanelProps {
   speciesFact?: string | null;
   onBattleAgain: () => void;
   onSelectAnotherCard: () => void;
+  onLeave?: () => void;
 }
 
 export function BattleOutcomePanel({
@@ -22,6 +23,7 @@ export function BattleOutcomePanel({
   speciesFact,
   onBattleAgain,
   onSelectAnotherCard,
+  onLeave,
 }: BattleOutcomePanelProps) {
   const win = outcome === "win";
   const isSurrender = outcome === "surrender";
@@ -47,7 +49,7 @@ export function BattleOutcomePanel({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => {}}
+      onRequestClose={onLeave ?? onSelectAnotherCard}
     >
       <View style={styles.backdrop}>
         <View style={styles.card}>
@@ -106,6 +108,11 @@ export function BattleOutcomePanel({
           >
             <Text style={styles.secondaryText}>Choose Another Card</Text>
           </Tap>
+          {onLeave && (
+            <Tap label="Leave to Home" style={styles.leaveBtn} onPress={onLeave}>
+              <Text style={styles.leaveText}>Back to Home</Text>
+            </Tap>
+          )}
         </View>
       </View>
     </Modal>
@@ -211,4 +218,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#37474F",
   },
+  leaveBtn: {
+    width: "100%",
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  leaveText: { color: "#566159", fontSize: 13, fontWeight: "700" },
 });

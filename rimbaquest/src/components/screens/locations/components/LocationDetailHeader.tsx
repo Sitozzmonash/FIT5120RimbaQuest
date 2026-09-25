@@ -4,13 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Tap } from "../../../common/Tap";
 
-export function LocationDetailHeader({
-  title,
-  onBack,
-}: {
-  title: string;
-  onBack: () => void;
-}) {
+export function LocationDetailHeader({ onBack }: { onBack: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 8 }]}>
@@ -18,7 +12,7 @@ export function LocationDetailHeader({
         <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
       </Tap>
       <Text style={styles.title} numberOfLines={1}>
-        {title}
+        Location Detail
       </Text>
     </View>
   );

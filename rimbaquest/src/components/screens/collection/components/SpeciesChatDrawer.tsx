@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -14,6 +15,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Species,
+  SpeciesChatCitation,
   SpeciesChatMessage,
   SpeciesChatResponse,
 } from "../../../../types";
@@ -22,21 +24,23 @@ import { Tap } from "../../../common/Tap";
 const DEFAULT_SUGGESTIONS = ["What do they eat?", "Where do they live?"];
 const EMPTY_QUESTION_MESSAGE = "Please type a question.";
 const UNAVAILABLE_MESSAGE =
-  "WildGuide is not connected yet. Please try again shortly.";
+  "WildGuide cannot chat right now. Please try again soon.";
 const REQUEST_ERROR_MESSAGE =
-  "I couldn't answer that right now. Please try again.";
+  "I couldn’t answer that right now. Please try again.";
 
 let messageSequence = 0;
 
 function makeMessage(
   role: SpeciesChatMessage["role"],
   content: string,
+  citations?: SpeciesChatCitation[],
 ): SpeciesChatMessage {
   messageSequence += 1;
   return {
     id: `${role}-${Date.now()}-${messageSequence}`,
     role,
     content,
+    citations,
   };
 }
 
@@ -92,6 +96,53 @@ export function SpeciesChatDrawer({
   const [failedQuestion, setFailedQuestion] = useState<string | null>(null);
 
   const chatAvailable = Boolean(childId && onSendQuestion);
+  const [webKeyboardInset, setWebKeyboardInset] = useState(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible) {
+      setWebKeyboardInset(0);
+      return;
+    }
+    const viewport =
+      typeof window !== "undefined" ? window.visualViewport : undefined;
+    if (!viewport) return;
+
+    const handleResize = () => {
+      const inset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+      setWebKeyboardInset(inset);
+      setIsKeyboardVisible(inset > 0);
+    };
+
+    handleResize();
+    viewport.addEventListener("resize", handleResize);
+    viewport.addEventListener("scroll", handleResize);
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+      viewport.removeEventListener("scroll", handleResize);
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, () =>
+      setIsKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(hideEvent, () =>
+      setIsKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     // Never show a reply from a previous wildlife card after switching cards.
@@ -145,14 +196,18 @@ export function SpeciesChatDrawer({
       if (requestVersion !== requestVersionRef.current) return;
       setMessages((current) => [
         ...current,
-        makeMessage("assistant", answer),
+        makeMessage("assistant", answer, response.citations),
       ]);
       setSuggestions(
         usableSuggestions(response.suggested_questions, defaultSuggestions),
       );
-    } catch {
+    } catch (requestError) {
       if (requestVersion !== requestVersionRef.current) return;
-      setError(REQUEST_ERROR_MESSAGE);
+      setError(
+        requestError instanceof Error && requestError.message === REQUEST_ERROR_MESSAGE
+          ? requestError.message
+          : REQUEST_ERROR_MESSAGE,
+      );
       setFailedQuestion(trimmedQuestion);
     } finally {
       if (requestVersion === requestVersionRef.current) {
@@ -175,7 +230,7 @@ export function SpeciesChatDrawer({
     >
       <KeyboardAvoidingView
         style={styles.modalRoot}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <Tap
           label="Close WildGuide chat"
@@ -188,7 +243,11 @@ export function SpeciesChatDrawer({
         <View
           style={[
             styles.drawer,
-            { paddingBottom: Math.max(insets.bottom, 16) },
+            {
+              paddingBottom: isKeyboardVisible
+                ? insets.bottom + webKeyboardInset
+                : 0,
+            },
           ]}
         >
           <View style={styles.handle} />
@@ -240,6 +299,23 @@ export function SpeciesChatDrawer({
                 >
                   {message.content}
                 </Text>
+                {message.role === "assistant" && message.citations?.length ? (
+                  <View style={styles.citationsBlock}>
+                    {message.citations.map((citation, index) => (
+                      <View
+                        key={`${message.id}-${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
+                        style={styles.citationItem}
+                      >
+                        <Text style={styles.citationLabel}>
+                          Source: {citation.source_name}
+                        </Text>
+                        <Text numberOfLines={2} style={styles.citationExcerpt}>
+                          {citation.excerpt}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
               </View>
             ))}
 
@@ -303,7 +379,7 @@ export function SpeciesChatDrawer({
                 setDraft(value);
                 if (error) setError(null);
               }}
-              placeholder="Ask about this species…"
+              placeholder="Ask about this animal..."
               placeholderTextColor="#92A099"
               editable={chatAvailable && !isSending}
               returnKeyType="send"
@@ -426,6 +502,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   userMessageText: { color: "#FFFFFF" },
+  citationsBlock: {
+    marginTop: 9,
+    gap: 7,
+    borderTopWidth: 1,
+    borderTopColor: "#C9E3CF",
+    paddingTop: 8,
+  },
+  citationItem: { gap: 2 },
+  citationLabel: { color: "#286341", fontSize: 10, fontWeight: "900" },
+  citationExcerpt: { color: "#526258", fontSize: 10, lineHeight: 14 },
   loadingBubble: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { color: "#28734A", fontSize: 13, fontWeight: "700" },
   suggestionsBlock: { marginTop: 3, gap: 7 },

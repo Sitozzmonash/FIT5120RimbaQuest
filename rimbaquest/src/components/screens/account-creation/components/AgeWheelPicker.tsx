@@ -8,6 +8,8 @@ import {
   Text,
   View,
 } from "react-native";
+import { useController } from "react-hook-form";
+import { AccountFormValues } from "../accountFormTypes";
 
 const AGE_MIN = 5;
 const AGE_MAX = 18;
@@ -19,22 +21,24 @@ function labelFor(n: number): string {
   return n === AGE_MAX ? `${n}+` : String(n);
 }
 
-// Scrollable, snap-to-item age picker (5-17, plus an "18+" bucket for
-// step 2 of account creation).
-export function AgeWheelPicker({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (n: number) => void;
-}) {
+// Scrollable, snap-to-item age picker (5-17, plus an "18+" bucket) for step 2
+// of account creation. Reads and writes its own field on the shared
+// account-creation form.
+export function AgeWheelPicker() {
+  const { field } = useController<AccountFormValues, "age">({
+    name: "age",
+    rules: { required: "Please scroll to select your age." },
+  });
+  const value = field.value;
+
   const numbers = useMemo(
     () => Array.from({ length: AGE_MAX - AGE_MIN + 1 }, (_, i) => AGE_MIN + i),
     [],
   );
   const scrollRef = useRef<ScrollView>(null);
   const settleTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialIndex = Math.max(0, numbers.indexOf(value));
+
+  const initialIndex = value == null ? 0 : Math.max(0, numbers.indexOf(value));
 
   useEffect(() => {
     const id = requestAnimationFrame(() => {
@@ -56,7 +60,7 @@ export function AgeWheelPicker({
     const index = Math.round(offsetY / AGE_ITEM_HEIGHT);
     const clamped = Math.min(numbers.length - 1, Math.max(0, index));
     const next = numbers[clamped];
-    if (next !== value) onChange(next);
+    if (next !== value) field.onChange(next);
     scrollRef.current?.scrollTo({
       y: clamped * AGE_ITEM_HEIGHT,
       animated: true,
@@ -88,7 +92,7 @@ export function AgeWheelPicker({
             : { onMomentumScrollEnd: handleMomentumEnd })}
         >
           {numbers.map((n) => {
-            const selected = n === value;
+            const selected = value !== null && n === value;
             return (
               <View key={n} style={styles.createAgeWheelItem}>
                 <Text
@@ -103,6 +107,11 @@ export function AgeWheelPicker({
             );
           })}
         </ScrollView>
+        {value === null && (
+          <View style={styles.createAgeWheelPlaceholder} pointerEvents="none">
+            <Text style={styles.createAgeWheelPlaceholderText}>Scroll to select</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -138,5 +147,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: "#0A4D26",
     fontWeight: "900",
+  },
+  createAgeWheelPlaceholder: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 88,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F4FCF6",
+  },
+  createAgeWheelPlaceholderText: {
+    fontSize: 12,
+    color: "#6A9B7D",
+    fontWeight: "700",
   },
 });

@@ -1,0 +1,24 @@
+[
+  {
+    "species_id": "sp_asian_elephant",
+    "source_id": "eaza",
+    "source_url": "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf",
+    "topic": "newborn calf shoulder height",
+    "excerpt": "EAZA's table, citing Dale (2010), reports Asian elephant newborn shoulder heights in human care: 95.9 ± 1.2 cm for males (n=19) and 91.9 ± 1.3 cm for females (n=23). That is about 94 cm overall; individual calves vary.",
+    "verification_status": "team-verified",
+    "verified_by": "RimbaQuest content team",
+    "verified_at": "2026-09-16T00:00:00Z",
+    "retrieved_at": "2026-09-16T00:00:00Z"
+  },
+  {
+    "species_id": "sp_asian_elephant",
+    "source_id": "dale_2010",
+    "source_url": "https://digitalcommons.butler.edu/facsch_papers/352/",
+    "topic": "birth statistics study scope",
+    "excerpt": "Dale's 2010 Zoo Biology study collected at least one birth measurement for 218 elephant calves from 74 institutions, including Asian elephant birth-height data.",
+    "verification_status": "team-verified",
+    "verified_by": "RimbaQuest content team",
+    "verified_at": "2026-09-16T00:00:00Z",
+    "retrieved_at": "2026-09-16T00:00:00Z"
+  }
+]

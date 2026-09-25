@@ -3,24 +3,21 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WILDLIFE_FILTERS } from "../../../../constants/seed";
+import { useLocationsStore } from "../../../../store/useLocationsStore";
 import { Tap } from "../../../common/Tap";
 import { styles as globalStyles } from "../../../../styles/theme";
 
 export function LocationsListHero({
   title,
   onBack,
-  search,
-  setSearch,
-  categoryFilter,
-  setCategoryFilter,
 }: {
   title: string;
   onBack: () => void;
-  search: string;
-  setSearch: (s: string) => void;
-  categoryFilter: string;
-  setCategoryFilter: (c: string) => void;
 }) {
+  const search = useLocationsStore((state) => state.search);
+  const setSearch = useLocationsStore((state) => state.setSearch);
+  const categoryFilter = useLocationsStore((state) => state.categoryFilter);
+  const setCategoryFilter = useLocationsStore((state) => state.setCategoryFilter);
   const insets = useSafeAreaInsets();
 
   return (
@@ -43,9 +40,9 @@ export function LocationsListHero({
 
       <View>
         <View style={[globalStyles.searchBox, styles.searchBox]}>
-          <Text style={globalStyles.searchIcon}>⌕</Text>
+          <MaterialIcons name="search" size={18} color="#879089" style={styles.searchIcon} />
           <TextInput
-            placeholder="Search locations or areas"
+          placeholder="Type a park or area name"
             placeholderTextColor="#879089"
             value={search}
             onChangeText={setSearch}
@@ -58,7 +55,7 @@ export function LocationsListHero({
               style={globalStyles.searchClear}
               onPress={() => setSearch("")}
             >
-              <Text style={globalStyles.searchClearText}>×</Text>
+              <MaterialIcons name="close" size={16} color="#087B35" />
             </Tap>
           )}
         </View>
@@ -124,6 +121,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   searchBox: { marginHorizontal: 20, marginBottom: 32 },
+  searchIcon: { marginRight: 8 },
   chips: { gap: 8, paddingHorizontal: 20, paddingBottom: 20, marginBottom: 10 },
   chip: {
     borderRadius: 16,

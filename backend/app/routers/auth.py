@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import secrets
 import time
 from datetime import datetime, timezone
@@ -12,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.database import engine
-from app.core.email import send_password_reset_email
+from app.core.email import email_provider_configured, send_password_reset_email
 from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import (
     ForgotPasswordIn,
@@ -147,14 +146,21 @@ def forgot_password(payload: ForgotPasswordIn):
                 text("UPDATE users SET recovery_token=:token WHERE id=:id"),
                 {"token": stored_token, "id": user["id"]},
             )
-            send_password_reset_email(email, code)
+            if not send_password_reset_email(email, code):
+                # Delivery failed: roll back the stored token and surface the
+                # error instead of pretending the code reached the user's inbox.
+                raise HTTPException(
+                    502,
+                    "We could not send the reset email right now. Please try again in a moment.",
+                )
 
     resp: dict[str, Any] = {
         "success": True,
         "message": "If this email is registered, a password reset code has been sent to your email.",
-        "simulated_token": code,
-        "dev_code": code,
     }
+    if not email_provider_configured():
+        resp["dev_code"] = code
+        resp["simulated_token"] = code
     return resp
 
 

@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
   Text,
   View,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import { Species } from "../../../types";
 import {
@@ -49,6 +50,7 @@ export interface BattleArenaScreenProps {
   onBattleAgain: () => void;
   onSelectAnotherCard: () => void;
   onBack: () => void;
+  onLeave?: () => void;
 }
 
 export function BattleArenaScreen({
@@ -74,6 +76,7 @@ export function BattleArenaScreen({
   onBattleAgain,
   onSelectAnotherCard,
   onBack,
+  onLeave,
 }: BattleArenaScreenProps) {
   const [giveUpConfirmVisible, setGiveUpConfirmVisible] = useState(false);
   const [logExpanded, setLogExpanded] = useState(false);
@@ -107,14 +110,22 @@ export function BattleArenaScreen({
       ? "Surrendered"
       : "Battle Arena";
 
-  const handleBackPress = () => {
+  const handleBackPress = useCallback(() => {
     if (isBusy) return;
-    if (battleState && outcome === null) {
+    if (battleState && outcome === null && !canRestart) {
       setGiveUpConfirmVisible(true);
       return;
     }
     onBack();
-  };
+  }, [isBusy, battleState, outcome, canRestart, onBack]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      handleBackPress();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [handleBackPress]);
 
   const handleSurrenderConfirm = () => {
     setGiveUpConfirmVisible(false);
@@ -139,24 +150,14 @@ export function BattleArenaScreen({
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerRow}>
-        <Tap
-          label="Back"
-          style={[styles.backButton, isBusy && styles.backButtonDisabled]}
-          disabled={isBusy}
-          onPress={handleBackPress}
-        >
-          <MaterialIcons name="arrow-back" size={22} color="#1B211C" />
-        </Tap>
-        <View style={styles.headerBarWrap}>
-          <BattleHeaderBar
-            title={headerTitle}
-            round={battleState ? round : undefined}
-            phase={battleState ? phase : undefined}
-            currentEvent={latestEvent}
-          />
-        </View>
-      </View>
+      <BattleHeaderBar
+        title={headerTitle}
+        round={battleState ? round : undefined}
+        phase={battleState ? phase : undefined}
+        currentEvent={latestEvent}
+        onBack={handleBackPress}
+        backDisabled={isBusy}
+      />
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -299,12 +300,13 @@ export function BattleArenaScreen({
 
       {/* Outcome Results Modal */}
       <BattleOutcomePanel
-        visible={isEnded}
+        visible={isEnded && !isBusy}
         outcome={outcome}
         xpAwarded={xpAwarded}
         speciesFact={card.fun_fact}
         onBattleAgain={onBattleAgain}
         onSelectAnotherCard={onSelectAnotherCard}
+        onLeave={onLeave}
       />
     </View>
   );
@@ -312,25 +314,6 @@ export function BattleArenaScreen({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#FFFFFF" },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2ECE4",
-    backgroundColor: "#FFFFFF",
-  },
-  backButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonDisabled: {
-    opacity: 0.4,
-  },
-  headerBarWrap: {
-    flex: 1,
-  },
   content: {
     paddingHorizontal: 14,
     paddingTop: 12,

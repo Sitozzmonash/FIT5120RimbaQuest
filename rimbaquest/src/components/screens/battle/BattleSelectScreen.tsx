@@ -137,7 +137,7 @@ export function BattleSelectScreen({
 
   return (
     <View style={styles.root}>
-      <BattleHeaderBar title="Wildlife Card Battles" />
+      <BattleHeaderBar title="Wildlife Card Battles" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <BattleIntroBanner />
 
@@ -324,7 +324,7 @@ export function BattleSelectScreen({
             )}
           </>
         ) : (
-          <BattleEmptyState onStartDiscovery={onStartDiscovery} />
+          <BattleEmptyState onStartDiscovery={onStartDiscovery} onBack={onBack} />
         )}
       </ScrollView>
 
@@ -342,7 +342,7 @@ export function BattleSelectScreen({
             disabled={!selectedCard}
             onPress={onStartBattle}
           />
-          <Tap label="Quit" style={globalStyles.secondary} onPress={onBack}>
+          <Tap label="Go back" style={globalStyles.secondary} onPress={onBack}>
             <Text style={globalStyles.secondaryText}>Back</Text>
           </Tap>
         </View>

@@ -1,17 +1,23 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { BattleEvent } from "../../../../types/battle";
+import { Tap } from "../../../common/Tap";
 
 export function BattleHeaderBar({
   title,
   round,
   phase,
   currentEvent,
+  onBack,
+  backDisabled = false,
 }: {
   title: string;
   round?: number;
   phase?: string;
   currentEvent?: BattleEvent | null;
+  onBack?: () => void;
+  backDisabled?: boolean;
 }) {
   let subtitle = "";
   if (currentEvent && currentEvent.message) {
@@ -29,9 +35,19 @@ export function BattleHeaderBar({
   }
 
   return (
-    <View style={styles.wrap} accessible accessibilityRole="header">
+    <View style={styles.wrap}>
       <View style={styles.bar}>
-        <Text style={styles.title} numberOfLines={1}>
+        {onBack && (
+          <Tap
+            label="Go back"
+            style={[styles.backBtn, backDisabled && styles.backBtnDisabled]}
+            disabled={backDisabled}
+            onPress={onBack}
+          >
+            <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
+          </Tap>
+        )}
+        <Text style={styles.title} numberOfLines={1} accessibilityRole="header">
           {title}
         </Text>
         {round != null && (
@@ -69,8 +85,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     height: 52,
     paddingHorizontal: 20,
+    gap: 12,
   },
-  title: { color: "#1B211C", fontSize: 18, fontWeight: "900", flexShrink: 1 },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#E2ECE4",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backBtnDisabled: { opacity: 0.4 },
+  title: { color: "#1B211C", fontSize: 18, fontWeight: "900", flex: 1 },
   roundBadge: {
     flexDirection: "row",
     alignItems: "center",

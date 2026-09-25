@@ -97,7 +97,7 @@ export function CollectionLevelBar({
         <View style={styles.collectionLevelLabelsRow}>
           {tiers.map((tier) => (
             <View key={tier.level} style={styles.collectionLevelLabelCell}>
-              <Text style={styles.collectionLevelLabelLv}>Lv{tier.level}</Text>
+              <Text style={styles.collectionLevelLabelLv}>Level {tier.level}</Text>
               <Text style={styles.collectionLevelLabelFraction}>
                 {tier.inTier}/{tier.size}
               </Text>

@@ -18,9 +18,25 @@ REPOSITORY_ROOT = BACKEND_ROOT.parent
 load_dotenv(REPOSITORY_ROOT / ".env")
 load_dotenv(BACKEND_ROOT / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
+def _default_fun_facts_path() -> Path:
+    env_override = os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH") or os.getenv("FUN_FACTS_PATH")
+    if env_override:
+        return Path(env_override)
+    for candidate in (
+        Path("./data/fun_facts.json"),
+        BACKEND_ROOT / "data" / "fun_facts.json",
+        Path("./data/iteration2_fun_facts_pilot.json"),
+        BACKEND_ROOT / "data" / "iteration2_fun_facts_pilot.json",
+    ):
+        if candidate.exists():
+            return candidate
+    return Path("./data/fun_facts.json")
+
+
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
-ITERATION_2_FUN_FACTS_PILOT = Path(
-    os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
+ITERATION_2_FUN_FACTS_PILOT = _default_fun_facts_path()
+ITERATION_2_CHAT_EVIDENCE = Path(
+    os.getenv("ITERATION_2_CHAT_EVIDENCE_PATH", "./data/iteration2_chat_evidence.json")
 )
 
 
@@ -65,15 +81,50 @@ GROQ_API_BASE_URL = os.getenv(
     "GROQ_API_BASE_URL", "https://api.groq.com/openai/v1"
 ).strip().rstrip("/")
 GROQ_VISION_MODEL = os.getenv("GROQ_VISION_MODEL", "qwen/qwen3.8-27b").strip()
+PIC_DEEPSEEK_API_KEY = os.getenv("PIC_DEEPSEEK_API_KEY", "").strip()
+PIC_DEEPSEEK_API_BASE_URL = os.getenv(
+    "PIC_DEEPSEEK_API_BASE_URL", "https://api.deepseek.com"
+).strip().rstrip("/")
+PIC_DEEPSEEK_VISION_MODEL = os.getenv(
+    "PIC_DEEPSEEK_VISION_MODEL", "deepseek-flash"
+).strip()
 ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "").strip()
 ZHIPU_API_URL = os.getenv(
     "ZHIPU_API_URL", "https://open.bigmodel.cn/api/paas/v4/chat/completions"
 ).strip()
 ZHIPU_VISION_MODEL = os.getenv("ZHIPU_VISION_MODEL", "glm-4.6v-flash").strip()
-PRIMARY_VISION_MODEL = GROQ_VISION_MODEL
-VISION_PROVIDER_ORDER = "groq,zhipu,gemini"
+# ``SCEQUENCE`` is the user-facing compatibility spelling already used in the
+# deployment environment. ``VISION_PROVIDER_SEQUENCE`` is accepted as the
+# clearer alias for future deployments. Values are comma-separated provider
+# names, for example ``deepseek,groq,zhipu``.
+VISION_PROVIDER_SEQUENCE = (
+    os.getenv("SCEQUENCE", "").strip()
+    or os.getenv("VISION_PROVIDER_SEQUENCE", "").strip()
+    or "deepseek,groq,zhipu"
+)
+VISION_PROVIDER_ORDER = VISION_PROVIDER_SEQUENCE
+_PRIMARY_PROVIDER_ALIASES = {
+    "pic_deepseek": "deepseek",
+    "pic-deepseek": "deepseek",
+    "deepseek_flash": "deepseek",
+    "deepseek-flash": "deepseek",
+}
+_PRIMARY_PROVIDER_NAME = next(
+    (
+        _PRIMARY_PROVIDER_ALIASES.get(name.strip().casefold(), name.strip().casefold())
+        for name in VISION_PROVIDER_SEQUENCE.split(",")
+        if name.strip()
+    ),
+    "",
+)
+PRIMARY_VISION_MODEL = {
+    "deepseek": PIC_DEEPSEEK_VISION_MODEL,
+    "gemini": GEMINI_VISION_MODEL,
+    "groq": GROQ_VISION_MODEL,
+    "zhipu": ZHIPU_VISION_MODEL,
+}.get(_PRIMARY_PROVIDER_NAME, "configured_sequence")
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
-VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "45"))
+VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "20"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))
 
 # Epic 6: server-side only.  No Expo environment variable may contain this
@@ -83,7 +134,21 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "").strip()
 DEEPSEEK_API_BASE_URL = os.getenv("DEEPSEEK_API_BASE_URL", "https://api.deepseek.com").strip().rstrip("/")
 DEEPSEEK_CHAT_MODEL = os.getenv("DEEPSEEK_CHAT_MODEL", "deepseek-chat").strip()
 CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
+# The model returns only a small JSON evidence-ID list, not prose.
 CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
+
+# Epic 6 evidence retrieval. GBIF's public taxonomy API needs no key and is
+# only used for taxonomy questions. Wikipedia's Action API may provide a
+# current-species overview for safe, general questions. Other source material
+# is reviewed and stored in the database; this avoids arbitrary web scraping.
+# Opt in explicitly outside the Render blueprint. This prevents local tests
+# and unconfigured development environments from making a live request.
+GBIF_API_ENABLED = os.getenv("GBIF_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
+GBIF_API_BASE_URL = os.getenv("GBIF_API_BASE_URL", "https://api.gbif.org/v1").strip().rstrip("/")
+GBIF_TIMEOUT_SECONDS = float(os.getenv("GBIF_TIMEOUT_SECONDS", "8"))
+WIKIPEDIA_API_ENABLED = os.getenv("WIKIPEDIA_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
+WIKIPEDIA_API_BASE_URL = os.getenv("WIKIPEDIA_API_BASE_URL", "https://en.wikipedia.org/w/api.php").strip()
+WIKIPEDIA_TIMEOUT_SECONDS = float(os.getenv("WIKIPEDIA_TIMEOUT_SECONDS", "8"))
 
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"

@@ -1,37 +1,35 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { useFormContext } from "react-hook-form";
+import { AccountFormValues } from "../accountFormTypes";
 import { AgeWheelPicker } from "./AgeWheelPicker";
 import { StepNav } from "./StepNav";
 
-// Step 2 (final step) of account creation: pick an age via the scrollable
-// wheel, then submit to create the account.
 export function AgeStep({
-  value,
-  onChange,
-  error,
-  submitting,
   onBack,
   onRegister,
 }: {
-  value: number;
-  onChange: (n: number) => void;
-  error?: string;
-  submitting: boolean;
   onBack: () => void;
   onRegister: () => void;
 }) {
+  const {
+    formState: { errors, isSubmitting },
+  } = useFormContext<AccountFormValues>();
+  const error = errors.age?.message;
+
   return (
     <View style={styles.createStepBody}>
       <Text style={styles.createAgeHeading}>How old are you?</Text>
       <Text style={styles.createAgeSubtext}>Scroll to pick your age.</Text>
-      <AgeWheelPicker value={value} onChange={onChange} />
+
+      <AgeWheelPicker />
       {error && <Text style={styles.createFieldError}>{error}</Text>}
 
       <View style={styles.createActions}>
         <StepNav
           onBack={onBack}
-          nextLabel={submitting ? "Creating..." : "Create Account"}
-          nextDisabled={submitting}
+          nextLabel={isSubmitting ? "Creating..." : "Create Account"}
+          nextDisabled={isSubmitting}
           onNext={onRegister}
         />
       </View>

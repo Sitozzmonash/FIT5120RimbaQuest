@@ -1,39 +1,33 @@
-import React from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useMemo } from "react";
+import { StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { UserProfile } from "../../../types";
 import { WILDLIFE_FILTERS } from "../../../constants/seed";
-import { avatarImageFor } from "../../../constants/images";
+import { avatarImageFor, hasReferenceImage } from "../../../constants/images";
+import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
+import { useSpeciesCatalogStore } from "../../../store/useSpeciesCatalogStore";
+import { useUserStore } from "../../../store/useUserStore";
 import { ProfileHeader } from "./components/ProfileHeader";
 import { ProfileHero } from "./components/ProfileHero";
 import { OverallProgressCard } from "./components/OverallProgressCard";
-import { LogoutButton } from "./components/LogoutButton";
+import { ProfileActions } from "./components/ProfileActions";
 
-export function ProfileScreen({
-  currentUser,
-  displayProgress,
-  discoveredSpeciesCount,
-  onOpenEdit,
-  onLogout,
-  onBack,
-}: {
-  currentUser: UserProfile;
-  displayProgress: { found: number; total: number; xp: number; level?: number };
-  discoveredSpeciesCount: (cat: string) => { found: number; total: number };
-  onOpenEdit: () => void;
-  onLogout: () => void;
-  onBack: () => void;
-}) {
+export function ProfileScreen() {
   const insets = useSafeAreaInsets();
 
-  const categories = WILDLIFE_FILTERS.filter((item) => item.id !== "All").map(
-    (item) => ({
-      id: item.id,
-      label: item.label,
-      ...discoveredSpeciesCount(item.id),
-    }),
-  );
+  const currentUser = useUserStore((state) => state.currentUser);
+  const discovered = useUserStore((state) => state.discovered);
+  const species = useSpeciesCatalogStore((state) => state.species);
+  const displayProgress = useDisplayProgress();
+
+  const categories = useMemo(() => {
+    const supportedSpecies = species.filter(hasReferenceImage);
+    return WILDLIFE_FILTERS.filter((item) => item.id !== "All").map((item) => {
+      const items = supportedSpecies.filter((s) => s.category === item.id);
+      const found = items.filter((s) => discovered.includes(s.id)).length;
+      return { id: item.id, label: item.label, found, total: items.length };
+    });
+  }, [species, discovered]);
 
   return (
     <View style={styles.root}>
@@ -45,13 +39,13 @@ export function ProfileScreen({
       <View style={[styles.decoCircle1, { pointerEvents: "none" }]} />
       <View style={[styles.decoCircle2, { pointerEvents: "none" }]} />
 
-      <ScrollView
-        contentContainerStyle={[
+      <View
+        style={[
           styles.content,
-          { paddingTop: insets.top + 8, paddingBottom: 32 + insets.bottom },
+          { paddingTop: insets.top + 8, paddingBottom: 16 + insets.bottom },
         ]}
       >
-        <ProfileHeader title="My Profile" onBack={onBack} onEdit={onOpenEdit} />
+        <ProfileHeader title="My Profile" />
 
         <ProfileHero
           avatarImage={avatarImageFor(currentUser.avatar)}
@@ -59,16 +53,19 @@ export function ProfileScreen({
           level={displayProgress.level || currentUser.level}
         />
 
-        <OverallProgressCard progress={displayProgress} categories={categories} />
+        <OverallProgressCard
+          progress={displayProgress}
+          categories={categories}
+        />
 
-        <LogoutButton onPress={onLogout} />
-      </ScrollView>
+        <ProfileActions />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
+  root: { flex: 1, overflow: "hidden" },
   gradientBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
   decoCircle1: {
     position: "absolute",
@@ -90,5 +87,5 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFC314",
     opacity: 0.08,
   },
-  content: { paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
+  content: { flex: 1, paddingHorizontal: 18, paddingTop: 8, paddingBottom: 32 },
 });

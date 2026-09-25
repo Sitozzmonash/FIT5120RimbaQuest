@@ -1,28 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, StatusBar, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, BackHandler, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
-
-import {
-  GalleryItem,
-  IdentificationFeedback,
-  LocationItem,
-  LocationMode,
-  RecentCapture,
-  Screen,
-  Species,
-  SpeciesChatResponse,
-  UserProfile,
-  VerificationError,
-  BattleDifficulty,
-} from '../types';
+import { Screen } from '../types';
 import { API_BASE } from '../constants/config';
-import { CATEGORIES, OFFLINE_LOCATIONS, SEED_SPECIES, locationMatchesCategory, locationMatchesQuery } from '../constants/seed';
-import { SPECIES_IMAGES, hasReferenceImage } from '../constants/images';
-import { clearSession, loadSession, saveSession } from '../constants/session';
-import { levelForFound } from '../constants/progression';
 import { styles } from '../styles/theme';
 
 import { HomeScreen } from '../components/screens/HomeScreen';
@@ -35,1080 +15,147 @@ import {
   SpeciesScreen,
   SuccessScreen,
 } from '../components/screens/discovery';
-import { CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
-import { BattleArenaScreen, BattleSelectScreen } from '../components/screens/battle';
-import { useBattleSession } from '../hooks/useBattleSession';
+import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
+import { BattleArenaScreen, BattlePreparingModal, BattleSelectScreen } from '../components/screens/battle';
+import { AppLoadingModal } from '../components/common/AppLoadingModal';
+import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
-import { LoginScreen } from '../components/screens/LoginScreen';
+import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
-import { ForgotPasswordScreen } from '../components/screens/ForgotPasswordScreen';
-import { ResetPasswordScreen } from '../components/screens/ResetPasswordScreen';
+import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
-import { DEFAULT_AVATAR } from '../constants/images';
-
-const OFFLINE_SPECIES = Array.from(new Map(SEED_SPECIES.map((item) => [item.id, item])).values());
+import { useDiscoveryStore } from '../store/useDiscoveryStore';
+import { useNavigationStore } from '../store/useNavigationStore';
+import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
+import { useUserStore } from '../store/useUserStore';
+import { useBattleStore } from '../store/useBattleStore';
+import { useBattleSession } from '../hooks/useBattleSession';
+import { useUnlockedBattleSpecies } from '../hooks/useUnlockedBattleSpecies';
 
 const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const SESSION_EXPIRED_ERROR = 'RIMBAQUEST_SESSION_EXPIRED';
-const GUEST_USER: UserProfile = {
-  id: 0,
-  username: '',
-  email: '',
-  display_name: 'Explorer',
-  avatar: DEFAULT_AVATAR,
-  age: 10,
-  age_band: '8-11',
-  xp: 0,
-  level: 1,
-};
-
-function apiMessage(data: unknown, fallback: string): string {
-  if (data && typeof data === 'object' && 'detail' in data) {
-    const detail = (data as { detail: unknown }).detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail) && detail[0] && typeof detail[0] === 'object' && detail[0] && 'msg' in detail[0]) {
-      return String((detail[0] as { msg: string }).msg);
-    }
-  }
-  return fallback;
-}
-
-function isHttpPhotoUrl(url?: string | null): boolean {
-  return Boolean(url && /^https?:\/\//i.test(url));
-}
-
-function profileFromAuth(data: Record<string, unknown>): UserProfile {
-  return {
-    id: Number(data.child_id || data.id || 0),
-    username: String(data.username || ''),
-    email: String(data.email || ''),
-    display_name: String(data.display_name || data.username || 'Explorer'),
-    avatar: String(data.avatar || DEFAULT_AVATAR),
-    age: Number(data.age || 10),
-    age_band: '8-11',
-    xp: Number(data.xp || 0),
-    level: Number(data.level || 1),
-  };
-}
-
-async function readCurrentLocationLabel(): Promise<string | null> {
-  try {
-    const servicesEnabled = await Location.hasServicesEnabledAsync();
-    if (!servicesEnabled) return null;
-
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return null;
-
-    const position = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000)),
-    ]);
-
-    const { latitude, longitude } = position.coords;
-    try {
-      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const label = [place?.city || place?.subregion, place?.region || place?.country]
-        .filter(Boolean)
-        .join(', ');
-      if (label) return label;
-    } catch {
-      // Reverse geocoding can fail independently of the GPS fix (e.g. offline);
-      // fall back to coordinates rather than failing the whole lookup.
-    }
-
-    if (Platform.OS === 'web') return null;
-
-    return `Current location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`;
-  } catch {
-    return null;
-  }
-}
 
 export default function RimbaQuest() {
-  const [screen, setScreen] = useState<Screen>('account_entry');
-  const [history, setHistory] = useState<Screen[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [accessToken, setAccessToken] = useState('');
+  const screen = useNavigationStore((state) => state.screen);
 
-  const [species, setSpecies] = useState<Species[]>(OFFLINE_SPECIES);
-  const [selected, setSelected] = useState<Species>(OFFLINE_SPECIES[0]);
-  const [chosenSpeciesId, setChosenSpeciesId] = useState<string | null>(null);
-  const [category, setCategory] = useState('');
-  const [discovered, setDiscovered] = useState<string[]>([]);
-  const [filter, setFilter] = useState('All');
-
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [galleryPhotos, setGalleryPhotos] = useState<Record<string, GalleryItem[]>>({});
-  const [recentCaptures, setRecentCaptures] = useState<RecentCapture[]>([]);
-  const [discoveryLocation, setDiscoveryLocation] = useState('');
-  const [locationMode, setLocationMode] = useState<LocationMode>('manual');
-  const [locationNotice, setLocationNotice] = useState<string | null>(null);
-  const [resolvingLocation, setResolvingLocation] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [reportingVerification, setReportingVerification] = useState(false);
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const [verifyingPhoto, setVerifyingPhoto] = useState(false);
-  const [verificationError, setVerificationError] = useState<VerificationError | null>(null);
-  const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [verificationCandidates, setVerificationCandidates] = useState<Species[]>([]);
-  const [verificationPhotoUrl, setVerificationPhotoUrl] = useState<string | null>(null);
-  const [identificationFeedback, setIdentificationFeedback] = useState<IdentificationFeedback | null>(null);
-  const [identificationError, setIdentificationError] = useState<string | null>(null);
-  const [evaluatingIdentification, setEvaluatingIdentification] = useState(false);
-  const [firstDiscovery, setFirstDiscovery] = useState(true);
-  const [discoveryXpAwarded, setDiscoveryXpAwarded] = useState(0);
-  const [discoveryRecordedAt, setDiscoveryRecordedAt] = useState<string | null>(null);
-  const cameraRef = useRef<CameraView>(null);
-  const verificationAttemptRef = useRef(0);
-  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-
-  const [locations, setLocations] = useState<LocationItem[]>(OFFLINE_LOCATIONS);
-  const [selectedLocation, setSelectedLocation] = useState<LocationItem | null>(null);
-  const [locationSearch, setLocationSearch] = useState('');
-  const [locationCategoryFilter, setLocationCategoryFilter] = useState('All');
-  const [locationsLoading, setLocationsLoading] = useState(false);
-  const [locationsError, setLocationsError] = useState<string | null>(null);
-  const [locationDetailError, setLocationDetailError] = useState<string | null>(null);
-
-  const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
-  const [authUsername, setAuthUsername] = useState('');
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [authConfirmPassword, setAuthConfirmPassword] = useState('');
-  const [authAge, setAuthAge] = useState('10');
-  const [authAvatar, setAuthAvatar] = useState('hornbill');
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [authSubmitting, setAuthSubmitting] = useState(false);
-
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotToken, setForgotToken] = useState('');
-  const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
-  const [forgotFieldError, setForgotFieldError] = useState<string | null>(null);
-  const [forgotFormError, setForgotFormError] = useState<string | null>(null);
-  const [forgotSubmitting, setForgotSubmitting] = useState(false);
-
-  const [editDisplayName, setEditDisplayName] = useState('');
-  const [editAvatar, setEditAvatar] = useState(DEFAULT_AVATAR);
-  const [editAge, setEditAge] = useState('10');
-  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
-
-  const [battlePlayerCard, setBattlePlayerCard] = useState<Species | null>(null);
-  const [battleDifficulty, setBattleDifficulty] = useState<BattleDifficulty>('standard');
+  const bootstrapped = useUserStore((state) => state.bootstrapped);
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const childId = useUserStore((state) => state.currentUser.id);
+  const accessToken = useUserStore((state) => state.accessToken);
+  const expireSession = useUserStore((state) => state.expire);
+  const updateCurrentUser = useUserStore((state) => state.updateCurrentUser);
+  const battlePlayerCard = useBattleStore((state) => state.playerCard);
+  const battleDifficulty = useBattleStore((state) => state.difficulty);
+  const pendingBattle = useBattleStore((state) => state.pendingBattle);
+  const unlockedSpecies = useUnlockedBattleSpecies();
   const [cardUnlockSlots, setCardUnlockSlots] = useState<Record<string, number[]>>({});
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const resetAuthForm = () => {
-    setAuthUsername('');
-    setAuthEmail('');
-    setAuthPassword('');
-    setAuthConfirmPassword('');
-    setAuthAge('10');
-    setAuthAvatar('hornbill');
-    setFieldErrors({});
-    setAuthError(null);
-  };
-
-  const applyUser = (user: UserProfile, token: string, nextScreen: Screen = 'home') => {
-    setCurrentUser(user);
-    setAccessToken(token);
-    setGalleryPhotos({});
-    setIsLoggedIn(true);
-    void saveSession({ user, accessToken: token });
-    resetAuthForm();
-    setHistory([]);
-    setScreen(nextScreen);
-  };
-
-  const authenticatedHeaders = (token = accessToken): Record<string, string> =>
-    token ? { Authorization: `Bearer ${token}` } : {};
-
-  const expireSession = async () => {
-    await clearSession();
-    setAccessToken('');
-    setIsLoggedIn(false);
-    setCurrentUser(GUEST_USER);
-    setDiscovered([]);
-    setRecentCaptures([]);
-    setGalleryPhotos({});
-    resetAuthForm();
-    setAuthError('Your session is no longer valid. Please sign in again.');
-    setHistory([]);
-    setScreen('login');
-  };
-
   const battleSession = useBattleSession({
     apiBase: API_BASE,
-    childId: currentUser.id,
+    childId,
     token: accessToken,
     selectedSpecies: battlePlayerCard,
     difficulty: battleDifficulty,
     active: isLoggedIn,
     onSessionExpired: expireSession,
-    onXpAwarded: (totalXp) => {
-      setCurrentUser((prev) => {
-        const next = { ...prev, xp: totalXp };
-        void saveSession({ user: next, accessToken });
-        return next;
-      });
-    },
+    onXpAwarded: (xp) => updateCurrentUser({ xp }),
   });
 
-  const loadLocations = async () => {
-    setLocationsLoading(true);
-    setLocationsError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/locations`);
-      if (!res.ok) throw new Error('Unable to load locations');
-      const data = await res.json();
-      if (!data.items?.length) {
-        setLocations([]);
-        setLocationsError("We couldn't load wildlife locations right now. Please try again.");
-      } else {
-        setLocations(data.items);
-      }
-    } catch {
-      setLocationsError("We couldn't load wildlife locations right now. Please try again.");
-      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
-    } finally {
-      setLocationsLoading(false);
-    }
-  };
-
-  const refresh = async (childId: number, token = accessToken) => {
-    try {
-      const auth: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [speciesRes, collectionRes, profileRes, recentRes] = await Promise.all([
-        fetch(`${API_BASE}/api/v1/species`),
-        fetch(`${API_BASE}/api/v1/children/${childId}/collection`, { headers: auth }),
-        fetch(`${API_BASE}/api/v1/children/${childId}/profile`, { headers: auth }),
-        fetch(`${API_BASE}/api/v1/children/${childId}/recent-captures`, { headers: auth }),
-      ]);
-
-      if (profileRes.status === 401 || profileRes.status === 403) {
-        await expireSession();
-        setLoading(false);
-        return;
-      }
-
-      if (speciesRes.ok) setSpecies(await speciesRes.json());
-      if (collectionRes.ok) {
-        const data = await collectionRes.json();
-        setDiscovered(data.items.filter((item: { discovered: number }) => item.discovered).map((item: { id: string }) => item.id));
-      }
-      if (profileRes.ok) {
-        const data = await profileRes.json();
-        setCurrentUser((prev) => {
-          const next = { ...prev, ...data, username: String(data.username || prev.username) };
-          void saveSession({ user: next, accessToken: token });
-          return next;
-        });
-      }
-      if (recentRes.ok) {
-        const data = await recentRes.json();
-        setRecentCaptures(data.items);
-      }
-      await loadLocations();
-      setNotice(null);
-    } catch {
-      setNotice('You are exploring in offline demo mode. Discoveries will sync when the backend connects.');
-      setLocations((current) => (current.length ? current : OFFLINE_LOCATIONS));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshRecentCaptures = async (childId: number, token = accessToken) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${childId}/recent-captures`,
-        { headers: authenticatedHeaders(token) },
-      );
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        return;
-      }
-      if (response.ok) {
-        const data = await response.json();
-        setRecentCaptures(data.items);
-      }
-    } catch {
-      // A chat answer may still be visible even if the background refresh
-      // cannot update the home card immediately.
-    }
-  };
-
-  const sendSpeciesChatQuestion = async (
-    speciesId: string,
-    question: string,
-  ): Promise<SpeciesChatResponse> => {
-    if (!currentUser.id || !accessToken) {
-      throw new Error('Please sign in before using WildGuide.');
-    }
-    const response = await fetch(
-      `${API_BASE}/api/v1/children/${currentUser.id}/species/${encodeURIComponent(speciesId)}/chat`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authenticatedHeaders(),
-        },
-        body: JSON.stringify({ question }),
-      },
-    );
-    const data: unknown = await response.json().catch(() => ({}));
-    if (response.status === 401 || response.status === 403) {
-      await expireSession();
-      throw new Error(SESSION_EXPIRED_ERROR);
-    }
-    if (!response.ok) {
-      throw new Error(apiMessage(data, "I couldn't answer that right now. Please try again."));
-    }
-    if (!data || typeof data !== 'object' || !('answer' in data) ||
-      typeof data.answer !== 'string' || !data.answer.trim()) {
-      throw new Error("I couldn't answer that right now. Please try again.");
-    }
-    void refreshRecentCaptures(currentUser.id, accessToken);
-    const suggestions = 'suggested_questions' in data ? data.suggested_questions : undefined;
-    return {
-      answer: data.answer,
-      suggested_questions: Array.isArray(suggestions)
-        ? suggestions.filter((item): item is string => typeof item === 'string')
-        : undefined,
-    };
-  };
-
   useEffect(() => {
-    void (async () => {
-      const saved = await loadSession();
-      if (saved?.user?.id && saved.accessToken) {
-        setCurrentUser(saved.user);
-        setAccessToken(saved.accessToken);
-        setGalleryPhotos({});
-        setIsLoggedIn(true);
-        setScreen('home');
-      } else {
-        setScreen('account_entry');
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (isLoggedIn && currentUser.id && accessToken) {
-      void refresh(currentUser.id, accessToken);
-    }
-  }, [isLoggedIn, currentUser.id, accessToken]);
-
-  const prevScreenRef = useRef<Screen>(screen);
-  useEffect(() => {
-    if (prevScreenRef.current === 'battle_arena' && screen !== 'battle_arena') {
-      battleSession.reset();
-    }
-    prevScreenRef.current = screen;
-  }, [screen, battleSession]);
-
-  useEffect(() => {
-    battleSession.reset();
+    useBattleStore.getState().reset();
     setCardUnlockSlots({});
-  }, [accessToken, currentUser.id]);
+  }, [childId, accessToken]);
 
-  const supportedSpecies = useMemo(() => species.filter(hasReferenceImage), [species]);
-  const visibleSpecies = useMemo(
-    () =>
-      supportedSpecies
-        .filter((item) => filter === 'All' || item.category === filter)
-        .sort((left, right) => {
-          const unlockOrder = Number(discovered.includes(right.id)) - Number(discovered.includes(left.id));
-          return unlockOrder || left.common_name.localeCompare(right.common_name);
-        }),
-    [discovered, filter, supportedSpecies]
-  );
-  const unlockedSpeciesList = useMemo(
-    () => supportedSpecies.filter((item) => discovered.includes(item.id)),
-    [discovered, supportedSpecies]
-  );
-  const filteredLocations = useMemo(() => {
-    const query = locationSearch.trim().toLowerCase();
-    return locations.filter((loc) => {
-      const matchesQuery = locationMatchesQuery(loc, query);
-      return matchesQuery && locationMatchesCategory(loc, locationCategoryFilter);
-    });
-  }, [locations, locationSearch, locationCategoryFilter]);
+  useEffect(() => {
+    if (!pendingBattle || !isLoggedIn) return;
+    // Consume once, including when effects are replayed in development.
+    if (useBattleStore.getState().pendingBattle !== pendingBattle) return;
+    useBattleStore.getState().clearPendingBattle();
+    void battleSession.startBattle(pendingBattle.card, pendingBattle.difficulty);
+  }, [pendingBattle, isLoggedIn, battleSession.startBattle]);
 
-  const locationsEmptyMessage = locationSearch.trim()
-    ? 'No matching locations found.'
-    : locationCategoryFilter !== 'All'
-      ? 'No locations found for this wildlife category.'
-      : null;
-
-  const displayProgress = useMemo(() => {
-    const found = discovered.filter((id) => supportedSpecies.some((item) => item.id === id)).length;
-    return {
-      found,
-      total: supportedSpecies.length,
-      xp: currentUser.xp,
-      level: levelForFound(found),
-    };
-  }, [discovered, supportedSpecies, currentUser]);
-
-  const open = (next: Screen) => {
-    setHistory((cur) => [...cur, screen]);
-    setScreen(next);
-  };
-  const resetTo = (next: Screen) => {
-    setHistory([]);
-    setScreen(next);
-  };
-  const goBack = () => {
-    setHistory((cur) => {
-      const prev = cur[cur.length - 1];
-      setScreen(prev ?? (isLoggedIn ? 'home' : 'account_entry'));
-      return cur.slice(0, -1);
-    });
-  };
-
-  const resetDiscoverySelections = () => {
-    setCategory('');
-    setSelected(OFFLINE_SPECIES[0]);
-    setChosenSpeciesId(null);
-    setDiscoveryLocation('');
-    setLocationMode('manual');
-    setVerifyingPhoto(false);
-    setVerificationError(null);
-    setVerificationId(null);
-    setVerificationCandidates([]);
-    setVerificationPhotoUrl(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
-    setEvaluatingIdentification(false);
-    setReportingVerification(false);
-  };
-
-  const startDiscovery = (presetLocation?: string) => {
-    resetDiscoverySelections();
-    if (presetLocation) {
-      setDiscoveryLocation(presetLocation);
-      setLocationMode('manual');
+  const previousScreen = useRef<Screen>(screen);
+  useEffect(() => {
+    if (previousScreen.current === 'battle_arena' && screen !== 'battle_arena') {
+      battleSession.reset();
+      useBattleStore.getState().clearPendingBattle();
     }
-    setPhotoUri(null);
-    setPhotoError(null);
-    setSaveError(null);
-    setLocationNotice(null);
-    resetTo('photo');
-  };
+    previousScreen.current = screen;
+  }, [screen, battleSession.reset]);
 
-  const acceptPhoto = (uri: string, mimeType = 'image/jpeg') => {
-    const attempt = verificationAttemptRef.current + 1;
-    verificationAttemptRef.current = attempt;
-    setPhotoUri(uri);
-    setPhotoError(null);
-    setVerificationError(null);
-    open('photo_preview');
-    void verifyDiscoveryPhoto(uri, mimeType, attempt);
-  };
-
-  // Confirmed from the discard-photo dialog: abandon the in-progress
-  // discovery entirely and land back on Home, rather than stepping back
-  // one screen at a time.
-  const discardDiscovery = () => {
-    verificationAttemptRef.current += 1;
-    setPhotoUri(null);
-    setPhotoError(null);
-    setSaveError(null);
-    setLocationNotice(null);
-    resetDiscoverySelections();
-    resetTo('home');
-  };
-
-  const retakePhoto = () => {
-    verificationAttemptRef.current += 1;
-    setPhotoUri(null);
-    setPhotoError(null);
-    setVerificationError(null);
-    setVerificationId(null);
-    setVerificationCandidates([]);
-    setVerificationPhotoUrl(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
-    setScreen('photo');
-  };
-
-  const takePhoto = async () => {
-    try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-      if (photo?.uri) acceptPhoto(photo.uri);
-    } catch {
-      setPhotoError("Your photo couldn't be uploaded. Please try again.");
-    }
-  };
-
-  const pickFromGallery = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]?.uri) {
-        acceptPhoto(result.assets[0].uri, result.assets[0].mimeType || 'image/jpeg');
-      }
-    } catch {
-      setPhotoError("Your photo couldn't be uploaded. Please try again.");
-    }
-  };
-
-  const verifyDiscoveryPhoto = async (uri: string, mimeType: string, attempt: number) => {
-    setVerifyingPhoto(true);
-    setVerificationError(null);
-    setIdentificationFeedback(null);
-    setIdentificationError(null);
-    const form = new FormData();
-    if (Platform.OS === 'web') {
-      const blob = await fetch(uri).then((response) => response.blob());
-      form.append('photo', blob, `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`);
-    } else {
-      form.append('photo', {
-        uri,
-        name: `discovery.${mimeType === 'image/png' ? 'png' : mimeType === 'image/webp' ? 'webp' : 'jpg'}`,
-        type: mimeType,
-      } as unknown as Blob);
-    }
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications`, {
-        method: 'POST',
-        headers: authenticatedHeaders(),
-        body: form,
-      });
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) {
-        throw new Error(apiMessage(data, "We couldn't check your wildlife photo right now. Please try again."));
-      }
-      if (attempt !== verificationAttemptRef.current) return;
-      if (data.status !== 'verified') {
-        setVerificationError({
-          kind: 'unverified',
-          message: String(data.message || "We couldn't verify this animal. Please try another wildlife photo."),
-        });
-        return;
-      }
-      if (!data.verification_id || !Array.isArray(data.candidates) || data.candidates.length !== 4) {
-        throw new Error("We couldn't check your wildlife photo right now. Please try again.");
-      }
-      setVerificationId(String(data.verification_id));
-      setVerificationCandidates(data.candidates as Species[]);
-      setVerificationPhotoUrl(typeof data.photo_url === 'string' ? data.photo_url : null);
-      setScreen('category');
-    } catch (error) {
-      if (attempt !== verificationAttemptRef.current) return;
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setVerificationError({
-        kind: 'failed',
-        message: error instanceof Error ? error.message : "We couldn't check your wildlife photo right now. Please try again.",
-      });
-    } finally {
-      if (attempt === verificationAttemptRef.current) setVerifyingPhoto(false);
-    }
-  };
-
-  const evaluateIdentification = async (item: Species) => {
-    if (!verificationId || evaluatingIdentification) return;
-    setChosenSpeciesId(item.id);
-    setEvaluatingIdentification(true);
-    setIdentificationError(null);
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/evaluate`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-          body: JSON.stringify({ category, species_id: item.id }),
-        },
-      );
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(data, "We couldn't check your answer right now. Please try again."));
-      setIdentificationFeedback(data as IdentificationFeedback);
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setIdentificationError(error instanceof Error ? error.message : "We couldn't check your answer right now. Please try again.");
-    } finally {
-      setEvaluatingIdentification(false);
-    }
-  };
-
-  const continueWithVerifiedSpecies = (item: Species) => {
-    setSelected(item);
-    setChosenSpeciesId(item.id);
-    setIdentificationFeedback(null);
-    open('confirm');
-  };
-
-  const reportVerification = async () => {
-    if (!verificationId || reportingVerification || saving) return;
-    setReportingVerification(true);
-    setSaveError(null);
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/${verificationId}/report`,
-        { method: 'POST', headers: authenticatedHeaders() },
-      );
-      const data = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(data, "We couldn't report this result right now. Please try again."));
-      discardDiscovery();
-      setNotice('Thanks for reporting the AI result. No discovery or Wildlife Card was saved.');
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setSaveError(error instanceof Error ? error.message : "We couldn't report this result right now. Please try again.");
-    } finally {
-      setReportingVerification(false);
-    }
-  };
-
-  const recordDiscoveryWithLocation = async (locationLabel: string) => {
-    if (saving) return;
-    if (!photoUri) return;
-    if (!verificationId) {
-      setSaveError('This photo has not been verified. Please try another wildlife photo.');
+  useEffect(() => {
+    const speciesId = battlePlayerCard?.id;
+    if (screen !== 'battle_select' || !speciesId || !childId || !accessToken) {
+      setLoadingSlots(false);
       return;
     }
-    if (!locationLabel) {
-      setSaveError('Please choose or enter a discovery location.');
-      return;
-    }
-    setSaving(true);
-    setSaveError(null);
-    try {
-      const response = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/discoveries`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-        body: JSON.stringify({
-          verification_id: verificationId,
-          location_label: locationLabel,
-        }),
-      });
-      const responseData = await response.json().catch(() => ({}));
-      if (response.status === 401 || response.status === 403) {
-        await expireSession();
-        throw new Error(SESSION_EXPIRED_ERROR);
-      }
-      if (!response.ok) throw new Error(apiMessage(responseData, "Your discovery wasn't saved. Please try again."));
-      const result = responseData as {
-        first_discovery?: boolean;
-        total_xp?: number;
-        xp_awarded?: number;
-        recorded_at?: string;
-        photo_url?: string | null;
-      };
-      setFirstDiscovery(Boolean(result.first_discovery));
-      setDiscoveryXpAwarded(Number(result.xp_awarded ?? 0));
-      setDiscoveryRecordedAt(result.recorded_at ?? new Date().toISOString());
-      if (result.first_discovery && !discovered.includes(selected.id)) {
-        setDiscovered((current) => [...current, selected.id]);
-        setCurrentUser((prev) => ({ ...prev, xp: result.total_xp ?? prev.xp }));
-      }
-      setGalleryPhotos((current) => ({
-        ...current,
-        [selected.id]: [
-          { photo_url: result.photo_url || verificationPhotoUrl || photoUri, location_label: locationLabel },
-          ...(current[selected.id] ?? []),
-        ],
-      }));
-      await refresh(currentUser.id, accessToken);
-      open('success');
-    } catch (error) {
-      if (error instanceof Error && error.message === SESSION_EXPIRED_ERROR) return;
-      setSaveError(error instanceof Error ? error.message : "Your discovery wasn't saved. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const useAutomaticLocation = async () => {
-    setLocationMode('auto');
-    setLocationNotice(null);
-    setResolvingLocation(true);
-    try {
-      const label = await readCurrentLocationLabel();
-      if (!label) {
-        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
-        setLocationMode('manual');
-        return;
-      }
-      setDiscoveryLocation(label);
-    } finally {
-      setResolvingLocation(false);
-    }
-  };
-
-  const recordDiscovery = async () => {
-    if (saving) return;
-    if (locationMode === 'auto') {
-      const label = discoveryLocation.trim() || (await readCurrentLocationLabel());
-      if (!label) {
-        setLocationNotice('Your current location cannot be accessed. You can enter or select the location manually.');
-        setLocationMode('manual');
-        return;
-      }
-      setDiscoveryLocation(label);
-      await recordDiscoveryWithLocation(label);
-      return;
-    }
-    await recordDiscoveryWithLocation(discoveryLocation.trim());
-  };
-
-  const handleRegister = async () => {
-    if (authSubmitting) return;
-    setAuthError(null);
-    const errors: Record<string, string> = {};
-    const username = authUsername.trim();
-    if (!username) errors.username = 'Please enter a username.';
-    else if (username.length < 3 || username.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
-    if (!authAge.trim()) errors.age = 'Please enter your age.';
-    if (!authEmail.trim()) errors.email = 'Please enter an email address.';
-    else if (!EMAIL_RE.test(authEmail.trim())) errors.email = 'Please enter a valid email address.';
-    if (!authPassword) errors.password = 'Please create a password.';
-    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
-    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
-    setFieldErrors(errors);
-    if (Object.keys(errors).length) return;
-
-    setAuthSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username,
-          age: parseInt(authAge, 10) || 10,
-          email: authEmail.trim(),
-          password: authPassword,
-          avatar: authAvatar,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        let message = apiMessage(data, 'Registration was unsuccessful. Please try again.');
-        message = message.replace(/^String should have at least (\d+) characters?$/i, 'Password should have at least $1 characters');
-        if (/already taken/i.test(message)) setFieldErrors({ username: 'That username is already taken. Try another one.' });
-        else setAuthError(message);
-        return;
-      }
-      const token = String(data.access_token || '');
-      if (!token) throw new Error('Registration did not return an access token.');
-      applyUser(profileFromAuth(data), token);
-    } catch {
-      setAuthError('Registration was unsuccessful. Please try again.');
-    } finally {
-      setAuthSubmitting(false);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (authSubmitting) return;
-    setAuthError(null);
-    const errors: Record<string, string> = {};
-    if (!authUsername.trim()) errors.username = 'Please enter your username or email.';
-    if (!authPassword) errors.password = 'Please enter your password.';
-    setFieldErrors(errors);
-    if (Object.keys(errors).length) return;
-
-    setAuthSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username_or_email: authUsername.trim(), password: authPassword }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        if (res.status >= 500) setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
-        else setAuthError(apiMessage(data, 'Invalid username or password. Please try again.'));
-        return;
-      }
-      const token = String(data.access_token || '');
-      if (!token) throw new Error('Login did not return an access token.');
-      applyUser(profileFromAuth(data), token);
-    } catch {
-      setAuthError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setAuthSubmitting(false);
-    }
-  };
-
-  const validateUsernameBlur = () => {
-    const name = authUsername.trim();
-    if (!name) return;
-    if (name.length < 3 || name.length > 20) {
-      setFieldErrors((cur) => ({ ...cur, username: 'Username must be between 3 and 20 characters.' }));
-    } else {
-      setFieldErrors((cur) => {
-        const next = { ...cur };
-        delete next.username;
-        return next;
-      });
-    }
-  };
-
-  const validateEmailBlur = () => {
-    const email = authEmail.trim();
-    if (!email) return;
-    if (!EMAIL_RE.test(email)) {
-      setFieldErrors((cur) => ({ ...cur, email: 'Please enter a valid email address.' }));
-    } else {
-      setFieldErrors((cur) => {
-        const next = { ...cur };
-        delete next.email;
-        return next;
-      });
-    }
-  };
-
-  // Gates step 1 -> 2 of the Create Account wizard: unlike the blur handlers
-  // above, this checks both fields synchronously (e.g. a field the user never
-  // focused) and reports whether it's safe to advance.
-  const validateStep1 = (): boolean => {
-    const name = authUsername.trim();
-    const email = authEmail.trim();
-    const errors: { username?: string; email?: string; password?: string; confirmPassword?: string } = {};
-    if (!name) errors.username = 'Please enter a username.';
-    else if (name.length < 3 || name.length > 20) errors.username = 'Username must be between 3 and 20 characters.';
-    if (!email) errors.email = 'Please enter an email address.';
-    else if (!EMAIL_RE.test(email)) errors.email = 'Please enter a valid email address.';
-    if (!authPassword) errors.password = 'Please create a password.';
-    if (!authConfirmPassword) errors.confirmPassword = 'Please confirm your password.';
-    else if (authPassword !== authConfirmPassword) errors.confirmPassword = 'Passwords do not match.';
-
-    setFieldErrors((cur) => {
-      const next = { ...cur };
-      if (errors.username) next.username = errors.username;
-      else delete next.username;
-      if (errors.email) next.email = errors.email;
-      else delete next.email;
-      if (errors.password) next.password = errors.password;
-      else delete next.password;
-      if (errors.confirmPassword) next.confirmPassword = errors.confirmPassword;
-      else delete next.confirmPassword;
-      return next;
-    });
-    return !errors.username && !errors.email && !errors.password && !errors.confirmPassword;
-  };
-
-  const handleForgotRequest = async () => {
-    if (forgotSubmitting) return;
-    setForgotFormError(null);
-    if (!forgotEmail.trim()) {
-      setForgotFieldError('Please enter an email.');
-      return;
-    }
-    if (!EMAIL_RE.test(forgotEmail.trim())) {
-      setForgotFieldError('Please enter a valid email address.');
-      return;
-    }
-    setForgotFieldError(null);
-    setForgotSubmitting(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail.trim() }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setForgotFieldError(apiMessage(data, 'No RimbaQuest account was found for this email.'));
-        return;
-      }
-      setForgotToken('');
-      open('reset_password');
-    } catch {
-      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setForgotSubmitting(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (forgotSubmitting) return;
-    setForgotFieldError(null);
-    if (!forgotNewPassword) {
-      setForgotFormError('Please create a password.');
-      return;
-    }
-    if (forgotNewPassword !== forgotConfirmPassword) {
-      setForgotFieldError('Passwords do not match.');
-      return;
-    }
-    setForgotSubmitting(true);
-    setForgotFormError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: forgotEmail.trim(),
-          recovery_token: forgotToken.trim().toUpperCase(),
-          new_password: forgotNewPassword,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const message = apiMessage(data, 'Invalid or expired recovery code.');
-        setForgotFormError(/expired/i.test(message) ? `${message} Please request a new code.` : message);
-        return;
-      }
-      Alert.alert('Success', 'Password successfully updated!');
-      setForgotToken('');
-      setForgotNewPassword('');
-      setForgotConfirmPassword('');
-      resetTo('login');
-    } catch {
-      setForgotFormError("We couldn't reach RimbaQuest right now. Please try again.");
-    } finally {
-      setForgotSubmitting(false);
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    const username = editDisplayName.trim() || currentUser.username;
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      setProfileSaveError('Username must be 3–20 letters, numbers, hyphens, or underscores, with no spaces.');
-      return;
-    }
-    setProfileSaveError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/profile`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...authenticatedHeaders() },
-        body: JSON.stringify({
-          username,
-          avatar: editAvatar,
-          age: parseInt(editAge, 10) || currentUser.age,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setProfileSaveError(apiMessage(data, 'We could not save your profile changes.'));
-        return;
-      }
-      setCurrentUser((prev) => {
-        const updatedUsername = String(data.username || username || prev.username);
-        const next = { ...prev, ...data, username: updatedUsername, display_name: String(data.display_name || updatedUsername) };
-        void saveSession({ user: next, accessToken });
-        return next;
-      });
-    } catch {
-      setProfileSaveError("We couldn't reach RimbaQuest. Your profile was not changed.");
-      return;
-    }
-    goBack();
-  };
-
-  const handleLogout = () => {
-    void clearSession();
-    setAccessToken('');
-    setIsLoggedIn(false);
-    setCurrentUser(GUEST_USER);
-    setDiscovered([]);
-    setRecentCaptures([]);
-    setGalleryPhotos({});
-    setNotice(null);
-    resetAuthForm();
-    resetTo('account_entry');
-  };
-
-  const loadLocationDetail = async (loc: LocationItem) => {
-    setSelectedLocation(loc);
-    setLocationDetailError(null);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/locations/${loc.id}`);
-      if (!res.ok) throw new Error('fail');
-      const data = await res.json();
-      setSelectedLocation({
-        ...loc,
-        ...data,
-        facilities: Array.isArray(data.facilities) ? data.facilities : loc.facilities,
-      });
-    } catch {
-      if (!loc.description) {
-        setLocationDetailError("We couldn't load this location. Please try again.");
-      }
-    }
-  };
-
-  const loadSpeciesGallery = async (speciesId: string) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/gallery`, {
-        headers: authenticatedHeaders(),
-      });
-      if (res.status === 401 || res.status === 403) {
-        await expireSession();
-        return;
-      }
-      if (!res.ok) return;
-      const data = await res.json();
-      const remote = ((data.items || []) as GalleryItem[]).filter((item) => isHttpPhotoUrl(item.photo_url));
-      setGalleryPhotos((current) => ({ ...current, [speciesId]: remote }));
-    } catch {
-      // Keep the current in-memory gallery if the remote request is temporarily unavailable.
-    }
-  };
-
-  const loadBattleCardSlots = async (speciesId: string) => {
-    if (!currentUser.id || !accessToken) return;
+    const controller = new AbortController();
     setLoadingSlots(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/v1/children/${currentUser.id}/species/${speciesId}/battle-card`, {
-        headers: authenticatedHeaders(),
-      });
-      if (res.status === 401 || res.status === 403) {
-        await expireSession();
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.card?.unlocked_abilities)) {
-          setCardUnlockSlots((prev) => ({
-            ...prev,
+    void (async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/v1/children/${childId}/species/${encodeURIComponent(speciesId)}/battle-card`,
+          { headers: { Authorization: `Bearer ${accessToken}` }, signal: controller.signal },
+        );
+        if (controller.signal.aborted) return;
+        if (response.status === 401 || response.status === 403) {
+          await expireSession();
+          return;
+        }
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!controller.signal.aborted && Array.isArray(data.card?.unlocked_abilities)) {
+          setCardUnlockSlots((current) => ({
+            ...current,
             [speciesId]: data.card.unlocked_abilities,
           }));
         }
+      } catch {
+        // Retain cached unlocks while offline; the server validates battle moves.
+      } finally {
+        if (!controller.signal.aborted) setLoadingSlots(false);
       }
-    } catch {
-      // Keep previous cached unlocks on network error
-    } finally {
-      setLoadingSlots(false);
-    }
-  };
+    })();
+    return () => controller.abort();
+  }, [screen, battlePlayerCard?.id, childId, accessToken, expireSession]);
 
-  const initBattle = async (card: Species, diff: BattleDifficulty = battleDifficulty) => {
-    setBattlePlayerCard(card);
-    open('battle_arena');
-    void battleSession.startBattle(card, diff);
-  };
+  useEffect(() => {
+    void useUserStore.getState().restoreSession();
+  }, []);
 
-  const discoveryPhoto = photoUri ? { uri: photoUri } : null;
-  const profileDirty =
-    editDisplayName !== currentUser.username ||
-    editAvatar !== currentUser.avatar ||
-    editAge !== String(currentUser.age);
+  useEffect(() => {
+    void useSpeciesCatalogStore.getState().loadSpecies();
+  }, []);
 
-  if (loading) {
+  // goBack() lands here once its history stack is empty.
+  useEffect(() => {
+    useNavigationStore.getState().setFallbackScreen(isLoggedIn ? 'home' : 'account_entry');
+  }, [isLoggedIn]);
+
+  const [exitConfirmVisible, setExitConfirmVisible] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onHardwareBackPress = () => {
+      const { screen: currentScreen, history, goBack } = useNavigationStore.getState();
+      // The arena confirms surrender before allowing a live battle to close.
+      if (currentScreen === 'battle_arena') return false;
+      if (history.length > 0) {
+        goBack();
+        return true;
+      }
+
+      setExitConfirmVisible(true);
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, []);
+
+  const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
+
+  if (!bootstrapped) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.loading}>
@@ -1127,208 +174,46 @@ export default function RimbaQuest() {
     >
       <StatusBar barStyle="dark-content" />
       <View style={[styles.page, fullBleed && styles.pageTransparent]}>
-        {screen === 'home' && isLoggedIn && (
-          <HomeScreen
-            currentUser={currentUser}
-            displayProgress={displayProgress}
-            recentCaptures={recentCaptures}
-            notice={notice}
-            onOpenProfile={() => open('progress')}
-            onOpenCollection={() => open('collection')}
-            onOpenLocations={() => open('locations')}
-            onStartDiscovery={() => startDiscovery()}
-            onOpenBattle={() => open('battle_select')}
-          />
+        {screen === 'home' && isLoggedIn && <HomeScreen />}
+
+        {screen === 'locations' && <LocationsScreen />}
+
+        {screen === 'location_detail' && <LocationDetailScreen />}
+
+        {screen === 'photo' && <CameraScreen />}
+
+        {screen === 'photo_preview' && discoveryPhotoUri && <PhotoPreviewScreen />}
+
+        {screen === 'category' && discoveryPhotoUri && <CategoryScreen />}
+
+        {screen === 'species' && discoveryPhotoUri && <SpeciesScreen />}
+
+        {screen === 'confirm' && discoveryPhotoUri && <ConfirmScreen />}
+
+        {screen === 'success' && <SuccessScreen />}
+
+        {screen === 'collection' && <CollectionScreen />}
+
+        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery') && (
+          <SpeciesDetailScreen />
         )}
 
-        {screen === 'locations' && (
-          <LocationsScreen
-            locations={filteredLocations}
-            hasLocations={locations.length > 0}
-            search={locationSearch}
-            setSearch={setLocationSearch}
-            categoryFilter={locationCategoryFilter}
-            setCategoryFilter={setLocationCategoryFilter}
-            loading={locationsLoading}
-            error={locationsError}
-            emptyMessage={locationsEmptyMessage}
-            onRetry={() => void loadLocations()}
-            onSelectLocation={(loc) => {
-              open('location_detail');
-              void loadLocationDetail(loc);
-            }}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'quiz' && <AbilityQuizScreen />}
 
-        {screen === 'location_detail' && selectedLocation && (
-          <LocationDetailScreen
-            location={selectedLocation}
-            error={locationDetailError}
-            onRetry={() => void loadLocationDetail(selectedLocation)}
-            onBack={goBack}
-            onRecordHere={(locName) => startDiscovery(locName)}
-          />
-        )}
-
-        {screen === 'photo' && (
-          <CameraScreen
-            cameraRef={cameraRef}
-            cameraPermission={cameraPermission}
-            photoError={photoError}
-            lastCaptureUri={recentCaptures[0]?.photo_url ?? null}
-            onRequestPermission={requestCameraPermission}
-            onTakePhoto={() => void takePhoto()}
-            onPickFromGallery={() => void pickFromGallery()}
-            onBack={goBack}
-          />
-        )}
-
-        {screen === 'photo_preview' && discoveryPhoto && (
-          <PhotoPreviewScreen
-            photo={discoveryPhoto}
-            verifying={verifyingPhoto}
-            verificationError={verificationError}
-            onRetake={retakePhoto}
-          />
-        )}
-
-        {screen === 'category' && discoveryPhoto && (
-          <CategoryScreen
-            photo={discoveryPhoto}
-            categories={CATEGORIES}
-            category={category}
-            onSelectCategory={(cat) => {
-              setCategory(cat);
-              setIdentificationError(null);
-              open('species');
-            }}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
-
-        {screen === 'species' && discoveryPhoto && (
-          <SpeciesScreen
-            photo={discoveryPhoto}
-            category={category}
-            speciesList={verificationCandidates}
-            selectedId={chosenSpeciesId}
-            evaluating={evaluatingIdentification}
-            feedback={identificationFeedback}
-            errorMessage={identificationError}
-            onSubmit={(item) => void evaluateIdentification(item)}
-            onContinue={continueWithVerifiedSpecies}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
-
-        {screen === 'confirm' && discoveryPhoto && (
-          <ConfirmScreen
-            photo={discoveryPhoto}
-            selected={selected}
-            candidates={verificationCandidates}
-            discoveryLocation={discoveryLocation}
-            setDiscoveryLocation={setDiscoveryLocation}
-            locationMode={locationMode}
-            setLocationMode={(mode) => {
-              if (mode === 'auto') {
-                void useAutomaticLocation();
-                return;
-              }
-              setLocationMode(mode);
-              setLocationNotice(null);
-            }}
-            resolvingLocation={resolvingLocation}
-            locationOptions={locations}
-            locationNotice={locationNotice}
-            saveError={saveError}
-            saving={saving}
-            reporting={reportingVerification}
-            onConfirm={() => void recordDiscovery()}
-            onReport={() => void reportVerification()}
-            onBack={goBack}
-            onDiscard={discardDiscovery}
-          />
-        )}
-
-        {screen === 'success' && (
-          <SuccessScreen
-            selected={selected}
-            discoveryLocation={discoveryLocation}
-            firstDiscovery={firstDiscovery}
-            xpAwarded={discoveryXpAwarded}
-            recordedAt={discoveryRecordedAt}
-            onViewCard={() => open('about')}
-            onRecordAnother={() => startDiscovery()}
-          />
-        )}
-
-        {screen === 'collection' && (
-          <CollectionScreen
-            speciesList={visibleSpecies}
-            discoveredIds={discovered}
-            filter={filter}
-            setFilter={setFilter}
-            displayProgress={displayProgress}
-            onSelectSpecies={(item) => {
-              setSelected(item);
-              void loadSpeciesGallery(item.id);
-              open('about');
-            }}
-            onSelectLocked={(item) => {
-              setSelected(item);
-              open('locked');
-            }}
-            onStartDiscovery={() => {
-              resetDiscoverySelections();
-              setPhotoUri(null);
-              setPhotoError(null);
-              setSaveError(null);
-              setLocationNotice(null);
-              open('photo');
-            }}
-            onBack={goBack}
-          />
-        )}
-
-        {(screen === 'about' || screen === 'battle_stats' || screen === 'facts' || screen === 'gallery' || screen === 'quiz') && (
-          <SpeciesDetailScreen
-            species={selected}
-            screen={screen}
-            photos={galleryPhotos[selected.id] ?? []}
-            token={accessToken}
-            onTabChange={(tab) => open(tab)}
-            onStartBattle={() => void initBattle(selected, battleDifficulty)}
-            childId={currentUser.id}
-            onChatSend={(question) => sendSpeciesChatQuestion(selected.id, question)}
-            onBack={() => resetTo('collection')}
-          />
-        )}
-
-        {screen === 'locked' && (
-          <LockedScreen
-            species={selected}
-            onBack={() => resetTo('collection')}
-          />
-        )}
+        {screen === 'locked' && <LockedScreen />}
 
         {screen === 'battle_select' && (
           <BattleSelectScreen
-            unlockedSpecies={unlockedSpeciesList}
+            unlockedSpecies={unlockedSpecies}
             selectedCard={battlePlayerCard}
             difficulty={battleDifficulty}
             unlockedAbilitiesMap={cardUnlockSlots}
             loadingSlots={loadingSlots}
-            onSelectCard={(card) => {
-              setBattlePlayerCard(card);
-              void loadBattleCardSlots(card.id);
-            }}
-            onChangeDifficulty={setBattleDifficulty}
-            onStartBattle={() => battlePlayerCard && void initBattle(battlePlayerCard, battleDifficulty)}
-            onStartDiscovery={() => startDiscovery()}
-            onBack={goBack}
+            onSelectCard={useBattleStore.getState().selectCard}
+            onChangeDifficulty={useBattleStore.getState().setDifficulty}
+            onStartBattle={() => battlePlayerCard && useBattleStore.getState().startBattle(battlePlayerCard)}
+            onStartDiscovery={() => useDiscoveryStore.getState().start()}
+            onBack={() => useNavigationStore.getState().goBack()}
           />
         )}
 
@@ -1352,144 +237,39 @@ export default function RimbaQuest() {
             onSurrender={battleSession.surrender}
             onRetry={battleSession.retry}
             onRefresh={battleSession.refreshState}
-            onRestart={() => { battleSession.reset(); void battleSession.startBattle(battlePlayerCard, battleDifficulty); }}
+            onRestart={() => {
+              battleSession.reset();
+              void battleSession.startBattle(battlePlayerCard, battleDifficulty);
+            }}
             onBattleAgain={() => void battleSession.startBattle(battlePlayerCard, battleDifficulty)}
-            onSelectAnotherCard={() => resetTo('battle_select')}
-            onBack={goBack}
+            onSelectAnotherCard={() => useNavigationStore.getState().resetTo('battle_select')}
+            onBack={() => useNavigationStore.getState().goBack()}
+            onLeave={() => useNavigationStore.getState().resetTo('home')}
           />
         )}
 
-        {screen === 'account_entry' && (
-          <AccountEntryScreen
-            onLogin={() => {
-              resetAuthForm();
-              open('login');
-            }}
-            onCreateAccount={() => {
-              resetAuthForm();
-              open('create_account');
-            }}
-          />
-        )}
+        {screen === 'account_entry' && <AccountEntryScreen />}
 
-        {screen === 'login' && (
-          <LoginScreen
-            username={authUsername}
-            setUsername={setAuthUsername}
-            password={authPassword}
-            setPassword={setAuthPassword}
-            fieldErrors={fieldErrors}
-            authError={authError}
-            submitting={authSubmitting}
-            onLogin={() => void handleLogin()}
-            onForgotPassword={() => {
-              setForgotFieldError(null);
-              setForgotFormError(null);
-              open('forgot_password');
-            }}
-            onCreateAccount={() => {
-              resetAuthForm();
-              open('create_account');
-            }}
-          />
-        )}
+        {screen === 'login' && <LoginScreen />}
 
-        {screen === 'create_account' && (
-          <AccountCreationScreen
-            username={authUsername}
-            setUsername={setAuthUsername}
-            age={authAge}
-            setAge={setAuthAge}
-            email={authEmail}
-            setEmail={setAuthEmail}
-            password={authPassword}
-            setPassword={setAuthPassword}
-            confirmPassword={authConfirmPassword}
-            setConfirmPassword={setAuthConfirmPassword}
-            avatar={authAvatar}
-            setAvatar={setAuthAvatar}
-            fieldErrors={fieldErrors}
-            authError={authError}
-            submitting={authSubmitting}
-            onRegister={() => void handleRegister()}
-            onLogin={() => {
-              resetAuthForm();
-              open('login');
-            }}
-            onBack={goBack}
-            onValidateStep1={validateStep1}
-            onBlurUsername={validateUsernameBlur}
-            onBlurEmail={validateEmailBlur}
-          />
-        )}
+        {screen === 'create_account' && <AccountCreationScreen />}
 
-        {screen === 'forgot_password' && (
-          <ForgotPasswordScreen
-            email={forgotEmail}
-            setEmail={setForgotEmail}
-            fieldError={forgotFieldError}
-            formError={forgotFormError}
-            submitting={forgotSubmitting}
-            onSendRecoveryLink={() => void handleForgotRequest()}
-            onBackToLogin={() => resetTo('login')}
-          />
-        )}
+        {screen === 'forgot_password' && <ForgotPasswordScreen />}
 
-        {screen === 'reset_password' && (
-          <ResetPasswordScreen
-            email={forgotEmail}
-            setEmail={setForgotEmail}
-            code={forgotToken}
-            setCode={setForgotToken}
-            newPassword={forgotNewPassword}
-            setNewPassword={setForgotNewPassword}
-            confirmPassword={forgotConfirmPassword}
-            setConfirmPassword={setForgotConfirmPassword}
-            fieldError={forgotFieldError}
-            formError={forgotFormError}
-            submitting={forgotSubmitting}
-            onResetPassword={() => void handleResetPassword()}
-            onBackToLogin={() => resetTo('login')}
-          />
-        )}
+        {screen === 'reset_password' && <ResetPasswordScreen />}
 
-        {screen === 'profile_edit' && (
-          <ProfileEditScreen
-            displayName={editDisplayName}
-            setDisplayName={setEditDisplayName}
-            email={currentUser.email}
-            age={editAge}
-            setAge={setEditAge}
-            avatar={editAvatar}
-            setAvatar={setEditAvatar}
-            onSave={() => void handleSaveProfile()}
-            onBack={goBack}
-            isDirty={profileDirty}
-            error={profileSaveError}
-          />
-        )}
+        {screen === 'profile_edit' && <ProfileEditScreen />}
 
-        {screen === 'progress' && (
-          <ProfileScreen
-            currentUser={currentUser}
-            displayProgress={displayProgress}
-            discoveredSpeciesCount={(cat) => {
-              const items = supportedSpecies.filter((item) => item.category === cat);
-              const found = items.filter((item) => discovered.includes(item.id)).length;
-              return { found, total: items.length };
-            }}
-            onOpenEdit={() => {
-            setEditDisplayName(currentUser.username);
-            setEditAvatar(currentUser.avatar);
-            setEditAge(String(currentUser.age));
-            setProfileSaveError(null);
-              open('profile_edit');
-            }}
-            onLogout={handleLogout}
-            onBack={goBack}
-          />
-        )}
+        {screen === 'progress' && <ProfileScreen />}
       </View>
+
+      <BattlePreparingModal visible={screen === 'battle_arena' && battleSession.loading} />
+      <AppLoadingModal />
+      <ExitConfirmModal
+        visible={exitConfirmVisible}
+        onStay={() => setExitConfirmVisible(false)}
+        onLeave={() => BackHandler.exitApp()}
+      />
     </SafeAreaView>
   );
 }

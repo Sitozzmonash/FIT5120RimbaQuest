@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import httpx
@@ -8,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.core import seed
 from app.core.database import engine
 from app.main import app
 from app.services import chatbot
@@ -49,12 +51,6 @@ def unlock(child_id: int, species_id: str) -> None:
         )
 
 
-@pytest.fixture(autouse=True)
-def use_deterministic_chat_fallback(monkeypatch):
-    # No test can accidentally make a network call with a local developer key.
-    monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "")
-
-
 def chat(child_id: int, token: str, species_id: str, question: str):
     return client.post(
         f"/api/v1/children/{child_id}/species/{species_id}/chat",
@@ -63,7 +59,14 @@ def chat(child_id: int, token: str, species_id: str, question: str):
     )
 
 
-def test_chat_requires_own_discovered_card():
+@pytest.fixture(autouse=True)
+def use_deterministic_chat_fallback(monkeypatch):
+    # No test can accidentally use a developer's live provider credential.
+    monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "")
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", False)
+
+
+def test_chat_requires_the_authenticated_childs_discovered_card():
     owner_id, owner_token = register_child("chat_owner")
     _, other_token = register_child("chat_other")
     unlock(owner_id, CURRENT_SPECIES_ID)
@@ -82,18 +85,22 @@ def test_chat_requires_own_discovered_card():
     assert undiscovered.json()["detail"] == "Discovered Wildlife Card not found"
 
 
-def test_chat_mock_answers_only_from_current_species_and_applies_guardrails():
+def test_mock_answers_current_card_only_and_applies_guardrails():
     child_id, token = register_child("chat_rules")
     unlock(child_id, CURRENT_SPECIES_ID)
 
     happy = chat(child_id, token, CURRENT_SPECIES_ID, "What does this animal eat?")
     assert happy.status_code == 200, happy.text
-    assert happy.json() == {
-        "species_id": CURRENT_SPECIES_ID,
-        "answer": "Asian Elephant's diet includes: Grasses, leaves, bark and fruit.",
-        "source": "mock",
-        "fallback": None,
-    }
+    assert happy.json()["answer"] == "Asian Elephant's diet includes: Grasses, leaves, bark and fruit."
+    assert happy.json()["source"] == "mock"
+    assert happy.json()["citations"] == [
+        {
+            "source_id": "rimbaquest-card",
+            "source_name": "RimbaQuest verified Wildlife Card",
+            "source_url": None,
+            "excerpt": "Diet: Grasses, leaves, bark and fruit.",
+        }
+    ]
 
     empty = chat(child_id, token, CURRENT_SPECIES_ID, "   ")
     assert empty.status_code == 400
@@ -103,10 +110,11 @@ def test_chat_mock_answers_only_from_current_species_and_applies_guardrails():
     assert other_species.status_code == 200
     assert other_species.json()["answer"] == "I can only answer questions about Asian Elephant on this card."
     assert other_species.json()["fallback"] == "other_species"
+    assert other_species.json()["citations"] == []
 
     unsupported = chat(child_id, token, CURRENT_SPECIES_ID, "How long does this animal live?")
     assert unsupported.status_code == 200
-    assert unsupported.json()["answer"] == chatbot.VERIFIED_INFO_UNAVAILABLE_MESSAGE
+    assert unsupported.json()["answer"] == chatbot.RELIABLE_INFO_UNAVAILABLE_MESSAGE
     assert unsupported.json()["fallback"] == "unsupported"
 
     unrelated = chat(child_id, token, CURRENT_SPECIES_ID, "What is the capital of Malaysia?")
@@ -129,7 +137,124 @@ def test_chat_mock_answers_only_from_current_species_and_applies_guardrails():
     assert activity == "chat"
 
 
-def test_configured_deepseek_selects_an_approved_field_only(monkeypatch):
+def test_team_verified_fun_facts_are_available_as_chat_evidence():
+    child_id, token = register_child("chat_facts")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    with engine.begin() as connection:
+        connection.execute(
+            text("""UPDATE species_fun_facts
+                    SET verification_status='team-verified',
+                        verified_by='test content reviewer',
+                        verified_at=:now
+                    WHERE species_id=:species_id AND display_order=1"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        )
+
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me a fun fact")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert body["answer"].startswith("Here is a team-verified fun fact:")
+    assert body["citations"][0]["source_id"] == "rimbaquest-fun-facts"
+    assert body["citations"][0]["source_name"] == "RimbaQuest team-verified Fun Facts"
+    assert body["citations"][0]["source_url"] is None
+
+
+def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
+    child_id, token = register_child("chat_eaza")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    # Test against the committed review data, not a hand-written row, so a
+    # source or review-metadata change cannot silently remove this capability.
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+
+    response = chat(
+        child_id,
+        token,
+        CURRENT_SPECIES_ID,
+        "How tall is an Asian Elephant calf when it is born?",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert "about 94 cm overall" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "eaza",
+            "source_name": "EAZA Elephant Best Practice Guidelines",
+            "source_url": "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf",
+            "excerpt": (
+                "EAZA's table, citing Dale (2010), reports Asian elephant newborn shoulder "
+                "heights in human care: 95.9 ± 1.2 cm for males (n=19) and 91.9 ± 1.3 "
+                "cm for females (n=23). That is about 94 cm overall; individual calves vary."
+            ),
+        }
+    ]
+
+
+def test_wikipedia_live_lookup_is_current_species_only_and_cited(monkeypatch):
+    child_id, token = register_child("chat_wikipedia")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+    requests: list[dict] = []
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "query": {
+                    "pages": {
+                        "1": {
+                            "title": "Asian elephant",
+                            "extract": "The Asian elephant is the only living species in the genus Elephas.",
+                        }
+                    }
+                }
+            }
+
+    def fake_get(url, **kwargs):
+        requests.append({"url": url, **kwargs})
+        return FakeResponse()
+
+    monkeypatch.setattr(chatbot.httpx, "get", fake_get)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me more about the Asian Elephant.")
+
+    assert response.status_code == 200, response.text
+    assert requests[0]["params"]["titles"] == "Asian Elephant"
+    assert "Tell me more" not in str(requests[0]["params"])
+    assert requests[0]["headers"]["User-Agent"] == chatbot.WIKIPEDIA_USER_AGENT
+    assert response.json()["answer"].startswith("According to Wikipedia")
+    assert response.json()["citations"] == [
+        {
+            "source_id": "wikipedia",
+            "source_name": "Wikipedia (live supplementary reference)",
+            "source_url": "https://en.wikipedia.org/wiki/Asian_elephant",
+            "excerpt": "The Asian elephant is the only living species in the genus Elephas.",
+        }
+    ]
+
+
+def test_wikipedia_is_not_requested_for_newborn_height(monkeypatch):
+    child_id, token = register_child("chat_wikipedia_limits")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+
+    def no_network(*_args, **_kwargs):
+        raise AssertionError("newborn-height questions must not use Wikipedia")
+
+    monkeypatch.setattr(chatbot.httpx, "get", no_network)
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "How tall is an Asian Elephant calf when it is born?")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["citations"][0]["source_id"] == "eaza"
+
+
+def test_configured_deepseek_must_cite_server_selected_evidence(monkeypatch):
     child_id, token = register_child("chat_deepseek")
     unlock(child_id, CURRENT_SPECIES_ID)
     monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "configured")
@@ -140,7 +265,21 @@ def test_configured_deepseek_selects_an_approved_field_only(monkeypatch):
             return None
 
         def json(self):
-            return {"choices": [{"message": {"content": json.dumps({"field": "diet"})}}]}
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "status": "answered",
+                                    "answer": "Asian Elephants eat grasses, leaves, bark and fruit.",
+                                    "evidence_ids": ["card:diet"],
+                                }
+                            )
+                        }
+                    }
+                ]
+            }
 
     def fake_post(_url, **kwargs):
         requests.append(kwargs["json"])
@@ -151,19 +290,177 @@ def test_configured_deepseek_selects_an_approved_field_only(monkeypatch):
 
     assert response.status_code == 200, response.text
     assert response.json()["source"] == "deepseek"
-    assert response.json()["answer"] == "Asian Elephant's diet includes: Grasses, leaves, bark and fruit."
+    assert response.json()["citations"][0]["excerpt"] == "Diet: Grasses, leaves, bark and fruit."
     provider_input = json.loads(requests[0]["messages"][1]["content"])
-    assert set(provider_input) == {"question", "allowed_fields"}
-    assert set(provider_input["allowed_fields"]).issubset(chatbot.APPROVED_FIELD_LABELS)
+    assert set(provider_input) == {"current_species", "question", "evidence"}
+    assert any(item["id"] == "card:diet" for item in provider_input["evidence"])
     request_text = json.dumps(requests[0], ensure_ascii=False)
     assert "source_url" not in request_text
-    assert "fact_text" not in request_text
-    assert "verification_status" not in request_text
     assert "child_id" not in request_text
     assert requests[0]["response_format"] == {"type": "json_object"}
 
 
-def test_deepseek_failure_returns_503_and_does_not_write_activity(monkeypatch):
+def test_reviewed_whitelist_excerpt_is_cited_and_untrusted_host_is_rejected(monkeypatch):
+    child_id, token = register_child("chat_evidence")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    with engine.begin() as connection:
+        evidence_id = connection.execute(
+            text("""INSERT INTO species_chat_evidence
+                (species_id, source_id, source_url, topic, excerpt,
+                 verification_status, verified_by, verified_at, retrieved_at)
+                VALUES (:species_id, 'mybis', 'https://www.mybis.gov.my/one/species/elephant',
+                        'social behaviour', 'Asian elephants live in social family groups.',
+                        'team-verified', 'content team', :now, :now)
+                RETURNING id"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        ).scalar_one()
+        connection.execute(
+            text("""INSERT INTO species_chat_evidence
+                (species_id, source_id, source_url, topic, excerpt,
+                 verification_status, retrieved_at)
+                VALUES (:species_id, 'untrusted', 'https://example.invalid/fact',
+                        'unsafe', 'This must never reach the chatbot.',
+                        'team-verified', :now)"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        )
+        connection.execute(
+            text("""INSERT INTO species_chat_evidence
+                (species_id, source_id, source_url, topic, excerpt,
+                 verification_status, verified_by, verified_at, retrieved_at)
+                VALUES (:species_id, 'mybis', 'http://www.mybis.gov.my/one/species/elephant',
+                        'unsafe transport', 'This must not be cited over HTTP.',
+                        'team-verified', 'content team', :now, :now)"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        )
+        connection.execute(
+            text("""INSERT INTO species_chat_evidence
+                (species_id, source_id, source_url, topic, excerpt,
+                 verification_status, retrieved_at)
+                VALUES (:species_id, 'mybis', 'https://www.mybis.gov.my/one/species/elephant-metadata',
+                        'unreviewed', 'This must not be cited without reviewer metadata.',
+                        'team-verified', :now)"""),
+            {"species_id": CURRENT_SPECIES_ID, "now": datetime.now(timezone.utc)},
+        )
+
+    monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "configured")
+    requested_evidence: list[list[dict]] = []
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": json.dumps(
+                                {
+                                    "status": "answered",
+                                    "answer": "They live in social family groups.",
+                                    "evidence_ids": [f"external:{evidence_id}"],
+                                }
+                            )
+                        }
+                    }
+                ]
+            }
+
+    def fake_post(_url, **kwargs):
+        requested_evidence.append(json.loads(kwargs["json"]["messages"][1]["content"])["evidence"])
+        return FakeResponse()
+
+    monkeypatch.setattr(chatbot.httpx, "post", fake_post)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me more about this animal")
+
+    assert response.status_code == 200, response.text
+    citation = response.json()["citations"][0]
+    assert citation["source_id"] == "mybis"
+    assert citation["source_url"] == "https://www.mybis.gov.my/one/species/elephant"
+    assert all("example.invalid" not in item["excerpt"] for item in requested_evidence[0])
+    assert all("over HTTP" not in item["excerpt"] for item in requested_evidence[0])
+    assert all("without reviewer metadata" not in item["excerpt"] for item in requested_evidence[0])
+
+
+def test_gbif_taxonomy_lookup_is_cited_and_constrained(monkeypatch):
+    child_id, token = register_child("chat_gbif")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "GBIF_API_ENABLED", True)
+
+    class FakeResponse:
+        def __init__(self, body):
+            self.body = body
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self.body
+
+    def fake_get(url, **_kwargs):
+        if url.endswith("/species/match"):
+            return FakeResponse({"usageKey": 2441133, "scientificName": "Elephas maximus"})
+        assert url.endswith("/species/2441133")
+        return FakeResponse(
+            {
+                "kingdom": "Animalia",
+                "class": "Mammalia",
+                "order": "Proboscidea",
+                "family": "Elephantidae",
+                "genus": "Elephas",
+            }
+        )
+
+    monkeypatch.setattr(chatbot.httpx, "get", fake_get)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "What family is it in?")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["source"] == "mock"
+    citation = response.json()["citations"][0]
+    assert citation["source_id"] == "gbif"
+    assert citation["source_url"] == "https://www.gbif.org/species/2441133"
+    assert "family: Elephantidae" in citation["excerpt"]
+
+
+@pytest.mark.parametrize(
+    ("match_body", "record_body"),
+    [
+        ([], None),
+        ({"usageKey": 2441133, "scientificName": "Elephas maximus"}, []),
+    ],
+)
+def test_malformed_gbif_payload_returns_controlled_failure(
+    monkeypatch,
+    match_body,
+    record_body,
+):
+    child_id, token = register_child("chat_gbif_bad")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "GBIF_API_ENABLED", True)
+
+    class FakeResponse:
+        def __init__(self, body):
+            self.body = body
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self.body
+
+    def fake_get(url, **_kwargs):
+        if url.endswith("/species/match"):
+            return FakeResponse(match_body)
+        return FakeResponse(record_body)
+
+    monkeypatch.setattr(chatbot.httpx, "get", fake_get)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "What family is it in?")
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == chatbot.SERVICE_FAILURE_MESSAGE
+
+
+def test_provider_failure_returns_controlled_503_and_does_not_write_activity(monkeypatch):
     child_id, token = register_child("chat_failure")
     unlock(child_id, CURRENT_SPECIES_ID)
     monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "configured")
@@ -192,8 +489,6 @@ def test_continue_learning_is_deduplicated_and_orders_by_chat_activity():
 
     assert chat(child_id, token, CURRENT_SPECIES_ID, "What does it eat?").status_code == 200
     assert chat(child_id, token, OTHER_SPECIES_ID, "What does it eat?").status_code == 200
-    # A second interaction with the same card must move that one row back up,
-    # rather than create a duplicate Continue Learning entry.
     assert chat(child_id, token, CURRENT_SPECIES_ID, "Where does it live?").status_code == 200
 
     recent = client.get(

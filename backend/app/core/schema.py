@@ -123,6 +123,34 @@ species_fun_facts = Table(
 )
 Index("ix_species_fun_facts_species_order", species_fun_facts.c.species_id, species_fun_facts.c.display_order)
 
+# Approved excerpts from the small Epic 6 source whitelist.  They are kept
+# separately from Fun Facts because an excerpt may answer a deeper question
+# (for example, a taxonomy or protection detail) without becoming a card fact.
+# Runtime code rejects every row unless its source host, review status, named
+# reviewer, and review timestamp match the policy in ``services/chatbot.py``.
+species_chat_evidence = Table(
+    "species_chat_evidence",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), nullable=False),
+    Column("source_id", String(40), nullable=False),
+    Column("source_url", Text, nullable=False),
+    Column("topic", String(120), nullable=False),
+    Column("excerpt", Text, nullable=False),
+    Column("verification_status", String(40), nullable=False, default="source-linked-draft"),
+    Column("verified_by", String(100)),
+    Column("verified_at", DateTime(timezone=True)),
+    Column("retrieved_at", DateTime(timezone=True), nullable=False),
+    UniqueConstraint(
+        "species_id", "source_id", "source_url", "topic", name="uq_species_chat_evidence_source_topic"
+    ),
+)
+Index(
+    "ix_species_chat_evidence_species_status",
+    species_chat_evidence.c.species_id,
+    species_chat_evidence.c.verification_status,
+)
+
 species_fun_fact_sources = Table(
     "species_fun_fact_sources",
     metadata,
