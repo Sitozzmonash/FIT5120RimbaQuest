@@ -9,13 +9,37 @@ const STRIPE_TOPS = [8, 18, 28, 38, 48, 58, 68, 78, 88];
 export function WoodPlank({
   title,
   centered = false,
+  large = false,
+  accessory,
 }: {
   title: string;
   // Centered single-line title on a 43px plank (section cards).
   centered?: boolean;
+  // Bigger 24px title, e.g. an animal's name.
+  large?: boolean;
+  // Shown beside the title, e.g. a category badge.
+  accessory?: React.ReactNode;
 }) {
+  const titleText = (
+    <Text
+      style={[
+        styles.title,
+        centered && styles.titleCentered,
+        large && styles.titleLarge,
+      ]}
+    >
+      {title}
+    </Text>
+  );
+
   return (
-    <View style={[styles.plank, centered && styles.plankCentered]}>
+    <View
+      style={[
+        styles.plank,
+        centered && styles.plankCentered,
+        large && styles.plankLarge,
+      ]}
+    >
       {/* wood stripes */}
       {STRIPE_TOPS.map((top) => (
         <View key={top} style={[styles.stripe, { top }]} />
@@ -26,9 +50,14 @@ export function WoodPlank({
       <View style={[styles.rivet, { left: 11 }]} />
       <View style={[styles.rivet, { right: 11 }]} />
 
-      <Text style={[styles.title, centered && styles.titleCentered]}>
-        {title}
-      </Text>
+      {accessory ? (
+        <View style={styles.titleRow}>
+          {titleText}
+          {accessory}
+        </View>
+      ) : (
+        titleText
+      )}
     </View>
   );
 }
@@ -47,6 +76,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  plankLarge: { paddingVertical: 12 },
+  titleRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
   stripe: {
     position: "absolute",
@@ -79,4 +116,5 @@ const styles = StyleSheet.create({
     lineHeight: 20.7,
   },
   titleCentered: { textAlign: "center" },
+  titleLarge: { fontSize: 24, lineHeight: 29 },
 });

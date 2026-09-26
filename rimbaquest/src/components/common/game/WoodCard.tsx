@@ -8,14 +8,23 @@ export function WoodCard({
   title,
   children,
   bodyStyle,
+  largeTitle = false,
+  titleAccessory,
 }: {
   title: string;
   children: React.ReactNode;
   bodyStyle?: StyleProp<ViewStyle>;
+  largeTitle?: boolean;
+  titleAccessory?: React.ReactNode;
 }) {
   return (
     <View style={styles.card}>
-      <WoodPlank title={title} centered />
+      <WoodPlank
+        title={title}
+        centered
+        large={largeTitle}
+        accessory={titleAccessory}
+      />
       <View style={[styles.body, bodyStyle]}>{children}</View>
     </View>
   );
