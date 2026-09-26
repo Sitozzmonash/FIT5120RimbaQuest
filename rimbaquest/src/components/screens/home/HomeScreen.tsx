@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { avatarImageFor, HOME_MAP_IMAGES } from "../../../constants/images";
 import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
@@ -7,12 +7,12 @@ import { useUnlockedBattleSpecies } from "../../../hooks/useUnlockedBattleSpecie
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useUserStore } from "../../../store/useUserStore";
-import { styles as themeStyles } from "../../../styles/theme";
 import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeMapCanvas } from "./components/HomeMapCanvas";
 import { MapNodeButton } from "./components/MapNodeButton";
 import { MapScenery } from "./components/MapScenery";
+import { NoticeModal } from "./components/NoticeModal";
 import { ResumeList } from "./components/ResumeList";
 import { RESUME_SHEET_PEEK, ResumeSheet } from "./components/ResumeSheet";
 import { HOME_COLORS } from "./homeTheme";
@@ -20,7 +20,6 @@ import { MAP_CAMP_POSITION, MAP_NODE_POSITIONS } from "./homeMapLayout";
 
 export function HomeScreen() {
   const currentUser = useUserStore((state) => state.currentUser);
-  const notice = useUserStore((state) => state.notice);
   const progress = useDisplayProgress();
   const battleReady = useUnlockedBattleSpecies().length > 0;
   const open = useNavigationStore.getState().open;
@@ -95,9 +94,7 @@ export function HomeScreen() {
         )}
       </View>
 
-      {notice ? (
-        <Text style={[themeStyles.notice, styles.notice]}>{notice}</Text>
-      ) : null}
+      <NoticeModal />
     </View>
   );
 }
@@ -105,5 +102,4 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: HOME_COLORS.ground, overflow: "hidden" },
   body: { flex: 1 },
-  notice: { position: "absolute", left: 18, right: 18, bottom: 200 },
 });

@@ -65,7 +65,6 @@ export type SaveDiscoveryResult = {
 
 type DiscoveryActions = {
   setPhotoError: (error: string | null) => void;
-  setCategory: (category: string) => void;
   setIdentificationError: (error: string | null) => void;
   setDiscoveryLocation: (location: string) => void;
   setLocationMode: (mode: LocationMode) => void;
@@ -196,7 +195,6 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
   ...initialState,
 
   setPhotoError: (photoError) => set({ photoError }),
-  setCategory: (category) => set({ category }),
   setIdentificationError: (identificationError) => set({ identificationError }),
   setDiscoveryLocation: (discoveryLocation) => set({ discoveryLocation }),
 
@@ -707,9 +705,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     get().discardAndExit();
     useUserStore
       .getState()
-      .setNotice(
-        "Thanks for telling us. We did not save the photo or add a card.",
-      );
+      .setNotice("We did not save the photo or add a card.", {
+        title: "Thanks for telling us!",
+        positive: true,
+      });
     return true;
   },
 }));

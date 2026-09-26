@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { AUTH_IMAGES } from "../../../constants/images";
@@ -14,6 +14,7 @@ import { RecoveryEmailField } from "./components/RecoveryEmailField";
 import { VerificationCodeField } from "./components/VerificationCodeField";
 import { Tap } from "../../common/Tap";
 import { PrimaryButton } from "../../common/PrimaryButton";
+import { WoodModal } from "../../common/game/WoodModal";
 
 export function ResetPasswordScreen() {
   const insets = useSafeAreaInsets();
@@ -22,6 +23,17 @@ export function ResetPasswordScreen() {
   const [showEmailInput] = useState(() => !email.trim());
   const formError = useForgotPasswordStore((state) => state.formError);
   const submitting = useForgotPasswordStore((state) => state.submitting);
+  const [resetDone, setResetDone] = useState(false);
+
+  // After the "All done!" popup: clear the form and go to Log In.
+  const finishReset = () => {
+    const store = useForgotPasswordStore.getState();
+    store.setToken("");
+    store.setNewPassword("");
+    store.setConfirmPassword("");
+    setResetDone(false);
+    useNavigationStore.getState().resetTo("login");
+  };
 
   const handleResetPassword = async () => {
     const store = useForgotPasswordStore.getState();
@@ -33,7 +45,9 @@ export function ResetPasswordScreen() {
       return;
     }
     if (recoveryToken.length !== 6) {
-      store.setFormError("Please type all 6 letters or numbers from the email.");
+      store.setFormError(
+        "Please type all 6 letters or numbers from the email.",
+      );
       return;
     }
     if (!store.newPassword) {
@@ -78,11 +92,7 @@ export function ResetPasswordScreen() {
         );
         return;
       }
-      Alert.alert("All done!", "Your new password is ready.");
-      store.setToken("");
-      store.setNewPassword("");
-      store.setConfirmPassword("");
-      useNavigationStore.getState().resetTo("login");
+      setResetDone(true);
     } catch {
       store.setFormError(
         "We couldn't reach RimbaQuest right now. Please try again.",
@@ -181,6 +191,17 @@ export function ResetPasswordScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <WoodModal
+        visible={resetDone}
+        onRequestClose={finishReset}
+        icon="check"
+        positive
+        title="All done!"
+        message="Your new password is ready. Log in with it now."
+        actionLabel="Go to Log In"
+        onAction={finishReset}
+      />
     </View>
   );
 }

@@ -3,7 +3,6 @@ import {
   Animated,
   Easing,
   Image,
-  Modal,
   Platform,
   StyleSheet,
   Text,
@@ -18,37 +17,32 @@ import {
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { VerificationErrorKind } from "../../../types";
 import { Tap } from "../../common/Tap";
-import { PrimaryButton } from "../../common/PrimaryButton";
+import { WoodModal } from "../../common/game/WoodModal";
 
 const SHIMMER_WIDTH = 70;
 const SHIMMER_DURATION = 1100;
 
 const FAILURE_COPY: Record<
   VerificationErrorKind,
-  { eyebrow: string; title: string; allowRetry: boolean }
+  { title: string; allowRetry: boolean }
 > = {
   unsupported_file: {
-    eyebrow: "PHOTO NOT SUPPORTED",
     title: "This file can't be used.",
     allowRetry: false,
   },
   no_animal_detected: {
-    eyebrow: "NO ANIMAL FOUND",
     title: "We couldn't find an animal in this photo.",
     allowRetry: true,
   },
   low_confidence: {
-    eyebrow: "NOT SURE YET",
     title: "We're not sure enough about this one.",
     allowRetry: true,
   },
   species_not_in_catalog: {
-    eyebrow: "NOT IN RIMBAQUEST YET",
     title: "That animal isn't one of our supported species.",
     allowRetry: false,
   },
   failed: {
-    eyebrow: "PHOTO NOT CHECKED",
     title: "We couldn't check your wildlife photo right now.",
     allowRetry: true,
   },
@@ -191,12 +185,16 @@ export function PhotoPreviewScreen() {
 
   if (!photoUri) return null;
 
+  const failureCopy =
+    (verificationError && FAILURE_COPY[verificationError.kind]) ??
+    FAILURE_COPY.failed;
+
   return (
     <View style={styles.page}>
       <Image
         source={{ uri: photoUri }}
         style={StyleSheet.absoluteFill}
-        resizeMode="cover"
+        resizeMode="contain"
       />
       <View style={styles.photoShade} />
 
@@ -247,7 +245,10 @@ export function PhotoPreviewScreen() {
                       {
                         translateX: shimmerAnim.interpolate({
                           inputRange: [0, 1],
-                          outputRange: [-SHIMMER_WIDTH, trackWidth + SHIMMER_WIDTH],
+                          outputRange: [
+                            -SHIMMER_WIDTH,
+                            trackWidth + SHIMMER_WIDTH,
+                          ],
                         }),
                       },
                     ],
@@ -280,70 +281,34 @@ export function PhotoPreviewScreen() {
         ) : null}
       </View>
 
-      <Modal
+      <WoodModal
         visible={resultShown && succeeded}
-        transparent
-        animationType="fade"
         onRequestClose={handleRetake}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.successCard}>
-            <View style={styles.successIconWrap}>
-              <MaterialIcons name="check" size={40} color="#FFFFFF" />
-            </View>
-            <Text style={styles.successEyebrow}>IDENTIFICATION COMPLETE</Text>
-            <Text style={styles.successTitle}>
-              We have successfully identified your species!
-            </Text>
-            <Text style={styles.successText}>
-              Let's see which animal we found.
-            </Text>
-            <PrimaryButton
-              label="Next"
-              style={styles.nextButton}
-              onPress={handleViewSpecies}
-            />
-          </View>
-        </View>
-      </Modal>
+        icon="check"
+        positive
+        stars={false}
+        title="Identification Complete!"
+        message="We have successfully identified your species! Let's see which animal we found."
+        actionLabel="Next"
+        onAction={handleViewSpecies}
+      />
 
-      <Modal
+      <WoodModal
         visible={resultShown && Boolean(verificationError)}
-        transparent
-        animationType="fade"
         onRequestClose={handleRetake}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={styles.failureCard}>
-            <Text style={styles.failureEyebrow}>
-              {(verificationError && FAILURE_COPY[verificationError.kind].eyebrow) ??
-                FAILURE_COPY.failed.eyebrow}
-            </Text>
-            <Text style={styles.failureTitle}>
-              {(verificationError && FAILURE_COPY[verificationError.kind].title) ??
-                FAILURE_COPY.failed.title}
-            </Text>
-            <Text style={styles.failureText}>
-              {verificationError?.message ?? "Please try again."}
-            </Text>
-            {verificationError && FAILURE_COPY[verificationError.kind].allowRetry ? (
-              <PrimaryButton
-                label="Try Again"
-                style={styles.tryAgainButton}
-                onPress={handleTryAgain}
-              />
-            ) : null}
-            <Tap
-              label="Capture Again"
-              style={styles.captureAgainButton}
-              onPress={handleRetake}
-            >
-              <MaterialIcons name="photo-camera" size={18} color="#0A4D26" />
-              <Text style={styles.captureAgainText}>Capture Again</Text>
-            </Tap>
-          </View>
-        </View>
-      </Modal>
+        icon="alert"
+        positive={false}
+        title={failureCopy.title}
+        message={verificationError?.message ?? "Please try again."}
+        {...(failureCopy.allowRetry
+          ? {
+              actionLabel: "Try Again",
+              onAction: handleTryAgain,
+              secondaryLabel: "Capture Again",
+              onSecondary: handleRetake,
+            }
+          : { actionLabel: "Capture Again", onAction: handleRetake })}
+      />
     </View>
   );
 }
@@ -431,78 +396,4 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textDecorationLine: "underline",
   },
-  modalBackdrop: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 38,
-    backgroundColor: "rgba(0,0,0,0.7)",
-  },
-  successCard: {
-    borderRadius: 28,
-    paddingHorizontal: 28,
-    paddingVertical: 30,
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#FFFFFF",
-  },
-  successIconWrap: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#0A4D26",
-    marginBottom: 4,
-  },
-  successEyebrow: { color: "#0A4D26", fontSize: 14, fontWeight: "900" },
-  successTitle: {
-    color: "#1A1A1A",
-    fontSize: 23,
-    lineHeight: 29,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-  successText: {
-    color: "#667085",
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-  nextButton: { width: "100%", marginTop: 8 },
-  failureCard: {
-    borderRadius: 28,
-    paddingHorizontal: 28,
-    paddingVertical: 30,
-    alignItems: "center",
-    gap: 12,
-    backgroundColor: "#FFFFFF",
-  },
-  failureEyebrow: { color: "#F05A24", fontSize: 14, fontWeight: "900" },
-  failureTitle: {
-    color: "#1A1A1A",
-    fontSize: 23,
-    lineHeight: 29,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-  failureText: {
-    color: "#667085",
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-  },
-  tryAgainButton: { width: "100%", marginTop: 8 },
-  captureAgainButton: {
-    width: "100%",
-    minHeight: 50,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: "#0A4D26",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 16,
-  },
-  captureAgainText: { color: "#0A4D26", fontSize: 15, fontWeight: "800" },
 });

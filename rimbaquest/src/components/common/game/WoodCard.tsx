@@ -7,18 +7,20 @@ import { WoodPlank } from "./WoodPlank";
 export function WoodCard({
   title,
   children,
+  style,
   bodyStyle,
   largeTitle = false,
   titleAccessory,
 }: {
   title: string;
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
   bodyStyle?: StyleProp<ViewStyle>;
   largeTitle?: boolean;
   titleAccessory?: React.ReactNode;
 }) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, style]}>
       <WoodPlank
         title={title}
         centered

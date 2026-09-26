@@ -1,76 +1,80 @@
 import React from "react";
-import { ScrollView, StyleSheet, Text, TextInput } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
+import { FONTS } from "../../../../constants/fonts";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { useLocationsStore } from "../../../../store/useLocationsStore";
-import { Tap } from "../../../common/Tap";
+import { DISCOVERY_COLORS } from "./discoveryTheme";
 
+// Free-text place name. Typing here switches the sheet to a typed location.
 export function LocationManualSection() {
+  const locationMode = useDiscoveryStore((state) => state.locationMode);
   const discoveryLocation = useDiscoveryStore(
     (state) => state.discoveryLocation,
   );
-  const setDiscoveryLocation = useDiscoveryStore(
-    (state) => state.setDiscoveryLocation,
-  );
+  const spots = useLocationsStore((state) => state.locations);
 
-  const locationOptions = useLocationsStore((state) => state.locations);
+  // Only show what the child typed; spot names and detected places have
+  // their own rows above.
+  const typed =
+    locationMode === "manual" &&
+    !spots.some((spot) => spot.name === discoveryLocation)
+      ? discoveryLocation
+      : "";
+
+  const onChangeText = (text: string) => {
+    const store = useDiscoveryStore.getState();
+    if (store.locationMode !== "manual") store.setLocationMode("manual");
+    store.setDiscoveryLocation(text);
+  };
 
   return (
-    <>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}
-      >
-        {locationOptions.map((loc) => (
-          <Tap
-            key={loc.id}
-            label={loc.name}
-            style={[
-              styles.chip,
-              discoveryLocation === loc.name && styles.chipActive,
-            ]}
-            onPress={() => setDiscoveryLocation(loc.name)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                discoveryLocation === loc.name && styles.chipTextActive,
-              ]}
-            >
-              {loc.name}
-            </Text>
-          </Tap>
-        ))}
-      </ScrollView>
+    <View style={[styles.inputBox, typed ? styles.inputBoxFilled : null]}>
+      <View style={styles.insetShade} />
+      <MaterialIcons
+        name="edit-location-alt"
+        size={19}
+        color={DISCOVERY_COLORS.heading}
+      />
       <TextInput
         style={styles.input}
-        value={discoveryLocation}
-        onChangeText={setDiscoveryLocation}
-        placeholder="Or type the name of a place"
-        placeholderTextColor="#879089"
+        value={typed}
+        onChangeText={onChangeText}
+        placeholder="Type the name of a place"
+        placeholderTextColor="rgba(11, 61, 34, 0.55)"
       />
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  chips: { gap: 8, paddingVertical: 4 },
-  chip: {
-    borderRadius: 16,
-    backgroundColor: "#F0F4F1",
+  inputBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    height: 50,
     paddingHorizontal: 12,
-    paddingVertical: 7,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 3,
+    borderColor: DISCOVERY_COLORS.ink,
+    borderRadius: 14,
+    overflow: "hidden",
   },
-  chipActive: { backgroundColor: "#0A4D26" },
-  chipText: { fontSize: 12, color: "#607068", fontWeight: "700" },
-  chipTextActive: { color: "#FFFFFF" },
+  inputBoxFilled: { backgroundColor: DISCOVERY_COLORS.mint },
+  insetShade: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: "rgba(7, 60, 29, 0.08)",
+  },
   input: {
-    borderWidth: 1,
-    borderColor: "#C8D1CA",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    minHeight: 44,
-    fontSize: 14,
-    color: "#1B211C",
+    flex: 1,
+    fontFamily: FONTS.bodyExtraBold,
+    color: DISCOVERY_COLORS.heading,
+    fontSize: 15,
+    paddingVertical: 0,
+    outlineWidth: 0,
   },
 });

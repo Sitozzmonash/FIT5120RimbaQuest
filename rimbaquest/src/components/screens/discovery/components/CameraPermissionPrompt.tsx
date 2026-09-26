@@ -4,7 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
-import { PrimaryButton } from "../../../common/PrimaryButton";
+import { GameButton } from "../../../common/game/GameButton";
 
 export function CameraPermissionPrompt({
   onRequestPermission,
@@ -29,19 +29,14 @@ export function CameraPermissionPrompt({
         already have.
       </Text>
       {photoError ? <Text style={styles.errorBanner}>{photoError}</Text> : null}
-      <PrimaryButton
-        label="Use Camera"
-        style={styles.primaryBtn}
-        onPress={onRequestPermission}
-      />
-      <Tap
-        label="Choose a photo"
-        style={styles.secondaryBtn}
-        onPress={onPickFromGallery}
-      >
-        <MaterialIcons name="photo-library" size={16} color="#1A1A1A" />
-        <Text style={styles.secondaryText}>Choose a Photo</Text>
-      </Tap>
+      <View style={styles.actions}>
+        <GameButton label="Use Camera" onPress={onRequestPermission} />
+        <GameButton
+          label="Choose a Photo"
+          variant="secondary"
+          onPress={onPickFromGallery}
+        />
+      </View>
     </View>
   );
 }
@@ -73,21 +68,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
-  primaryBtn: { width: "100%" },
-  secondaryBtn: {
-    flexDirection: "row",
-    gap: 8,
-    minHeight: 46,
-    borderRadius: 23,
-    borderColor: "rgba(255,255,255,0.3)",
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.9)",
-  },
-  secondaryText: { color: "#1A1A1A", fontSize: 13, fontWeight: "700" },
+  actions: { alignSelf: "stretch", gap: 8 },
   errorBanner: {
     color: "#FFFFFF",
     backgroundColor: "rgba(217,56,58,0.85)",

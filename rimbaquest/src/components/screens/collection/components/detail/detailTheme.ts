@@ -8,7 +8,6 @@ export const DETAIL_IMAGES = {
   lock: require("../../../../../../assets/collection/locked-lock.png"),
   modalBush: require("../../../../../../assets/collection/modal-bush.png"),
   modalLeaf: require("../../../../../../assets/collection/modal-leaf.png"),
-  perkRays: require("../../../../../../assets/collection/perk-rays.png"),
   locationPin: require("../../../../../../assets/locations/location-pin.png"),
 };
 

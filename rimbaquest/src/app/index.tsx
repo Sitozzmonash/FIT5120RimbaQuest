@@ -9,7 +9,6 @@ import { LocationDetailScreen, LocationsScreen } from '../components/screens/loc
 import {
   CameraScreen,
   PhotoPreviewScreen,
-  CategoryScreen,
   ConfirmScreen,
   SpeciesScreen,
   SuccessScreen,
@@ -29,7 +28,7 @@ import { useNavigationStore } from '../store/useNavigationStore';
 import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
 import { useUserStore } from '../store/useUserStore';
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz', 'species', 'confirm', 'success'];
 
 export default function RimbaQuest() {
   const screen = useNavigationStore((state) => state.screen);
@@ -102,8 +101,6 @@ export default function RimbaQuest() {
         {screen === 'photo' && <CameraScreen />}
 
         {screen === 'photo_preview' && discoveryPhotoUri && <PhotoPreviewScreen />}
-
-        {screen === 'category' && discoveryPhotoUri && <CategoryScreen />}
 
         {screen === 'species' && discoveryPhotoUri && <SpeciesScreen />}
 

@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FONTS } from "../../../constants/fonts";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore";
-import { DiscoveryHeader } from "./components/DiscoveryHeader";
+import { WoodCard } from "../../common/game/WoodCard";
 import { DiscoveryBottomNav } from "./components/DiscoveryBottomNav";
-import { PhotoPreview } from "./components/PhotoPreview";
-import { InfoCard } from "./components/InfoCard";
+import { DiscoveryHeader } from "./components/DiscoveryHeader";
+import { DISCOVERY_COLORS } from "./components/discoveryTheme";
 import { LocationEditSheet } from "./components/LocationEditSheet";
-import { AiDetectionNotice } from "./components/AiDetectionNotice";
-import { ConfirmationPrompt } from "./components/ConfirmationPrompt";
+import { LocationRow } from "./components/LocationRow";
+import { PhotoPreview } from "./components/PhotoPreview";
+import { PlankSection } from "./components/PlankSection";
 
 export function ConfirmScreen() {
+  const insets = useSafeAreaInsets();
   const selected = useSelectedSpeciesStore((state) => state.selected);
   const discoveryLocation = useDiscoveryStore(
     (state) => state.discoveryLocation,
@@ -24,6 +28,8 @@ export function ConfirmScreen() {
 
   const [editingLocation, setEditingLocation] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const busy = finalizing || reporting;
+  const hasLocation = Boolean(discoveryLocation.trim()) && !resolvingLocation;
 
   const locationValue =
     locationMode === "auto"
@@ -39,56 +45,69 @@ export function ConfirmScreen() {
     if (!ok) setFinalizing(false);
   };
 
-  const handleReport = async () => {
-    await useDiscoveryStore.getState().reportAndExit();
-  };
-
   return (
     <View style={styles.page}>
       <DiscoveryHeader
-        title="Check Your Animal"
+        title="Confirm Discovery"
         confirmDiscard
         onDiscard={() => useDiscoveryStore.getState().discardAndExit()}
-        disabled={finalizing || reporting}
+        disabled={busy}
       />
-      <ScrollView contentContainerStyle={styles.content}>
-        <AiDetectionNotice />
 
-        <PhotoPreview />
+      <View style={[styles.body, { paddingBottom: 16 + insets.bottom }]}>
+        <WoodCard
+          title={selected.common_name}
+          largeTitle
+          titleAccessory={
+            <View style={styles.categoryPill}>
+              <Text style={styles.categoryText}>{selected.category}</Text>
+            </View>
+          }
+          style={styles.card}
+          bodyStyle={styles.cardBody}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <PhotoPreview />
 
-        <View style={styles.speciesHeader}>
-          <Text style={styles.speciesName}>{selected.common_name}</Text>
-          <View style={styles.categoryPill}>
-            <Text style={styles.categoryPillText}>{selected.category}</Text>
-          </View>
-        </View>
+            <PlankSection title="Pick your location">
+              <LocationRow
+                value={locationValue}
+                onPress={() => setEditingLocation(true)}
+              />
+            </PlankSection>
 
-        <View style={styles.infoSection}>
-          <InfoCard
-            icon="place"
-            label="LOCATION"
-            value={locationValue}
-            onPress={() => setEditingLocation(true)}
+            <PlankSection
+              title="Is this the species you saw?"
+              background="#FFE7A8"
+            >
+              <Text style={styles.question}>
+                Our photo helper makes its best guess, but it can be wrong.
+                Double-check the photo and details before you record your
+                discovery.
+              </Text>
+            </PlankSection>
+
+            {saveError ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{saveError}</Text>
+              </View>
+            ) : null}
+          </ScrollView>
+
+          <DiscoveryBottomNav
+            onBack={() => void useDiscoveryStore.getState().reportAndExit()}
+            backLabel={reporting ? "Sending..." : "No"}
+            backDisabled={busy}
+            nextLabel={finalizing ? "Saving..." : "Confirm & Save"}
+            nextDisabled={busy || !hasLocation}
+            nextLoading={finalizing}
+            onNext={() => void handleConfirm()}
           />
-        </View>
-
-        {saveError ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{saveError}</Text>
-          </View>
-        ) : null}
-
-        <ConfirmationPrompt />
-      </ScrollView>
-
-      <DiscoveryBottomNav
-        onBack={() => void handleReport()}
-        backLabel={reporting ? "Sending..." : "No"}
-        backDisabled={finalizing || reporting}
-        nextLabel={finalizing ? "Saving..." : "Yes, Save It"}
-        nextDisabled={finalizing || reporting}
-        onNext={() => void handleConfirm()}
-      />
+        </WoodCard>
+      </View>
 
       <LocationEditSheet
         visible={editingLocation}
@@ -99,35 +118,43 @@ export function ConfirmScreen() {
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: "#FFFFFF" },
-  content: { padding: 16, gap: 16 },
-  speciesHeader: { gap: 6 },
-  speciesName: {
-    color: "#1A1A1A",
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: "800",
-  },
+  page: { flex: 1, backgroundColor: DISCOVERY_COLORS.confirmBg },
+  body: { flex: 1, paddingTop: 12, paddingHorizontal: 8 },
+  card: { flex: 1, borderRadius: 24 },
+  cardBody: { flex: 1, gap: 12, paddingTop: 4 },
+  scroll: { gap: 14, paddingBottom: 12, paddingHorizontal: 2 },
   categoryPill: {
-    alignSelf: "flex-start",
-    backgroundColor: "#E8F5EE",
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    backgroundColor: DISCOVERY_COLORS.mint,
+    borderWidth: 2,
+    borderColor: DISCOVERY_COLORS.ink,
     borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
   },
-  categoryPillText: { color: "#12B347", fontSize: 12, fontWeight: "800" },
-  infoSection: { gap: 12 },
+  categoryText: {
+    fontFamily: FONTS.bodyBlack,
+    color: DISCOVERY_COLORS.mintText,
+    fontSize: 12,
+  },
+  question: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: FONTS.bodyExtraBold,
+    color: "#5A3810",
+    fontSize: 13,
+    lineHeight: 18,
+  },
   errorBox: {
-    borderWidth: 1,
-    borderColor: "#F3C6C6",
+    padding: 12,
     backgroundColor: "#FCE8E8",
+    borderWidth: 2,
+    borderColor: DISCOVERY_COLORS.ink,
     borderRadius: 14,
-    padding: 14,
   },
   errorText: {
+    fontFamily: FONTS.bodyBold,
     color: "#B3261E",
     fontSize: 13,
-    fontWeight: "700",
     textAlign: "center",
   },
 });

@@ -1,9 +1,8 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { FONTS } from "../../../../../constants/fonts";
-import { GAME_COLORS } from "../../../../common/game/gameTheme";
-import { ScaleTap } from "../../../../common/ScaleTap";
-import { DETAIL_COLORS } from "./detailTheme";
+import { FONTS } from "../../../constants/fonts";
+import { ScaleTap } from "../ScaleTap";
+import { GAME_COLORS } from "./gameTheme";
 
 const GRAIN_TOPS = [5, 15, 25, 35, 45, 55];
 
@@ -34,6 +33,7 @@ export function WoodenTabBar<K extends string>({
             onPress={() => onChange(key)}
           >
             <View
+              key={selected ? "active" : "idle"}
               style={[
                 styles.face,
                 selected ? styles.faceActive : styles.faceIdle,
@@ -101,13 +101,13 @@ const styles = StyleSheet.create({
     top: 0,
     height: 48,
     borderBottomWidth: 7,
-    backgroundColor: DETAIL_COLORS.paper,
+    backgroundColor: GAME_COLORS.paper,
   },
   faceActive: {
     top: 4,
     height: 44,
     borderBottomWidth: 3,
-    backgroundColor: DETAIL_COLORS.gold,
+    backgroundColor: GAME_COLORS.goldLight,
   },
   insetShade: {
     position: "absolute",
@@ -119,9 +119,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: FONTS.display,
-    color: DETAIL_COLORS.heading,
+    color: GAME_COLORS.heading,
     fontSize: 13,
     textAlign: "center",
   },
-  labelActive: { color: DETAIL_COLORS.goldText },
+  labelActive: { color: GAME_COLORS.goldText },
 });

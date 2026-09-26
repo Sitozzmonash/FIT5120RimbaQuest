@@ -1,11 +1,13 @@
 import React from "react";
-import { Image, Modal, StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import { FONTS } from "../../../../constants/fonts";
 import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
 import { Species } from "../../../../types";
 import { speciesAbilities } from "../speciesAbilities";
-import { DETAIL_COLORS, DETAIL_IMAGES } from "./detail/detailTheme";
+import { DETAIL_COLORS } from "./detail/detailTheme";
 import { GameButton } from "../../../common/game/GameButton";
+import { GameRibbon } from "../../../common/game/GameRibbon";
+import { SpinningRays } from "../../../common/game/SpinningRays";
 
 export function PerkUnlockedModal({ species }: { species: Species }) {
   const newPerk = useAbilityQuizStore((state) => state.newPerk);
@@ -25,21 +27,10 @@ export function PerkUnlockedModal({ species }: { species: Species }) {
       onRequestClose={dismiss}
     >
       <View style={styles.backdrop}>
-        <Image
-          source={DETAIL_IMAGES.perkRays}
-          style={styles.rays}
-          resizeMode="contain"
-        />
+        <SpinningRays style={styles.rays} />
 
         <View style={styles.card}>
-          <View style={styles.ribbon}>
-            <View style={[styles.tail, { left: 0 }]} />
-            <View style={[styles.tail, { right: 0 }]} />
-            <View style={styles.ribbonCenter}>
-              <View style={styles.ribbonShine} />
-              <Text style={styles.ribbonText}>New Perk Unlocked!</Text>
-            </View>
-          </View>
+          <GameRibbon label="New Perk Unlocked!" style={styles.ribbon} />
 
           <Text style={styles.name}>{perk?.name}</Text>
           {perk?.description ? (
@@ -61,7 +52,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     overflow: "hidden",
   },
-  rays: { position: "absolute", width: 900, height: 900 },
+  rays: { position: "absolute" },
   card: {
     width: "100%",
     maxWidth: 342,
@@ -76,53 +67,7 @@ const styles = StyleSheet.create({
     borderColor: DETAIL_COLORS.ink,
     borderRadius: 24,
   },
-  ribbon: {
-    position: "absolute",
-    top: -33,
-    width: 260,
-    height: 54,
-    alignSelf: "center",
-  },
-  tail: {
-    position: "absolute",
-    top: 12,
-    width: 50,
-    height: 40,
-    backgroundColor: "#C25E00",
-    borderWidth: 3,
-    borderColor: DETAIL_COLORS.ink,
-  },
-  ribbonCenter: {
-    position: "absolute",
-    top: 0,
-    left: 18,
-    right: 18,
-    height: 46 + 4,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FFB938",
-    borderWidth: 3,
-    borderBottomWidth: 7,
-    borderColor: DETAIL_COLORS.ink,
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  ribbonShine: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
-  },
-  ribbonText: {
-    fontFamily: FONTS.display,
-    color: "#FFFFFF",
-    fontSize: 18,
-    textShadowColor: "#7A3500",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 1,
-  },
+  ribbon: { position: "absolute", top: -33 },
   name: {
     fontFamily: FONTS.display,
     color: DETAIL_COLORS.heading,

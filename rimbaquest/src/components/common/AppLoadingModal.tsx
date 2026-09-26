@@ -1,43 +1,27 @@
 import React from "react";
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet } from "react-native";
 import { useUserStore } from "../../store/useUserStore";
+import { WoodModal } from "./game/WoodModal";
+
+const EXPLORER_HAT = require("../../../assets/collection/chat-explorer-hat.png");
 
 export function AppLoadingModal() {
   const loading = useUserStore((state) => state.profileLoading);
 
   return (
-    <Modal visible={loading} transparent animationType="fade" onRequestClose={() => {}}>
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <ActivityIndicator size="large" color="#0A4D26" />
-          <Text style={styles.title}>Getting Your Adventure Ready!</Text>
-          <Text style={styles.copy}>
-            Gathering your animal cards...
-          </Text>
-        </View>
-      </View>
-    </Modal>
+    <WoodModal
+      visible={loading}
+      icon={EXPLORER_HAT}
+      positive
+      stars={false}
+      title="Getting Your Adventure Ready!"
+      message="Gathering your animal cards..."
+    >
+      <ActivityIndicator size="large" color="#3F9A4E" style={styles.spinner} />
+    </WoodModal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 320,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    paddingVertical: 28,
-    paddingHorizontal: 24,
-    alignItems: "center",
-    gap: 10,
-  },
-  title: { color: "#0A4D26", fontSize: 16, fontWeight: "900", marginTop: 6, textAlign: "center" },
-  copy: { color: "#566159", fontSize: 12, textAlign: "center" },
+  spinner: { marginTop: 4 },
 });

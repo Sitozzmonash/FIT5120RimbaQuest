@@ -49,6 +49,10 @@ type UserState = {
   recentCaptures: RecentCapture[];
   galleryPhotos: Record<string, GalleryItem[]>;
   notice: string | null;
+  
+  // Optional heading and tone for the notice popup on the home screen.
+  noticeTitle: string | null;
+  noticePositive: boolean;
 
   // True once the app has finished trying to restore a saved session, so
   // the app shell knows when to stop showing its boot spinner.
@@ -81,7 +85,10 @@ type UserActions = {
   refreshProfile: () => Promise<void>;
   refreshRecentCaptures: () => Promise<void>;
 
-  setNotice: (notice: string | null) => void;
+  setNotice: (
+    notice: string | null,
+    options?: { title?: string; positive?: boolean },
+  ) => void;
   recordDiscoverySaved: (
     speciesId: string,
     result: DiscoverySaveResult,
@@ -108,6 +115,8 @@ export const useUserStore = create<UserStore>((set, get) => ({
   recentCaptures: [],
   galleryPhotos: {},
   notice: null,
+  noticeTitle: null,
+  noticePositive: false,
   bootstrapped: false,
   profileLoading: false,
 
@@ -178,6 +187,7 @@ export const useUserStore = create<UserStore>((set, get) => ({
       recentCaptures: [],
       galleryPhotos: {},
       notice: null,
+      noticeTitle: null,
     });
     resetAuthForm();
     useNavigationStore.getState().resetTo("account_entry");
@@ -259,6 +269,8 @@ export const useUserStore = create<UserStore>((set, get) => ({
       set({
         notice:
           "RimbaQuest is offline. New animal photos will be saved when it reconnects.",
+        noticeTitle: "You're offline",
+        noticePositive: false,
       });
     } finally {
       set({ bootstrapped: true, profileLoading: false });
@@ -287,7 +299,12 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
-  setNotice: (notice) => set({ notice }),
+  setNotice: (notice, options) =>
+    set({
+      notice,
+      noticeTitle: options?.title ?? null,
+      noticePositive: options?.positive ?? false,
+    }),
 
   recordDiscoverySaved: (speciesId, result) => {
     set((state) => ({

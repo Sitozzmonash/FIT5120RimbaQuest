@@ -95,14 +95,14 @@ export function GameButton({
 }: {
   label: string;
   onPress: () => void;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger";
   size?: GameButtonSize;
   width?: "full" | "hug";
   loading?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
-  const primary = variant === "primary";
+  const primary = variant !== "secondary";
   const inactive = disabled || loading;
   const t = SIZES[size];
   const gel = primary ? t.primaryGel : t.secondaryGel;
@@ -138,7 +138,11 @@ export function GameButton({
           styles.face,
           { borderRadius: t.radius, paddingHorizontal: t.paddingX },
           primary
-            ? [styles.primaryFace, { height: t.faceHeight + PRIMARY_DROP }]
+            ? [
+                styles.primaryFace,
+                variant === "danger" && styles.dangerFace,
+                { height: t.faceHeight + PRIMARY_DROP },
+              ]
             : [styles.secondaryFace, { height: t.faceHeight }],
         ]}
       >
@@ -192,7 +196,7 @@ const styles = StyleSheet.create({
     borderColor: GAME_COLORS.ink,
     overflow: "hidden",
   },
-  // The drop shadow is drawn as a thicker bottom border.
+  dangerFace: { backgroundColor: "#D9383A" },
   primaryFace: {
     backgroundColor: GAME_COLORS.go,
     borderWidth: 3,

@@ -19,7 +19,7 @@ import { PerkUnlockedModal } from "./components/PerkUnlockedModal";
 import { ChatFab } from "./components/detail/ChatFab";
 import { DETAIL_COLORS } from "./components/detail/detailTheme";
 import { ViewPhotoCard } from "./components/detail/ViewPhotoCard";
-import { WoodenTab, WoodenTabBar } from "./components/detail/WoodenTabBar";
+import { WoodenTab, WoodenTabBar } from "../../common/game/WoodenTabBar";
 
 const DETAIL_TABS: WoodenTab<Screen>[] = [
   { key: "about", label: "About" },

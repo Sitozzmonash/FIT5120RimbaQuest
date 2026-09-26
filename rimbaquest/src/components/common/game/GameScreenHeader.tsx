@@ -11,9 +11,11 @@ const CHEVRON_LEFT = require("../../../../assets/game/chevron-left.png");
 export function GameScreenHeader({
   title,
   onBack,
+  disabled = false,
 }: {
   title: string;
   onBack: () => void;
+  disabled?: boolean;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -21,7 +23,12 @@ export function GameScreenHeader({
     <View>
       <View style={styles.drop} />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <ScaleTap label="Go back" style={styles.backSlot} onPress={onBack}>
+        <ScaleTap
+          label="Go back"
+          style={[styles.backSlot, disabled && styles.disabled]}
+          onPress={onBack}
+          disabled={disabled}
+        >
           <View style={[styles.backCircle, styles.backShadow]} />
           <View style={[styles.backCircle, styles.backFace]}>
             <Image
@@ -63,6 +70,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 26,
   },
   backSlot: { width: BACK_SIZE, height: BACK_SIZE + 4 },
+  disabled: { opacity: 0.5 },
   backCircle: {
     position: "absolute",
     width: BACK_SIZE,

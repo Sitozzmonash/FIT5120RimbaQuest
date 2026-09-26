@@ -22,6 +22,9 @@ const SCREEN_COLORS: Partial<Record<Screen, PageColors>> = {
   progress: { top: GAME_GREEN, bottom: GAME_GREEN },
   profile_edit: { top: GAME_GREEN, bottom: GAME_GREEN },
   photo: { top: "#0B0F0B", bottom: "#0B0F0B" },
+  species: { top: GAME_GREEN, bottom: "#0B0F0B" },
+  confirm: { top: GAME_GREEN, bottom: "#1A4D2E" },
+  success: { top: GAME_GREEN, bottom: GAME_GREEN },
 };
 
 function setThemeColor(color: string) {
