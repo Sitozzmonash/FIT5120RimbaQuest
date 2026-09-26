@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screen } from '../types';
 import { styles } from '../styles/theme';
 
-import { HomeScreen } from '../components/screens/HomeScreen';
+import { HomeScreen } from '../components/screens/home';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/locations';
 import {
   CameraScreen,

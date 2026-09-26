@@ -1,0 +1,109 @@
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { avatarImageFor, HOME_MAP_IMAGES } from "../../../constants/images";
+import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
+import { useUnlockedBattleSpecies } from "../../../hooks/useUnlockedBattleSpecies";
+import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
+import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useUserStore } from "../../../store/useUserStore";
+import { styles as themeStyles } from "../../../styles/theme";
+import { CampProfileButton } from "./components/CampProfileButton";
+import { HomeHeader } from "./components/HomeHeader";
+import { HomeMapCanvas } from "./components/HomeMapCanvas";
+import { MapNodeButton } from "./components/MapNodeButton";
+import { MapScenery } from "./components/MapScenery";
+import { ResumeList } from "./components/ResumeList";
+import { RESUME_SHEET_PEEK, ResumeSheet } from "./components/ResumeSheet";
+import { HOME_COLORS } from "./homeTheme";
+import { MAP_CAMP_POSITION, MAP_NODE_POSITIONS } from "./homeMapLayout";
+
+export function HomeScreen() {
+  const currentUser = useUserStore((state) => state.currentUser);
+  const notice = useUserStore((state) => state.notice);
+  const progress = useDisplayProgress();
+  const battleReady = useUnlockedBattleSpecies().length > 0;
+  const open = useNavigationStore.getState().open;
+  const insets = useSafeAreaInsets();
+  const [bodyHeight, setBodyHeight] = useState(0);
+
+  return (
+    <View style={styles.root}>
+      <HomeHeader />
+
+      <View
+        style={styles.body}
+        onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}
+      >
+        <HomeMapCanvas>
+          <MapScenery />
+          <MapNodeButton
+            {...MAP_NODE_POSITIONS.discover}
+            label="Discover"
+            accessibilityLabel="Discover places to see animals"
+            icon={HOME_MAP_IMAGES.iconDiscover}
+            iconSize={{ width: 54, height: 46.56 }}
+            color="#D8ECCE"
+            onPress={() => open("locations")}
+          />
+          <MapNodeButton
+            {...MAP_NODE_POSITIONS.capture}
+            featured
+            label="Capture"
+            accessibilityLabel="Capture an animal photo"
+            icon={HOME_MAP_IMAGES.iconCapture}
+            iconSize={{ width: 74, height: 57.03 }}
+            color="#FFE7A8"
+            onPress={() => useDiscoveryStore.getState().start()}
+          />
+          <MapNodeButton
+            {...MAP_NODE_POSITIONS.collection}
+            label="Collection"
+            accessibilityLabel={`Collection, ${progress.found} of ${progress.total} discovered`}
+            icon={HOME_MAP_IMAGES.iconCollection}
+            iconSize={{ width: 50, height: 56.25 }}
+            color={HOME_COLORS.paper}
+            badge={`${progress.found}/${progress.total}`}
+            onPress={() => open("collection")}
+          />
+          <MapNodeButton
+            {...MAP_NODE_POSITIONS.battle}
+            label="Battle"
+            accessibilityLabel={battleReady ? "Battle, unlocked" : "Battle"}
+            icon={HOME_MAP_IMAGES.iconBattle}
+            iconSize={{ width: 50, height: 45.31 }}
+            color="#FFD3BD"
+            badge={battleReady ? "New!" : undefined}
+            onPress={() => open("battle_select")}
+          />
+          <CampProfileButton
+            {...MAP_CAMP_POSITION}
+            name={currentUser.display_name}
+            level={progress.level || currentUser.level}
+            avatar={avatarImageFor(currentUser.avatar)}
+            onPress={() => open("progress")}
+          />
+        </HomeMapCanvas>
+
+        {/* Reserves the collapsed sheet's space so the map scales above it. */}
+        <View style={{ height: RESUME_SHEET_PEEK + insets.bottom }} />
+
+        {bodyHeight > 0 && (
+          <ResumeSheet availableHeight={bodyHeight}>
+            <ResumeList />
+          </ResumeSheet>
+        )}
+      </View>
+
+      {notice ? (
+        <Text style={[themeStyles.notice, styles.notice]}>{notice}</Text>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: HOME_COLORS.ground, overflow: "hidden" },
+  body: { flex: 1 },
+  notice: { position: "absolute", left: 18, right: 18, bottom: 200 },
+});

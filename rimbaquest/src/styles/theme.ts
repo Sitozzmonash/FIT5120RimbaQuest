@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 import { collectionStyles } from './screens/collection.styles';
-import { homeStyles } from './screens/home.styles';
 import { accountEntryStyles } from './screens/accountEntry.styles';
 import { commonUiStyles } from './common-ui.styles';
 
@@ -63,13 +62,14 @@ const general = StyleSheet.create({
   searchInput: { flex: 1, color: '#1B211C', fontSize: 13, minHeight: 44, paddingVertical: 0 },
   searchClear: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
   searchEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 18, alignItems: 'center' },
+  decoCircle1: { position: 'absolute', left: -50, top: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: '#78B833', opacity: 0.15 },
+  decoCircle2: { position: 'absolute', left: '68%', top: 50, width: 140, height: 140, borderRadius: 70, backgroundColor: '#A8D860', opacity: 0.1 },
   searchEmptyTitle: { color: '#087B35', fontSize: 15, fontWeight: '800', marginBottom: 4 },
 });
 
 export const styles: any = {
   ...general,
   ...commonUiStyles,
-  ...homeStyles,
   ...collectionStyles,
   ...accountEntryStyles,
 };

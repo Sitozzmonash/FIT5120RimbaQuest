@@ -19,12 +19,23 @@ export const DISCOVERY_CATEGORY_IMAGES = {
 
 export const HOME_IMAGES = {
   brandLogo: require('../../assets/home/brand-logo.png'),
-  leafDecor: require('../../assets/home/image-decor.png'),
-  pandaDecor: require('../../assets/home/red-panda-bush-deco.png'),
-  collectionBook: require('../../assets/home/collection-book.png'),
-  tileDiscover: require('../../assets/home/tile-discover.png'),
   tileCapture: require('../../assets/home/tile-capture.png'),
-  tileBattle: require('../../assets/home/tile-battle.png'),
+};
+
+export const HOME_MAP_IMAGES = {
+  brandLogo: require('../../assets/home/map/brand-logo-compact.png'),
+  grassPatch: require('../../assets/home/map/grass-patch.png'),
+  grassTuft: require('../../assets/home/map/grass-tuft.png'),
+  sprout: require('../../assets/home/map/sprout.png'),
+  butterfly: require('../../assets/home/map/butterfly.png'),
+  pebbles: require('../../assets/home/map/pebbles.png'),
+  bush: require('../../assets/home/map/bush.png'),
+  rock: require('../../assets/home/map/rock.png'),
+  iconDiscover: require('../../assets/home/map/icon-discover.png'),
+  iconCapture: require('../../assets/home/map/icon-capture.png'),
+  iconCollection: require('../../assets/home/map/icon-collection.png'),
+  iconBattle: require('../../assets/home/map/icon-battle.png'),
+  chevron: require('../../assets/home/map/chevron.png'),
 };
 
 export const COLLECTION_IMAGES = {
