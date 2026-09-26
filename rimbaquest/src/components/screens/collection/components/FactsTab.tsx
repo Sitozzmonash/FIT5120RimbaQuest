@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 import { API_BASE } from "../../../../constants/config";
+import { FONTS } from "../../../../constants/fonts";
 import { FunFact } from "../../../../types";
+import { DetailCard } from "./detail/DetailCard";
+import { DETAIL_COLORS, DETAIL_IMAGES } from "./detail/detailTheme";
+import { FactRow } from "./detail/FactRow";
+import { TabStatus } from "./detail/TabStatus";
 
 export function FactsTab({ speciesId }: { speciesId: string }) {
   const [facts, setFacts] = useState<FunFact[]>([]);
@@ -14,7 +19,9 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
       .then(async (response) => (response.ok ? response.json() : { facts: [] }))
       .then((payload: { facts?: FunFact[] }) => {
         if (active) {
-          setFacts(Array.isArray(payload.facts) ? payload.facts.slice(0, 10) : []);
+          setFacts(
+            Array.isArray(payload.facts) ? payload.facts.slice(0, 10) : [],
+          );
         }
       })
       .catch(() => {
@@ -28,50 +35,41 @@ export function FactsTab({ speciesId }: { speciesId: string }) {
     };
   }, [speciesId]);
 
-  if (loading) {
-    return (
-      <View style={styles.state}>
-        <ActivityIndicator color="#0B7A35" />
-        <Text style={styles.stateText}>Loading fun facts…</Text>
-      </View>
-    );
-  }
-
-  if (!facts.length) {
-    return (
-      <View style={styles.state}>
-        <Text style={styles.stateText}>
-          More wildlife facts for this animal are coming soon.
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <>
-      {facts.map((fact, idx) => (
-        <React.Fragment key={fact.display_order}>
-          <View style={styles.detailFactRow}>
-            <Text style={styles.factNumber}>{idx + 1}</Text>
-            <View style={styles.factContent}>
-              <Text style={styles.detailFactText}>{fact.fact_text}</Text>
-              {/* <Text style={styles.sourceText}>Source: {fact.source_name}</Text> */}
-            </View>
-          </View>
-          {idx < facts.length - 1 && <View style={styles.detailDivider} />}
-        </React.Fragment>
-      ))}
-    </>
+    <DetailCard>
+      <View style={styles.title}>
+        <Image
+          source={DETAIL_IMAGES.rocks}
+          style={styles.rocks}
+          resizeMode="contain"
+        />
+        <Text style={styles.titleText}>Did you know?</Text>
+      </View>
+      {loading ? (
+        <TabStatus loading message="Loading fun facts…" />
+      ) : facts.length ? (
+        <View>
+          {facts.map((fact, idx) => (
+            <FactRow
+              key={fact.display_order}
+              number={idx + 1}
+              text={fact.fact_text}
+            />
+          ))}
+        </View>
+      ) : (
+        <TabStatus message="More wildlife facts for this animal are coming soon." />
+      )}
+    </DetailCard>
   );
 }
 
 const styles = StyleSheet.create({
-  detailFactRow: { paddingVertical: 14, flexDirection: "row", gap: 10 },
-  factNumber: { color: "#0B7A35", fontWeight: "800", fontSize: 14 },
-  factContent: { flex: 1, gap: 5 },
-  detailFactText: { color: "#1A1A1A", fontSize: 14, lineHeight: 20 },
-  sourceText: { color: "#566159", fontSize: 12, lineHeight: 16 },
-  detailDivider: { height: 1, backgroundColor: "#E6E6E6" },
-  state: { paddingVertical: 28, alignItems: "center", gap: 10 },
-  stateText: { color: "#566159", fontSize: 14, lineHeight: 20, textAlign: "center" },
+  title: { flexDirection: "row", alignItems: "center", gap: 8 },
+  rocks: { width: 33.8, height: 24 },
+  titleText: {
+    fontFamily: FONTS.display,
+    color: DETAIL_COLORS.heading,
+    fontSize: 20,
+  },
 });

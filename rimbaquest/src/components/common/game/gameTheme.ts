@@ -12,6 +12,7 @@ export const GAME_COLORS = {
   rivet: "#5A2D0A",
   go: "#3F9A4E",
   track: "#E4D6B4",
+  divider: "#D9C79B",
 };
 
 // Lilita One with a dark outline-ish shadow, used on headers and plank signs.

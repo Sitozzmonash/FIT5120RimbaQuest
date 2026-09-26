@@ -12,7 +12,6 @@ export const PROFILE_COLORS = {
   avatarBg: "#D8ECCE",
   pillBorder: "#2F7A41",
   pillText: "#1A4D2B",
-  divider: "#D9C79B",
   lockedBg: "#ECE2C8",
   lockedBorder: "#A89D7C",
   lockedText: "#7A6F55",

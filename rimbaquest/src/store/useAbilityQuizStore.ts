@@ -41,6 +41,7 @@ type AbilityQuizState = {
   errorMsg: string;
   result: QuizResult | null;
   giveUpConfirmVisible: boolean;
+  newPerk: { speciesId: string; slot: number } | null;
 };
 
 type AbilityQuizActions = {
@@ -57,6 +58,7 @@ type AbilityQuizActions = {
   openGiveUpConfirm: () => void;
   closeGiveUpConfirm: () => void;
   giveUp: () => void;
+  dismissNewPerk: () => void;
 };
 
 export type AbilityQuizStore = AbilityQuizState & AbilityQuizActions;
@@ -121,12 +123,16 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   errorMsg: "",
   result: null,
   giveUpConfirmVisible: false,
+  newPerk: null,
 
   fetchProgression: async (speciesId) => {
     const hasCache = speciesId in get().progressionBySpecies;
     if (!hasCache) {
       set((state) => ({
-        progressionLoadingSpecies: { ...state.progressionLoadingSpecies, [speciesId]: true },
+        progressionLoadingSpecies: {
+          ...state.progressionLoadingSpecies,
+          [speciesId]: true,
+        },
       }));
     }
 
@@ -174,14 +180,18 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       | "ability_1"
       | "ability_2"
       | "ability_3";
-    const abilityName = slot === 3
-      ? species.passive?.name
-      : species.abilities?.find((ability) => ability.slot === slot)?.name;
+    const abilityName =
+      slot === 3
+        ? species.passive?.name
+        : species.abilities?.find((ability) => ability.slot === slot)?.name;
     set({
       unlockModalVisible: true,
       pendingSlot: slot,
       pendingDifficulty: DIFFICULTY_BY_SLOT[slot] || "easy",
-      pendingAbilityName: abilityName || species[abilityKey] || (slot === 3 ? "Wild Instinct" : `Ability ${slot}`),
+      pendingAbilityName:
+        abilityName ||
+        species[abilityKey] ||
+        (slot === 3 ? "Wild Instinct" : `Ability ${slot}`),
       activeSpecies: species,
     });
   },
@@ -247,7 +257,11 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       if (res.ok) {
         useContinueLearningStore
           .getState()
-          .recordActivity(useUserStore.getState().currentUser.id, activeSpecies.id, "quiz");
+          .recordActivity(
+            useUserStore.getState().currentUser.id,
+            activeSpecies.id,
+            "quiz",
+          );
       }
       if (data.passed) {
         await get().fetchProgression(activeSpecies.id);
@@ -268,7 +282,12 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   },
 
   finishQuiz: () => {
+    const { result, activeSpecies, pendingSlot } = get();
     set({
+      newPerk:
+        result?.passed && activeSpecies && pendingSlot
+          ? { speciesId: activeSpecies.id, slot: pendingSlot }
+          : null,
       result: null,
       questions: [],
       currentIndex: 0,
@@ -284,4 +303,6 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   closeGiveUpConfirm: () => set({ giveUpConfirmVisible: false }),
 
   giveUp: () => get().finishQuiz(),
+
+  dismissNewPerk: () => set({ newPerk: null }),
 }));

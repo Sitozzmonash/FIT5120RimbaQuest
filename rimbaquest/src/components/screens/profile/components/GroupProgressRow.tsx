@@ -4,7 +4,7 @@ import { FONTS } from "../../../../constants/fonts";
 import { GameProgressBar } from "../../../common/game/GameProgressBar";
 import { PROFILE_COLORS } from "../profileTheme";
 import { percentOf } from "../profileProgress";
-import { DashedDivider } from "./DashedDivider";
+import { DashedDivider } from "../../../common/game/DashedDivider";
 
 export function GroupProgressRow({
   label,

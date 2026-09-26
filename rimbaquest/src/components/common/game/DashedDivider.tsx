@@ -1,6 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { PROFILE_COLORS } from "../profileTheme";
+import { GAME_COLORS } from "./gameTheme";
 
 export function DashedDivider() {
   return (
@@ -16,6 +16,6 @@ const styles = StyleSheet.create({
     height: 6,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: PROFILE_COLORS.divider,
+    borderColor: GAME_COLORS.divider,
   },
 });
