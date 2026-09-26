@@ -8,7 +8,6 @@ export const PROFILE_COLORS = {
   faded: "#7C8A78",
   gold: "#F2B233",
   goldLight: "#FFD66E",
-  goldText: "#4A2A05",
   avatarBg: "#D8ECCE",
   pillBorder: "#2F7A41",
   pillText: "#1A4D2B",

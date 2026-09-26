@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { outlinedTitleStyle } from "../../../common/game/gameTheme";
 import { PROFILE_COLORS } from "../profileTheme";
-import { LevelPill } from "./LevelPill";
+import { LevelPill } from "../../../common/game/LevelPill";
 
 const AVATAR_SIZE = 80;
 

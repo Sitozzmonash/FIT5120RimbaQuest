@@ -19,7 +19,6 @@ export const DISCOVERY_CATEGORY_IMAGES = {
 
 export const HOME_IMAGES = {
   brandLogo: require('../../assets/home/brand-logo.png'),
-  tileCapture: require('../../assets/home/tile-capture.png'),
 };
 
 export const HOME_MAP_IMAGES = {

@@ -58,9 +58,6 @@ const general = StyleSheet.create({
   quizOptionText: { textAlign: 'center', lineHeight: 18 },
   quizOptionTextSelected: { color: '#FFFFFF' },
   pressed: { opacity: 0.72 },
-  searchBox: { minHeight: 46, marginBottom: 12, borderWidth: 1, borderColor: '#C8D1CA', borderRadius: 12, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF' },
-  searchInput: { flex: 1, color: '#1B211C', fontSize: 13, minHeight: 44, paddingVertical: 0 },
-  searchClear: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
   searchEmpty: { borderWidth: 1, borderColor: '#CBECD6', backgroundColor: '#F4FFF7', borderRadius: 14, padding: 18, alignItems: 'center' },
   searchEmptyTitle: { color: '#087B35', fontSize: 15, fontWeight: '800', marginBottom: 4 },
 });
