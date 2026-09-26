@@ -2,10 +2,12 @@ import React from "react";
 import {
   Image,
   ImageSourcePropType,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { HOME_MAP_IMAGES } from "../../../../constants/images";
 import { ScaleTap } from "../../../common/ScaleTap";
 import { HOME_COLORS, signTextStyle } from "../homeTheme";
 import { MapBadge } from "./MapBadge";
@@ -13,6 +15,14 @@ import { WoodenSign } from "./WoodenSign";
 
 const NODE_SIZE = 84;
 const FEATURED_SIZE = 110;
+
+// Greyed-out look for a node that isn't available yet.
+const LOCKED = {
+  face: "#C9C3B0",
+  ink: "#5E5946",
+  sign: "#9C9480",
+  text: "#F3EEE2",
+};
 
 export type MapNodeProps = {
   label: string;
@@ -26,6 +36,8 @@ export type MapNodeProps = {
   badge?: string;
   // The main call to action gets a larger, gold-ringed node.
   featured?: boolean;
+  // Greyed out with a padlock.
+  locked?: boolean;
   onPress: () => void;
 };
 
@@ -40,8 +52,30 @@ export function MapNodeButton({
   width,
   badge,
   featured = false,
+  locked = false,
   onPress,
 }: MapNodeProps) {
+  if (locked) {
+    return (
+      <ScaleTap
+        label={accessibilityLabel}
+        style={[styles.node, { left, top, width }]}
+        onPress={onPress}
+      >
+        <LockedCircle>
+          <Image
+            source={icon}
+            style={[iconSize, styles.lockedIcon]}
+            resizeMode="contain"
+          />
+        </LockedCircle>
+        <WoodenSign style={[styles.sign, styles.lockedSign]}>
+          <Text style={[styles.label, styles.lockedLabel]}>{label}</Text>
+        </WoodenSign>
+      </ScaleTap>
+    );
+  }
+
   return (
     <ScaleTap
       label={accessibilityLabel}
@@ -84,6 +118,22 @@ function NodeCircle({
         {children}
       </View>
       {badge ? <MapBadge label={badge} /> : null}
+    </View>
+  );
+}
+
+function LockedCircle({ children }: { children: React.ReactNode }) {
+  return (
+    <View style={styles.circleSlot}>
+      <View style={[styles.circle, styles.circleDrop, styles.lockedDrop]} />
+      <View style={[styles.circle, styles.circleFace, styles.lockedFace]}>
+        {children}
+      </View>
+      <Image
+        source={HOME_MAP_IMAGES.lock}
+        style={styles.lockBadge}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -146,6 +196,22 @@ const styles = StyleSheet.create({
     height: NODE_SIZE - 8,
     borderRadius: (NODE_SIZE - 8) / 2,
   },
+
+  lockedDrop: { backgroundColor: LOCKED.ink },
+  lockedFace: { backgroundColor: LOCKED.face, borderColor: LOCKED.ink },
+  lockedIcon:
+    Platform.OS === "ios"
+      ? { tintColor: LOCKED.ink, opacity: 0.4 }
+      : { filter: "grayscale(1)", opacity: 0.55 },
+  lockBadge: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    width: 40,
+    height: 40 * (242 / 204),
+  },
+  lockedSign: { backgroundColor: LOCKED.sign, borderColor: LOCKED.ink },
+  lockedLabel: { color: LOCKED.text, textShadowColor: LOCKED.ink },
 
   featuredSlot: { width: FEATURED_SIZE, height: FEATURED_SIZE },
   ring: { position: "absolute", borderRadius: 999 },

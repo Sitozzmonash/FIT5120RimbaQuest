@@ -20,7 +20,7 @@ export function ResumeSpeciesCard({
 }: {
   name: string;
   image?: ImageSourcePropType;
-  status: string;
+  status?: string;
   category?: string;
   onPress: () => void;
 }) {
@@ -30,27 +30,33 @@ export function ResumeSpeciesCard({
       style={styles.card}
       onPress={onPress}
     >
-      <View style={styles.thumb}>
-        {image ? (
+      {image ? (
+        <View style={styles.thumb}>
           <Image source={image} style={styles.thumbImage} resizeMode="cover" />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
           {name}
         </Text>
-        <View style={styles.pills}>
-          <View style={[styles.pill, styles.statusPill]}>
-            <Text style={[styles.pillText, styles.statusText]}>{status}</Text>
+        {status || category ? (
+          <View style={styles.pills}>
+            {status ? (
+              <View style={[styles.pill, styles.statusPill]}>
+                <Text style={[styles.pillText, styles.statusText]}>
+                  {status}
+                </Text>
+              </View>
+            ) : null}
+            {category ? (
+              <View style={[styles.pill, styles.categoryPill]}>
+                <Text style={[styles.pillText, styles.categoryText]}>
+                  {category}
+                </Text>
+              </View>
+            ) : null}
           </View>
-          {category ? (
-            <View style={[styles.pill, styles.categoryPill]}>
-              <Text style={[styles.pillText, styles.categoryText]}>
-                {category}
-              </Text>
-            </View>
-          ) : null}
-        </View>
+        ) : null}
       </View>
       <Image
         source={HOME_MAP_IMAGES.chevron}

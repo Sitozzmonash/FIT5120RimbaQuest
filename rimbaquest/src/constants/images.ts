@@ -28,6 +28,7 @@ export const HOME_MAP_IMAGES = {
   iconCollection: require('../../assets/home/map/icon-collection.png'),
   iconBattle: require('../../assets/home/map/icon-battle.png'),
   chevron: require('../../assets/home/map/chevron.png'),
+  lock: require('../../assets/collection/locked-lock.png'),
 };
 
 export const COLLECTION_IMAGES = {
@@ -37,10 +38,10 @@ export const COLLECTION_IMAGES = {
 };
 
 export const AUTH_IMAGES = {
-  mascotWelcome: require('../../assets/auth/mascot-id-card.png'),
-  mascotLogin: require('../../assets/auth/mascot-wave.png'),
-  mascotForgot: require('../../assets/auth/mascot-key.png'),
-  mascotReset: require('../../assets/auth/mascot-shield.png'),
+  heroElephantTiger: require('../../assets/auth/hero-elephant-tiger.png'),
+  heroTigerElephantTapir: require('../../assets/auth/hero-tiger-elephant-tapir.png'),
+  heroTigerSunBear: require('../../assets/auth/hero-tiger-sunbear.png'),
+  heroTigerTapir: require('../../assets/auth/hero-tiger-tapir.png'),
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
 };
 

@@ -11,6 +11,11 @@ const DEFAULT_COLORS: PageColors = { top: "#FFFFFF", bottom: "#FFFFFF" };
 // edge (shows in the strip revealed when the address bar hides on scroll).
 const SCREEN_COLORS: Partial<Record<Screen, PageColors>> = {
   home: { top: "#FDF2D9", bottom: "#FDF2D9" },
+  account_entry: { top: "#FDF2D9", bottom: GAME_GREEN },
+  login: { top: "#FDF2D9", bottom: GAME_GREEN },
+  create_account: { top: "#FDF2D9", bottom: GAME_GREEN },
+  forgot_password: { top: "#FDF2D9", bottom: GAME_GREEN },
+  reset_password: { top: "#FDF2D9", bottom: GAME_GREEN },
   locations: { top: GAME_GREEN, bottom: "#F5EDD6" },
   collection: { top: GAME_GREEN, bottom: GAME_GREEN },
   about: { top: GAME_GREEN, bottom: GAME_GREEN },

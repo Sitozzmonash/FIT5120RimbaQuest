@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "expo": "54.0.37",
+    "expo-audio": "~1.1.1",
     "expo-camera": "~17.0.10",
     "expo-constants": "18.0.14",
     "expo-device": "~8.0.10",

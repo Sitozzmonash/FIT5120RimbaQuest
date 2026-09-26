@@ -40,7 +40,6 @@ export function ResumeList() {
     return (
       <ResumeSpeciesCard
         name="Find your first animal"
-        status="Capture"
         onPress={() => useDiscoveryStore.getState().start()}
       />
     );

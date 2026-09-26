@@ -1,7 +1,6 @@
 import { StyleSheet } from 'react-native';
 
 import { collectionStyles } from './screens/collection.styles';
-import { accountEntryStyles } from './screens/accountEntry.styles';
 import { commonUiStyles } from './common-ui.styles';
 
 // General / shared styles used across multiple screens, plus the app shell
@@ -66,5 +65,4 @@ export const styles: any = {
   ...general,
   ...commonUiStyles,
   ...collectionStyles,
-  ...accountEntryStyles,
 };

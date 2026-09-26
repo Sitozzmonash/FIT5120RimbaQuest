@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { avatarImageFor, HOME_MAP_IMAGES } from "../../../constants/images";
@@ -11,12 +11,21 @@ import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeMapCanvas } from "./components/HomeMapCanvas";
 import { MapNodeButton } from "./components/MapNodeButton";
+import { MapCritters } from "./components/MapCritters";
+import { MapGroundLayer } from "./components/MapGroundLayer";
+import { MapHintBubble } from "./components/MapHintBubble";
+import { MapPathingDebug } from "./components/MapPathingDebug";
 import { MapScenery } from "./components/MapScenery";
 import { NoticeModal } from "./components/NoticeModal";
 import { ResumeList } from "./components/ResumeList";
 import { RESUME_SHEET_PEEK, ResumeSheet } from "./components/ResumeSheet";
 import { HOME_COLORS } from "./homeTheme";
-import { MAP_CAMP_POSITION, MAP_NODE_POSITIONS } from "./homeMapLayout";
+import { SHOW_MAP_DEBUG } from "./mapPathing";
+import {
+  MAP_BATTLE_HINT_POSITION,
+  MAP_CAMP_POSITION,
+  MAP_NODE_POSITIONS,
+} from "./homeMapLayout";
 
 export function HomeScreen() {
   const currentUser = useUserStore((state) => state.currentUser);
@@ -25,6 +34,22 @@ export function HomeScreen() {
   const open = useNavigationStore.getState().open;
   const insets = useSafeAreaInsets();
   const [bodyHeight, setBodyHeight] = useState(0);
+  const [battleHintVisible, setBattleHintVisible] = useState(false);
+  const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Tapping the locked battle node shows why it's locked for a few seconds.
+  const showBattleHint = () => {
+    if (hintTimer.current) clearTimeout(hintTimer.current);
+    setBattleHintVisible(true);
+    hintTimer.current = setTimeout(() => setBattleHintVisible(false), 2000);
+  };
+
+  useEffect(
+    () => () => {
+      if (hintTimer.current) clearTimeout(hintTimer.current);
+    },
+    [],
+  );
 
   return (
     <View style={styles.root}>
@@ -36,6 +61,7 @@ export function HomeScreen() {
       >
         <HomeMapCanvas>
           <MapScenery />
+          <MapGroundLayer />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.discover}
             label="Discover"
@@ -68,13 +94,23 @@ export function HomeScreen() {
           <MapNodeButton
             {...MAP_NODE_POSITIONS.battle}
             label="Battle"
-            accessibilityLabel={battleReady ? "Battle, unlocked" : "Battle"}
+            accessibilityLabel={
+              battleReady
+                ? "Battle"
+                : "Battle, locked. Capture an animal to unlock battles"
+            }
             icon={HOME_MAP_IMAGES.iconBattle}
             iconSize={{ width: 50, height: 45.31 }}
             color="#FFD3BD"
-            badge={battleReady ? "New!" : undefined}
-            onPress={() => open("battle_select")}
+            locked={!battleReady}
+            onPress={battleReady ? () => open("battle_select") : showBattleHint}
           />
+          {!battleReady && battleHintVisible && (
+            <MapHintBubble
+              {...MAP_BATTLE_HINT_POSITION}
+              text="Capture an animal to unlock battles!"
+            />
+          )}
           <CampProfileButton
             {...MAP_CAMP_POSITION}
             name={currentUser.display_name}
@@ -82,6 +118,8 @@ export function HomeScreen() {
             avatar={avatarImageFor(currentUser.avatar)}
             onPress={() => open("progress")}
           />
+          <MapCritters layer="air" />
+          {SHOW_MAP_DEBUG && <MapPathingDebug />}
         </HomeMapCanvas>
 
         {/* Reserves the collapsed sheet's space so the map scales above it. */}

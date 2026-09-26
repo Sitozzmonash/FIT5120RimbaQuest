@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import { Animated, Pressable, StyleProp, ViewStyle } from "react-native";
+import { playButtonClick } from "../../utils/sounds";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -37,7 +38,10 @@ export function ScaleTap({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      onPress={onPress}
+      onPress={() => {
+        playButtonClick();
+        onPress();
+      }}
       onPressIn={() => animateTo(pressedScale)}
       onPressOut={() => animateTo(1)}
       style={[style, { transform: [{ scale }] }]}

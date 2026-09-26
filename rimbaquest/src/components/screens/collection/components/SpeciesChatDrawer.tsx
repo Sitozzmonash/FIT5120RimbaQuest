@@ -285,7 +285,7 @@ export function SpeciesChatDrawer({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={closeDrawer}
     >
       <View style={styles.modalRoot} onLayout={handleModalLayout}>

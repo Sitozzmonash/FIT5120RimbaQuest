@@ -1,28 +1,33 @@
 import React, { useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
+import { StyleSheet, Text, View } from "react-native";
+import { FONTS } from "../../../constants/fonts";
 import { AUTH_IMAGES } from "../../../constants/images";
 import { API_BASE } from "../../../constants/config";
 import { EMAIL_RE } from "../../../constants/validation";
 import { useForgotPasswordStore } from "../../../store/useForgotPasswordStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { apiMessage } from "../../../utils/authApi";
-import { ConfirmNewPasswordField } from "./components/ConfirmNewPasswordField";
-import { NewPasswordField } from "./components/NewPasswordField";
-import { RecoveryEmailField } from "./components/RecoveryEmailField";
-import { VerificationCodeField } from "./components/VerificationCodeField";
-import { Tap } from "../../common/Tap";
-import { PrimaryButton } from "../../common/PrimaryButton";
+import { GameButton } from "../../common/game/GameButton";
 import { WoodModal } from "../../common/game/WoodModal";
+import { AuthErrorBanner } from "../auth/AuthErrorBanner";
+import { AuthLink } from "../auth/AuthLink";
+import { AuthScreen } from "../auth/AuthScreen";
+import { AuthTextField } from "../auth/AuthTextField";
+import { AUTH_COLORS, authBodyStyle, authTitleStyle } from "../auth/authTheme";
+import { RecoveryEmailField } from "./components/RecoveryEmailField";
 
 export function ResetPasswordScreen() {
-  const insets = useSafeAreaInsets();
-
   const email = useForgotPasswordStore((state) => state.email);
-  const [showEmailInput] = useState(() => !email.trim());
+  const token = useForgotPasswordStore((state) => state.token);
+  const newPassword = useForgotPasswordStore((state) => state.newPassword);
+  const confirmPassword = useForgotPasswordStore(
+    (state) => state.confirmPassword,
+  );
+  const fieldError = useForgotPasswordStore((state) => state.fieldError);
   const formError = useForgotPasswordStore((state) => state.formError);
   const submitting = useForgotPasswordStore((state) => state.submitting);
+
+  const [showEmailInput] = useState(() => !email.trim());
   const [resetDone, setResetDone] = useState(false);
 
   // After the "All done!" popup: clear the form and go to Log In.
@@ -80,10 +85,10 @@ export function ResetPasswordScreen() {
       if (!res.ok) {
         const apiError = apiMessage(
           data,
-          "That secret code is wrong or too old.",
+          "That verification code is wrong or too old.",
         );
         const message = /invalid|expired|recovery|token/i.test(apiError)
-          ? "That secret code is wrong or too old."
+          ? "That verification code is wrong or too old."
           : apiError;
         store.setFormError(
           /expired/i.test(message)
@@ -102,95 +107,75 @@ export function ResetPasswordScreen() {
     }
   };
 
+  const { setToken, setNewPassword, setConfirmPassword } =
+    useForgotPasswordStore.getState();
+
   return (
-    <View style={styles.resetRoot}>
-      <LinearGradient
-        colors={["#C8F0D8", "#E0F5E9", "#F0FAF4", "#E8F6EE"]}
-        locations={[0, 0.3, 0.6, 1]}
-        style={styles.resetBackground}
+    <AuthScreen
+      hero={AUTH_IMAGES.heroTigerSunBear}
+      heroWidth={280}
+      heroHeight={210}
+      heroOverlap={43}
+    >
+      <Text style={authTitleStyle}>Reset Password</Text>
+      <Text style={authBodyStyle}>
+        {showEmailInput ? (
+          "Enter the code from your email, then create a new password for your account."
+        ) : (
+          <>
+            Enter the code we sent to{" "}
+            <Text style={styles.email}>{email.trim()}</Text>, then create a new
+            password for your account.
+          </>
+        )}
+      </Text>
+      <AuthErrorBanner message={formError} />
+
+      <View style={styles.fields}>
+        {showEmailInput && <RecoveryEmailField showError={false} />}
+        <AuthTextField
+          label="Verification Code *"
+          icon="vpn-key"
+          placeholder="Type all 6 letters or numbers"
+          value={token}
+          onChangeText={(val) => setToken(val.replace(/\s/g, "").toUpperCase())}
+          autoCapitalize="characters"
+          autoComplete="one-time-code"
+          maxLength={50}
+        />
+        <AuthTextField
+          label="New Password *"
+          icon="lock-outline"
+          password
+          placeholder="Enter new password"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          error={Boolean(fieldError)}
+          autoComplete="new-password"
+        />
+        <AuthTextField
+          label="Confirm New Password *"
+          icon="lock-outline"
+          password
+          placeholder="Re-enter new password"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          error={fieldError}
+          autoComplete="new-password"
+          onSubmitEditing={() => void handleResetPassword()}
+        />
+      </View>
+
+      <GameButton
+        label="Reset Password"
+        loading={submitting}
+        onPress={() => void handleResetPassword()}
       />
-      <View style={[styles.resetDecoCircle1, { pointerEvents: "none" }]} />
-      <View style={[styles.resetDecoCircle2, { pointerEvents: "none" }]} />
 
-      <ScrollView
-        contentContainerStyle={[styles.resetScroll, { paddingTop: insets.top }]}
-      >
-        <View style={styles.resetCenterWrap}>
-          <View style={styles.resetMascotContainer}>
-            <View style={styles.resetMascotBlob}>
-              <Image
-                source={AUTH_IMAGES.mascotReset}
-                style={styles.resetMascotImage}
-                resizeMode="cover"
-              />
-            </View>
-          </View>
-
-          <View
-            style={[styles.resetForm, { paddingBottom: 48 + insets.bottom }]}
-          >
-            <View style={styles.resetTextGroup}>
-              <Text style={styles.resetTitle}>Make a New Password</Text>
-              <Text style={styles.resetSubtitle}>
-                Type the secret code from the email, then choose a new password.
-              </Text>
-            </View>
-
-            {formError && (
-              <Text style={styles.resetErrorBanner}>{formError}</Text>
-            )}
-
-            <View style={styles.resetFields}>
-              {showEmailInput ? (
-                <View style={styles.resetField}>
-                  <Text style={styles.resetFieldLabel}>Account Email *</Text>
-                  <RecoveryEmailField />
-                </View>
-              ) : (
-                <View style={styles.resetEmailBanner}>
-                  <Text style={styles.resetEmailText}>
-                    Resetting password for: {email.trim()}
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.resetField}>
-                <Text style={styles.resetFieldLabel}>Secret Code *</Text>
-                <VerificationCodeField />
-              </View>
-
-              <View style={styles.resetField}>
-                <Text style={styles.resetFieldLabel}>New Password *</Text>
-                <NewPasswordField />
-              </View>
-
-              <View style={styles.resetField}>
-                <Text style={styles.resetFieldLabel}>
-                  Type New Password Again *
-                </Text>
-                <ConfirmNewPasswordField />
-              </View>
-            </View>
-
-            <View style={styles.resetActions}>
-              <PrimaryButton
-                label="Save New Password"
-                displayText={submitting ? "Saving..." : "Save New Password"}
-                loading={submitting}
-                style={styles.resetSubmitBtn}
-                onPress={() => void handleResetPassword()}
-              />
-              <Tap
-                label="Back to Log In"
-                style={{}}
-                onPress={() => useNavigationStore.getState().resetTo("login")}
-              >
-                <Text style={styles.resetLinkBack}>Back to Log In</Text>
-              </Tap>
-            </View>
-          </View>
-        </View>
-      </ScrollView>
+      <AuthLink
+        label="Back to Log In"
+        onPress={() => useNavigationStore.getState().resetTo("login")}
+      />
 
       <WoodModal
         visible={resetDone}
@@ -202,85 +187,11 @@ export function ResetPasswordScreen() {
         actionLabel="Go to Log In"
         onAction={finishReset}
       />
-    </View>
+    </AuthScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  resetRoot: { flex: 1, overflow: "hidden" },
-  resetBackground: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  resetDecoCircle1: {
-    position: "absolute",
-    left: -50,
-    top: -50,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: "#78B833",
-    opacity: 0.15,
-  },
-  resetDecoCircle2: {
-    position: "absolute",
-    left: "70%",
-    top: "80%",
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "#78B833",
-    opacity: 0.12,
-  },
-  resetScroll: { flexGrow: 1 },
-  resetCenterWrap: { flex: 1, justifyContent: "center" },
-  resetMascotContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  resetMascotBlob: {
-    width: 282,
-    height: 255,
-    borderRadius: 80,
-    backgroundColor: "rgba(216,240,224,0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  resetMascotImage: { width: 250, height: 258 },
-  resetForm: { gap: 28, paddingHorizontal: 24, paddingBottom: 48 },
-  resetTextGroup: { gap: 8 },
-  resetTitle: { color: "#0A4D26", fontSize: 24, fontWeight: "800" },
-  resetSubtitle: { color: "#2D5A3E", fontSize: 15 },
-  resetErrorBanner: {
-    color: "#D9383A",
-    backgroundColor: "#FCE8E8",
-    borderRadius: 10,
-    padding: 10,
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  resetFields: { gap: 16 },
-  resetEmailBanner: {
-    backgroundColor: "#EAF5EE",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  resetEmailText: { fontSize: 12, color: "#1B4D2E", fontWeight: "700" },
-  resetField: { gap: 6 },
-  resetFieldLabel: { color: "#0A4D26", fontSize: 13, fontWeight: "700" },
-  resetActions: { gap: 16, alignItems: "center" },
-  resetSubmitBtn: { width: "100%" },
-  resetLinkBack: {
-    color: "#0A4D26",
-    fontSize: 15,
-    fontWeight: "700",
-    textDecorationLine: "underline",
-  },
+  fields: { gap: 14 },
+  email: { fontFamily: FONTS.bodyBlack, color: AUTH_COLORS.title },
 });

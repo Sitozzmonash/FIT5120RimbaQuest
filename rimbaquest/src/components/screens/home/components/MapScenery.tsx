@@ -4,12 +4,12 @@ import { HOME_MAP_IMAGES } from "../../../../constants/images";
 import { HOME_COLORS } from "../homeTheme";
 import {
   MAP_CLEARINGS,
-  MAP_DECOR,
   MAP_GRASS_PATCHES,
   MAP_TRAIL,
 } from "../homeMapLayout";
 
-// Non-interactive map ground: clearings, grass, the dotted trail and props.
+// Non-interactive map ground: clearings, grass and the dotted trail. The props
+// (bushes, rocks...) live in MapGroundLayer so animals can walk behind them.
 export function MapScenery() {
   return (
     <View style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}>
@@ -40,18 +40,6 @@ export function MapScenery() {
         <View
           key={`${left}-${top}`}
           style={[styles.trailStone, { left, top }]}
-        />
-      ))}
-      {MAP_DECOR.map(({ source, rotate, ...placement }) => (
-        <Image
-          key={`${placement.left}-${placement.top}`}
-          source={source}
-          style={[
-            styles.absolute,
-            placement,
-            rotate ? { transform: [{ rotate }] } : null,
-          ]}
-          resizeMode="stretch"
         />
       ))}
     </View>

@@ -22,6 +22,7 @@ import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useWebPageColors } from '../hooks/useWebPageColors';
 import { useDiscoveryStore } from '../store/useDiscoveryStore';
 import { useNavigationStore } from '../store/useNavigationStore';
@@ -36,6 +37,7 @@ export default function RimbaQuest() {
 
   const bootstrapped = useUserStore((state) => state.bootstrapped);
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  useBackgroundMusic(screen, isLoggedIn);
 
   useEffect(() => {
     void useUserStore.getState().restoreSession();
