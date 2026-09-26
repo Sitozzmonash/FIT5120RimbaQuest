@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     borderColor: HOME_COLORS.ink,
   },
   categoryPill: { backgroundColor: "#D8ECCE", borderColor: "#2F7A41" },
-  pillText: { fontSize: 11, fontWeight: "900" },
+  pillText: { fontSize: 11, fontFamily: FONTS.bodyBlack },
   statusText: { color: HOME_COLORS.paper },
   categoryText: { color: "#1A4D2B" },
   chevron: { width: 13, height: 18.23 },
