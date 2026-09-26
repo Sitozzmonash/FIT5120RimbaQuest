@@ -1,220 +1,55 @@
 import React, { useState } from "react";
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { MaterialIcons } from "@expo/vector-icons";
+import { StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AVATAR_CHOICES } from "../../../constants/images";
-import { API_BASE } from "../../../constants/config";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useProfileEditStore } from "../../../store/useProfileEditStore";
-import { useUserStore } from "../../../store/useUserStore";
-import { apiMessage } from "../../../utils/authApi";
-import { Tap } from "../../common/Tap";
-import { PrimaryButton } from "../../common/PrimaryButton";
-import { EditProfileHeader } from "./components/EditProfileHeader";
+import { FitScrollView } from "../../common/FitScrollView";
+import { GameButton } from "../../common/game/GameButton";
+import { GameScreenHeader } from "../../common/game/GameScreenHeader";
+import { AvatarChoiceCard } from "./components/AvatarChoiceCard";
+import { ExplorerDetailsCard } from "./components/ExplorerDetailsCard";
+import { ProfileErrorNote } from "./components/ProfileErrorNote";
 import { UnsavedChangesModal } from "./components/UnsavedChangesModal";
-import { styles as globalStyles } from "../../../styles/theme";
-
-function formatAge(age: string): string {
-  const n = parseInt(age, 10);
-  return Number.isFinite(n) && n >= 18 ? "18+" : age;
-}
+import { PROFILE_COLORS } from "./profileTheme";
+import { saveProfile } from "./saveProfile";
 
 export function ProfileEditScreen() {
-  const email = useUserStore((state) => state.currentUser.email);
-  const displayName = useProfileEditStore((state) => state.displayName);
-  const avatar = useProfileEditStore((state) => state.avatar);
-  const age = useProfileEditStore((state) => state.age);
-  const originalUsername = useProfileEditStore(
-    (state) => state.originalUsername,
-  );
-  const originalAvatar = useProfileEditStore((state) => state.originalAvatar);
+  const insets = useSafeAreaInsets();
   const error = useProfileEditStore((state) => state.error);
   const saving = useProfileEditStore((state) => state.saving);
-
-  const isDirty = displayName !== originalUsername || avatar !== originalAvatar;
-
-  const insets = useSafeAreaInsets();
+  const isDirty = useProfileEditStore(
+    (state) =>
+      state.displayName !== state.originalUsername ||
+      state.avatar !== state.originalAvatar,
+  );
   const [confirmingLeave, setConfirmingLeave] = useState(false);
 
   const leave = () => {
-    if (!isDirty) {
-      useNavigationStore.getState().goBack();
+    if (isDirty) {
+      setConfirmingLeave(true);
       return;
     }
-    setConfirmingLeave(true);
-  };
-
-  const handleSave = async () => {
-    const store = useProfileEditStore.getState();
-    const username = store.displayName.trim() || store.originalUsername;
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      store.setError(
-        "Use 3 to 20 letters or numbers. You can also use - or _ with no spaces.",
-      );
-      return;
-    }
-    store.setError(null);
-    store.setSaving(true);
-    try {
-      const user = useUserStore.getState();
-      const res = await fetch(
-        `${API_BASE}/api/v1/children/${user.currentUser.id}/profile`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...user.authHeaders(),
-          },
-          body: JSON.stringify({
-            username,
-            avatar: store.avatar,
-            age: parseInt(store.age, 10),
-          }),
-        },
-      );
-      if (res.status === 401 || res.status === 403) {
-        await user.expire();
-        return;
-      }
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const message = apiMessage(
-          data,
-          "We could not save your profile changes.",
-        );
-        store.setError(
-          /username.*taken/i.test(message)
-            ? "Someone already uses that explorer name. Try another one."
-            : "We could not save your changes. Please try again.",
-        );
-        return;
-      }
-      useUserStore.getState().applyProfileUpdate(data, username);
-      useNavigationStore.getState().goBack();
-    } catch {
-      store.setError(
-        "We couldn't save your changes. Please try again.",
-      );
-    } finally {
-      store.setSaving(false);
-    }
+    useNavigationStore.getState().goBack();
   };
 
   return (
     <View style={styles.root}>
-      <LinearGradient
-        colors={["#C8F0D8", "#E0F5E9", "#F0FAF4", "#E8F6EE"]}
-        locations={[0, 0.3, 0.6, 1]}
-        style={styles.gradientBg}
-      />
-      <View style={[styles.decoCircle1, { pointerEvents: "none" }]} />
-      <View style={[styles.decoCircle2, { pointerEvents: "none" }]} />
+      <GameScreenHeader title="Edit Profile" onBack={leave} />
 
-      <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
-        <EditProfileHeader onBack={leave} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={[
-          globalStyles.content,
-          { paddingTop: 8, paddingBottom: 32 + insets.bottom },
-        ]}
+      <FitScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.card}>
-          <Text style={styles.inputLabel}>EXPLORER NAME</Text>
-          <View style={styles.inputBox}>
-            <MaterialIcons name="person-outline" size={18} color="#0A4D26" />
-            <TextInput
-              style={styles.input}
-              value={displayName}
-              onChangeText={(text) =>
-                useProfileEditStore.getState().setDisplayName(text)
-              }
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-          <Text style={styles.helpText}>
-            You can use this name when you log in.
-          </Text>
-
-          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>
-            EMAIL
-          </Text>
-          <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-            <MaterialIcons name="mail-outline" size={18} color="#8A968E" />
-            <TextInput
-              style={[styles.input, styles.inputDisabled]}
-              value={email}
-              editable={false}
-            />
-          </View>
-          <Text style={styles.helpText}>This email cannot be changed here.</Text>
-
-          <Text style={[styles.inputLabel, styles.inputLabelSpaced]}>AGE</Text>
-          <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-            <MaterialIcons name="cake" size={18} color="#8A968E" />
-            <TextInput
-              style={[styles.input, styles.inputDisabled]}
-              value={formatAge(age)}
-              editable={false}
-              keyboardType="numeric"
-            />
-          </View>
-          <Text style={styles.helpText}>Your age cannot be changed here.</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.inputLabel}>CHOOSE AN AVATAR</Text>
-          <View style={styles.avatarPicker}>
-            {AVATAR_CHOICES.map(({ key, label, image }) => (
-              <Tap
-                key={key}
-                label={key}
-                style={[
-                  styles.avatarChoice,
-                  avatar === key && styles.avatarChoiceActive,
-                ]}
-                onPress={() => useProfileEditStore.getState().setAvatar(key)}
-              >
-                <Image
-                  source={image}
-                  style={styles.avatarChoiceImage}
-                  resizeMode="cover"
-                />
-                <Text style={styles.avatarChoiceName}>{label}</Text>
-                {avatar === key && (
-                  <View style={styles.avatarChoiceCheck}>
-                    <MaterialIcons name="check" size={13} color="#FFFFFF" />
-                  </View>
-                )}
-              </Tap>
-            ))}
-          </View>
-        </View>
-
-        {error ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        ) : null}
-
-        <PrimaryButton
+        <ExplorerDetailsCard />
+        <AvatarChoiceCard />
+        {error ? <ProfileErrorNote message={error} /> : null}
+        <GameButton
           label={saving ? "Saving..." : "Save My Changes"}
           loading={saving}
-          disabled={saving}
-          style={styles.saveBtn}
-          onPress={() => void handleSave()}
+          onPress={() => void saveProfile()}
+          size="m"
         />
-      </ScrollView>
+      </FitScrollView>
 
       <UnsavedChangesModal
         visible={confirmingLeave}
@@ -229,112 +64,11 @@ export function ProfileEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, overflow: "hidden" },
-  gradientBg: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0 },
-  headerBar: { paddingHorizontal: 18 },
-  decoCircle1: {
-    position: "absolute",
-    left: -30,
-    top: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "#78B833",
-    opacity: 0.12,
+  root: { flex: 1, backgroundColor: PROFILE_COLORS.background },
+  content: {
+    gap: 16,
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
   },
-  decoCircle2: {
-    position: "absolute",
-    right: -40,
-    bottom: 40,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "#FFC314",
-    opacity: 0.08,
-  },
-  card: {
-    borderColor: "#DFE7E1",
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
-    backgroundColor: "#FFFFFF",
-  },
-  inputLabel: {
-    color: "#78817B",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.4,
-    marginBottom: 6,
-  },
-  inputLabelSpaced: { marginTop: 14 },
-  inputBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: "#D1E8D5",
-    backgroundColor: "#F7FBF8",
-    paddingHorizontal: 14,
-  },
-  input: { flex: 1, color: "#1B211C", fontSize: 14, padding: 0 },
-  inputBoxDisabled: { backgroundColor: "#EEF1EF", borderColor: "#DDE4E0" },
-  inputDisabled: { color: "#8A968E" },
-  helpText: { color: "#66756D", fontSize: 11, marginTop: 6 },
-  avatarPicker: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 4,
-  },
-  avatarChoice: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#DFE7E1",
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  avatarChoiceActive: {
-    borderColor: "#0BA84A",
-    borderWidth: 2,
-    backgroundColor: "#EDF5EF",
-  },
-  avatarChoiceImage: { width: 68, height: 68, borderRadius: 34 },
-  avatarChoiceName: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#566159",
-    textTransform: "capitalize",
-    marginTop: 6,
-  },
-  avatarChoiceCheck: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#0BA84A",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  errorBox: {
-    borderWidth: 1,
-    borderColor: "#F3C6C6",
-    backgroundColor: "#FCE8E8",
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 8,
-  },
-  errorText: {
-    color: "#B3261E",
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  saveBtn: { marginTop: 14 },
 });

@@ -11,6 +11,7 @@ export default function RootLayout() {
     [FONTS.bodyBold]: require("../../assets/fonts/Nunito-Bold.ttf"),
     [FONTS.bodyExtraBold]: require("../../assets/fonts/Nunito-ExtraBold.ttf"),
     [FONTS.bodyBlack]: require("../../assets/fonts/Nunito-Black.ttf"),
+    [FONTS.button]: require("../../assets/fonts/Fredoka-Bold.ttf"),
   });
 
   return (

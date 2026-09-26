@@ -49,25 +49,33 @@ export const AUTH_IMAGES = {
   mascotLogin: require('../../assets/auth/mascot-wave.png'),
   mascotForgot: require('../../assets/auth/mascot-key.png'),
   mascotReset: require('../../assets/auth/mascot-shield.png'),
-  avatarTiger: require('../../assets/auth/avatar-tiger.png'),
-  avatarTapir: require('../../assets/auth/avatar-tapir.png'),
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
+};
+
+export const AVATAR_ART = {
+  tiger: require('../../assets/profile/avatar-tiger.png'),
+  elephant: require('../../assets/profile/avatar-elephant.png'),
+  tapir: require('../../assets/profile/avatar-tapir.png'),
+  sunBear: require('../../assets/profile/avatar-sunbear.png'),
 };
 
 export const DEFAULT_AVATAR = 'hornbill';
 
 export const AVATAR_CHOICES = [
-  { key: 'hornbill', label: 'Tapir', image: AUTH_IMAGES.avatarTapir },
-  { key: 'tiger', label: 'Tiger', image: AUTH_IMAGES.avatarTiger },
-  { key: 'panda', label: 'Panda', image: AUTH_IMAGES.avatarPanda },
+  { key: 'tiger', label: 'Tiger', image: AVATAR_ART.tiger },
+  { key: 'elephant', label: 'Elephant', image: AVATAR_ART.elephant },
+  // The tapir is stored as 'hornbill' for existing accounts.
+  { key: 'hornbill', label: 'Tapir', image: AVATAR_ART.tapir },
+  { key: 'sunbear', label: 'Sun Bear', image: AVATAR_ART.sunBear },
 ] as const;
 
-export const AVATAR_IMAGES: Record<string, number> = Object.fromEntries(
-  AVATAR_CHOICES.map((choice) => [choice.key, choice.image]),
-);
+export const AVATAR_IMAGES: Record<string, number> = {
+  ...Object.fromEntries(AVATAR_CHOICES.map((choice) => [choice.key, choice.image])),
+  panda: AUTH_IMAGES.avatarPanda,
+};
 
 export function avatarImageFor(avatar: string): number {
-  return AVATAR_IMAGES[avatar] || AUTH_IMAGES.avatarTiger;
+  return AVATAR_IMAGES[avatar] || AVATAR_ART.tiger;
 }
 
 export const SPECIES_IMAGES: Record<string, number> = {

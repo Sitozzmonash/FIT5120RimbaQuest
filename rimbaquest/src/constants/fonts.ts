@@ -4,4 +4,6 @@ export const FONTS = {
   bodyBold: "Nunito-Bold",
   bodyExtraBold: "Nunito-ExtraBold",
   bodyBlack: "Nunito-Black",
+  // Labels on the chunky 3D game buttons.
+  button: "Fredoka-Bold",
 };

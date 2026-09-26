@@ -10,8 +10,8 @@ import { useLocationsStore } from "../../../store/useLocationsStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { styles as globalStyles } from "../../../styles/theme";
 import { Tap } from "../../common/Tap";
+import { GameScreenHeader } from "../../common/game/GameScreenHeader";
 import { LocationSearchBar } from "./components/LocationSearchBar";
-import { LocationsHeader } from "./components/LocationsHeader";
 import { PlaceCard } from "./components/PlaceCard";
 import { PlacesSectionHeader } from "./components/PlacesSectionHeader";
 import { PlacesStatus } from "./components/PlacesStatus";
@@ -104,7 +104,7 @@ export function LocationsScreen() {
 
   return (
     <View style={styles.root}>
-      <LocationsHeader
+      <GameScreenHeader
         title="Wildlife Locations"
         onBack={() => useNavigationStore.getState().goBack()}
       />

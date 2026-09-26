@@ -6,7 +6,7 @@ import { ScaleTap } from "../../../common/ScaleTap";
 import { openingHoursPills } from "../formatOpeningHours";
 import { LOCATION_COLORS } from "../locationsTheme";
 import { InfoPill } from "./InfoPill";
-import { PlankHeader } from "./PlankHeader";
+import { WoodPlank } from "../../../common/game/WoodPlank";
 
 const GO_SIZE = 44;
 const CHEVRON_RIGHT = require("../../../../../assets/locations/chevron-right.png");
@@ -31,7 +31,7 @@ export function PlaceCard({
       disabled={disabled}
       pressedScale={0.96}
     >
-      <PlankHeader title={location.name} />
+      <WoodPlank title={location.name} />
       <View style={styles.body}>
         <View style={styles.info}>
           <View style={styles.areaRow}>

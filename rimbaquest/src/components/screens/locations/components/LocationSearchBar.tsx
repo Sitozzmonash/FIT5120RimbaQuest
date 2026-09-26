@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: FONTS.bodyBold,
     paddingVertical: 0,
+    outlineWidth: 0,
   },
   clear: {
     width: 26,

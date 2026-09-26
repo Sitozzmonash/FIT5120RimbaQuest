@@ -1,13 +1,14 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScaleTap } from "../../../common/ScaleTap";
-import { LOCATION_COLORS, outlinedTitleStyle } from "../locationsTheme";
+import { ScaleTap } from "../ScaleTap";
+import { GAME_COLORS, outlinedTitleStyle } from "./gameTheme";
 
 const BACK_SIZE = 46;
-const CHEVRON_LEFT = require("../../../../../assets/locations/chevron-left.png");
+const CHEVRON_LEFT = require("../../../../assets/game/chevron-left.png");
 
-export function LocationsHeader({
+// Dark green rounded header with a round back button and outlined title.
+export function GameScreenHeader({
   title,
   onBack,
 }: {
@@ -23,7 +24,11 @@ export function LocationsHeader({
         <ScaleTap label="Go back" style={styles.backSlot} onPress={onBack}>
           <View style={[styles.backCircle, styles.backShadow]} />
           <View style={[styles.backCircle, styles.backFace]}>
-            <Image source={CHEVRON_LEFT} style={styles.chevron} resizeMode="contain" />
+            <Image
+              source={CHEVRON_LEFT}
+              style={styles.chevron}
+              resizeMode="contain"
+            />
           </View>
         </ScaleTap>
         <Text style={styles.title} numberOfLines={1}>
@@ -51,9 +56,9 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 16,
     paddingBottom: 8,
-    backgroundColor: LOCATION_COLORS.headerGreen,
+    backgroundColor: GAME_COLORS.headerGreen,
     borderBottomWidth: 3,
-    borderBottomColor: LOCATION_COLORS.ink,
+    borderBottomColor: GAME_COLORS.ink,
     borderBottomLeftRadius: 26,
     borderBottomRightRadius: 26,
   },
@@ -64,19 +69,19 @@ const styles = StyleSheet.create({
     height: BACK_SIZE,
     borderRadius: BACK_SIZE / 2,
   },
-  backShadow: { top: 4, backgroundColor: LOCATION_COLORS.ink },
+  backShadow: { top: 4, backgroundColor: GAME_COLORS.ink },
   backFace: {
     top: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: LOCATION_COLORS.paper,
+    backgroundColor: GAME_COLORS.paper,
     borderWidth: 3,
-    borderColor: LOCATION_COLORS.ink,
+    borderColor: GAME_COLORS.ink,
   },
   chevron: { width: 14.5, height: 20 },
   title: {
     ...outlinedTitleStyle,
-    textShadowColor: LOCATION_COLORS.ink,
+    textShadowColor: GAME_COLORS.ink,
     flexShrink: 1,
     fontSize: 24,
     lineHeight: 26.4,
