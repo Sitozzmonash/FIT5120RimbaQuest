@@ -20,6 +20,7 @@ export function PasswordField() {
       }}
       render={({ field: { value, onChange, onBlur }, fieldState }) => (
         <AuthTextField
+          compact
           label="Password *"
           icon="lock-outline"
           password

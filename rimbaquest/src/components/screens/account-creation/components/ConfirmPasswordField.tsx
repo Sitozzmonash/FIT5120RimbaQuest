@@ -17,6 +17,7 @@ export function ConfirmPasswordField() {
       }}
       render={({ field: { value, onChange, onBlur }, fieldState }) => (
         <AuthTextField
+          compact
           label="Confirm Password *"
           icon="lock-outline"
           password

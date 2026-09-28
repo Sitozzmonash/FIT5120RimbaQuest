@@ -1,9 +1,9 @@
 import { AudioPlayer, createAudioPlayer } from "expo-audio";
 
-const BUTTON_CLICK = require("../../assets/audio/button-click-2.wav");
+const BUTTON_CLICK = require("../../assets/audio/button-click-3.mp3");
 const BACKGROUND_MUSIC = require("../../assets/audio/background-music.mp3");
 
-const MUSIC_VOLUME = 0.35;
+const MUSIC_VOLUME = 1.0;
 
 let clickPlayer: AudioPlayer | null = null;
 let musicPlayer: AudioPlayer | null = null;

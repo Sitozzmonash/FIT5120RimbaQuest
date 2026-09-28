@@ -1,6 +1,6 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { AUTH_IMAGES } from "../../constants/images";
+import { StyleSheet, Text, Image, View } from "react-native";
+import { AUTH_IMAGES, HOME_IMAGES } from "../../constants/images";
 import { useLoginStore } from "../../store/useLoginStore";
 import { useNavigationStore } from "../../store/useNavigationStore";
 import { GameButton } from "../common/game/GameButton";
@@ -15,7 +15,7 @@ export function AccountEntryScreen() {
 
   return (
     <AuthScreen
-      hero={AUTH_IMAGES.heroTigerElephantTapir}
+      // hero={AUTH_IMAGES.heroTigerElephantTapir}
       heroWidth={320}
       heroHeight={220}
       heroOverlap={42}
@@ -24,6 +24,17 @@ export function AccountEntryScreen() {
       cardStyle={styles.card}
     >
       <View style={styles.intro}>
+        <Image
+          source={HOME_IMAGES.brandLogo}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="RimbaQuest"
+        />
+        <Image
+          source={AUTH_IMAGES.heroTigerElephantTapir}
+          style={{ width: "100%", height: 200 }}
+          resizeMode="contain"
+        />
         <Text style={styles.title}>Start your wildlife adventure</Text>
         <Text style={authBodyStyle}>
           Log in to continue your journey or create an account to save your
@@ -45,8 +56,9 @@ export function AccountEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 24, paddingTop: 40 },
+  card: { gap: 24, paddingTop: 24 },
   intro: { gap: 10 },
   title: { ...authTitleStyle, fontSize: 22 },
   buttons: { gap: 12 },
+  logo: { width: "100%", height: 75 },
 });

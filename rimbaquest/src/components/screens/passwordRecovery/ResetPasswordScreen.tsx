@@ -113,8 +113,8 @@ export function ResetPasswordScreen() {
   return (
     <AuthScreen
       hero={AUTH_IMAGES.heroTigerSunBear}
-      heroWidth={280}
-      heroHeight={210}
+      heroWidth={220}
+      heroHeight={150}
       heroOverlap={43}
     >
       <Text style={authTitleStyle}>Reset Password</Text>

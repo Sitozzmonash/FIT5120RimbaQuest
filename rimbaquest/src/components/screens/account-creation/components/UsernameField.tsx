@@ -28,6 +28,7 @@ export function UsernameField() {
       }}
       render={({ field: { value, onChange, onBlur }, fieldState }) => (
         <AuthTextField
+          compact
           label="Explorer Name *"
           icon="person-outline"
           placeholder="For example: JungleHero7"

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import { FormProvider, useForm } from "react-hook-form";
 import { API_BASE } from "../../../constants/config";
 import { useLoginStore } from "../../../store/useLoginStore";
@@ -14,7 +14,7 @@ import { AccountStep } from "./components/AccountStep";
 import { AgeStep } from "./components/AgeStep";
 import { AuthErrorBanner } from "../auth/AuthErrorBanner";
 import { AuthScreen } from "../auth/AuthScreen";
-import { authBodyStyle, authTitleStyle } from "../auth/authTheme";
+import { authTitleStyle } from "../auth/authTheme";
 
 export function AccountCreationScreen() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -106,17 +106,10 @@ export function AccountCreationScreen() {
   });
 
   return (
-    <AuthScreen>
-      <View style={styles.intro}>
-        <Text style={authTitleStyle}>
-          {step === 1 ? "Create Account" : "How old are you?"}
-        </Text>
-        <Text style={authBodyStyle}>
-          {step === 1
-            ? "Step 1 of 2: set up your explorer."
-            : "Step 2 of 2: scroll to pick your age."}
-        </Text>
-      </View>
+    <AuthScreen cardStyle={styles.card} decorations={false}>
+      <Text style={authTitleStyle}>
+        {step === 1 ? "Create Account" : "How old are you?"}
+      </Text>
       <AuthErrorBanner message={authError} />
 
       <FormProvider {...form}>
@@ -143,5 +136,6 @@ export function AccountCreationScreen() {
 }
 
 const styles = StyleSheet.create({
-  intro: { gap: 8 },
+  // Tighter than the default auth card so each step fits one screen.
+  card: { paddingVertical: 16, gap: 12 },
 });

@@ -23,7 +23,8 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: HOME_COLORS.paper,
+    // backgroundColor: HOME_COLORS.paper,
+    backgroundColor: "#D8ECCE",
     borderBottomWidth: 3,
     borderBottomColor: HOME_COLORS.ink,
   },

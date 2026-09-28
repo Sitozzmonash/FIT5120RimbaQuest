@@ -7,7 +7,7 @@ type Placement = { left: number; top: number; width: number; height: number };
 
 // Soft circular clearings painted on the ground.
 export const MAP_CLEARINGS = [
-  { cx: 319.8, cy: 59, r: 56, color: "rgba(90, 140, 60, 0.3)" },
+  { cx: 319.8, cy: 59, r: 56, color: "rgba(140, 135, 60, 0.3)" },
   { cx: 39, cy: 295.4, r: 60, color: "rgba(90, 140, 60, 0.3)" },
   { cx: 343.2, cy: 413.5, r: 50, color: "rgba(90, 140, 60, 0.28)" },
   { cx: 195, cy: 531.7, r: 36, color: "rgba(70, 130, 170, 0.32)" },

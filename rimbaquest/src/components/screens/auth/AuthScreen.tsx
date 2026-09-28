@@ -6,6 +6,7 @@ import {
   Platform,
   StyleProp,
   StyleSheet,
+  useWindowDimensions,
   View,
   ViewStyle,
 } from "react-native";
@@ -14,6 +15,7 @@ import { SvgXml } from "react-native-svg";
 import { FitScrollView } from "../../common/FitScrollView";
 import { AuthBrandHeader } from "./AuthBrandHeader";
 import { AUTH_COLORS } from "./authTheme";
+import { AUTH_IMAGES } from "../../../constants/images";
 
 const glowSvg = (width: number, height: number, opacity: number) => `
 <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -29,6 +31,11 @@ const glowSvg = (width: number, height: number, opacity: number) => `
 const TOP_GLOW = glowSvg(520, 420, 0.7);
 const BOTTOM_GLOW = glowSvg(520, 380, 0.5);
 
+// Screen width the bush decorations were laid out for; other widths scale them.
+const DECOR_DESIGN_WIDTH = 390;
+const DECOR_MIN_SCALE = 0.85;
+const DECOR_MAX_SCALE = 1.2;
+
 // Space between the brand header and the hero art.
 const HERO_GAP = 24;
 
@@ -43,6 +50,7 @@ export function AuthScreen({
   heroOverlap = 0,
   centered = false,
   bottomGlow = false,
+  decorations = true,
   cardStyle,
   children,
 }: {
@@ -54,22 +62,34 @@ export function AuthScreen({
   heroOverlap?: number;
   centered?: boolean;
   bottomGlow?: boolean;
+  // The bush decorations around the screen edges.
+  decorations?: boolean;
   cardStyle?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  const headerHeight = Math.max(92, insets.top + 56);
+  // const headerHeight = Math.max(92, insets.top + 56);
+  const headerHeight = insets.top + 24;
+  const { width } = useWindowDimensions();
+  // Each bush group's wrapper is a zero-size point at its corner, so scaling
+  // it grows or shrinks the whole cluster toward that corner.
+  // Capped so wide screens (web, tablets) don't blow the bushes up.
+  const scale = Math.min(
+    Math.max(width / DECOR_DESIGN_WIDTH, DECOR_MIN_SCALE),
+    DECOR_MAX_SCALE,
+  );
+  const decorScale = { transform: [{ scale }] };
 
   return (
     <View style={styles.root}>
-      <View style={[styles.glow, { top: 17 }]}>
+      {/* <View style={[styles.glow, { top: 17 }]}>
         <SvgXml xml={TOP_GLOW} width={520} height={420} />
       </View>
       {bottomGlow && (
         <View style={[styles.glow, { top: 500 }]}>
           <SvgXml xml={BOTTOM_GLOW} width={520} height={380} />
         </View>
-      )}
+      )} */}
 
       <KeyboardAvoidingView
         style={styles.fill}
@@ -80,12 +100,13 @@ export function AuthScreen({
           contentContainerStyle={[
             styles.scroll,
             {
-              paddingTop: headerHeight + HERO_GAP,
+              // paddingTop: headerHeight + HERO_GAP,
+              paddingTop: headerHeight,
               paddingBottom: 24 + insets.bottom,
             },
           ]}
         >
-          {centered && <View style={styles.fill} />}
+          {/* {centered && <View style={styles.fill} />} */}
           {hero && (
             <View
               style={[
@@ -101,11 +122,193 @@ export function AuthScreen({
             </View>
           )}
           <View style={[styles.card, cardStyle]}>{children}</View>
-          {centered && <View style={styles.fill} />}
+          {/* {centered && <View style={styles.fill} />} */}
         </FitScrollView>
       </KeyboardAvoidingView>
 
-      <AuthBrandHeader height={headerHeight} topInset={insets.top} />
+      {decorations && (
+        <>
+        <View
+          style={{
+            position: "absolute",
+            top: 50,
+            left: "50%",
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.topRightBush}
+            style={{
+              position: "absolute",
+              bottom: -80,
+              left: -120,
+              width: 200,
+              height: 200,
+              transform: [{ rotate: "220deg" }],
+            }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View
+          style={{
+            position: "absolute",
+            top: 50,
+            right: 0,
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.topRightBush}
+            style={{
+              position: "absolute",
+              bottom: -90,
+              right: -10,
+              width: 200,
+              height: 200,
+              transform: [{ rotate: "-90deg" }],
+            }}
+            resizeMode="contain"
+          />
+          <Image
+            source={AUTH_IMAGES.topRightBush}
+            style={{
+              position: "absolute",
+              bottom: -40,
+              right: -5,
+              width: 100,
+              height: 100,
+              transform: [{ rotate: "-90deg" }],
+            }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View
+          style={{
+            position: "absolute",
+            top: 50,
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.topLeftBush}
+            style={{
+              position: "absolute",
+              bottom: -70,
+              left: -10,
+              width: 200,
+              height: 200,
+              transform: [{ rotate: "90deg" }],
+            }}
+            resizeMode="contain"
+          />
+          <Image
+            source={AUTH_IMAGES.topLeftBush}
+            style={{
+              position: "absolute",
+              bottom: -40,
+              left: -5,
+              width: 100,
+              height: 100,
+              transform: [{ rotate: "90deg" }],
+            }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "50%",
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.bottomRightBush}
+            style={{
+              position: "absolute",
+              bottom: -91,
+              left: -55,
+              width: 192,
+              height: 216,
+            }}
+            resizeMode="contain"
+          />
+          <Image
+            source={AUTH_IMAGES.bottomRightBush}
+            style={{
+              position: "absolute",
+              bottom: -83,
+              left: -137,
+              width: 160,
+              height: 192,
+            }}
+            resizeMode="contain"
+          />
+          <Image
+            source={AUTH_IMAGES.bottomRightBush}
+            style={{
+              position: "absolute",
+              bottom: -83,
+              left: -77,
+              width: 160,
+              height: 160,
+            }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.bottomLeftBush}
+            style={{
+              position: "absolute",
+              bottom: -60,
+              left: -120,
+              width: 240,
+              height: 160,
+            }}
+            resizeMode="contain"
+          />
+        </View>
+
+        <View
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            pointerEvents: "none",
+            ...decorScale,
+          }}
+        >
+          <Image
+            source={AUTH_IMAGES.bottomLeftBush}
+            style={{
+              position: "absolute",
+              bottom: -50,
+              right: -100,
+              width: 240,
+              height: 160,
+            }}
+            resizeMode="contain"
+          />
+        </View>
+        </>
+      )}
+      {/* <AuthBrandHeader height={headerHeight} topInset={insets.top} /> */}
     </View>
   );
 }
@@ -114,7 +317,9 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     overflow: "hidden",
-    backgroundColor: AUTH_COLORS.background,
+    // backgroundColor: AUTH_COLORS.background,
+    backgroundColor: "#D8ECCE",
+    alignContent: "center",
   },
   fill: { flex: 1 },
   glow: {
@@ -124,7 +329,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     pointerEvents: "none",
   },
-  scroll: { flexGrow: 1 },
+  scroll: { flexGrow: 1, justifyContent: "center" },
   // Drawn over the card so the animals stand on its top edge.
   hero: { alignItems: "center", zIndex: 1, pointerEvents: "none" },
   card: {
@@ -133,11 +338,11 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     gap: 20,
     alignItems: "stretch",
-    backgroundColor: AUTH_COLORS.card,
-    borderWidth: 3,
+    // backgroundColor: AUTH_COLORS.card,
+    // borderWidth: 3,
     // The thick bottom edge is the card's solid drop shadow.
-    borderBottomWidth: 9,
-    borderColor: AUTH_COLORS.ink,
-    borderRadius: 22,
+    // borderBottomWidth: 9,
+    // borderColor: AUTH_COLORS.ink,
+    // borderRadius: 22,
   },
 });

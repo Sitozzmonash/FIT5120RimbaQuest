@@ -20,6 +20,7 @@ export function EmailField() {
       }}
       render={({ field: { value, onChange, onBlur }, fieldState }) => (
         <AuthTextField
+          compact
           label="Email Address *"
           icon="mail-outline"
           placeholder="name@example.com"

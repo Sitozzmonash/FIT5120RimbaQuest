@@ -39,6 +39,11 @@ export function AccountStep({
 }
 
 const styles = StyleSheet.create({
-  fields: { gap: 14 },
-  loginRow: { alignItems: "center", gap: 4 },
+  fields: { gap: 10 },
+  loginRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
 });

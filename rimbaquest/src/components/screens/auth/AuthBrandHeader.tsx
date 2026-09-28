@@ -34,7 +34,8 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: AUTH_COLORS.paper,
+    // backgroundColor: AUTH_COLORS.paper,
+    backgroundColor: "#D8ECCE",
     borderBottomWidth: 3,
     borderBottomColor: AUTH_COLORS.ink,
   },

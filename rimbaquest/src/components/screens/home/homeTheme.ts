@@ -3,7 +3,9 @@ import { FONTS } from '../../../constants/fonts';
 // Palette for the camp map home screen.
 export const HOME_COLORS = {
   ink: '#073C1D',
-  ground: '#D9C38F',
+  // ground: '#D9C38F',
+  // ground: '#a8d98f',
+  ground: '#2F6B3E',
   paper: '#FDF2D9',
   wood: '#B86F32',
   woodLine: 'rgba(90, 45, 10, 0.2)',

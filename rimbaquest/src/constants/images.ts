@@ -15,7 +15,7 @@ export const HOME_IMAGES = {
 };
 
 export const HOME_MAP_IMAGES = {
-  brandLogo: require('../../assets/home/map/brand-logo-compact.png'),
+  brandLogo: require('../../assets/home/brand-logo.png'),
   grassPatch: require('../../assets/home/map/grass-patch.png'),
   grassTuft: require('../../assets/home/map/grass-tuft.png'),
   sprout: require('../../assets/home/map/sprout.png'),
@@ -43,6 +43,11 @@ export const AUTH_IMAGES = {
   heroTigerSunBear: require('../../assets/auth/hero-tiger-sunbear.png'),
   heroTigerTapir: require('../../assets/auth/hero-tiger-tapir.png'),
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
+
+  bottomLeftBush: require('../../assets/auth/bush.png'),
+  bottomRightBush: require('../../assets/auth/bush2.png'),
+  topLeftBush: require('../../assets/auth/foliage_left.png'),
+  topRightBush: require('../../assets/auth/foliage_right.png'),
 };
 
 export const AVATAR_ART = {

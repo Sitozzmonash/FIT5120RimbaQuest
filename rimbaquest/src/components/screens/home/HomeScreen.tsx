@@ -16,6 +16,7 @@ import { MapGroundLayer } from "./components/MapGroundLayer";
 import { MapHintBubble } from "./components/MapHintBubble";
 import { MapPathingDebug } from "./components/MapPathingDebug";
 import { MapScenery } from "./components/MapScenery";
+import { HomeMenu, MenuConfirmModal } from "./components/MenuConfirmModal";
 import { NoticeModal } from "./components/NoticeModal";
 import { ResumeList } from "./components/ResumeList";
 import { RESUME_SHEET_PEEK, ResumeSheet } from "./components/ResumeSheet";
@@ -36,6 +37,18 @@ export function HomeScreen() {
   const [bodyHeight, setBodyHeight] = useState(0);
   const [battleHintVisible, setBattleHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pendingMenu, setPendingMenu] = useState<HomeMenu | null>(null);
+  const avatar = avatarImageFor(currentUser.avatar);
+
+  const enterMenu = () => {
+    const menu = pendingMenu;
+    setPendingMenu(null);
+    if (menu === "discover") open("locations");
+    else if (menu === "capture") useDiscoveryStore.getState().start();
+    else if (menu === "collection") open("collection");
+    else if (menu === "battle") open("battle_select");
+    else if (menu === "camp") open("progress");
+  };
 
   // Tapping the locked battle node shows why it's locked for a few seconds.
   const showBattleHint = () => {
@@ -69,7 +82,7 @@ export function HomeScreen() {
             icon={HOME_MAP_IMAGES.iconDiscover}
             iconSize={{ width: 54, height: 46.56 }}
             color="#D8ECCE"
-            onPress={() => open("locations")}
+            onPress={() => setPendingMenu("discover")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.capture}
@@ -79,7 +92,7 @@ export function HomeScreen() {
             icon={HOME_MAP_IMAGES.iconCapture}
             iconSize={{ width: 74, height: 57.03 }}
             color="#FFE7A8"
-            onPress={() => useDiscoveryStore.getState().start()}
+            onPress={() => setPendingMenu("capture")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.collection}
@@ -89,7 +102,7 @@ export function HomeScreen() {
             iconSize={{ width: 50, height: 56.25 }}
             color={HOME_COLORS.paper}
             badge={`${progress.found}/${progress.total}`}
-            onPress={() => open("collection")}
+            onPress={() => setPendingMenu("collection")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.battle}
@@ -103,7 +116,7 @@ export function HomeScreen() {
             iconSize={{ width: 50, height: 45.31 }}
             color="#FFD3BD"
             locked={!battleReady}
-            onPress={battleReady ? () => open("battle_select") : showBattleHint}
+            onPress={battleReady ? () => setPendingMenu("battle") : showBattleHint}
           />
           {!battleReady && battleHintVisible && (
             <MapHintBubble
@@ -115,8 +128,8 @@ export function HomeScreen() {
             {...MAP_CAMP_POSITION}
             name={currentUser.display_name}
             level={progress.level || currentUser.level}
-            avatar={avatarImageFor(currentUser.avatar)}
-            onPress={() => open("progress")}
+            avatar={avatar}
+            onPress={() => setPendingMenu("camp")}
           />
           <MapCritters layer="air" />
           {SHOW_MAP_DEBUG && <MapPathingDebug />}
@@ -132,6 +145,12 @@ export function HomeScreen() {
         )}
       </View>
 
+      <MenuConfirmModal
+        menu={pendingMenu}
+        campAvatar={avatar}
+        onEnter={enterMenu}
+        onCancel={() => setPendingMenu(null)}
+      />
       <NoticeModal />
     </View>
   );
