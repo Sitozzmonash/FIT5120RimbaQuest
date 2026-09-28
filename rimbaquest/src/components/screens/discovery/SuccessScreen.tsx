@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { imageFor } from "../../../constants/images";
@@ -13,6 +13,7 @@ import { SpinningRays } from "../../common/game/SpinningRays";
 import { CollectibleCard } from "./components/CollectibleCard";
 import { DISCOVERY_COLORS } from "./components/discoveryTheme";
 import { SuccessSummary } from "./components/SuccessSummary";
+import { playCaptureSuccess } from "@/utils/sounds";
 
 function formatDate(iso: string | null): string {
   const d = iso ? new Date(iso) : new Date();
@@ -41,6 +42,10 @@ export function SuccessScreen() {
       ? [{ label: "Location", value: discoveryLocation }]
       : []),
   ];
+
+  useEffect(() => {
+    void playCaptureSuccess();
+  }, []);
 
   return (
     <View style={styles.page}>

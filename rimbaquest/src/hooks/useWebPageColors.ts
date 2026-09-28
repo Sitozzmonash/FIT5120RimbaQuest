@@ -10,7 +10,7 @@ const DEFAULT_COLORS: PageColors = { top: "#FFFFFF", bottom: "#FFFFFF" };
 // Colour at each screen's top edge (tints the mobile browser bar) and bottom
 // edge (shows in the strip revealed when the address bar hides on scroll).
 const SCREEN_COLORS: Partial<Record<Screen, PageColors>> = {
-  home: { top: "#FDF2D9", bottom: "#FDF2D9" },
+  home: { top: "#D8ECCE", bottom: "#FDF2D9" },
   account_entry: { top: "#FDF2D9", bottom: GAME_GREEN },
   login: { top: "#FDF2D9", bottom: GAME_GREEN },
   create_account: { top: "#FDF2D9", bottom: GAME_GREEN },

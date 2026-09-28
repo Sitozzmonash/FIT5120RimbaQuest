@@ -1,7 +1,8 @@
 import { AudioPlayer, createAudioPlayer } from "expo-audio";
 
-const BUTTON_CLICK = require("../../assets/audio/button-click-3.mp3");
+const BUTTON_CLICK = require("../../assets/audio/button-click-3.wav");
 const BACKGROUND_MUSIC = require("../../assets/audio/background-music.mp3");
+const CAPTURE_SUCCESS_MUSIC = require("../../assets/audio/capture-success-2.mp3");
 
 const MUSIC_VOLUME = 1.0;
 
@@ -22,6 +23,16 @@ export function playButtonClick() {
   resumeBackgroundMusic();
 }
 
+export function playCaptureSuccess() {
+  try {
+    const player = createAudioPlayer(CAPTURE_SUCCESS_MUSIC);
+    player.play();
+  } catch {
+    // e.g. audio unavailable on this device or blocked by the browser.
+  }
+  resumeBackgroundMusic();
+}
+
 // Starts the looping soundtrack (safe to call again while it's playing).
 export function startBackgroundMusic() {
   musicWanted = true;
@@ -31,7 +42,7 @@ export function startBackgroundMusic() {
       musicPlayer.loop = true;
       musicPlayer.volume = MUSIC_VOLUME;
     }
-    if (!musicPlayer.playing) musicPlayer.play();
+    musicPlayer.play();
   } catch {
     // Music is optional; the app works silently if it can't play.
   }
@@ -57,11 +68,12 @@ export function pauseBackgroundMusic() {
   }
 }
 
-// Picks the soundtrack back up if it's meant to be playing.
+// Picks the soundtrack back up if it's meant to be playing. Called on every
+// button tap so a play the browser blocked (no user gesture) gets retried.
 export function resumeBackgroundMusic() {
   if (!musicWanted) return;
   try {
-    if (musicPlayer && !musicPlayer.playing) musicPlayer.play();
+    musicPlayer?.play();
   } catch {
     // ignore
   }
