@@ -1,132 +1,128 @@
 import React, { useMemo } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LocationItem } from "../../../types";
-import { locationMatchesCategory, locationMatchesQuery } from "../../../constants/seed";
+import {
+  locationMatchesCategory,
+  locationMatchesQuery,
+} from "../../../constants/seed";
 import { useLocationsStore } from "../../../store/useLocationsStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
-import { Tap } from "../../common/Tap";
-import { PrimaryButton } from "../../common/PrimaryButton";
 import { styles as globalStyles } from "../../../styles/theme";
-import { LocationsListHero } from "./components/LocationsListHero";
-import { LocationCard } from "./components/LocationCard";
+import { Tap } from "../../common/Tap";
+import { GameScreenHeader } from "../../common/game/GameScreenHeader";
+import { LocationSearchBar } from "./components/LocationSearchBar";
+import { PlaceCard } from "./components/PlaceCard";
+import { PlacesSectionHeader } from "./components/PlacesSectionHeader";
+import { PlacesStatus } from "./components/PlacesStatus";
+import { SightingsWarningBanner } from "./components/SightingsWarningBanner";
+import { LOCATION_COLORS } from "./locationsTheme";
+
+// Place details aren't opened from the list yet.
+const PLACE_DETAILS_ENABLED = true;
 
 export function LocationsScreen() {
+  const insets = useSafeAreaInsets();
   const locations = useLocationsStore((state) => state.locations);
   const search = useLocationsStore((state) => state.search);
   const categoryFilter = useLocationsStore((state) => state.categoryFilter);
   const loading = useLocationsStore((state) => state.loading);
   const error = useLocationsStore((state) => state.error);
   const loadLocations = useLocationsStore((state) => state.loadLocations);
-  const loadLocationDetail = useLocationsStore((state) => state.loadLocationDetail);
-
-  const hasLocations = locations.length > 0;
+  const loadLocationDetail = useLocationsStore(
+    (state) => state.loadLocationDetail,
+  );
 
   const filteredLocations = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return locations.filter((loc) => {
-      const matchesQuery = locationMatchesQuery(loc, query);
-      return matchesQuery && locationMatchesCategory(loc, categoryFilter);
-    });
+    return locations.filter(
+      (loc) =>
+        locationMatchesQuery(loc, query) &&
+        locationMatchesCategory(loc, categoryFilter),
+    );
   }, [locations, search, categoryFilter]);
-
-  const emptyMessage = search.trim()
-    ? 'We could not find a place with that name.'
-    : categoryFilter !== 'All'
-      ? 'We could not find a place for this animal group.'
-      : null;
 
   const handleSelectLocation = (loc: LocationItem) => {
     void loadLocationDetail(loc);
     useNavigationStore.getState().open("location_detail");
   };
 
+  const renderPlaces = () => {
+    if (loading) {
+      return (
+        <PlacesStatus loading message="Finding places to see animals..." />
+      );
+    }
+    if (!locations.length) {
+      return (
+        <PlacesStatus
+          message={
+            error ||
+            "We couldn't load wildlife locations right now. Please try again."
+          }
+          onRetry={() => void loadLocations()}
+        />
+      );
+    }
+    return (
+      <ScrollView
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: 24 + insets.bottom },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {error ? (
+          <View>
+            <Text style={globalStyles.notice}>{error}</Text>
+            <Tap
+              label="Try Again"
+              style={globalStyles.textButton}
+              onPress={() => void loadLocations()}
+            >
+              <Text style={globalStyles.textButtonText}>Try Again</Text>
+            </Tap>
+          </View>
+        ) : null}
+        <PlacesSectionHeader count={filteredLocations.length} />
+        {filteredLocations.length ? (
+          filteredLocations.map((loc) => (
+            <PlaceCard
+              key={loc.id}
+              location={loc}
+              disabled={!PLACE_DETAILS_ENABLED}
+              // onPress={() => handleSelectLocation(loc)}
+              onPress={() => {}}
+            />
+          ))
+        ) : (
+          <PlacesStatus message="We could not find a place with that name." />
+        )}
+      </ScrollView>
+    );
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-      <LocationsListHero
+    <View style={styles.root}>
+      <GameScreenHeader
         title="Wildlife Locations"
         onBack={() => useNavigationStore.getState().goBack()}
       />
-      <View style={styles.listContainer}>
-        {loading ? (
-          <View style={styles.centerState}>
-            <ActivityIndicator color="#0BA84A" />
-            <Text style={styles.centerStateSubtitle}>
-              Finding places to see animals...
-            </Text>
-          </View>
-        ) : !hasLocations ? (
-          <View style={styles.centerState}>
-            <Text style={styles.centerStateTitle}>
-              {error ||
-                "We couldn't load wildlife locations right now. Please try again."}
-            </Text>
-            <PrimaryButton label="Try Again" icon="refresh" onPress={() => void loadLocations()} />
-          </View>
-        ) : !filteredLocations.length ? (
-          <View style={styles.centerState}>
-            <Text style={styles.centerStateTitle}>{emptyMessage}</Text>
-          </View>
-        ) : (
-          <ScrollView contentContainerStyle={globalStyles.content}>
-            {error ? (
-              <View style={styles.noticeBanner}>
-                <Text style={globalStyles.notice}>{error}</Text>
-                <Tap
-                  label="Try Again"
-                  style={globalStyles.textButton}
-                  onPress={() => void loadLocations()}
-                >
-                  <Text style={globalStyles.textButtonText}>Try Again</Text>
-                </Tap>
-              </View>
-            ) : null}
-            <View style={styles.locationList}>
-              {filteredLocations.map((loc) => (
-                <LocationCard
-                  key={loc.id}
-                  location={loc}
-                  onPress={() => handleSelectLocation(loc)}
-                />
-              ))}
-            </View>
-          </ScrollView>
-        )}
-      </View>
+      <SightingsWarningBanner />
+      <LocationSearchBar />
+      <View style={styles.panel}>{renderPlaces()}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  listContainer: {
+  root: { flex: 1, gap: 8, backgroundColor: LOCATION_COLORS.forest },
+  panel: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    marginTop: -16,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    overflow: "hidden",
+    backgroundColor: LOCATION_COLORS.panel,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
-  locationList: { gap: 12 },
-  noticeBanner: { marginBottom: 10 },
-  centerState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    gap: 14,
-  },
-  centerStateTitle: {
-    color: "#707872",
-    fontSize: 13,
-    textAlign: "center",
-  },
-  centerStateSubtitle: {
-    color: "#707872",
-    fontSize: 13,
-    textAlign: "center",
-  },
+  list: { gap: 16, paddingTop: 14, paddingHorizontal: 16 },
 });

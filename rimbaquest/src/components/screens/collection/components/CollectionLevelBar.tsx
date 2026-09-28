@@ -9,7 +9,9 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { FONTS } from "../../../../constants/fonts";
 import { ANIMALS_PER_LEVEL } from "../../../../constants/progression";
+import { GAME_COLORS } from "../../../common/game/gameTheme";
 
 const VISIBLE_ANIMALS_CAP = 100;
 const EDGE_FADE_WIDTH = 40;
@@ -108,7 +110,7 @@ export function CollectionLevelBar({
 
       {canScrollLeft && (
         <LinearGradient
-          colors={["#F4FCF6", "rgba(244,252,246,0)"]}
+          colors={[GAME_COLORS.paper, "rgba(253,242,217,0)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.edgeFade, styles.edgeFadeLeft]}
@@ -119,7 +121,7 @@ export function CollectionLevelBar({
       )}
       {canScrollRight && (
         <LinearGradient
-          colors={["rgba(244,252,246,0)", "#F4FCF6"]}
+          colors={["rgba(253,242,217,0)", GAME_COLORS.paper]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.edgeFade, styles.edgeFadeRight]}
@@ -142,20 +144,22 @@ const styles = StyleSheet.create({
   scrollContent: { flexDirection: "column", gap: 6 },
   collectionProgressTrackOuter: {
     width: "100%",
-    height: 10,
+    height: 14,
     position: "relative",
   },
   collectionProgressTrack: {
     width: "100%",
-    height: 10,
-    backgroundColor: "#D8EDD8",
-    borderRadius: 5,
+    height: 14,
+    backgroundColor: GAME_COLORS.track,
+    borderWidth: 2,
+    borderColor: GAME_COLORS.ink,
+    borderRadius: 999,
     overflow: "hidden",
   },
   collectionProgressFill: {
     height: "100%",
-    backgroundColor: "#78B833",
-    borderRadius: 5,
+    backgroundColor: GAME_COLORS.go,
+    borderRadius: 999,
   },
   collectionLevelTick: {
     position: "absolute",
@@ -169,15 +173,19 @@ const styles = StyleSheet.create({
     width: 2,
     height: 3,
     borderRadius: 1,
-    backgroundColor: "#E8541A",
+    backgroundColor: GAME_COLORS.wood,
   },
   collectionLevelLabelsRow: { flexDirection: "row" },
   collectionLevelLabelCell: { flex: 1, alignItems: "center", gap: 2 },
-  collectionLevelLabelLv: { color: "#0A4D26", fontSize: 10, fontWeight: "800" },
+  collectionLevelLabelLv: {
+    fontFamily: FONTS.display,
+    color: GAME_COLORS.heading,
+    fontSize: 12,
+  },
   collectionLevelLabelFraction: {
-    color: "#6A8A72",
-    fontSize: 9,
-    fontWeight: "700",
+    fontFamily: FONTS.bodyBold,
+    color: GAME_COLORS.label,
+    fontSize: 10,
   },
   edgeFade: {
     position: "absolute",
@@ -190,9 +198,9 @@ const styles = StyleSheet.create({
   edgeFadeLeft: { left: 0, alignItems: "flex-start", paddingLeft: 0 },
   edgeFadeRight: { right: 0, alignItems: "flex-end", paddingRight: 0 },
   edgeChevron: {
-    color: "#78B833",
+    fontFamily: FONTS.display,
+    color: GAME_COLORS.go,
     fontSize: 17,
-    fontWeight: "900",
     opacity: 0.85,
   },
 });

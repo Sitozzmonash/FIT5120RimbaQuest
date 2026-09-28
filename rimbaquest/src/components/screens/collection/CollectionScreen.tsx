@@ -14,18 +14,16 @@ import { CollectionHeroSection } from "./components/CollectionHeroSection";
 import { CollectionSearchBar } from "./components/CollectionSearchBar";
 import { WildlifeFilterChips } from "./components/WildlifeFilterChips";
 
-const HERO_GAP = 21;
+const HERO_GAP = 4;
 
 export function CollectionScreen() {
   const speciesList = useCollectionSpeciesList();
 
-  const [waveWidth, setWaveWidth] = useState(0);
   const [heroHeight, setHeroHeight] = useState(0);
 
   const handleHeroLayout = (e: {
     nativeEvent: { layout: { width: number; height: number } };
   }) => {
-    setWaveWidth(e.nativeEvent.layout.width);
     setHeroHeight(e.nativeEvent.layout.height);
   };
 
@@ -33,7 +31,7 @@ export function CollectionScreen() {
   const [stuck, setStuck] = useState(false);
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     if (!heroHeight) return;
-    const next = e.nativeEvent.contentOffset.y >= heroHeight + HERO_GAP - 1;
+    const next = e.nativeEvent.contentOffset.y >= heroHeight + HERO_GAP;
     setStuck((prev) => (prev === next ? prev : next));
   };
 
@@ -70,10 +68,8 @@ export function CollectionScreen() {
         renderItem={({ item: row }) => <CollectionGridRow items={row} />}
         ListHeaderComponent={
           <>
-            <View style={{ height: headerHeight }} />
+            <View style={{ height: headerHeight + 12 }} />
             <CollectionHeroSection
-              waveWidth={waveWidth}
-              heroHeight={heroHeight}
               onLayout={handleHeroLayout}
             />
 
@@ -91,7 +87,6 @@ export function CollectionScreen() {
       />
 
       <CollectionHeaderBar
-        stuck={stuck}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       />
 
@@ -110,11 +105,13 @@ export function CollectionScreen() {
   );
 }
 
+const BACKGROUND = "#0E4527";
+
 const styles = StyleSheet.create({
-  collectionRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  collectionRoot: { flex: 1, backgroundColor: BACKGROUND },
   collectionScroll: { flex: 1 },
   collectionScrollContent: { paddingBottom: 32 },
-  collectionTabsSticky: { backgroundColor: "#FFFFFF", paddingTop: 10 },
+  collectionTabsSticky: { backgroundColor: BACKGROUND, paddingTop: 10 },
   collectionTabsFixed: { position: "absolute", left: 0, right: 0 },
   collectionGridTopSpacer: { height: 14 },
 });

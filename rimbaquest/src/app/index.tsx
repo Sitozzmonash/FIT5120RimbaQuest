@@ -4,12 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screen } from '../types';
 import { styles } from '../styles/theme';
 
-import { HomeScreen } from '../components/screens/HomeScreen';
+import { HomeScreen } from '../components/screens/home';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/locations';
 import {
   CameraScreen,
   PhotoPreviewScreen,
-  CategoryScreen,
   ConfirmScreen,
   SpeciesScreen,
   SuccessScreen,
@@ -23,18 +22,22 @@ import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import { useWebPageColors } from '../hooks/useWebPageColors';
 import { useDiscoveryStore } from '../store/useDiscoveryStore';
 import { useNavigationStore } from '../store/useNavigationStore';
 import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
 import { useUserStore } from '../store/useUserStore';
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz', 'species', 'confirm', 'success'];
 
 export default function RimbaQuest() {
   const screen = useNavigationStore((state) => state.screen);
+  useWebPageColors(screen);
 
   const bootstrapped = useUserStore((state) => state.bootstrapped);
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  useBackgroundMusic(screen, isLoggedIn);
 
   useEffect(() => {
     void useUserStore.getState().restoreSession();
@@ -100,8 +103,6 @@ export default function RimbaQuest() {
         {screen === 'photo' && <CameraScreen />}
 
         {screen === 'photo_preview' && discoveryPhotoUri && <PhotoPreviewScreen />}
-
-        {screen === 'category' && discoveryPhotoUri && <CategoryScreen />}
 
         {screen === 'species' && discoveryPhotoUri && <SpeciesScreen />}
 

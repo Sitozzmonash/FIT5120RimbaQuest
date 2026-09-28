@@ -1,69 +1,91 @@
 import React from "react";
-import { Modal, StyleSheet, Text, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
-import { difficultyLabel, useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
-import { Tap } from "../../../common/Tap";
+import { Image, Modal, StyleSheet, Text, View } from "react-native";
+import { SvgXml } from "react-native-svg";
+import { FONTS } from "../../../../constants/fonts";
+import {
+  difficultyLabel,
+  useAbilityQuizStore,
+} from "../../../../store/useAbilityQuizStore";
 import { QuizDifficulty } from "../../../../types";
+import { Tap } from "../../../common/Tap";
+import { DetailPill } from "./detail/DetailPill";
+import {
+  DETAIL_COLORS,
+  DETAIL_IMAGES,
+  MODAL_GLOW_SVG,
+} from "./detail/detailTheme";
+import { GameButton } from "../../../common/game/GameButton";
 
-const DIFFICULTY_BADGE: Record<QuizDifficulty, { bg: string; text: string }> = {
-  easy: { bg: "#E8F6EE", text: "#0A4D26" },
-  medium: { bg: "#FEF3C7", text: "#92400E" },
-  hard: { bg: "#FEE2E2", text: "#DC2626" },
+const DIFFICULTY_TONE: Record<QuizDifficulty, "mint" | "amber" | "red"> = {
+  easy: "mint",
+  medium: "amber",
+  hard: "red",
 };
 
+const BADGE_SIZE = 96;
+
+// "Unlock This Ability" prompt shown before an ability quiz.
 export function AbilityUnlockModal() {
   const visible = useAbilityQuizStore((state) => state.unlockModalVisible);
   const abilityName = useAbilityQuizStore((state) => state.pendingAbilityName);
   const difficulty = useAbilityQuizStore((state) => state.pendingDifficulty);
-  const slot = useAbilityQuizStore((state) => state.pendingSlot);
-
-  const badge = DIFFICULTY_BADGE[difficulty || "easy"];
+  const close = () => useAbilityQuizStore.getState().closeUnlockModal();
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={() => useAbilityQuizStore.getState().closeUnlockModal()}
+      onRequestClose={close}
     >
       <View style={styles.backdrop}>
+        <View style={[styles.glow, { pointerEvents: "none" }]}>
+          <SvgXml xml={MODAL_GLOW_SVG} width={390} height={360} />
+        </View>
+
         <View style={styles.card}>
-          <View style={styles.iconWrap}>
-            <MaterialIcons name="lock" size={36} color="#0A4D26" />
-          </View>
-          <Text style={styles.title}>Earn This Ability</Text>
-          <View style={styles.abilityBadge}>
-            <Text style={styles.abilityBadgeText}>{abilityName}</Text>
-          </View>
-          {difficulty && (
-            <View style={[styles.difficultyBadge, { backgroundColor: badge.bg }]}>
-              <Text style={[styles.difficultyBadgeText, { color: badge.text }]}>
-                {difficultyLabel(difficulty)}
-              </Text>
+          <View style={styles.badgeSlot}>
+            <View style={[styles.badge, styles.badgeShadow]} />
+            <View style={[styles.badge, styles.badgeFace]}>
+              <Image
+                source={DETAIL_IMAGES.lock}
+                style={styles.lock}
+                resizeMode="contain"
+              />
             </View>
-          )}
-          <Text style={styles.message}>
-            {slot === 3
-              ? "Answer a few questions about this animal to unlock its 4-Energy battle ability!"
-              : "Answer a few questions about this animal to earn its battle ability!"}
-          </Text>
-          <View style={styles.actions}>
-            <Tap
-              label="Start Quiz"
-              style={styles.beginBtn}
-              onPress={() => void useAbilityQuizStore.getState().beginChallenge()}
-            >
-              <Text style={styles.beginBtnText}>Start Quiz</Text>
-              <MaterialIcons name="arrow-forward" size={18} color="#FFFFFF" />
-            </Tap>
-            <Tap
-              label="Not Now"
-              style={styles.dismissBtn}
-              onPress={() => useAbilityQuizStore.getState().closeUnlockModal()}
-            >
-              <Text style={styles.dismissBtnText}>Not Now</Text>
-            </Tap>
           </View>
+
+          <Text style={styles.kicker}>Unlock This Ability</Text>
+          <Text style={styles.name}>{abilityName}</Text>
+          {difficulty ? (
+            <DetailPill
+              label={difficultyLabel(difficulty)}
+              tone={DIFFICULTY_TONE[difficulty]}
+            />
+          ) : null}
+          <Text style={styles.message}>
+            First, get to know this animal before unlocking its abilities for
+            battle!
+          </Text>
+          <GameButton
+            size="m"
+            label="Begin Challenge"
+            onPress={() => void useAbilityQuizStore.getState().beginChallenge()}
+          />
+          <Tap label="Not Now" style={styles.notNow} onPress={close}>
+            <Text style={styles.notNowText}>Not Now</Text>
+          </Tap>
+
+          <Image
+            source={DETAIL_IMAGES.modalBush}
+            style={styles.bush}
+            resizeMode="contain"
+          />
+          <Image
+            source={DETAIL_IMAGES.modalLeaf}
+            style={styles.leaf}
+            resizeMode="contain"
+          />
         </View>
       </View>
     </Modal>
@@ -73,66 +95,90 @@ export function AbilityUnlockModal() {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.65)",
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
   },
+  glow: { position: "absolute" },
   card: {
     width: "100%",
-    maxWidth: 344,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 28,
-    paddingTop: 32,
-    paddingBottom: 28,
-    paddingHorizontal: 24,
+    maxWidth: 330,
     alignItems: "center",
-    gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  iconWrap: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: "#E8F6EE",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  title: { color: "#1A1A1A", fontSize: 24, fontWeight: "800", textAlign: "center" },
-  abilityBadge: {
-    backgroundColor: "#E8F6EE",
-    borderRadius: 99,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-  },
-  abilityBadgeText: { color: "#0A4D26", fontSize: 15, fontWeight: "800" },
-  difficultyBadge: { borderRadius: 99, paddingHorizontal: 12, paddingVertical: 6 },
-  difficultyBadgeText: { fontSize: 13, fontWeight: "800" },
-  message: { color: "#667085", fontSize: 15, lineHeight: 22, textAlign: "center" },
-  actions: { width: "100%", gap: 16, marginTop: 6 },
-  beginBtn: {
-    minHeight: 52,
-    borderRadius: 18,
-    backgroundColor: "#0A4D26",
-    borderWidth: 1,
-    borderColor: "#78B833",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
     gap: 10,
-    paddingHorizontal: 32,
-    shadowColor: "#12B347",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
+    paddingTop: 58,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    backgroundColor: DETAIL_COLORS.paper,
+    borderWidth: 3,
+    borderBottomWidth: 9,
+    borderColor: DETAIL_COLORS.ink,
+    borderRadius: 24,
   },
-  beginBtnText: { color: "#FFFFFF", fontSize: 18, fontWeight: "800" },
-  dismissBtn: { alignItems: "center", justifyContent: "center", paddingVertical: 4 },
-  dismissBtnText: { color: "#98A2B3", fontSize: 15, fontWeight: "600" },
+  badgeSlot: {
+    position: "absolute",
+    top: -51,
+    width: BADGE_SIZE,
+    height: BADGE_SIZE + 5,
+  },
+  badge: {
+    position: "absolute",
+    width: BADGE_SIZE,
+    height: BADGE_SIZE,
+    borderRadius: BADGE_SIZE / 2,
+  },
+  badgeShadow: { top: 5, backgroundColor: DETAIL_COLORS.ink },
+  badgeFace: {
+    top: 0,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFE7A8",
+    borderWidth: 3,
+    borderColor: DETAIL_COLORS.ink,
+  },
+  lock: { width: 45.5, height: 54 },
+  kicker: {
+    fontFamily: FONTS.display,
+    color: DETAIL_COLORS.heading,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  name: {
+    fontFamily: FONTS.bodyBlack,
+    color: DETAIL_COLORS.mintText,
+    fontSize: 27,
+    textAlign: "center",
+  },
+  message: {
+    fontFamily: FONTS.bodyBold,
+    color: DETAIL_COLORS.body,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+  notNow: {
+    height: 44,
+    minWidth: 120,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notNowText: {
+    fontFamily: FONTS.bodyBlack,
+    color: DETAIL_COLORS.label,
+    fontSize: 14,
+  },
+  bush: {
+    position: "absolute",
+    left: -27,
+    bottom: -20,
+    width: 120,
+    height: 68.9,
+  },
+  leaf: {
+    position: "absolute",
+    right: -23,
+    bottom: -16,
+    width: 80,
+    height: 63.1,
+  },
 });

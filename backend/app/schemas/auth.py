@@ -4,7 +4,7 @@ import re
 from pydantic import BaseModel, Field, field_validator
 
 
-ALLOWED_AVATARS = frozenset({"hornbill", "tiger", "panda"})
+ALLOWED_AVATARS = frozenset({"hornbill", "tiger", "panda", "elephant", "sunbear"})
 
 
 def _validate_username_value(value: str) -> str:

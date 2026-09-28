@@ -1,15 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-  Image,
-  Modal,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GalleryItem, Screen } from "../../../types";
 import { imageFor } from "../../../constants/images";
 import { useNavigationStore } from "../../../store/useNavigationStore";
@@ -17,19 +8,24 @@ import { useSelectedSpeciesStore } from "../../../store/useSelectedSpeciesStore"
 import { useUserStore } from "../../../store/useUserStore";
 import { useAbilityQuizStore } from "../../../store/useAbilityQuizStore";
 import { useContinueLearningStore } from "../../../store/useContinueLearningStore";
-import { Tap } from "../../common/Tap";
+import { GameScreenHeader } from "../../common/game/GameScreenHeader";
 import { AboutTab } from "./components/AboutTab";
 import { BattleStatsTab } from "./components/BattleStatsTab";
 import { FactsTab } from "./components/FactsTab";
 import { GalleryTab } from "./components/GalleryTab";
 import { SpeciesChatDrawer } from "./components/SpeciesChatDrawer";
 import { AbilityUnlockModal } from "./components/AbilityUnlockModal";
+import { PerkUnlockedModal } from "./components/PerkUnlockedModal";
+import { ChatFab } from "./components/detail/ChatFab";
+import { DETAIL_COLORS } from "./components/detail/detailTheme";
+import { ViewPhotoCard } from "./components/detail/ViewPhotoCard";
+import { WoodenTab, WoodenTabBar } from "../../common/game/WoodenTabBar";
 
-const DETAIL_TABS: [Screen, string][] = [
-  ["about", "About"],
-  ["facts", "Fun Facts"],
-  ["battle_stats", "Battle Stats"],
-  ["gallery", "Gallery"],
+const DETAIL_TABS: WoodenTab<Screen>[] = [
+  { key: "about", label: "About" },
+  { key: "facts", label: "Fun Facts" },
+  { key: "battle_stats", label: "Battle Stats" },
+  { key: "gallery", label: "Gallery" },
 ];
 
 const EMPTY_PHOTOS: GalleryItem[] = [];
@@ -42,181 +38,66 @@ export function SpeciesDetailScreen() {
   );
   const token = useUserStore((state) => state.accessToken);
   const childId = useUserStore((state) => state.currentUser.id);
+  const insets = useSafeAreaInsets();
 
-  const onTabChange = (next: Screen) => useNavigationStore.getState().open(next);
+  const onTabChange = (next: Screen) =>
+    useNavigationStore.getState().open(next);
   const onBack = () => useNavigationStore.getState().resetTo("collection");
   const onChatSend = (question: string) =>
     useUserStore.getState().chatWithSpecies(species.id, question);
-  // Tab content lives in a horizontal, paging ScrollView so the user can swipe
-  // left/right between tabs, in sync with tapping the tab labels above it.
-  const [pageWidth, setPageWidth] = useState(0);
-  const [heroEnlarged, setHeroEnlarged] = useState(false);
   const [chatVisible, setChatVisible] = useState(false);
-  const pagerRef = useRef<ScrollView>(null);
-  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeIndex = DETAIL_TABS.findIndex(([key]) => key === screen);
+  const activeTab =
+    DETAIL_TABS.find(({ key }) => key === screen)?.key ?? "about";
 
   useEffect(() => {
     void useAbilityQuizStore.getState().fetchProgression(species.id);
   }, [species.id, token]);
 
   useEffect(() => {
-    useContinueLearningStore.getState().recordActivity(childId, species.id, "view");
+    useContinueLearningStore
+      .getState()
+      .recordActivity(childId, species.id, "view");
   }, [species.id, childId]);
 
   useEffect(() => {
     if (screen === "facts") {
-      useContinueLearningStore.getState().recordActivity(childId, species.id, "fun_facts");
+      useContinueLearningStore
+        .getState()
+        .recordActivity(childId, species.id, "fun_facts");
     }
   }, [species.id, screen, childId]);
 
-  useEffect(() => {
-    if (pageWidth > 0 && activeIndex >= 0) {
-      pagerRef.current?.scrollTo({
-        x: activeIndex * pageWidth,
-        animated: true,
-      });
-    }
-    // Only re-sync when the active tab or measured width changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, pageWidth]);
-
-  const syncTabToOffset = (x: number) => {
-    if (!pageWidth) return;
-    const index = Math.round(x / pageWidth);
-    const clamped = Math.min(DETAIL_TABS.length - 1, Math.max(0, index));
-    const next = DETAIL_TABS[clamped][0];
-    if (next !== screen) onTabChange(next);
-  };
-
-  const handleSwipeEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) =>
-    syncTabToOffset(e.nativeEvent.contentOffset.x);
-
-  const handlePagerScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
-    scrollEndTimer.current = setTimeout(() => syncTabToOffset(x), 60);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (scrollEndTimer.current) clearTimeout(scrollEndTimer.current);
-    };
-  }, []);
-
   return (
-    <View style={styles.detailRoot}>
-      <View style={styles.detailHeaderBar}>
-        <Tap label="Go back" style={styles.collectionBackBtn} onPress={onBack}>
-          <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
-        </Tap>
-        <Text numberOfLines={1} style={styles.detailHeaderTitle}>
-          {species.common_name}
-        </Text>
-      </View>
+    <View style={styles.root}>
+      <GameScreenHeader title={species.common_name} onBack={onBack} />
 
-      <Tap
-        label={`Make the ${species.common_name} picture bigger`}
-        style={styles.detailHeroTap}
-        onPress={() => setHeroEnlarged(true)}
-      >
-        <Image
-          source={imageFor(species)!}
-          style={styles.detailHeroImage}
-          resizeMode="cover"
+      <View style={styles.top}>
+        <ViewPhotoCard name={species.common_name} image={imageFor(species)} />
+        <WoodenTabBar
+          tabs={DETAIL_TABS}
+          active={activeTab}
+          onChange={onTabChange}
         />
-      </Tap>
-
-      <Modal
-        visible={heroEnlarged}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setHeroEnlarged(false)}
-      >
-        <Tap
-          label="Close big picture"
-          style={styles.lightboxBackdrop}
-          onPress={() => setHeroEnlarged(false)}
-        >
-          <Image
-            source={imageFor(species)!}
-            style={styles.lightboxImage}
-            resizeMode="contain"
-          />
-        </Tap>
-        <Tap
-          label="Close"
-          style={styles.lightboxCloseBtn}
-          onPress={() => setHeroEnlarged(false)}
-        >
-          <MaterialIcons name="close" size={22} color="#FFFFFF" />
-        </Tap>
-      </Modal>
-
-      <View style={styles.detailTabsRow}>
-        {DETAIL_TABS.map(([key, label]) => {
-          const active = screen === key;
-          return (
-            <Tap
-              key={key}
-              label={label}
-              style={styles.detailTab}
-              onPress={() => onTabChange(key)}
-            >
-              <Text
-                style={[
-                  styles.detailTabText,
-                  active && styles.detailTabTextActive,
-                ]}
-              >
-                {label}
-              </Text>
-              <View
-                style={[
-                  styles.detailTabUnderline,
-                  active && styles.detailTabUnderlineActive,
-                ]}
-              />
-            </Tap>
-          );
-        })}
       </View>
 
       <ScrollView
-        ref={pagerRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        decelerationRate="fast"
-        onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
-        onMomentumScrollEnd={handleSwipeEnd}
-        onScrollEndDrag={handleSwipeEnd}
-        onScroll={handlePagerScroll}
-        scrollEventThrottle={16}
+        key={activeTab}
+        contentContainerStyle={[
+          styles.page,
+          { paddingBottom: 40 + insets.bottom },
+        ]}
       >
-        {pageWidth > 0 &&
-          DETAIL_TABS.map(([key]) => (
-            <ScrollView
-              key={key}
-              style={{ width: pageWidth }}
-              contentContainerStyle={styles.detailBody}
-              nestedScrollEnabled
-            >
-              {key === "about" && <AboutTab item={species} />}
-              {key === "battle_stats" && <BattleStatsTab item={species} />}
-              {key === "facts" && <FactsTab speciesId={species.id} />}
-              {key === "gallery" && <GalleryTab photos={photos} />}
-            </ScrollView>
-          ))}
+        {activeTab === "about" && <AboutTab item={species} />}
+        {activeTab === "facts" && <FactsTab speciesId={species.id} />}
+        {activeTab === "battle_stats" && <BattleStatsTab item={species} />}
+        {activeTab === "gallery" && <GalleryTab photos={photos} />}
       </ScrollView>
 
-      <Tap
+      <ChatFab
         label={`Ask WildGuide about ${species.common_name}`}
-        style={styles.chatLauncher}
+        style={{ right: 20, bottom: 5 + insets.bottom }}
         onPress={() => setChatVisible(true)}
-      >
-        <MaterialIcons name="smart-toy" size={23} color="#FFFFFF" />
-      </Tap>
+      />
       <SpeciesChatDrawer
         visible={chatVisible}
         species={species}
@@ -225,98 +106,13 @@ export function SpeciesDetailScreen() {
         onSendQuestion={onChatSend}
       />
       <AbilityUnlockModal />
+      <PerkUnlockedModal species={species} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  detailRoot: { flex: 1, backgroundColor: "#FFFFFF" },
-  collectionBackBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2ECE4",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  detailHeaderBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 20,
-    marginTop: 8,
-    minHeight: 56,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2ECE4",
-  },
-  detailHeaderTitle: {
-    flex: 1,
-    color: "#1A1A1A",
-    fontSize: 20,
-    fontWeight: "900",
-  },
-  detailHeroTap: { width: "100%" },
-  detailHeroImage: { width: "100%", height: 200 },
-  lightboxBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lightboxImage: { width: "100%", height: "100%" },
-  lightboxCloseBtn: {
-    position: "absolute",
-    top: 48,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  detailTabsRow: {
-    flexDirection: "row",
-    gap: 24,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 4,
-    backgroundColor: "#FFFFFF",
-  },
-  detailTab: { alignItems: "center", gap: 8 },
-  detailTabText: { color: "#1A1A1A", fontSize: 14, fontWeight: "600" },
-  detailTabTextActive: { fontWeight: "900" },
-  detailTabUnderline: {
-    height: 2,
-    width: 36,
-    borderRadius: 1,
-    backgroundColor: "transparent",
-  },
-  detailTabUnderlineActive: { backgroundColor: "#78B833" },
-  detailBody: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
-    backgroundColor: "#FFFFFF",
-    flexGrow: 1,
-  },
-  chatLauncher: {
-    position: "absolute",
-    right: 18,
-    bottom: 20,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#075A2B",
-    shadowColor: "#001A0A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.22,
-    shadowRadius: 7,
-    elevation: 5,
-  },
+  root: { flex: 1, backgroundColor: DETAIL_COLORS.background },
+  top: { gap: 12, paddingTop: 12, paddingHorizontal: 16 },
+  page: { padding: 16, flexGrow: 1, paddingTop: 12 },
 });

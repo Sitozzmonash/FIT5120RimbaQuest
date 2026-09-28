@@ -1,8 +1,10 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text } from "react-native";
+import { FONTS } from "../../../../constants/fonts";
 import { WILDLIFE_FILTERS } from "../../../../constants/seed";
 import { useCollectionStore } from "../../../../store/useCollectionStore";
-import { Tap } from "../../../common/Tap";
+import { GAME_COLORS } from "../../../common/game/gameTheme";
+import { ScaleTap } from "../../../common/ScaleTap";
 
 const CHIP_LABELS: Record<string, string> = {
   All: "All",
@@ -17,45 +19,46 @@ export function WildlifeFilterChips() {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      style={styles.collectionTabsScroll}
-      contentContainerStyle={styles.collectionTabsRow}
+      style={styles.scroll}
+      contentContainerStyle={styles.row}
     >
-      {WILDLIFE_FILTERS.map((item) => (
-        <Tap
-          key={item.id}
-          label={`Filter ${item.label}`}
-          style={[
-            styles.collectionChip,
-            filter === item.id && styles.collectionChipActive,
-          ]}
-          onPress={() => onSelect(item.id)}
-        >
-          <Text
-            style={[
-              styles.collectionChipText,
-              filter === item.id && styles.collectionChipTextActive,
-            ]}
+      {WILDLIFE_FILTERS.map((item) => {
+        const active = filter === item.id;
+        return (
+          <ScaleTap
+            key={item.id}
+            label={`Filter ${item.label}`}
+            style={[styles.chip, active ? styles.chipActive : styles.chipIdle]}
+            onPress={() => onSelect(item.id)}
           >
-            {CHIP_LABELS[item.id] ?? item.label}
-          </Text>
-        </Tap>
-      ))}
+            <Text style={[styles.text, active && styles.textActive]}>
+              {CHIP_LABELS[item.id] ?? item.label}
+            </Text>
+          </ScaleTap>
+        );
+      })}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  collectionTabsScroll: { flexGrow: 0 },
-  collectionTabsRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
-  collectionChip: {
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#C8E4C8",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  scroll: { flexGrow: 0 },
+  row: {
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 2,
+    paddingBottom: 12,
+    alignItems: "flex-end",
   },
-  collectionChipActive: { backgroundColor: "#78B833", borderColor: "#78B833" },
-  collectionChipText: { color: "#0A4D26", fontSize: 12, fontWeight: "700" },
-  collectionChipTextActive: { color: "#FFFFFF" },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 2,
+    borderColor: GAME_COLORS.ink,
+    borderRadius: 999,
+  },
+  chipIdle: { backgroundColor: GAME_COLORS.paper, borderBottomWidth: 5 },
+  chipActive: { backgroundColor: GAME_COLORS.goldLight },
+  text: { fontFamily: FONTS.display, color: GAME_COLORS.heading, fontSize: 14 },
+  textActive: { color: GAME_COLORS.goldText },
 });
