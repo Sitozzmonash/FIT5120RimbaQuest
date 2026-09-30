@@ -63,15 +63,17 @@ def chat_about_discovered_species(
                     WHERE is_active=TRUE AND id <> :species_id"""),
             {"species_id": species_id},
         ))
-        # The team has confirmed every Iteration 3 workbook row. Keep the
-        # status predicate as a second layer so a future draft cannot enter
-        # the provider context simply because it belongs to the right species.
+        # Every Iteration 3 row is team-verified, but retain the full approval
+        # predicate so a later draft or incomplete review cannot reach the
+        # provider context merely because it belongs to the current species.
         fun_facts = rows(connection.execute(
             text("""SELECT id, fact_text, source_name, source_url,
-                           verification_status, verified_by
+                           verification_status, verified_by, verified_at
                     FROM species_fun_facts
                     WHERE species_id=:species_id
                       AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
+                      AND NULLIF(TRIM(verified_by), '') IS NOT NULL
+                      AND verified_at IS NOT NULL
                     ORDER BY display_order ASC"""),
             {"species_id": species_id},
         ))
@@ -81,6 +83,8 @@ def chat_about_discovered_species(
                     JOIN species_fun_facts AS facts ON facts.id=sources.fact_id
                     WHERE facts.species_id=:species_id
                       AND LOWER(facts.verification_status) IN ('team-verified', 'approved', 'verified')
+                      AND NULLIF(TRIM(facts.verified_by), '') IS NOT NULL
+                      AND facts.verified_at IS NOT NULL
                     ORDER BY sources.id ASC"""),
             {"species_id": species_id},
         ))

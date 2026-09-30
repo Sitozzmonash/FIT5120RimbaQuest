@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import Connection, Table, select
 
@@ -174,6 +176,27 @@ def _seed_key(*parts: object) -> str:
     return json.dumps(list(parts), ensure_ascii=False, separators=(",", ":"))
 
 
+FUN_FACT_CONTENT_POLICY_VERSION = "child-facing-fun-facts-v2"
+FUN_FACT_BLOCKED_PATTERNS = (
+    r"\brimbaquest\s+catalogue\b",
+    r"\bcatalogue\s+links?\b",
+    r"^from wikipedia, the free encyclopedia",
+    r"\byou can help wikipedia\b",
+    r"\bthis article\b.*\bis a stub\b",
+    r"^life-history note:",
+    r"lifespan.*\b(unknown|uncertain)\b",
+    r"lifespan.*not well documented",
+)
+
+
+def _is_child_facing_fun_fact(fact_text: object) -> bool:
+    """Reject scraped page text and preparation notes, not ordinary source-linked facts."""
+    text = str(fact_text or "").strip()
+    return bool(text) and not any(
+        re.search(pattern, text, re.IGNORECASE) for pattern in FUN_FACT_BLOCKED_PATTERNS
+    )
+
+
 def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
     raw_value = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == key)
@@ -192,12 +215,15 @@ def seed_iteration_three_fun_facts(connection: Connection) -> None:
 
     The source workbook contains 10 reviewed facts for each supported species.
     Every source URL belongs to the reviewed record, so it remains available
-    as a citation without passing the separate live-source whitelist.
+    as a citation without passing the separate live-source whitelist. Content
+    that is not child-facing remains rejected even if it is source-linked.
     """
     if not ITERATION_3_FUN_FACTS.exists():
         return
 
-    seed_version = hashlib.sha256(ITERATION_3_FUN_FACTS.read_bytes()).hexdigest()
+    seed_version = hashlib.sha256(
+        ITERATION_3_FUN_FACTS.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
+    ).hexdigest()
     version_key = "iteration_3_fun_facts_sha256"
     keys_key = "iteration_3_fun_facts_seed_keys"
     current_version = connection.execute(
@@ -235,15 +261,68 @@ def seed_iteration_three_fun_facts(connection: Connection) -> None:
         )
 
     for record in records:
+        fact_text = str(record.get("fun_fact") or record.get("fact_text") or "").strip()
+        source_url = str(record.get("source_url") or "").strip()
+        source_name = record.get("source_name")
+        if not source_name:
+            if source_url:
+                netloc = urlparse(source_url).netloc
+                source_name = netloc or "Reference Source"
+            else:
+                source_name = "Reference Source"
+        source_license = record.get("source_license") or "Web Reference"
+
+        raw_retrieved = record.get("retrieved_at")
+        if raw_retrieved:
+            if isinstance(raw_retrieved, str):
+                retrieved_at = datetime.fromisoformat(raw_retrieved.replace("Z", "+00:00"))
+            elif isinstance(raw_retrieved, datetime):
+                retrieved_at = raw_retrieved
+            else:
+                retrieved_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+        else:
+            retrieved_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+
+        if record.get("verified") == "PASS":
+            verification_status = "team-verified"
+            verified_by = record.get("verified_by") or "content team"
+            raw_verified_at = record.get("verified_at")
+            if raw_verified_at:
+                verified_at = (
+                    datetime.fromisoformat(raw_verified_at.replace("Z", "+00:00"))
+                    if isinstance(raw_verified_at, str)
+                    else raw_verified_at
+                )
+            else:
+                verified_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+        else:
+            verification_status = record.get("verification_status", "source-linked-draft")
+            verified_by = record.get("verified_by")
+            raw_verified_at = record.get("verified_at")
+            if raw_verified_at:
+                verified_at = (
+                    datetime.fromisoformat(raw_verified_at.replace("Z", "+00:00"))
+                    if isinstance(raw_verified_at, str)
+                    else raw_verified_at
+                )
+            else:
+                verified_at = None
+
         values = {
-            **{key: value for key, value in record.items() if key != "additional_sources"},
-            "retrieved_at": datetime.fromisoformat(record["retrieved_at"].replace("Z", "+00:00")),
-            "verified_at": (
-                datetime.fromisoformat(record["verified_at"].replace("Z", "+00:00"))
-                if record.get("verified_at")
-                else None
-            ),
+            "species_id": record["species_id"],
+            "display_order": int(record["display_order"]),
+            "fact_text": fact_text,
+            "source_name": source_name,
+            "source_url": source_url,
+            "source_license": source_license,
+            "retrieved_at": retrieved_at,
+            "verification_status": verification_status,
+            "uncertainty_note": record.get("uncertainty_note"),
+            "verified_by": verified_by,
+            "verified_at": verified_at,
         }
+        if not _is_child_facing_fun_fact(values["fact_text"]):
+            values["verification_status"] = "rejected"
         predicate = (
             (species_fun_facts.c.species_id == values["species_id"])
             & (species_fun_facts.c.display_order == values["display_order"])

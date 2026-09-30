@@ -1,10 +1,7 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Tap } from "../../../common/Tap";
-import { PrimaryButton } from "../../../common/PrimaryButton";
+import { StyleSheet, View } from "react-native";
+import { GameButton } from "../../../common/game/GameButton";
 
-// Shared Back / Next (or Confirm) footer used by every step of the
-// discovery flow.
 export function DiscoveryBottomNav({
   onBack,
   backLabel = "Back",
@@ -12,6 +9,7 @@ export function DiscoveryBottomNav({
   nextLabel,
   onNext,
   nextDisabled,
+  nextLoading,
 }: {
   onBack: () => void;
   backLabel?: string;
@@ -19,47 +17,32 @@ export function DiscoveryBottomNav({
   nextLabel: string;
   onNext: () => void;
   nextDisabled?: boolean;
+  nextLoading?: boolean;
 }) {
   return (
-    <View style={styles.wrap}>
-      <View style={styles.row}>
-        <Tap
-          label={backLabel}
-          style={[styles.backBtn, backDisabled && styles.disabled]}
-          disabled={backDisabled}
-          onPress={onBack}
-        >
-          <Text style={styles.backText}>{backLabel}</Text>
-        </Tap>
-        <PrimaryButton
-          label={nextLabel}
-          disabled={nextDisabled}
-          style={styles.nextBtn}
-          onPress={onNext}
-        />
-      </View>
+    <View style={styles.row}>
+      <GameButton
+        label={backLabel}
+        variant="secondary"
+        width="hug"
+        style={styles.back}
+        disabled={backDisabled}
+        onPress={onBack}
+      />
+      <GameButton
+        label={nextLabel}
+        width="hug"
+        style={styles.next}
+        disabled={nextDisabled}
+        loading={nextLoading}
+        onPress={onNext}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    width: "100%",
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 24,
-  },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, width: "100%" },
-  backBtn: {
-    width: 120,
-    height: 52,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backText: { color: "#0A4D26", fontSize: 16, fontWeight: "800" },
-  nextBtn: { flex: 1 },
-  disabled: { opacity: 0.45 },
+  row: { flexDirection: "row", alignItems: "flex-end", gap: 12, width: "100%" },
+  back: { width: 120 },
+  next: { flex: 1 },
 });

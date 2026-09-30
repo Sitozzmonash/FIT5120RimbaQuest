@@ -41,3 +41,11 @@ services:
         sync: false
       - key: ZHIPU_VISION_MODEL
         value: glm-4.6v-flash
+      # Password-reset email via Brevo's HTTPS API. Render blocks outbound SMTP
+      # (smtp.gmail.com:587 -> "Network is unreachable"), so email goes over 443.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: RimbaQuest Team

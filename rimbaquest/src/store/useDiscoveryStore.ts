@@ -7,6 +7,7 @@ import {
   LocationMode,
   Species,
   VerificationError,
+  VerificationErrorKind,
 } from "../types";
 import { OFFLINE_SPECIES } from "../constants/seed";
 import { useNavigationStore } from "./useNavigationStore";
@@ -19,6 +20,8 @@ type DiscoveryState = {
   photoError: string | null;
   verifyingPhoto: boolean;
   verificationError: VerificationError | null;
+  photoCheckStage: PhotoCheckStage | null;
+  photoCheckAttempt: number;
   verificationId: string | null;
   verificationCandidates: Species[];
   verificationPhotoUrl: string | null;
@@ -40,6 +43,16 @@ type DiscoveryState = {
   discoveryRecordedAt: string | null;
 };
 
+export type PhotoCheckStage =
+  | "uploading"
+  | "identifying"
+  | "matching"
+  | "saving"
+  | "done"
+  | "unverified"
+  | "failed"
+  | "cancelled";
+
 export type SaveDiscoveryResult = {
   speciesId: string;
   first_discovery: boolean;
@@ -52,7 +65,6 @@ export type SaveDiscoveryResult = {
 
 type DiscoveryActions = {
   setPhotoError: (error: string | null) => void;
-  setCategory: (category: string) => void;
   setIdentificationError: (error: string | null) => void;
   setDiscoveryLocation: (location: string) => void;
   setLocationMode: (mode: LocationMode) => void;
@@ -84,12 +96,37 @@ type DiscoveryActions = {
 
 export type DiscoveryStore = DiscoveryState & DiscoveryActions;
 
+let activePhotoVerification: AbortController | null = null;
+let activePhotoVerificationTraceId: string | null = null;
+
+function cancelActivePhotoVerification(): void {
+  activePhotoVerification?.abort();
+  activePhotoVerification = null;
+  if (activePhotoVerificationTraceId) {
+    const traceId = activePhotoVerificationTraceId;
+    activePhotoVerificationTraceId = null;
+    const { currentUser, authHeaders } = useUserStore.getState();
+    void fetch(
+      `${API_BASE}/api/v1/children/${currentUser.id}/discovery-verifications/status/${traceId}`,
+      { method: "DELETE", headers: authHeaders() },
+    ).catch(() => {});
+  }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const PHOTO_CHECK_POLL_INTERVAL_MS = 700;
+
 const initialState: DiscoveryState = {
   photoUri: null,
   photoMimeType: null,
   photoError: null,
   verifyingPhoto: false,
   verificationError: null,
+  photoCheckStage: null,
+  photoCheckAttempt: 0,
   verificationId: null,
   verificationCandidates: [],
   verificationPhotoUrl: null,
@@ -158,7 +195,6 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
   ...initialState,
 
   setPhotoError: (photoError) => set({ photoError }),
-  setCategory: (category) => set({ category }),
   setIdentificationError: (identificationError) => set({ identificationError }),
   setDiscoveryLocation: (discoveryLocation) => set({ discoveryLocation }),
 
@@ -170,7 +206,8 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     set({ locationMode: mode, locationNotice: null });
   },
 
-  resetSelections: () =>
+  resetSelections: () => {
+    cancelActivePhotoVerification();
     set({
       category: "",
       chosenSpeciesId: null,
@@ -178,6 +215,8 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       locationMode: "manual",
       verifyingPhoto: false,
       verificationError: null,
+      photoCheckStage: null,
+      photoCheckAttempt: 0,
       verificationId: null,
       verificationCandidates: [],
       verificationPhotoUrl: null,
@@ -185,31 +224,42 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       identificationError: null,
       evaluatingIdentification: false,
       reportingVerification: false,
-    }),
+    });
+  },
 
-  retake: () =>
+  retake: () => {
+    cancelActivePhotoVerification();
     set((state) => ({
       verificationAttempt: state.verificationAttempt + 1,
       photoUri: null,
       photoMimeType: null,
       photoError: null,
       verificationError: null,
+      photoCheckStage: null,
+      photoCheckAttempt: 0,
       verificationId: null,
       verificationCandidates: [],
       verificationPhotoUrl: null,
       identificationFeedback: null,
       identificationError: null,
-    })),
+      verifyingPhoto: false,
+    }));
+  },
 
-  discard: () =>
+  discard: () => {
+    cancelActivePhotoVerification();
     set((state) => ({
       ...initialState,
       verificationAttempt: state.verificationAttempt + 1,
-    })),
+    }));
+  },
 
   submitPhoto: async (uri, mimeType) => {
     const { currentUser, authHeaders } = useUserStore.getState();
     const childId = currentUser.id;
+    cancelActivePhotoVerification();
+    const controller = new AbortController();
+    activePhotoVerification = controller;
     const attempt = get().verificationAttempt + 1;
     set({
       verificationAttempt: attempt,
@@ -217,6 +267,8 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       photoMimeType: mimeType,
       photoError: null,
       verificationError: null,
+      photoCheckStage: "uploading",
+      photoCheckAttempt: 0,
       verifyingPhoto: true,
       verificationId: null,
       verificationCandidates: [],
@@ -243,6 +295,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       } as unknown as Blob);
     }
 
+    if (controller.signal.aborted || attempt !== get().verificationAttempt) {
+      return false;
+    }
+
     try {
       const response = await fetch(
         `${API_BASE}/api/v1/children/${childId}/discovery-verifications`,
@@ -250,6 +306,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
           method: "POST",
           headers: authHeaders(),
           body: form,
+          signal: controller.signal,
         },
       );
       const data = await response.json().catch(() => ({}));
@@ -257,42 +314,127 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         await useUserStore.getState().expire();
         return false;
       }
-      if (!response.ok) {
-        throw new Error(
-          "We couldn't check your wildlife photo right now. Please try again.",
-        );
-      }
-      if (attempt !== get().verificationAttempt) return false;
-      if (data.status !== "verified") {
+      if (
+        response.status === 415 ||
+        response.status === 400 ||
+        response.status === 413
+      ) {
         set({
           verificationError: {
-            kind: "unverified",
+            kind: "unsupported_file",
             message:
-              "We couldn't find an animal in this photo. Please try a clearer wildlife photo.",
+              typeof data.detail === "string"
+                ? data.detail
+                : "This file isn't a wildlife photo we can check.",
           },
         });
         return false;
       }
-      if (
-        !data.verification_id ||
-        !Array.isArray(data.candidates) ||
-        data.candidates.length !== 4
-      ) {
+      if (!response.ok || data.status !== "pending" || !data.trace_id) {
         throw new Error(
           "We couldn't check your wildlife photo right now. Please try again.",
         );
       }
-      const candidates = data.candidates as Species[];
-      set({
-        verificationId: String(data.verification_id),
-        verificationCandidates: candidates,
-        verificationPhotoUrl:
-          typeof data.photo_url === "string" ? data.photo_url : null,
-        category: candidates[0]?.category ?? "",
-      });
-      return true;
-    } catch (error) {
       if (attempt !== get().verificationAttempt) return false;
+      activePhotoVerificationTraceId = String(data.trace_id);
+
+      // The backend runs identification as a background job and reports its
+      // real stage here; this polls that instead of guessing with a timer.
+      while (true) {
+        await wait(PHOTO_CHECK_POLL_INTERVAL_MS);
+        if (controller.signal.aborted || attempt !== get().verificationAttempt) {
+          return false;
+        }
+        let statusResponse: Response;
+        try {
+          statusResponse = await fetch(
+            `${API_BASE}/api/v1/children/${childId}/discovery-verifications/status/${activePhotoVerificationTraceId}`,
+            { headers: authHeaders(), signal: controller.signal },
+          );
+        } catch {
+          if (controller.signal.aborted) return false;
+          continue;
+        }
+        if (statusResponse.status === 401 || statusResponse.status === 403) {
+          await useUserStore.getState().expire();
+          return false;
+        }
+        if (!statusResponse.ok) {
+          throw new Error(
+            "We couldn't check your wildlife photo right now. Please try again.",
+          );
+        }
+        const statusData = await statusResponse.json().catch(() => ({}));
+        if (attempt !== get().verificationAttempt) return false;
+
+        const stage: PhotoCheckStage | undefined = statusData.stage;
+        set({
+          photoCheckStage: stage ?? null,
+          photoCheckAttempt:
+            typeof statusData.attempt === "number" ? statusData.attempt : 0,
+        });
+
+        if (stage === "cancelled") return false;
+        if (stage === "failed") {
+          set({
+            verificationError: {
+              kind: "failed",
+              message:
+                typeof statusData.message === "string"
+                  ? statusData.message
+                  : "We couldn't check your wildlife photo right now. Please try again.",
+            },
+          });
+          return false;
+        }
+        if (stage === "unverified") {
+          const reason: string =
+            typeof statusData.reason === "string"
+              ? statusData.reason
+              : "no_animal_detected";
+          const kind: VerificationErrorKind =
+            reason === "low_confidence" || reason === "species_not_in_catalog"
+              ? reason
+              : "no_animal_detected";
+          set({
+            verificationError: {
+              kind,
+              message:
+                typeof statusData.message === "string"
+                  ? statusData.message
+                  : "We couldn't find an animal in this photo. Please try a clearer wildlife photo.",
+            },
+          });
+          return false;
+        }
+        if (stage === "done") {
+          if (
+            !statusData.verification_id ||
+            !Array.isArray(statusData.candidates) ||
+            statusData.candidates.length !== 4
+          ) {
+            throw new Error(
+              "We couldn't check your wildlife photo right now. Please try again.",
+            );
+          }
+          const candidates = statusData.candidates as Species[];
+          set({
+            verificationId: String(statusData.verification_id),
+            verificationCandidates: candidates,
+            verificationPhotoUrl:
+              typeof statusData.photo_url === "string"
+                ? statusData.photo_url
+                : null,
+            category: candidates[0]?.category ?? "",
+          });
+          return true;
+        }
+        // Still "uploading" / "identifying" / "matching" / "saving": keep polling.
+      }
+    } catch (error) {
+      if (controller.signal.aborted || attempt !== get().verificationAttempt) {
+        return false;
+      }
       set({
         verificationError: {
           kind: "failed",
@@ -304,6 +446,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       });
       return false;
     } finally {
+      if (activePhotoVerification === controller) {
+        activePhotoVerification = null;
+        activePhotoVerificationTraceId = null;
+      }
       if (attempt === get().verificationAttempt) set({ verifyingPhoto: false });
     }
   },
@@ -312,11 +458,12 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     const state = get();
     if (!state.photoUri || state.verifyingPhoto) return;
 
-    const verified = await get().submitPhoto(
+    // The preview screen shows a popup once verification finishes, and the
+    // popup's button continues to the species screen.
+    await get().submitPhoto(
       state.photoUri,
       state.photoMimeType ?? "image/jpeg",
     );
-    if (verified) useNavigationStore.getState().setScreen("species");
   },
 
   evaluateIdentification: async (item) => {
@@ -525,10 +672,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
 
   capturePhoto: (uri, mimeType = "image/jpeg") => {
     useNavigationStore.getState().open("photo_preview");
-    void (async () => {
-      const verified = await get().submitPhoto(uri, mimeType);
-      if (verified) useNavigationStore.getState().setScreen("species");
-    })();
+    // Don't jump straight to the species screen: the preview screen shows a
+    // success popup and the user taps its button to continue.
+    void get().submitPhoto(uri, mimeType);
   },
 
   discardAndExit: () => {
@@ -559,9 +705,10 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     get().discardAndExit();
     useUserStore
       .getState()
-      .setNotice(
-        "Thanks for telling us. We did not save the photo or add a card.",
-      );
+      .setNotice("We did not save the photo or add a card.", {
+        title: "Thanks for telling us!",
+        positive: true,
+      });
     return true;
   },
 }));

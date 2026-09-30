@@ -1,14 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Linking,
+  Dimensions,
+  Keyboard,
+  LayoutChangeEvent,
   Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -19,14 +20,22 @@ import {
   SpeciesChatMessage,
   SpeciesChatResponse,
 } from "../../../../types";
+import { FONTS } from "../../../../constants/fonts";
 import { Tap } from "../../../common/Tap";
+import { ChatBubble } from "./chat/ChatBubble";
+import { ChatComposer } from "./chat/ChatComposer";
+import { ChatDrawerHeader } from "./chat/ChatDrawerHeader";
+import { SuggestionChips } from "./chat/SuggestionChips";
 
+const COMPOSER_BOTTOM_GAP = 12;
+const DRAWER_SCREEN_SHARE = 0.95;
+const DRAWER_MAX_HEIGHT = 820;
 const DEFAULT_SUGGESTIONS = ["What do they eat?", "Where do they live?"];
 const EMPTY_QUESTION_MESSAGE = "Please type a question.";
 const UNAVAILABLE_MESSAGE =
   "WildGuide cannot chat right now. Please try again soon.";
 const REQUEST_ERROR_MESSAGE =
-  "I couldn’t answer that right now. Please try again.";
+  "I couldn't answer that right now. Please try again.";
 
 let messageSequence = 0;
 
@@ -47,14 +56,11 @@ function makeMessage(
 function welcomeMessage(species: Species): SpeciesChatMessage {
   return makeMessage(
     "assistant",
-    `Hi! I'm WildGuide. Ask me anything about the ${species.common_name}. 🌿`,
+    `Hi! I'm WildGuide. Ask me anything about the ${species.common_name}.`,
   );
 }
 
-function usableSuggestions(
-  suggestions: unknown,
-  fallback: string[],
-): string[] {
+function usableSuggestions(suggestions: unknown, fallback: string[]): string[] {
   if (!Array.isArray(suggestions)) return fallback;
 
   const cleaned = suggestions
@@ -63,24 +69,6 @@ function usableSuggestions(
     .filter(Boolean);
   const unique = Array.from(new Set(cleaned)).slice(0, 3);
   return unique.length > 0 ? unique : fallback;
-}
-
-function citationUrls(citation: SpeciesChatCitation): string[] {
-  const candidates = [
-    ...(citation.source_urls ?? []),
-    citation.source_url ?? "",
-  ];
-  return Array.from(
-    new Set(
-      candidates
-        .filter((url) => /^https:\/\//i.test(url.trim()))
-        .map((url) => url.trim()),
-    ),
-  ).slice(0, 4);
-}
-
-function openSource(url: string) {
-  void Linking.openURL(url).catch(() => undefined);
 }
 
 export type SpeciesChatDrawerProps = {
@@ -114,6 +102,105 @@ export function SpeciesChatDrawer({
   const [failedQuestion, setFailedQuestion] = useState<string | null>(null);
 
   const chatAvailable = Boolean(childId && onSendQuestion);
+  const [keyboardInset, setKeyboardInset] = useState(0);
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
+  const inputFocusedRef = useRef(false);
+  const [modalLayout, setModalLayout] = useState({
+    width: windowWidth,
+    height: windowHeight,
+    fullHeight: windowHeight,
+    measured: false,
+  });
+  const resizedInset = Math.max(0, modalLayout.fullHeight - modalLayout.height);
+  // Android's Modal uses adjustResize. Its measured height already excludes
+  // the keyboard, so applying the keyboard event's height would count it twice.
+  const composerInset =
+    Platform.OS === "android"
+      ? resizedInset
+      : Math.max(resizedInset, keyboardInset);
+  const keyboardOpen = composerInset > 0;
+  const drawerHeight = Math.min(
+    DRAWER_MAX_HEIGHT,
+    modalLayout.fullHeight * DRAWER_SCREEN_SHARE,
+  );
+
+  const handleModalLayout = ({
+    nativeEvent: { layout },
+  }: LayoutChangeEvent) => {
+    setModalLayout((previous) => {
+      const preserveHeight =
+        previous.measured &&
+        previous.width === layout.width &&
+        (inputFocusedRef.current || Keyboard.isVisible() || keyboardInset > 0);
+      return {
+        width: layout.width,
+        height: layout.height,
+        fullHeight: preserveHeight
+          ? Math.max(previous.fullHeight, layout.height)
+          : layout.height,
+        measured: true,
+      };
+    });
+  };
+
+  useEffect(() => {
+    if (!visible) {
+      setKeyboardInset(0);
+      inputFocusedRef.current = false;
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" || !visible) return;
+    const viewport =
+      typeof window !== "undefined" ? window.visualViewport : undefined;
+    if (!viewport) return;
+
+    const handleResize = () => {
+      const inset = Math.max(
+        0,
+        window.innerHeight - viewport.height - viewport.offsetTop,
+      );
+      setKeyboardInset(inset);
+    };
+
+    handleResize();
+    viewport.addEventListener("resize", handleResize);
+    viewport.addEventListener("scroll", handleResize);
+    return () => {
+      viewport.removeEventListener("resize", handleResize);
+      viewport.removeEventListener("scroll", handleResize);
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    if (Platform.OS === "web" || !visible) return;
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillChangeFrame" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSub = Keyboard.addListener(showEvent, (event) => {
+      if (Platform.OS === "ios") Keyboard.scheduleLayoutAnimation(event);
+      // Frame-change events also fire when iOS moves the keyboard offscreen.
+      setKeyboardInset(
+        Math.max(
+          0,
+          Math.min(
+            event.endCoordinates.height,
+            Dimensions.get("screen").height - event.endCoordinates.screenY,
+          ),
+        ),
+      );
+    });
+    const hideSub = Keyboard.addListener(hideEvent, (event) => {
+      if (Platform.OS === "ios") Keyboard.scheduleLayoutAnimation(event);
+      setKeyboardInset(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   useEffect(() => {
     // Never show a reply from a previous wildlife card after switching cards.
@@ -133,7 +220,7 @@ export function SpeciesChatDrawer({
       0,
     );
     return () => clearTimeout(timeout);
-  }, [error, isSending, messages.length, visible]);
+  }, [error, isSending, composerInset, messages.length, visible]);
 
   const sendQuestion = async (question: string, appendUserMessage: boolean) => {
     const trimmedQuestion = question.trim();
@@ -175,7 +262,8 @@ export function SpeciesChatDrawer({
     } catch (requestError) {
       if (requestVersion !== requestVersionRef.current) return;
       setError(
-        requestError instanceof Error && requestError.message === REQUEST_ERROR_MESSAGE
+        requestError instanceof Error &&
+          requestError.message === REQUEST_ERROR_MESSAGE
           ? requestError.message
           : REQUEST_ERROR_MESSAGE,
       );
@@ -188,6 +276,7 @@ export function SpeciesChatDrawer({
   };
 
   const closeDrawer = () => {
+    Keyboard.dismiss();
     setError(null);
     onClose();
   };
@@ -196,13 +285,10 @@ export function SpeciesChatDrawer({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={closeDrawer}
     >
-      <KeyboardAvoidingView
-        style={styles.modalRoot}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
+      <View style={styles.modalRoot} onLayout={handleModalLayout}>
         <Tap
           label="Close WildGuide chat"
           style={StyleSheet.absoluteFill}
@@ -214,28 +300,19 @@ export function SpeciesChatDrawer({
         <View
           style={[
             styles.drawer,
-            { paddingBottom: Math.max(insets.bottom, 16) },
+            {
+              top: modalLayout.fullHeight - drawerHeight,
+              height: drawerHeight,
+              paddingBottom: composerInset,
+            },
           ]}
         >
-          <View style={styles.handle} />
-          <View style={styles.statusRow}>
-            <View style={styles.statusIcon}>
-              <MaterialIcons name="auto-awesome" size={17} color="#28734A" />
-            </View>
-            <Text style={styles.statusText}>We are ready to help you!</Text>
-            <Tap
-              label="Close WildGuide chat"
-              style={styles.closeButton}
-              onPress={closeDrawer}
-            >
-              <MaterialIcons name="close" size={19} color="#526258" />
-            </Tap>
-          </View>
+          <ChatDrawerHeader onClose={closeDrawer} />
 
           {!chatAvailable ? (
-            <View style={styles.unavailableNotice}>
-              <MaterialIcons name="info-outline" size={17} color="#5D6B62" />
-              <Text style={styles.unavailableText}>{UNAVAILABLE_MESSAGE}</Text>
+            <View style={styles.notice}>
+              <MaterialIcons name="info-outline" size={17} color="#5B6B58" />
+              <Text style={styles.noticeText}>{UNAVAILABLE_MESSAGE}</Text>
             </View>
           ) : null}
 
@@ -244,102 +321,37 @@ export function SpeciesChatDrawer({
             style={styles.messages}
             contentContainerStyle={styles.messagesContent}
             keyboardShouldPersistTaps="handled"
+            onLayout={() => scrollRef.current?.scrollToEnd({ animated: false })}
             onContentSizeChange={() =>
               scrollRef.current?.scrollToEnd({ animated: true })
             }
           >
             {messages.map((message) => (
-              <View
+              <ChatBubble
                 key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.role === "assistant"
-                    ? styles.assistantBubble
-                    : styles.userBubble,
-                ]}
+                role={message.role}
+                citations={message.citations}
               >
-                <Text
-                  style={[
-                    styles.messageText,
-                    message.role === "user" && styles.userMessageText,
-                  ]}
-                >
-                  {message.content}
-                </Text>
-                {message.role === "assistant" && message.citations?.length ? (
-                  <View style={styles.citationsBlock}>
-                    {message.citations.map((citation, index) => {
-                      const sourceUrls = citationUrls(citation);
-                      return (
-                        <View
-                          key={`${message.id}-${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
-                          style={styles.citationItem}
-                        >
-                          <Text style={styles.citationLabel}>
-                            Source: {citation.source_name}
-                          </Text>
-                          {sourceUrls.length ? (
-                            <View style={styles.sourceLinks}>
-                              {sourceUrls.map((url, sourceIndex) => (
-                                <Tap
-                                  key={url}
-                                  label={`View source ${sourceIndex + 1}`}
-                                  style={styles.sourceLink}
-                                  onPress={() => openSource(url)}
-                                >
-                                  <Text style={styles.sourceLinkText}>
-                                    {sourceUrls.length === 1
-                                      ? "View source"
-                                      : `View source ${sourceIndex + 1}`}
-                                  </Text>
-                                </Tap>
-                              ))}
-                            </View>
-                          ) : null}
-                          <Text numberOfLines={2} style={styles.citationExcerpt}>
-                            {citation.excerpt}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                  </View>
-                ) : null}
-              </View>
+                {message.content}
+              </ChatBubble>
             ))}
 
             {isSending ? (
-              <View
-                style={[
-                  styles.messageBubble,
-                  styles.assistantBubble,
-                  styles.loadingBubble,
-                ]}
-              >
-                <ActivityIndicator size="small" color="#28734A" />
-                <Text style={styles.loadingText}>WildGuide is thinking…</Text>
-              </View>
+              <ChatBubble role="assistant">
+                <View style={styles.thinking}>
+                  <ActivityIndicator size="small" color="#3F9A4E" />
+                  <Text style={styles.thinkingText}>
+                    WildGuide is thinking…
+                  </Text>
+                </View>
+              </ChatBubble>
             ) : null}
 
-            <View style={styles.suggestionsBlock}>
-              <Text style={styles.suggestionsLabel}>Try asking</Text>
-              <View style={styles.suggestionRow}>
-                {suggestions.map((suggestion) => (
-                  <Tap
-                    key={suggestion}
-                    label={`Ask: ${suggestion}`}
-                    style={[
-                      styles.suggestionChip,
-                      (!chatAvailable || isSending) &&
-                        styles.suggestionChipDisabled,
-                    ]}
-                    disabled={!chatAvailable || isSending}
-                    onPress={() => void sendQuestion(suggestion, true)}
-                  >
-                    <Text style={styles.suggestionText}>{suggestion}</Text>
-                  </Tap>
-                ))}
-              </View>
-            </View>
+            <SuggestionChips
+              suggestions={suggestions}
+              disabled={!chatAvailable || isSending}
+              onPick={(question) => void sendQuestion(question, true)}
+            />
           </ScrollView>
 
           {error ? (
@@ -351,43 +363,39 @@ export function SpeciesChatDrawer({
                   style={styles.retryButton}
                   onPress={() => void sendQuestion(failedQuestion, false)}
                 >
-                  <MaterialIcons name="refresh" size={16} color="#0A4D26" />
+                  <MaterialIcons name="refresh" size={16} color="#0B3D22" />
                   <Text style={styles.retryText}>Retry</Text>
                 </Tap>
               ) : null}
             </View>
           ) : null}
 
-          <View style={styles.composer}>
-            <TextInput
-              accessibilityLabel={`Ask a question about ${species.common_name}`}
-              style={styles.composerInput}
-              value={draft}
-              onChangeText={(value) => {
-                setDraft(value);
-                if (error) setError(null);
-              }}
-              placeholder="Ask about this animal..."
-              placeholderTextColor="#92A099"
-              editable={chatAvailable && !isSending}
-              returnKeyType="send"
-              onSubmitEditing={() => void sendQuestion(draft, true)}
-              maxLength={300}
-            />
-            <Tap
-              label="Send question"
-              style={[
-                styles.sendButton,
-                (!chatAvailable || isSending) && styles.sendButtonDisabled,
-              ]}
-              disabled={!chatAvailable || isSending}
-              onPress={() => void sendQuestion(draft, true)}
-            >
-              <MaterialIcons name="send" size={19} color="#FFFFFF" />
-            </Tap>
-          </View>
+          <ChatComposer
+            value={draft}
+            speciesName={species.common_name}
+            disabled={!chatAvailable || isSending}
+            // bottomPadding={
+            //   keyboardOpen
+            //     ? COMPOSER_BOTTOM_GAP
+            //     : insets.bottom + COMPOSER_BOTTOM_GAP
+            // }
+            bottomPadding={
+              COMPOSER_BOTTOM_GAP
+            }
+            onFocus={() => {
+              inputFocusedRef.current = true;
+            }}
+            onBlur={() => {
+              inputFocusedRef.current = false;
+            }}
+            onChangeText={(value) => {
+              setDraft(value);
+              if (error) setError(null);
+            }}
+            onSend={() => void sendQuestion(draft, true)}
+          />
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 }
@@ -395,154 +403,64 @@ export function SpeciesChatDrawer({
 const styles = StyleSheet.create({
   modalRoot: {
     flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(20, 32, 24, 0.52)",
+    backgroundColor: "rgba(8, 22, 14, 0.4)",
   },
   drawer: {
+    // Anchor to the unoccluded modal top so resizing cannot lift the header.
+    position: "absolute",
     width: "100%",
     maxWidth: 520,
-    height: "76%",
-    maxHeight: 720,
     alignSelf: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#FDF2D9",
+    borderWidth: 3,
+    borderBottomWidth: 0,
+    borderColor: "#073C1D",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: "hidden",
-    shadowColor: "#001A0A",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 18,
-    elevation: 16,
   },
-  handle: {
-    width: 42,
-    height: 4,
-    borderRadius: 2,
-    alignSelf: "center",
-    backgroundColor: "#D8E3DA",
-    marginTop: 10,
-    marginBottom: 7,
-  },
-  statusRow: {
-    minHeight: 54,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDF2EE",
-  },
-  statusIcon: {
-    width: 31,
-    height: 31,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#E7F5EA",
-  },
-  statusText: { flex: 1, color: "#253128", fontSize: 14, fontWeight: "800" },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F2F5F2",
-  },
-  unavailableNotice: {
+  notice: {
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
     marginHorizontal: 16,
     marginTop: 12,
     padding: 10,
+    backgroundColor: "#ECE2C8",
+    borderWidth: 2,
+    borderColor: "#A89D7C",
     borderRadius: 12,
-    backgroundColor: "#F1F4F2",
   },
-  unavailableText: { flex: 1, color: "#5D6B62", fontSize: 12, lineHeight: 17 },
+  noticeText: {
+    flex: 1,
+    fontFamily: FONTS.bodyBold,
+    color: "#5B6B58",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   messages: { flex: 1 },
-  messagesContent: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 18,
-    gap: 10,
-  },
-  messageBubble: {
-    maxWidth: "82%",
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  assistantBubble: {
-    alignSelf: "flex-start",
-    backgroundColor: "#E7F5EA",
-    borderTopLeftRadius: 5,
-  },
-  userBubble: {
-    alignSelf: "flex-end",
-    backgroundColor: "#075A2B",
-    borderTopRightRadius: 5,
-  },
-  messageText: {
-    color: "#253128",
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "600",
-  },
-  userMessageText: { color: "#FFFFFF" },
-  citationsBlock: {
-    marginTop: 9,
-    gap: 7,
-    borderTopWidth: 1,
-    borderTopColor: "#C9E3CF",
-    paddingTop: 8,
-  },
-  citationItem: { gap: 2 },
-  citationLabel: { color: "#286341", fontSize: 10, fontWeight: "900" },
-  sourceLinks: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  sourceLink: {
-    alignSelf: "flex-start",
-    borderBottomWidth: 1,
-    borderBottomColor: "#28734A",
-    paddingBottom: 1,
-  },
-  sourceLinkText: { color: "#1B6B40", fontSize: 10, fontWeight: "900" },
-  citationExcerpt: { color: "#526258", fontSize: 10, lineHeight: 14 },
-  loadingBubble: { flexDirection: "row", alignItems: "center", gap: 8 },
-  loadingText: { color: "#28734A", fontSize: 13, fontWeight: "700" },
-  suggestionsBlock: { marginTop: 3, gap: 7 },
-  suggestionsLabel: { color: "#758178", fontSize: 11, fontWeight: "800" },
-  suggestionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  suggestionChip: {
-    borderWidth: 1,
-    borderColor: "#C5E5CE",
-    borderRadius: 16,
-    backgroundColor: "#F8FFFA",
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  suggestionChipDisabled: { opacity: 0.5 },
-  suggestionText: { color: "#28734A", fontSize: 11, fontWeight: "800" },
+  messagesContent: { gap: 12, paddingHorizontal: 16, paddingVertical: 18 },
+  thinking: { flexDirection: "row", alignItems: "center", gap: 8 },
+  thinkingText: { fontFamily: FONTS.bodyBold, color: "#3F9A4E", fontSize: 13 },
   errorRow: {
-    minHeight: 42,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#FFF2F1",
-    borderWidth: 1,
-    borderColor: "#FFD1CC",
+    marginHorizontal: 16,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#FCE8E8",
+    borderWidth: 2,
+    borderColor: "#073C1D",
+    borderRadius: 12,
   },
   errorText: {
     flex: 1,
-    color: "#9C3024",
+    fontFamily: FONTS.bodyBold,
+    color: "#B3261E",
     fontSize: 12,
     lineHeight: 17,
-    fontWeight: "600",
   },
   retryButton: {
     flexDirection: "row",
@@ -551,32 +469,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 4,
   },
-  retryText: { color: "#0A4D26", fontSize: 12, fontWeight: "900" },
-  composer: {
-    minHeight: 58,
-    marginHorizontal: 16,
-    paddingLeft: 13,
-    paddingRight: 5,
-    borderRadius: 24,
-    backgroundColor: "#F1F5F2",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  composerInput: {
-    flex: 1,
-    minHeight: 46,
-    color: "#253128",
-    fontSize: 14,
-    paddingVertical: 0,
-  },
-  sendButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#075A2B",
-  },
-  sendButtonDisabled: { opacity: 0.45 },
+  retryText: { fontFamily: FONTS.bodyBlack, color: "#0B3D22", fontSize: 12 },
 });

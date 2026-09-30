@@ -1,0 +1,40 @@
+name: deploy-web
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rimbaquest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: rimbaquest/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Export static web build
+        env:
+          CI: 1
+          EXPO_PUBLIC_API_BASE_URL: https://fit5120rimbaquest-master.onrender.com
+        run: npx expo export --platform web
+
+      - name: Deploy to Expo hosting (preview alias)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          CI: 1
+        run: npx -y eas-cli@latest deploy --alias latest --non-interactive

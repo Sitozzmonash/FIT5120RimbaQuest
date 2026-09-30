@@ -1,148 +1,85 @@
 import React, { useState } from "react";
-import { Image, Modal, StyleSheet, Text, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import { StyleSheet, Text, View } from "react-native";
+import { FONTS } from "../../../../constants/fonts";
 import { GalleryItem } from "../../../../types";
-import { Tap } from "../../../common/Tap";
+import { DetailCard } from "./detail/DetailCard";
+import { DetailPill } from "./detail/DetailPill";
+import { DETAIL_COLORS } from "./detail/detailTheme";
+import { PhotoLightbox } from "./detail/PhotoLightbox";
+import { SightingPolaroid } from "./detail/SightingPolaroid";
+import { TabStatus } from "./detail/TabStatus";
 
-function formatPhotoLocation(item: GalleryItem): string {
+function photoLocation(item: GalleryItem): string {
   return item.location_label?.trim() || "Place not saved";
+}
+
+// Pairs of photos, one row per pair.
+function inRows<T>(items: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let i = 0; i < items.length; i += 2) rows.push(items.slice(i, i + 2));
+  return rows;
 }
 
 export function GalleryTab({ photos }: { photos: GalleryItem[] }) {
   const [enlarged, setEnlarged] = useState<GalleryItem | null>(null);
 
-  return photos.length ? (
-    <View style={styles.detailGalleryGrid}>
-      {photos.map((item, index) => (
-        <View
-          key={`${item.photo_url || "photo"}-${index}`}
-          style={styles.detailGalleryItem}
-        >
-          {item.photo_url ? (
-            <Tap
-              label={`Make photo from ${item.location_label || "this animal find"} bigger`}
-              style={styles.detailGalleryTap}
-              onPress={() => setEnlarged(item)}
-            >
-              <Image
-                source={{ uri: item.photo_url }}
-                style={styles.detailGalleryImage}
-              />
-            </Tap>
-          ) : (
-            <View
-              style={[styles.detailGalleryImage, styles.galleryPlaceholder]}
-            />
-          )}
-          <Text style={styles.detailGalleryDate} numberOfLines={1}>
-            {formatPhotoLocation(item)}
-          </Text>
-        </View>
-      ))}
+  return (
+    <DetailCard style={styles.card}>
+      <View style={styles.header}>
+        <Text style={styles.title}>My Sightings</Text>
+        <DetailPill
+          label={`${photos.length} ${photos.length === 1 ? "photo" : "photos"}`}
+          tone="green"
+        />
+      </View>
 
-      <Modal
-        visible={Boolean(enlarged)}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setEnlarged(null)}
-      >
-        <Tap
-          label="Close big photo"
-          style={styles.lightboxBackdrop}
-          onPress={() => setEnlarged(null)}
-        >
-          {enlarged?.photo_url && (
-            <Image
-              source={{ uri: enlarged.photo_url }}
-              style={styles.lightboxImage}
-              resizeMode="contain"
-            />
-          )}
-        </Tap>
-        {enlarged && (
-          <View style={styles.lightboxLocationBadge} pointerEvents="none">
-            <MaterialIcons name="place" size={14} color="#FFFFFF" />
-            <Text style={styles.lightboxLocationText} numberOfLines={1}>
-              {formatPhotoLocation(enlarged)}
-            </Text>
-          </View>
-        )}
-        <Tap
-          label="Close"
-          style={styles.lightboxCloseBtn}
-          onPress={() => setEnlarged(null)}
-        >
-          <MaterialIcons name="close" size={22} color="#FFFFFF" />
-        </Tap>
-      </Modal>
-    </View>
-  ) : (
-    <View style={styles.galleryEmpty}>
-      <Text style={styles.galleryEmptyTitle}>No personal photos yet</Text>
-      <Text style={styles.muted}>
-        Photos you save of this animal will appear here.
-      </Text>
-    </View>
+      {photos.length ? (
+        <View style={styles.grid}>
+          {inRows(photos).map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.row}>
+              {row.map((item, i) => {
+                const index = rowIndex * 2 + i;
+                return (
+                  <SightingPolaroid
+                    key={`${item.photo_url || "photo"}-${index}`}
+                    uri={item.photo_url}
+                    location={photoLocation(item)}
+                    index={index}
+                    onPress={() => setEnlarged(item)}
+                  />
+                );
+              })}
+              {/* Keeps a lone last photo at half width. */}
+              {row.length === 1 && <View style={styles.spacer} />}
+            </View>
+          ))}
+        </View>
+      ) : (
+        <TabStatus message="Photos you save of this animal will appear here." />
+      )}
+
+      <PhotoLightbox
+        source={enlarged?.photo_url ? { uri: enlarged.photo_url } : null}
+        caption={enlarged ? photoLocation(enlarged) : undefined}
+        onClose={() => setEnlarged(null)}
+      />
+    </DetailCard>
   );
 }
 
 const styles = StyleSheet.create({
-  detailGalleryGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  detailGalleryItem: { width: "48%", gap: 8 },
-  detailGalleryTap: { width: "100%" },
-  detailGalleryImage: { width: "100%", height: 110, borderRadius: 24 },
-  detailGalleryDate: { color: "#1A1A1A", fontSize: 10, fontWeight: "500" },
-  lightboxBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lightboxImage: { width: "100%", height: "100%" },
-  lightboxLocationBadge: {
-    position: "absolute",
-    bottom: 48,
-    left: 20,
-    right: 72,
+  card: { gap: 18 },
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    justifyContent: "space-between",
   },
-  lightboxLocationText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
-    flexShrink: 1,
+  title: {
+    fontFamily: FONTS.display,
+    color: DETAIL_COLORS.heading,
+    fontSize: 20,
   },
-  lightboxCloseBtn: {
-    position: "absolute",
-    top: 48,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  galleryEmpty: {
-    borderWidth: 1,
-    borderColor: "#CBECD6",
-    backgroundColor: "#F4FFF7",
-    borderRadius: 14,
-    padding: 18,
-    alignItems: "center",
-  },
-  galleryEmptyTitle: {
-    color: "#087B35",
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 5,
-  },
-  galleryPlaceholder: { backgroundColor: "#E8EEEA" },
-  muted: { color: "#707872", fontSize: 11, marginTop: 2, paddingHorizontal: 6 },
+  grid: { gap: 22, padding: 4 },
+  row: { flexDirection: "row", gap: 18 },
+  spacer: { flex: 1 },
 });

@@ -31,20 +31,11 @@ export const OFFLINE_SPECIES = Array.from(
 //   { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature park', area: 'Kuala Selangor, Selangor', description: 'Mangrove boardwalks where wetland birds and reptiles may be encountered. Sightings are never guaranteed.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 65.0, why_recommended: 'Safe boardwalks over tidal wetlands.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies' },
 // ];
 
-export const CATEGORIES = ['Mammal', 'Bird', 'Butterfly', 'Reptile'];
-
-export const CATEGORY_APPEARANCE: Record<string, string> = {
-  Mammal: 'Look for fur or hair, ears, a nose, four legs, and often a tail.',
-  Bird: 'Look for feathers, a beak, two wings, two legs, and tail feathers.',
-  Butterfly: 'Look for a small body, six legs, two feelers, and four colourful wings.',
-  Reptile: 'Look for dry scales or a hard shell, a low body, and often a long tail.',
-};
-
 export const WILDLIFE_FILTERS = [
   { id: 'All', label: 'All Wildlife' },
   { id: 'Mammal', label: 'Mammals' },
   { id: 'Bird', label: 'Birds' },
-  { id: 'Butterfly', label: 'Butterflies / Insects' },
+  { id: 'Butterfly', label: 'Butterflies' },
   { id: 'Reptile', label: 'Reptiles' },
 ];
 

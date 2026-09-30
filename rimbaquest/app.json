@@ -59,7 +59,15 @@
           "locationWhenInUsePermission": "Allow RimbaQuest to use your current location to tag where you recorded a wildlife discovery.",
           "isAndroidBackgroundLocationEnabled": false
         }
-      ]
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true,

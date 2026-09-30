@@ -2,7 +2,6 @@ export type Screen =
   | 'home'
   | 'photo'
   | 'photo_preview'
-  | 'category'
   | 'species'
   | 'confirm'
   | 'success'
@@ -17,7 +16,6 @@ export type Screen =
   | 'locations'
   | 'location_detail'
   | 'battle_select'
-  | 'battle_arena'
   | 'account_entry'
   | 'login'
   | 'create_account'
@@ -42,7 +40,34 @@ export type Species = {
   ability_2?: string;
   ability_3?: string;
   abilities_locked?: boolean;
+  // Additive structured battle fields
+  role?: string;
+  max_energy?: number;
+  energy?: number;
+  passive?: {
+    name: string;
+    trigger: string;
+    description: string;
+  } | null;
+  abilities?: Array<{
+    slot: number;
+    name: string;
+    description?: string;
+    energy_cost?: number;
+    multiplier?: number;
+    heal_amount?: number;
+    shield_amount?: number;
+  }>;
+  // Abilities as the Wildlife Card Battle resolves them (dice-free text).
+  wildlife_abilities?: Array<{
+    slot: number;
+    name: string;
+    description: string;
+    cost: number;
+  }>;
 };
+
+export * from './battle';
 
 export type IdentificationFeedback = {
   correct: boolean;
@@ -52,8 +77,15 @@ export type IdentificationFeedback = {
   explanation?: string | null;
 };
 
+export type VerificationErrorKind =
+  | 'unsupported_file'
+  | 'no_animal_detected'
+  | 'low_confidence'
+  | 'species_not_in_catalog'
+  | 'failed';
+
 export type VerificationError = {
-  kind: 'unverified' | 'failed';
+  kind: VerificationErrorKind;
   message: string;
 };
 
@@ -95,6 +127,13 @@ export type GalleryItem = {
   photo_url?: string | null;
   location_label?: string | null;
   recorded_at?: string | null;
+};
+
+export type FunFact = {
+  display_order: number;
+  fact_text: string;
+  source_name: string;
+  source_url: string | null;
 };
 
 export type LocationMode = 'auto' | 'manual';

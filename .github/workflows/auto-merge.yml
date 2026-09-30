@@ -1,0 +1,46 @@
+name: auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to approve and merge
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: automerge-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # Fork guard: never run on PRs from forks (defense-in-depth against PAT exposure).
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      GH_TOKEN: ${{ secrets.AUTO_MERGE_TOKEN }}
+      PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Self-modify guard — block PRs that touch workflows
+        run: |
+          CHANGED="$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename')"
+          echo "Changed files:"
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -q '^\.github/workflows/'; then
+            echo "::error::PR modifies .github/workflows/ — refusing to auto-merge. Requires human review."
+            exit 1
+          fi
+
+      - name: Auto-approve PR
+        run: gh pr review "$PR_NUMBER" --repo "$REPO" --approve || echo "::warning::approve skipped (already approved, or PR authored by the token owner)"
+
+      - name: Squash-merge PR
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --delete-branch
