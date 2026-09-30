@@ -55,7 +55,7 @@ Current Iteration 2 boundaries:
 
 - DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification according to `SCEQUENCE`.
 - `DEEPSEEK_API_KEY` is separately used for the Epic 6 current-card chatbot; it is never exposed to Expo and is never treated as a factual source.
-- The Iteration 3 dataset provides 10 team-verified Fun Facts for each of the 152 supported species. The group reviewer is `RimbaQuest content team`, and each fact retains its reviewed source URL or URLs for child-facing citations. These reviewed workbook links are not limited to the separate dynamic-source whitelist.
+- The Iteration 3 dataset provides 10 team-verified Fun Facts for each of the 152 supported species. The group reviewer is `RimbaQuest content team`, and each fact retains its reviewed source URL or URLs for child-facing citations. For a question not covered by a card or Fun Fact, the backend retrieves matching HTML/PDF text from every fixed, verified source URL for that current card. These workbook links are not limited to the separate dynamic-source whitelist, and a child's input can never select a URL to retrieve.
 - Epic 6 uses an evidence-first retrieval flow: approved card material and team-reviewed Fun Facts first, then approved source excerpts and a limited GBIF taxonomy lookup when relevant. Evidence removed from a later reviewed seed is marked `revoked` on deployment and cannot be used in a reply.
 - Other Iteration 3 social features remain out of scope; the Wildlife Card Battle flow below includes friend matches.
 
@@ -76,9 +76,9 @@ An authenticated child can open the **WildGuide** drawer from an already discove
 - The endpoint verifies the child's ownership of the current discovered card before answering.
 - Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
 - DeepSeek receives only evidence IDs, topics, and excerpts for the current card. It selects the evidence IDs to use; the backend rejects unknown IDs, resolves citations itself, and renders the child-facing factual text from the approved excerpt rather than trusting provider-written claims. It is instructed to recognise paraphrased questions. The deterministic local fallback also matches reviewed Fun Facts for common paraphrases.
-- The separate dynamic-source whitelist permits MyBIS, PERHILITAN, GBIF, IUCN, the EAZA Elephant Best Practice Guidelines, Dale (2010), and the English/Chinese Wikipedia editions. Stored dynamic excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. This does not restrict the team-verified Iteration 3 Fun Fact workbook. Wikipedia can also supply a tightly bounded live overview of the current species for a general question; it is supplementary and cannot be used for numerical, medical, legal, or conservation claims. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only; arbitrary webpage scraping is not implemented.
+- The separate dynamic-source whitelist permits MyBIS, PERHILITAN, GBIF, IUCN, the EAZA Elephant Best Practice Guidelines, Dale (2010), and the English/Chinese Wikipedia editions. Stored dynamic excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. This does not restrict the team-verified Iteration 3 Fun Fact workbook. Its fixed source URLs are fetched without redirects, with HTTPS, response-size, timeout, and content-type limits; HTML and PDF text is searched only for the current card. Wikipedia can also supply a tightly bounded live overview of the current species for a general question; it is supplementary and cannot be used for numerical, medical, legal, or conservation claims. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only.
 
-`backend/data/iteration3_fun_facts.json` is the deployment-ready version of the supplied workbook. It contains 1,520 `team-verified` rows, including source links. For each answer drawn from a Fun Fact, the API returns the approved source link or links and the app displays a visually distinct **View source** link. The server never fetches a child-supplied URL or treats the linked page as unreviewed runtime content.
+`backend/data/iteration3_fun_facts.json` is the deployment-ready version of the supplied workbook. It contains 1,520 `team-verified` rows, including source links. For each answer drawn from a Fun Fact or a matching source-page passage, the API returns the approved source link and the app displays a visually distinct **View source** link. The server never fetches a child-supplied URL.
 - If information is unavailable, the chatbot returns the controlled reliable-information fallback rather than guessing. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
 - Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
 
@@ -340,6 +340,9 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
 | `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
 | `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80`; the provider returns only evidence IDs, not answer prose |
+| `ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED` | No | Enables retrieval from fixed, verified Fun Fact source URLs; defaults to `true` |
+| `ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS` | No | Per-source retrieval timeout in seconds; defaults to `6` |
+| `ITERATION_3_SOURCE_PAGE_MAX_BYTES` | No | Maximum source-page download size; defaults to `8388608` |
 | `GBIF_API_ENABLED` | No | Enables the restricted public GBIF taxonomy lookup; defaults to `false` outside the Render blueprint |
 | `GBIF_API_BASE_URL` | No | Defaults to `https://api.gbif.org/v1` |
 | `GBIF_TIMEOUT_SECONDS` | No | Defaults to `8` |
@@ -473,8 +476,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the storage secret access key.
 - The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
-- The chat service sends no child data, source URLs, or other-species facts to DeepSeek. It supplies only server-selected evidence excerpts and rejects an answer without known evidence IDs.
-- The chat service only returns citations resolved from approved RimbaQuest evidence, reviewed MyBIS/PERHILITAN/GBIF/IUCN excerpts, or the restricted GBIF taxonomy API.
+- The chat service sends no child data or other-species facts to DeepSeek. It supplies only server-selected evidence excerpts and rejects an answer without known evidence IDs.
+- The chat service only returns citations resolved from approved RimbaQuest evidence, the current card's fixed verified source URLs, reviewed MyBIS/PERHILITAN/GBIF/IUCN excerpts, or the restricted GBIF taxonomy API.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.

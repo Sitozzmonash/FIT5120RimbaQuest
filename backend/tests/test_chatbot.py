@@ -64,6 +64,7 @@ def use_deterministic_chat_fallback(monkeypatch):
     # No test can accidentally use a developer's live provider credential.
     monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "")
     monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", False)
+    monkeypatch.setattr(chatbot, "ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", False)
 
 
 def test_chat_requires_the_authenticated_childs_discovered_card():
@@ -211,6 +212,57 @@ def test_verified_fun_fact_returns_every_reviewed_source_link_for_that_fact():
         "https://en.wikipedia.org/wiki/Graphium_agamemnon",
         "https://en.wikipedia.org/wiki/Osmeterium",
     ]
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["what's size of elephant", "what's the average weight of asian elephant"],
+)
+def test_verified_source_page_content_answers_size_questions_and_cites_its_url(
+    monkeypatch,
+    question,
+):
+    child_id, token = register_child("chat_source_page")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", True)
+    loaded_urls: list[str] = []
+
+    def load_verified_page(source_url: str) -> str:
+        loaded_urls.append(source_url)
+        if source_url == "https://nationalzoo.si.edu/animals/asian-elephant":
+            return (
+                "Size\n"
+                "Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
+                "(2,750 and 5,420 kilograms). They typically stand 6 to 12 feet "
+                "(1.8 to 3.8 meters) tall at the shoulder."
+            )
+        return ""
+
+    monkeypatch.setattr(chatbot, "_load_verified_source_page", load_verified_page)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, question)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["fallback"] is None
+    assert "6,000 and 12,000 pounds" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "verified-source-page",
+            "source_name": "Verified source: nationalzoo.si.edu",
+            "source_url": "https://nationalzoo.si.edu/animals/asian-elephant",
+            "source_urls": ["https://nationalzoo.si.edu/animals/asian-elephant"],
+            "excerpt": (
+                "Size Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
+                "(2,750 and 5,420 kilograms). They typically stand 6 to 12 feet "
+                "(1.8 to 3.8 meters) tall at the shoulder."
+            ),
+        }
+    ]
+    assert set(loaded_urls) == {
+        "https://www.worldwildlife.org/species/elephant/asian-elephant/",
+        "https://nationalzoo.si.edu/animals/asian-elephant",
+        "https://www.fauna-flora.org/species/asian-elephant/",
+    }
 
 
 def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():

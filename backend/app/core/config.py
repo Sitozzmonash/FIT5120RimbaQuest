@@ -139,6 +139,19 @@ CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
 # The model returns only a small JSON evidence-ID list, not prose.
 CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
 
+# Iteration 3 source pages are the fixed, team-verified URLs bundled with the
+# Fun Fact workbook. They are never derived from a child's question or input.
+ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED = (
+    os.getenv("ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", "true").strip().casefold()
+    in {"1", "true", "yes"}
+)
+ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS = float(
+    os.getenv("ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS", "6")
+)
+ITERATION_3_SOURCE_PAGE_MAX_BYTES = int(
+    os.getenv("ITERATION_3_SOURCE_PAGE_MAX_BYTES", str(8 * 1024 * 1024))
+)
+
 # Epic 6 evidence retrieval. GBIF's public taxonomy API needs no key and is
 # only used for taxonomy questions. Wikipedia's Action API may provide a
 # current-species overview for safe, general questions. Other source material
