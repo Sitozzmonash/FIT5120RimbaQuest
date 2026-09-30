@@ -212,8 +212,6 @@ def test_verified_fun_fact_returns_every_reviewed_source_link_for_that_fact():
         "https://en.wikipedia.org/wiki/Graphium_agamemnon",
         "https://en.wikipedia.org/wiki/Osmeterium",
     ]
-
-
 @pytest.mark.parametrize(
     "question",
     ["what's size of elephant", "what's the average weight of asian elephant"],
