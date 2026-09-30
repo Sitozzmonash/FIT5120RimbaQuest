@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy import Connection, Table, select
 
-from app.core.config import ITERATION_2_CHAT_EVIDENCE, ITERATION_2_FUN_FACTS_PILOT, SEED_SQL
+from app.core.config import ITERATION_2_CHAT_EVIDENCE, ITERATION_3_FUN_FACTS, SEED_SQL
 from app.core.schema import (
     app_metadata,
     locations,
@@ -210,25 +210,26 @@ def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
     return {item for item in decoded if isinstance(item, str)} if isinstance(decoded, list) else set()
 
 
-def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
-    """Load source-linked Fun Facts and reject non-child-facing seed records.
+def seed_iteration_three_fun_facts(connection: Connection) -> None:
+    """Load the team-verified Iteration 3 Fun Fact corpus.
 
-    Source-linked facts can be displayed without individual reviewer metadata.
-    Scraped page artefacts, RimbaQuest system statements, and uncertainty-only
-    placeholders remain traceable but do not enter the public feed.
+    The source workbook contains 10 reviewed facts for each supported species.
+    Every source URL belongs to the reviewed record, so it remains available
+    as a citation without passing the separate live-source whitelist. Content
+    that is not child-facing remains rejected even if it is source-linked.
     """
-    if not ITERATION_2_FUN_FACTS_PILOT.exists():
+    if not ITERATION_3_FUN_FACTS.exists():
         return
 
     seed_version = hashlib.sha256(
-        ITERATION_2_FUN_FACTS_PILOT.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
+        ITERATION_3_FUN_FACTS.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
     ).hexdigest()
-    version_key = "iteration_2_fun_facts_pilot_sha256"
-    keys_key = "iteration_2_fun_facts_pilot_seed_keys"
+    version_key = "iteration_3_fun_facts_sha256"
+    keys_key = "iteration_3_fun_facts_seed_keys"
     current_version = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == version_key)
     ).scalar_one_or_none()
-    records = json.loads(ITERATION_2_FUN_FACTS_PILOT.read_text(encoding="utf-8"))
+    records = json.loads(ITERATION_3_FUN_FACTS.read_text(encoding="utf-8"))
     current_keys = {
         _seed_key(record["species_id"], record["display_order"])
         for record in records
@@ -333,22 +334,15 @@ def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
             connection.execute(species_fun_facts.insert().values(**values))
 
         fact_id = connection.execute(select(species_fun_facts.c.id).where(predicate)).scalar_one()
+        # Source links are seed-owned as a set. Replacing them avoids a
+        # withdrawn or changed workbook URL remaining visible to a child.
+        connection.execute(
+            species_fun_fact_sources.delete().where(species_fun_fact_sources.c.fact_id == fact_id)
+        )
         for source in record.get("additional_sources", []):
-            source_values = {"fact_id": fact_id, **source}
-            source_exists = connection.execute(
-                select(species_fun_fact_sources.c.id).where(
-                    species_fun_fact_sources.c.fact_id == fact_id,
-                    species_fun_fact_sources.c.source_url == source_values["source_url"],
-                )
-            ).first()
-            if source_exists:
-                connection.execute(
-                    species_fun_fact_sources.update()
-                    .where(species_fun_fact_sources.c.id == source_exists.id)
-                    .values(**source_values)
-                )
-            else:
-                connection.execute(species_fun_fact_sources.insert().values(**source_values))
+            connection.execute(
+                species_fun_fact_sources.insert().values(fact_id=fact_id, **source)
+            )
 
     _set_metadata(connection, version_key, seed_version)
     _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))

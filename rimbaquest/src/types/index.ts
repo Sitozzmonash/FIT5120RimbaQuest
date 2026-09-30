@@ -169,6 +169,7 @@ export type SpeciesChatCitation = {
   source_id: string;
   source_name: string;
   source_url?: string | null;
+  source_urls?: string[];
   excerpt: string;
 };
 

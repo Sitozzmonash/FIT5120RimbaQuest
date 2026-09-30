@@ -11,7 +11,7 @@ from app.core.schema import metadata
 from app.core.seed import (
     seed_iteration_one,
     seed_iteration_two_chat_evidence,
-    seed_iteration_two_fun_facts_pilot,
+    seed_iteration_three_fun_facts,
 )
 
 
@@ -44,7 +44,7 @@ def initialise_database() -> None:
     metadata.create_all(engine)
     with engine.begin() as connection:
         seed_iteration_one(connection)
-        seed_iteration_two_fun_facts_pilot(connection)
+        seed_iteration_three_fun_facts(connection)
         seed_iteration_two_chat_evidence(connection)
 
 

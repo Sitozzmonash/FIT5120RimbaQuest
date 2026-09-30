@@ -101,10 +101,9 @@ species_images = Table(
     Column("attribution", Text),
 )
 
-# Iteration 2 keeps additional learning facts separate from the single
-# Iteration 1 ``species.fun_fact`` field so existing catalogue views remain
-# backwards compatible.  Each fact is source-linked and can be reviewed by
-# the team before it is shown in the child-facing app.
+# Iteration 3 keeps the 10 reviewed learning facts per species separate from
+# the single Iteration 1 ``species.fun_fact`` field. Each fact retains the
+# source links approved by the content team for child-facing citations.
 species_fun_facts = Table(
     "species_fun_facts",
     metadata,

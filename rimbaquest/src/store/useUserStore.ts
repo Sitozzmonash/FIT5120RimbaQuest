@@ -417,6 +417,19 @@ export const useUserStore = create<UserStore>((set, get) => ({
               typeof item.source_url === "string" && /^https:\/\//i.test(item.source_url)
                 ? item.source_url
                 : null,
+            source_urls: Array.isArray(item.source_urls)
+              ? Array.from(
+                  new Set(
+                    item.source_urls
+                      .filter(
+                        (url): url is string =>
+                          typeof url === "string" && /^https:\/\//i.test(url),
+                      )
+                      .map((url) => url.trim())
+                      .filter(Boolean),
+                  ),
+                ).slice(0, 4)
+              : [],
             excerpt:
               typeof item.excerpt === "string"
                 ? item.excerpt.trim().slice(0, 700)

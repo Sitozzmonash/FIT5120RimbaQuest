@@ -29,8 +29,8 @@ services:
         sync: false
       - key: DEEPSEEK_CHAT_MODEL
         value: deepseek-chat
-      # Public GBIF taxonomy lookup only; other external sources are reviewed
-      # evidence records rather than runtime web scraping.
+      # Public GBIF taxonomy lookup only. Other dynamic external sources are
+      # reviewed evidence records; verified Fun Fact source links are citations.
       - key: GBIF_API_ENABLED
         value: "true"
       # Narrow live Wikipedia overview lookup for safe, general questions

@@ -1,9 +1,25 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
 import { FONTS } from "../../../../../constants/fonts";
 import { SpeciesChatCitation } from "../../../../../types";
+import { Tap } from "../../../../common/Tap";
 import { ChatAvatar } from "./ChatAvatar";
 import { CHAT_COLORS } from "./chatTheme";
+
+function citationUrls(citation: SpeciesChatCitation): string[] {
+  const candidates = [...(citation.source_urls ?? []), citation.source_url ?? ""];
+  return Array.from(
+    new Set(
+      candidates
+        .filter((url) => /^https:\/\//i.test(url.trim()))
+        .map((url) => url.trim()),
+    ),
+  ).slice(0, 4);
+}
+
+function openSource(url: string) {
+  void Linking.openURL(url).catch(() => undefined);
+}
 
 export function ChatBubble({
   role,
@@ -33,19 +49,40 @@ export function ChatBubble({
         )}
         {citations?.length ? (
           <View style={styles.citations}>
-            {citations.map((citation, index) => (
-              <View
-                key={`${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
-                style={styles.citation}
-              >
-                <Text style={styles.citationLabel}>
-                  Source: {citation.source_name}
-                </Text>
-                <Text numberOfLines={2} style={styles.citationExcerpt}>
-                  {citation.excerpt}
-                </Text>
-              </View>
-            ))}
+            {citations.map((citation, index) => {
+              const sourceUrls = citationUrls(citation);
+              return (
+                <View
+                  key={`${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
+                  style={styles.citation}
+                >
+                  <Text style={styles.citationLabel}>
+                    Source: {citation.source_name}
+                  </Text>
+                  {sourceUrls.length ? (
+                    <View style={styles.sourceLinks}>
+                      {sourceUrls.map((url, sourceIndex) => (
+                        <Tap
+                          key={url}
+                          label={`View source ${sourceIndex + 1}`}
+                          style={styles.sourceLink}
+                          onPress={() => openSource(url)}
+                        >
+                          <Text style={styles.sourceLinkText}>
+                            {sourceUrls.length === 1
+                              ? "View source"
+                              : `View source ${sourceIndex + 1}`}
+                          </Text>
+                        </Tap>
+                      ))}
+                    </View>
+                  ) : null}
+                  <Text numberOfLines={2} style={styles.citationExcerpt}>
+                    {citation.excerpt}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         ) : null}
       </View>
@@ -90,6 +127,18 @@ const styles = StyleSheet.create({
   },
   citation: { gap: 2 },
   citationLabel: {
+    fontFamily: FONTS.bodyBlack,
+    color: CHAT_COLORS.green,
+    fontSize: 10,
+  },
+  sourceLinks: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  sourceLink: {
+    alignSelf: "flex-start",
+    borderBottomWidth: 1,
+    borderBottomColor: CHAT_COLORS.green,
+    paddingBottom: 1,
+  },
+  sourceLinkText: {
     fontFamily: FONTS.bodyBlack,
     color: CHAT_COLORS.green,
     fontSize: 10,

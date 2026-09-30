@@ -21,7 +21,7 @@ from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
-FUN_FACTS_PATH = DATA_DIR / "iteration2_fun_facts_pilot.json"
+FUN_FACTS_PATH = DATA_DIR / "iteration3_fun_facts.json"
 DB_PATH = DATA_DIR / "RimbaQuest.db"
 OUTPUT_PATH = DATA_DIR / "species_quiz_presets.json"
 
