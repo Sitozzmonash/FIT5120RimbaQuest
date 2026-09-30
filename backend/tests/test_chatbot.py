@@ -98,6 +98,7 @@ def test_mock_answers_current_card_only_and_applies_guardrails():
             "source_id": "rimbaquest-card",
             "source_name": "RimbaQuest verified Wildlife Card",
             "source_url": None,
+            "source_urls": [],
             "excerpt": "Diet: Grasses, leaves, bark and fruit.",
         }
     ]
@@ -145,10 +146,62 @@ def test_team_verified_fun_facts_are_available_as_chat_evidence():
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["source"] == "mock"
-    assert body["answer"].startswith("Here is a team-verified fun fact:")
+    assert body["answer"].startswith("Here is a verified fun fact:")
     assert body["citations"][0]["source_id"] == "rimbaquest-fun-facts"
-    assert body["citations"][0]["source_name"] == "RimbaQuest team-verified Fun Facts"
-    assert body["citations"][0]["source_url"] is None
+    assert body["citations"][0]["source_name"] == "Verified source: worldwildlife.org"
+    assert body["citations"][0]["source_url"] == "https://www.worldwildlife.org/species/elephant/asian-elephant/"
+    assert body["citations"][0]["source_urls"] == [
+        "https://www.worldwildlife.org/species/elephant/asian-elephant/"
+    ]
+
+
+def test_verified_fun_fact_answers_a_paraphrased_question_with_its_source_link():
+    child_id, token = register_child("chat_paraphrase")
+    unlock(child_id, "sp_common_mormon")
+
+    response = chat(
+        child_id,
+        token,
+        "sp_common_mormon",
+        "How long does the whole life cycle take?",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert "30 to 43 days" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "rimbaquest-fun-facts",
+            "source_name": "Verified source: animaldiversity.org",
+            "source_url": "https://animaldiversity.org/accounts/Papilio_polytes/",
+            "source_urls": ["https://animaldiversity.org/accounts/Papilio_polytes/"],
+            "excerpt": (
+                "The Common Mormon's entire life cycle, from egg-laying to the death "
+                "of the adult, can last about 30 to 43 days."
+            ),
+        }
+    ]
+
+
+def test_verified_fun_fact_returns_every_reviewed_source_link_for_that_fact():
+    child_id, token = register_child("chat_multiple_sources")
+    unlock(child_id, "sp_tailed_jay")
+
+    response = chat(
+        child_id,
+        token,
+        "sp_tailed_jay",
+        "How does its osmeterium help discourage predators?",
+    )
+
+    assert response.status_code == 200, response.text
+    citation = response.json()["citations"][0]
+    assert citation["source_url"] == "https://en.wikipedia.org/wiki/Graphium_agamemnon"
+    assert citation["source_urls"] == [
+        "https://en.wikipedia.org/wiki/Graphium_agamemnon",
+        "https://en.wikipedia.org/wiki/Osmeterium",
+    ]
 
 
 def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
@@ -175,6 +228,9 @@ def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
             "source_id": "eaza",
             "source_name": "EAZA Elephant Best Practice Guidelines",
             "source_url": "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf",
+            "source_urls": [
+                "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf"
+            ],
             "excerpt": (
                 "EAZA's table, citing Dale (2010), reports Asian elephant newborn shoulder "
                 "heights in human care: 95.9 ± 1.2 cm for males (n=19) and 91.9 ± 1.3 "
@@ -223,6 +279,7 @@ def test_wikipedia_live_lookup_is_current_species_only_and_cited(monkeypatch):
             "source_id": "wikipedia",
             "source_name": "Wikipedia (live supplementary reference)",
             "source_url": "https://en.wikipedia.org/wiki/Asian_elephant",
+            "source_urls": ["https://en.wikipedia.org/wiki/Asian_elephant"],
             "excerpt": "The Asian elephant is the only living species in the genus Elephas.",
         }
     ]

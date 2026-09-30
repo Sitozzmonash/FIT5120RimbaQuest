@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   ScrollView,
@@ -62,6 +63,24 @@ function usableSuggestions(
     .filter(Boolean);
   const unique = Array.from(new Set(cleaned)).slice(0, 3);
   return unique.length > 0 ? unique : fallback;
+}
+
+function citationUrls(citation: SpeciesChatCitation): string[] {
+  const candidates = [
+    ...(citation.source_urls ?? []),
+    citation.source_url ?? "",
+  ];
+  return Array.from(
+    new Set(
+      candidates
+        .filter((url) => /^https:\/\//i.test(url.trim()))
+        .map((url) => url.trim()),
+    ),
+  ).slice(0, 4);
+}
+
+function openSource(url: string) {
+  void Linking.openURL(url).catch(() => undefined);
 }
 
 export type SpeciesChatDrawerProps = {
@@ -249,19 +268,40 @@ export function SpeciesChatDrawer({
                 </Text>
                 {message.role === "assistant" && message.citations?.length ? (
                   <View style={styles.citationsBlock}>
-                    {message.citations.map((citation, index) => (
-                      <View
-                        key={`${message.id}-${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
-                        style={styles.citationItem}
-                      >
-                        <Text style={styles.citationLabel}>
-                          Source: {citation.source_name}
-                        </Text>
-                        <Text numberOfLines={2} style={styles.citationExcerpt}>
-                          {citation.excerpt}
-                        </Text>
-                      </View>
-                    ))}
+                    {message.citations.map((citation, index) => {
+                      const sourceUrls = citationUrls(citation);
+                      return (
+                        <View
+                          key={`${message.id}-${citation.source_id}-${citation.source_url ?? "card"}-${index}`}
+                          style={styles.citationItem}
+                        >
+                          <Text style={styles.citationLabel}>
+                            Source: {citation.source_name}
+                          </Text>
+                          {sourceUrls.length ? (
+                            <View style={styles.sourceLinks}>
+                              {sourceUrls.map((url, sourceIndex) => (
+                                <Tap
+                                  key={url}
+                                  label={`View source ${sourceIndex + 1}`}
+                                  style={styles.sourceLink}
+                                  onPress={() => openSource(url)}
+                                >
+                                  <Text style={styles.sourceLinkText}>
+                                    {sourceUrls.length === 1
+                                      ? "View source"
+                                      : `View source ${sourceIndex + 1}`}
+                                  </Text>
+                                </Tap>
+                              ))}
+                            </View>
+                          ) : null}
+                          <Text numberOfLines={2} style={styles.citationExcerpt}>
+                            {citation.excerpt}
+                          </Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 ) : null}
               </View>
@@ -459,6 +499,14 @@ const styles = StyleSheet.create({
   },
   citationItem: { gap: 2 },
   citationLabel: { color: "#286341", fontSize: 10, fontWeight: "900" },
+  sourceLinks: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  sourceLink: {
+    alignSelf: "flex-start",
+    borderBottomWidth: 1,
+    borderBottomColor: "#28734A",
+    paddingBottom: 1,
+  },
+  sourceLinkText: { color: "#1B6B40", fontSize: 10, fontWeight: "900" },
   citationExcerpt: { color: "#526258", fontSize: 10, lineHeight: 14 },
   loadingBubble: { flexDirection: "row", alignItems: "center", gap: 8 },
   loadingText: { color: "#28734A", fontSize: 13, fontWeight: "700" },

@@ -19,8 +19,8 @@ load_dotenv(REPOSITORY_ROOT / ".env")
 load_dotenv(BACKEND_ROOT / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
-ITERATION_2_FUN_FACTS_PILOT = Path(
-    os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
+ITERATION_3_FUN_FACTS = Path(
+    os.getenv("ITERATION_3_FUN_FACTS_PATH", "./data/iteration3_fun_facts.json")
 )
 ITERATION_2_CHAT_EVIDENCE = Path(
     os.getenv("ITERATION_2_CHAT_EVIDENCE_PATH", "./data/iteration2_chat_evidence.json")

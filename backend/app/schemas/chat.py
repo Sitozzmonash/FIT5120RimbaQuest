@@ -17,6 +17,7 @@ class SpeciesChatCitation(BaseModel):
     source_id: str
     source_name: str
     source_url: str | None = None
+    source_urls: list[str] = Field(default_factory=list, max_length=4)
     excerpt: str
 
 
