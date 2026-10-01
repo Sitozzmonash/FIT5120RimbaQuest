@@ -260,8 +260,6 @@ def test_verified_source_page_content_answers_size_questions_and_cites_its_url(
         "https://nationalzoo.si.edu/animals/asian-elephant",
         "https://www.fauna-flora.org/species/asian-elephant/",
     }
-
-
 def test_child_friendly_rendering_simplifies_technical_lifespan_evidence():
     species = {
         "common_name": "Common Mormon",
