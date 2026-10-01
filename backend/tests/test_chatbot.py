@@ -92,7 +92,7 @@ def test_mock_answers_current_card_only_and_applies_guardrails():
 
     happy = chat(child_id, token, CURRENT_SPECIES_ID, "What does this animal eat?")
     assert happy.status_code == 200, happy.text
-    assert happy.json()["answer"] == "Asian Elephant's diet includes: Grasses, leaves, bark and fruit."
+    assert happy.json()["answer"] == "Asian Elephant eats: Grasses, leaves, bark and fruit."
     assert happy.json()["source"] == "mock"
     assert happy.json()["citations"] == [
         {
@@ -100,7 +100,7 @@ def test_mock_answers_current_card_only_and_applies_guardrails():
             "source_name": "RimbaQuest verified Wildlife Card",
             "source_url": None,
             "source_urls": [],
-            "excerpt": "Diet: Grasses, leaves, bark and fruit.",
+            "excerpt": "Asian Elephant eats: Grasses, leaves, bark and fruit.",
         }
     ]
 
@@ -156,7 +156,7 @@ def test_team_verified_fun_facts_are_available_as_chat_evidence():
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["source"] == "mock"
-    assert body["answer"].startswith("Here is a verified fun fact:")
+    assert body["answer"].startswith("Fun fact:")
     assert body["citations"][0]["source_id"] == "rimbaquest-fun-facts"
     assert body["citations"][0]["source_name"] == "Verified source: worldwildlife.org"
     assert body["citations"][0]["source_url"] == "https://www.worldwildlife.org/species/elephant/asian-elephant/"
@@ -250,9 +250,8 @@ def test_verified_source_page_content_answers_size_questions_and_cites_its_url(
             "source_url": "https://nationalzoo.si.edu/animals/asian-elephant",
             "source_urls": ["https://nationalzoo.si.edu/animals/asian-elephant"],
             "excerpt": (
-                "Size Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
-                "(2,750 and 5,420 kilograms). They typically stand 6 to 12 feet "
-                "(1.8 to 3.8 meters) tall at the shoulder."
+                "Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
+                "(2,750 and 5,420 kilograms)."
             ),
         }
     ]
@@ -261,6 +260,56 @@ def test_verified_source_page_content_answers_size_questions_and_cites_its_url(
         "https://nationalzoo.si.edu/animals/asian-elephant",
         "https://www.fauna-flora.org/species/asian-elephant/",
     }
+def test_child_friendly_rendering_simplifies_technical_lifespan_evidence():
+    species = {
+        "common_name": "Common Mormon",
+        "scientific_name": "Papilio polytes",
+    }
+    evidence = chatbot.Evidence(
+        id="source-page:lifespan",
+        topic="team-verified source page",
+        source_id="verified-source-page",
+        source_name="Verified source: animaldiversity.org",
+        source_url="https://animaldiversity.org/accounts/Papilio_polytes/",
+        excerpt=(
+            "Lifespan/Longevity Adult Papilio polytes females typically live longer than "
+            "adult males, as females live an average of 6 to 8 days, while males live an "
+            "average of 3 to 4 days. It is possible that the production of mimetic patterns, "
+            "although beneficial by reducing predation, can also reduce the lifespan of "
+            "mimetic P. polytes."
+        ),
+    )
+
+    answer = chatbot._render_selected_evidence(species, [evidence])
+    citation = chatbot._child_citation(species, evidence)
+
+    assert answer == (
+        "Female Common Mormon adults usually live for 6 to 8 days. "
+        "Male adults usually live for 3 to 4 days."
+    )
+    assert citation.excerpt == answer
+    assert "Papilio" not in answer
+    assert "mimetic" not in answer.casefold()
+    assert len(answer) <= chatbot.MAX_CHILD_RESPONSE_CHARS
+
+
+def test_child_friendly_rendering_explains_protection_status_in_plain_language():
+    species = {"common_name": "Asian Elephant"}
+    evidence = chatbot.Evidence(
+        id="card:act716_status",
+        topic="act716_status",
+        source_id="rimbaquest-card",
+        source_name="RimbaQuest verified Wildlife Card",
+        source_url=None,
+        excerpt="Protection Status: Totally Protected",
+    )
+
+    answer = chatbot._render_selected_evidence(species, [evidence])
+
+    assert answer == (
+        "Asian Elephant is protected by law. This means people are not allowed to "
+        "catch, hurt, or keep it without special permission."
+    )
 
 
 def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
@@ -281,7 +330,7 @@ def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["source"] == "mock"
-    assert "about 94 cm overall" in body["answer"]
+    assert body["answer"] == "Newborn Asian Elephants are about 94 cm tall at the shoulder. Each calf can be a little taller or shorter."
     assert body["citations"] == [
         {
             "source_id": "eaza",
@@ -291,9 +340,8 @@ def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
                 "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf"
             ],
             "excerpt": (
-                "EAZA's table, citing Dale (2010), reports Asian elephant newborn shoulder "
-                "heights in human care: 95.9 ± 1.2 cm for males (n=19) and 91.9 ± 1.3 "
-                "cm for females (n=23). That is about 94 cm overall; individual calves vary."
+                "Newborn Asian Elephants are about 94 cm tall at the shoulder. "
+                "Each calf can be a little taller or shorter."
             ),
         }
     ]
@@ -332,14 +380,14 @@ def test_wikipedia_live_lookup_is_current_species_only_and_cited(monkeypatch):
     assert requests[0]["params"]["titles"] == "Asian Elephant"
     assert "Tell me more" not in str(requests[0]["params"])
     assert requests[0]["headers"]["User-Agent"] == chatbot.WIKIPEDIA_USER_AGENT
-    assert response.json()["answer"].startswith("According to Wikipedia")
+    assert response.json()["answer"] == "Asian Elephant is the only living kind in a scientific group called Elephas."
     assert response.json()["citations"] == [
         {
             "source_id": "wikipedia",
             "source_name": "Wikipedia (live supplementary reference)",
             "source_url": "https://en.wikipedia.org/wiki/Asian_elephant",
             "source_urls": ["https://en.wikipedia.org/wiki/Asian_elephant"],
-            "excerpt": "The Asian elephant is the only living species in the genus Elephas.",
+            "excerpt": "Asian Elephant is the only living kind in a scientific group called Elephas.",
         }
     ]
 
@@ -397,7 +445,7 @@ def test_configured_deepseek_must_cite_server_selected_evidence(monkeypatch):
 
     assert response.status_code == 200, response.text
     assert response.json()["source"] == "deepseek"
-    assert response.json()["citations"][0]["excerpt"] == "Diet: Grasses, leaves, bark and fruit."
+    assert response.json()["citations"][0]["excerpt"] == "Asian Elephant eats: Grasses, leaves, bark and fruit."
     provider_input = json.loads(requests[0]["messages"][1]["content"])
     assert set(provider_input) == {"current_species", "question", "evidence"}
     assert any(item["id"] == "card:diet" for item in provider_input["evidence"])
