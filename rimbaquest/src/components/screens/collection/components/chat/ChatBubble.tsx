@@ -17,6 +17,13 @@ function citationUrls(citation: SpeciesChatCitation): string[] {
   ).slice(0, 4);
 }
 
+function displaySourceName(sourceName: string): string {
+  // The chat UI already introduces the label with "Source:". Workbook-backed
+  // citations used to include "Verified source:" in their name as well, which
+  // made the child-facing label unnecessarily repetitive.
+  return sourceName.replace(/^verified\s+source\s*:\s*/i, "").trim() || sourceName;
+}
+
 function openSource(url: string) {
   void Linking.openURL(url).catch(() => undefined);
 }
@@ -57,7 +64,7 @@ export function ChatBubble({
                   style={styles.citation}
                 >
                   <Text style={styles.citationLabel}>
-                    Source: {citation.source_name}
+                    Source: {displaySourceName(citation.source_name)}
                   </Text>
                   {sourceUrls.length ? (
                     <View style={styles.sourceLinks}>
