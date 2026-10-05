@@ -22,6 +22,7 @@ HABITATS: tuple[str, ...] = (
     "Wetland",
     "Grassland",
     "Coastal",
+    "Montane",
 )
 
 _HABITAT_WORDS = {
@@ -30,10 +31,21 @@ _HABITAT_WORDS = {
     "Wetland": r"\bwetlands?\b|\bswamps?\b|\bmarsh(?:es)?\b|\brivers?\b|\briverine\b|\blakes?\b|\bstreams?\b|\bponds?\b|\bfreshwater\b|\bestuar(?:y|ies)\b",
     "Grassland": r"\bgrasslands?\b|\bgrasses\b|\bgrass\b|\bsavannas?\b|\bscrublands?\b|\bscrub\b|\bmeadows?\b",
     "Coastal": r"\bcoasts?\b|\bcoastal\b|\bbeaches?\b|\bseas?\b|\boceans?\b|\bmarine\b|\bcorals?\b|\bseagrass\b|\bestuar(?:y|ies)\b",
+    "Montane": r"\bmontane\b|\bmountains?\b|\bhighlands?\b|\buplands?\b|\bhill(?:s|y)?\b|\bhillsides?\b",
+}
+HABITAT_BONUSES = {
+    "Rainforest": {"attack_percent": 20, "defence_percent": 20, "theme": "dense cover"},
+    "Mangrove": {"attack_percent": 15, "defence_percent": 25, "theme": "root maze"},
+    "Wetland": {"attack_percent": 15, "defence_percent": 20, "theme": "water movement"},
+    "Grassland": {"attack_percent": 25, "defence_percent": 10, "theme": "open ground"},
+    "Coastal": {"attack_percent": 20, "defence_percent": 15, "theme": "shoreline mobility"},
+    "Montane": {"attack_percent": 10, "defence_percent": 25, "theme": "highland endurance"},
 }
 _COSTS = {1: 1, 2: 2, 3: 4}
 _SHIELD_CAP = 25
 _MAX_ENERGY = 8
+_HARD_SKILL_DAMAGE_BONUS = 10
+_OPENING_SHIELD_BY_MAX_SLOT = {0: 4, 1: 9, 2: 10, 3: 13}
 
 
 def habitat_matches(habitat_text: str | None, habitat: str) -> bool:
@@ -44,6 +56,12 @@ def habitat_matches(habitat_text: str | None, habitat: str) -> bool:
     if habitat == "Rainforest" and "mangrove" in text:
         # A mangrove forest alone is not necessarily a tropical rainforest.
         text = re.sub(r"\bmangrove\s+forests?\b", "mangrove", text)
+    if habitat == "Rainforest" and re.search(r"\bmontane\b|\bmountains?\b|\bhighlands?\b|\buplands?\b", text):
+        # Clearly high-elevation forest text gets its own arena instead of
+        # always falling into the generic forest bonus. Mixed lowland/hill
+        # phrases can still qualify for Rainforest and Montane.
+        text = re.sub(r"\b(?:montane|mountain|highland|upland)\s+(?:rain)?forests?\b", "montane", text)
+        text = re.sub(r"\b(?:rocky\s+)?hillsides?\b", "montane", text)
     return re.search(_HABITAT_WORDS[habitat], text) is not None
 
 
@@ -62,14 +80,18 @@ def choose_habitat(card_habitats: list[str | None], rng: Any) -> str:
     return rng.choice(mixed or list(HABITATS))
 
 
-def _habitat_attack(value: int) -> int:
-    # +20%, rounded half up in integers so small attacks keep their bonus.
-    return (value * 12 + 5) // 10
+def _scale_percent(value: int, percent: int) -> int:
+    return (value * percent + 50) // 100
 
 
-def _habitat_defence(value: int) -> int:
-    # Incoming damage x0.8, rounded half up to mirror the attack bonus.
-    return (value * 8 + 5) // 10
+def _habitat_attack(value: int, habitat: str) -> int:
+    bonus = HABITAT_BONUSES[habitat]["attack_percent"]
+    return _scale_percent(value, 100 + bonus)
+
+
+def _habitat_defence(value: int, habitat: str) -> int:
+    reduction = HABITAT_BONUSES[habitat]["defence_percent"]
+    return _scale_percent(value, 100 - reduction)
 
 
 def _other(side: str) -> str:
@@ -78,6 +100,11 @@ def _other(side: str) -> str:
     if side == "opponent":
         return "player"
     raise ValueError(f"Unknown battle side: {side}")
+
+
+def _opening_shield(unlocked: list[int]) -> int:
+    highest = max((slot for slot in unlocked if slot in _COSTS), default=0)
+    return _OPENING_SHIELD_BY_MAX_SLOT[highest]
 
 
 def _normalise_effect(effect: dict[str, Any]) -> dict[str, Any]:
@@ -128,12 +155,12 @@ def _third_ability(definition: dict[str, Any], attack: int) -> dict[str, Any]:
         else:
             converted = _normalise_effect(original)
             characteristic.append(converted)
-    # The former passive is now the sole action for this turn. Five extra
-    # damage makes the hard-quiz unlock worth its 4-Energy cost while retaining
-    # the individual species' basic attack as the damage baseline.
+    # The former passive is now the sole action for this turn. A larger fixed
+    # damage bonus keeps the hard-quiz unlock rewarding after per-species base
+    # attacks are restored to the source catalogue range.
     bonus_damage = sum(effect["value"] for effect in characteristic if effect["type"] == "damage")
     effects = [
-        {"type": "damage", "value": attack + 5 + bonus_damage, "target": "opponent"},
+        {"type": "damage", "value": attack + _HARD_SKILL_DAMAGE_BONUS + bonus_damage, "target": "opponent"},
         *(effect for effect in characteristic if effect["type"] != "damage"),
     ]
     return {
@@ -193,6 +220,7 @@ def _combatant(
     abilities = _abilities(definition, attack)
     for ability in abilities:
         ability["unlocked"] = ability["slot"] in unlocked_set
+    has_habitat_advantage = habitat_matches(natural_habitat, habitat)
     return {
         "species_id": definition["species_id"],
         "name": definition["name"],
@@ -204,7 +232,8 @@ def _combatant(
         "base_attack": attack,
         "energy": 5,
         "max_energy": _MAX_ENERGY,
-        "habitat_advantage": habitat_matches(natural_habitat, habitat),
+        "habitat_advantage": has_habitat_advantage,
+        "habitat_bonus": HABITAT_BONUSES[habitat] if has_habitat_advantage else None,
         "shield": 0,
         "guard": 0,
         "block": 0,
@@ -226,6 +255,11 @@ def new_match(
         raise ValueError(f"Unknown habitat: {habitat}")
     if initiative not in {"player", "opponent"}:
         raise ValueError("Initiative must be player or opponent")
+    player = _combatant(player_def, habitat, player_habitat, player_unlocked)
+    opponent = _combatant(opponent_def, habitat, opponent_habitat, opponent_unlocked)
+    second = opponent if initiative == "player" else player
+    second_unlocked = opponent_unlocked if initiative == "player" else player_unlocked
+    second["shield"] = _opening_shield(second_unlocked)
     return {
         "rules_version": "wildlife-1",
         "mode": mode,
@@ -236,8 +270,8 @@ def new_match(
         "turn_count": 0,
         "event_seq": 0,
         "events": [],
-        "player": _combatant(player_def, habitat, player_habitat, player_unlocked),
-        "opponent": _combatant(opponent_def, habitat, opponent_habitat, opponent_unlocked),
+        "player": player,
+        "opponent": opponent,
     }
 
 
@@ -267,13 +301,13 @@ def _damage(state: dict[str, Any], events: list[dict[str, Any]],
     attack = max(0, base + actor["boost"] - actor["weaken"])
     actor["boost"] = actor["weaken"] = 0
     if actor["habitat_advantage"]:
-        attack = _habitat_attack(attack)
+        attack = _habitat_attack(attack, state["habitat"])
     after_block = max(0, attack - defender["block"])
     defender["block"] = 0
     after_guard = math.floor(after_block * (100 - min(defender["guard"], 80)) / 100)
     defender["guard"] = 0
     if defender["habitat_advantage"]:
-        after_guard = _habitat_defence(after_guard)
+        after_guard = _habitat_defence(after_guard, state["habitat"])
     absorbed = min(defender["shield"], after_guard)
     defender["shield"] -= absorbed
     hp_damage = min(defender["hp"], after_guard - absorbed)

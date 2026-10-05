@@ -48,7 +48,12 @@ def test_malayan_tiger_first_active_and_elephant_passive() -> None:
     st, _ = battle_rules.play_action(st, "active_1", rng=ScriptedRNG([1]))
     tiger_a1_damage = next(a for a in tiger["abilities"] if a["slot"] == 1)["effects"][0]["value"]
     tiger_passive_bonus = tiger["passive"]["effects"][0]["value"]
-    assert st["opponent"]["energy"] == elephant["hp"] - tiger_a1_damage - tiger_passive_bonus + 8 and st["player"]["passive_triggers"] == 1
+    opening_shield = RULES["opening_shield_slot_3"]
+    assert (
+        st["opponent"]["energy"]
+        == elephant["hp"] - max(0, tiger_a1_damage + tiger_passive_bonus - opening_shield)
+        and st["player"]["passive_triggers"] == 1
+    )
     # Elephant low energy (threshold 0.20 = 25.6 HP) does NOT trigger initially
     assert st["opponent"]["passive_triggers"] == 0
 
@@ -64,7 +69,7 @@ def test_malayan_tiger_first_active_and_elephant_passive() -> None:
     locked_st, _ = battle_rules.roll_player(locked_st, rng=ScriptedRNG([4]))
     locked_st, _ = battle_rules.play_action(locked_st, "active_1", rng=ScriptedRNG([1]))
     assert locked_st["opponent"]["shield"] == 0
-    assert locked_st["opponent"]["energy"] == elephant["hp"] - max(0, tiger_a1_damage - 8)
+    assert locked_st["opponent"]["energy"] == elephant["hp"] - max(0, tiger_a1_damage - RULES["opening_shield_slot_2"])
 
 
 def test_basic_lucky_and_nonnatural_reroll() -> None:

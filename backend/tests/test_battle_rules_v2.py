@@ -280,10 +280,13 @@ def test_opponent_initiative_opening_and_draw_limits():
 
     # Opponent acted once
     assert state["opponent"]["action_count"] == 1
-    # The opponent moved first; the player receives opening protection, then the
-    # opening basic action consumes that shield before touching Energy.
-    assert state["player"]["shield"] == 0
-    assert state["player"]["energy"] == 98
+    # The opponent moved first; the player receives tiered opening protection
+    # for having slot 3 unlocked, then the opening basic action consumes part
+    # of that shield before touching Energy.
+    opening_shield = RULES["opening_shield_slot_3"]
+    basic_damage = o_def["base_attack"]
+    assert state["player"]["shield"] == max(0, opening_shield - basic_damage)
+    assert state["player"]["energy"] == p_def["hp"] - max(0, basic_damage - opening_shield)
     assert state["player"]["action_count"] == 0
 
     # Phase transitioned to roll for player

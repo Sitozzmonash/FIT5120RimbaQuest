@@ -216,10 +216,17 @@ def test_species_api_describes_battle_mode_abilities_without_dice():
     response = client.get("/api/v1/species/sp_mouse_deer")
     assert response.status_code == 200, response.text
     body = response.json()
-    assert any("die" in ability["description"] for ability in body["abilities"])
+    raw_visible_text = " ".join(
+        f"{ability['name']} {ability['description']}" for ability in body["abilities"]
+    ).casefold()
+    assert "die" not in raw_visible_text and "roll" not in raw_visible_text
     previews = body["wildlife_abilities"]
     assert [(ability["slot"], ability["cost"]) for ability in previews] == [(1, 1), (2, 2), (3, 4)]
-    assert not any("die" in ability["description"] or "roll" in ability["description"] for ability in previews)
+    assert not any(
+        "die" in f"{ability['name']} {ability['description']}".casefold()
+        or "roll" in f"{ability['name']} {ability['description']}".casefold()
+        for ability in previews
+    )
 
 
 def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
