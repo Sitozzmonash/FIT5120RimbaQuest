@@ -1,5 +1,5 @@
-import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useLocationsStore } from "../../../store/useLocationsStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
@@ -9,6 +9,7 @@ import { Info } from "../../common/CommonUI";
 import { styles as globalStyles } from "../../../styles/theme";
 import { LocationDetailHeader } from "./components/LocationDetailHeader";
 import { LocationFacilities } from "./components/LocationFacilities";
+import { directionsUrl, formatDistance } from '../../../utils/locationDiscovery';
 
 export function LocationDetailScreen() {
   const location = useLocationsStore((state) => state.selectedLocation);
@@ -16,10 +17,22 @@ export function LocationDetailScreen() {
   const loadLocationDetail = useLocationsStore(
     (state) => state.loadLocationDetail,
   );
+  const distance = useLocationsStore((state) => state.distances[location?.id ?? '']);
+  const [navigationError, setNavigationError] = useState<string | null>(null);
 
   if (!location) return null;
 
   const goBack = () => useNavigationStore.getState().goBack();
+  const openDirections = async () => {
+    const url = directionsUrl(location);
+    try {
+      if (!(await Linking.canOpenURL(url))) throw new Error('unsupported');
+      await Linking.openURL(url);
+      setNavigationError(null);
+    } catch {
+      setNavigationError("We couldn't open Google Maps right now. Please try again later.");
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
@@ -66,6 +79,17 @@ export function LocationDetailScreen() {
               <Info label="BEST TIME TO VISIT" value={location.best_time} />
             ) : null}
 
+            {formatDistance(distance) ? (
+              <Info label="APPROXIMATE DISTANCE" value={formatDistance(distance) as string} />
+            ) : null}
+
+            {typeof location.rating === 'number' ? (
+              <Info
+                label="RATING"
+                value={`${location.rating.toFixed(1)}${location.review_count ? ` from ${location.review_count} reviews` : ''}`}
+              />
+            ) : null}
+
             {location.typical_wildlife ? (
               <Info
                 label="ANIMALS YOU MAY SEE"
@@ -76,6 +100,23 @@ export function LocationDetailScreen() {
             {location.facilities && location.facilities.length > 0 && (
               <LocationFacilities facilities={location.facilities} />
             )}
+
+            {location.responsible_exploration ? (
+              <Info label="EXPLORE RESPONSIBLY" value={location.responsible_exploration} />
+            ) : null}
+
+            {location.official_website ? (
+              <Tap
+                label={`Open ${location.name} official website`}
+                style={styles.linkButton}
+                onPress={() => void Linking.openURL(location.official_website as string)}
+              >
+                <Text style={styles.linkButtonText}>Visit official website</Text>
+              </Tap>
+            ) : null}
+
+            <PrimaryButton label="Get Directions" style={styles.directionsBtn} onPress={() => void openDirections()} />
+            {navigationError ? <Text style={styles.navigationError}>{navigationError}</Text> : null}
 
             <PrimaryButton
               label="Take an Animal Photo Here"
@@ -90,7 +131,11 @@ export function LocationDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  recordBtn: { marginTop: 14 },
+  recordBtn: { marginTop: 8 },
+  directionsBtn: { marginTop: 14 },
+  navigationError: { color: '#9A3412', textAlign: 'center', fontSize: 12, marginTop: 8 },
+  linkButton: { alignItems: 'center', borderRadius: 12, borderWidth: 1, borderColor: '#1B6A42', padding: 12, marginTop: 14 },
+  linkButtonText: { color: '#1B6A42', fontWeight: '800' },
   locationDetailHero: {
     backgroundColor: "#F4FAF6",
     padding: 16,

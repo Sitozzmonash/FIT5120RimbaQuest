@@ -14,10 +14,12 @@ const LOCATION_PIN = require("../../../../../assets/locations/location-pin.png")
 
 export function PlaceCard({
   location,
+  distanceLabel,
   onPress,
   disabled = false,
 }: {
   location: LocationItem;
+  distanceLabel?: string | null;
   onPress: () => void;
   disabled?: boolean;
 }) {
@@ -49,6 +51,7 @@ export function PlaceCard({
               ))}
             </View>
           )}
+          {distanceLabel ? <Text style={styles.distance}>{distanceLabel}</Text> : null}
         </View>
         {/* <View style={styles.goSlot}>
           <View style={[styles.goCircle, styles.goShadow]} />
@@ -89,6 +92,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyExtraBold,
   },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  distance: { color: '#0B7A43', fontSize: 12, fontFamily: FONTS.bodyExtraBold },
   goSlot: { width: GO_SIZE, height: GO_SIZE + 3 },
   goCircle: {
     position: "absolute",

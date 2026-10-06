@@ -17,7 +17,9 @@ import { PlaceCard } from "./components/PlaceCard";
 import { PlacesSectionHeader } from "./components/PlacesSectionHeader";
 import { PlacesStatus } from "./components/PlacesStatus";
 import { SightingsWarningBanner } from "./components/SightingsWarningBanner";
+import { LocationMapView } from "./components/LocationMapView";
 import { LOCATION_COLORS } from "./locationsTheme";
+import { formatDistance, sortLocations } from "../../../utils/locationDiscovery";
 
 export function LocationsScreen() {
   const insets = useSafeAreaInsets();
@@ -29,6 +31,13 @@ export function LocationsScreen() {
   );
   const loading = useLocationsStore((state) => state.loading);
   const error = useLocationsStore((state) => state.error);
+  const viewMode = useLocationsStore((state) => state.viewMode);
+  const setViewMode = useLocationsStore((state) => state.setViewMode);
+  const distances = useLocationsStore((state) => state.distances);
+  const distanceStatus = useLocationsStore((state) => state.distanceStatus);
+  const distanceNotice = useLocationsStore((state) => state.distanceNotice);
+  const offlineNotice = useLocationsStore((state) => state.offlineNotice);
+  const requestDistances = useLocationsStore((state) => state.requestDistances);
   const loadLocations = useLocationsStore((state) => state.loadLocations);
   const loadLocationDetail = useLocationsStore(
     (state) => state.loadLocationDetail,
@@ -36,12 +45,13 @@ export function LocationsScreen() {
 
   const filteredLocations = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return locations.filter(
+    const matching = locations.filter(
       (loc) =>
         locationMatchesQuery(loc, query) &&
         locationMatchesCategory(loc, categoryFilter),
     );
-  }, [locations, search, categoryFilter]);
+    return sortLocations(matching, distances);
+  }, [locations, search, categoryFilter, distances]);
 
   const handleSelectLocation = (loc: LocationItem) => {
     void loadLocationDetail(loc);
@@ -85,22 +95,52 @@ export function LocationsScreen() {
             </Tap>
           </View>
         ) : null}
+        {offlineNotice ? <Text style={styles.notice}>{offlineNotice}</Text> : null}
+        <View style={styles.tools}>
+          <View style={styles.viewSwitch}>
+            {(['list', 'map'] as const).map((mode) => {
+              const active = viewMode === mode;
+              return (
+                <Tap
+                  key={mode}
+                  label={`Show ${mode} view`}
+                  style={[styles.viewButton, active && styles.viewButtonActive]}
+                  onPress={() => setViewMode(mode)}
+                >
+                  <Text style={[styles.viewButtonText, active && styles.viewButtonTextActive]}>
+                    {mode === 'list' ? 'List View' : 'Map View'}
+                  </Text>
+                </Tap>
+              );
+            })}
+          </View>
+          <Tap
+            label="Show distances from my location"
+            style={styles.distanceButton}
+            onPress={() => void requestDistances()}
+            disabled={distanceStatus === 'loading'}
+          >
+            <Text style={styles.distanceButtonText}>
+              {distanceStatus === 'loading' ? 'Finding distances...' : distanceStatus === 'available' ? 'Distances updated' : 'Show distances'}
+            </Text>
+          </Tap>
+        </View>
+        {distanceNotice ? <Text style={styles.notice}>{distanceNotice}</Text> : null}
         <PlacesSectionHeader count={filteredLocations.length} />
-        {filteredLocations.length ? (
+        {filteredLocations.length && viewMode === 'map' ? (
+          <LocationMapView locations={filteredLocations} distances={distances} onSelect={handleSelectLocation} />
+        ) : filteredLocations.length ? (
           filteredLocations.map((loc) => (
             <PlaceCard
               key={loc.id}
               location={loc}
+              distanceLabel={formatDistance(distances[loc.id])}
               onPress={() => handleSelectLocation(loc)}
             />
           ))
         ) : (
           <PlacesStatus
-            message={
-              search.trim()
-                ? "We could not find a place with that name."
-                : "No places in this category yet."
-            }
+            message="No matching locations found. Try another search or category."
           />
         )}
       </ScrollView>
@@ -170,4 +210,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
   },
   list: { gap: 16, paddingTop: 14, paddingHorizontal: 16 },
+  notice: { color: '#4C5D50', fontSize: 12, lineHeight: 17, backgroundColor: '#EDF6ED', borderRadius: 10, padding: 10 },
+  tools: { gap: 8 },
+  viewSwitch: { flexDirection: 'row', gap: 8 },
+  viewButton: { flex: 1, alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#B8CAB6', paddingVertical: 9, backgroundColor: '#FFFFFF' },
+  viewButtonActive: { backgroundColor: LOCATION_COLORS.forest, borderColor: LOCATION_COLORS.forest },
+  viewButtonText: { color: LOCATION_COLORS.ink, fontWeight: '800', fontSize: 13 },
+  viewButtonTextActive: { color: '#FFFFFF' },
+  distanceButton: { alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#7EA884', paddingVertical: 9, backgroundColor: '#E9F5EA' },
+  distanceButtonText: { color: '#1B5E32', fontWeight: '800', fontSize: 13 },
 });

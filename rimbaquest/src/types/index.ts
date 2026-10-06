@@ -109,7 +109,15 @@ export type LocationItem = {
   distance_km: number;
   why_recommended: string;
   typical_wildlife?: string;
+  /** Only locally maintained, verified fields are rendered. API fields remain optional. */
+  official_website?: string;
+  responsible_exploration?: string;
+  rating?: number;
+  review_count?: number;
 };
+
+export type LocationViewMode = 'list' | 'map';
+export type DistanceStatus = 'idle' | 'loading' | 'available' | 'denied' | 'unavailable';
 
 export type UserProfile = {
   id: number;
