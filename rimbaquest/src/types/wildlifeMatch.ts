@@ -60,7 +60,37 @@ export interface WildlifeInvite {
   match_id: string;
   habitat: string;
   status: string;
+  host_display_name?: string;
   can_join?: boolean;
+}
+
+export interface WildlifeFriend {
+  child_id: number;
+  display_name: string;
+  avatar?: string;
+  points: number;
+}
+
+export interface WildlifeIncomingInvite {
+  match_id: string;
+  invite_code: string;
+  habitat: string;
+  friend_child_id: number;
+  friend_display_name: string;
+}
+
+export interface WildlifeOutgoingInvite {
+  match_id: string;
+  status: "setup" | "waiting";
+  friend_child_id: number;
+  friend_display_name: string;
+}
+
+export interface WildlifeFriends {
+  friend_code: string;
+  friends: WildlifeFriend[];
+  incoming_invites: WildlifeIncomingInvite[];
+  outgoing_invites: WildlifeOutgoingInvite[];
 }
 
 export interface WildlifeCardOption {

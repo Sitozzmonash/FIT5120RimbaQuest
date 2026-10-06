@@ -4,6 +4,8 @@ import { useUserStore } from "../store/useUserStore";
 import {
   WildlifeAction,
   WildlifeCardOption,
+  WildlifeFriend,
+  WildlifeFriends,
   WildlifeInvite,
   WildlifeLeaderboardEntry,
   WildlifeMatch,
@@ -43,6 +45,8 @@ export function useWildlifeMatch() {
   const [cardOptions, setCardOptions] = useState<WildlifeCardOption[] | null>(null);
   const [restCards, setRestCards] = useState<WildlifeRestCard[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<WildlifeLeaderboardEntry[] | null>(null);
+  const [friends, setFriends] = useState<WildlifeFriends | null>(null);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [restError, setRestError] = useState<string | null>(null);
@@ -139,6 +143,45 @@ export function useWildlifeMatch() {
       if (isCurrent(captured)) setLeaderboardError(errorMessage(caught));
     }
   }, [request, isCurrent]);
+
+  const refreshFriends = useCallback(async () => {
+    const captured = generation.current;
+    try {
+      const data = await request<WildlifeFriends>("/api/v1/friends");
+      if (isCurrent(captured)) {
+        setFriends(data);
+        setFriendsError(null);
+      }
+    } catch (caught) {
+      if (isCurrent(captured)) setFriendsError(errorMessage(caught));
+    }
+  }, [request, isCurrent]);
+
+  const addFriend = useCallback(async (rawCode: string): Promise<WildlifeFriend | null> => {
+    if (mutationLocked.current) return null;
+    const code = rawCode.trim();
+    if (!code) {
+      setFriendsError("Enter your friend's code first.");
+      return null;
+    }
+    mutationLocked.current = true;
+    setPending("Adding friend");
+    setFriendsError(null);
+    const captured = generation.current;
+    try {
+      const data = await request<{ friend: WildlifeFriend }>("/api/v1/friends", { code });
+      if (!isCurrent(captured)) return null;
+      void refreshFriends();
+      void refreshLeaderboard();
+      return data.friend;
+    } catch (caught) {
+      if (isCurrent(captured)) setFriendsError(errorMessage(caught));
+      return null;
+    } finally {
+      mutationLocked.current = false;
+      if (isCurrent(captured)) setPending(null);
+    }
+  }, [request, isCurrent, refreshFriends, refreshLeaderboard]);
 
   const refreshCardOptions = useCallback(async (target: { matchId?: string; code?: string }) => {
     const captured = generation.current;
@@ -249,14 +292,16 @@ export function useWildlifeMatch() {
     }
   }, [request, isCurrent, applyMatch, refreshMatch, recoverCurrent]);
 
-  const start = useCallback(async (mode: WildlifeMode) => {
+  const start = useCallback(async (mode: WildlifeMode, friendChildId?: number) => {
     if (recovering || recoveryError) return false;
-    const success = await mutate("Creating match", "/api/v1/wildlife-battles", { mode }, (next) => {
+    const body = friendChildId === undefined ? { mode } : { mode, friend_child_id: friendChildId };
+    const success = await mutate("Creating match", "/api/v1/wildlife-battles", body, (next) => {
       setInvite(null);
       void refreshCardOptions({ matchId: next.id });
+      if (friendChildId !== undefined) void refreshFriends();
     });
     return success;
-  }, [mutate, refreshCardOptions, recovering, recoveryError]);
+  }, [mutate, refreshCardOptions, refreshFriends, recovering, recoveryError]);
 
   const previewInvite = useCallback(async (rawCode: string) => {
     if (recovering || recoveryError) return false;
@@ -344,7 +389,8 @@ export function useWildlifeMatch() {
     setRecoveryError(null);
     void refreshRest();
     void refreshLeaderboard();
-  }, [refreshRest, refreshLeaderboard]);
+    void refreshFriends();
+  }, [refreshRest, refreshLeaderboard, refreshFriends]);
 
   useEffect(() => {
     generation.current += 1;
@@ -358,6 +404,8 @@ export function useWildlifeMatch() {
     setCardOptions(null);
     setRestCards(null);
     setLeaderboard(null);
+    setFriends(null);
+    setFriendsError(null);
     setPending(null);
     setError(null);
     setRestError(null);
@@ -367,6 +415,7 @@ export function useWildlifeMatch() {
     if (childId && token) {
       void refreshRest();
       void refreshLeaderboard();
+      void refreshFriends();
       void recoverCurrent();
     }
     return () => {
@@ -374,13 +423,28 @@ export function useWildlifeMatch() {
       controllers.current.forEach((controller) => controller.abort());
       controllers.current.clear();
     };
-  }, [childId, token, refreshRest, refreshLeaderboard, recoverCurrent]);
+  }, [childId, token, refreshRest, refreshLeaderboard, refreshFriends, recoverCurrent]);
 
   useEffect(() => {
     if (match?.status !== "waiting" && match?.status !== "active") return;
     const timer = setInterval(() => void refreshMatch(false), 1000);
     return () => clearInterval(timer);
   }, [match?.id, match?.status, refreshMatch]);
+
+  // Friends' battle invitations arrive while the explorer is in the lobby, and
+  // the waiting screen shows which friend was invited.
+  const watchingFriends = Boolean(childId && token) && !invite && (!match || match.status === "setup" || match.status === "waiting");
+  useEffect(() => {
+    if (!watchingFriends) return;
+    const timer = setInterval(() => void refreshFriends(), 4000);
+    return () => clearInterval(timer);
+  }, [watchingFriends, refreshFriends]);
+
+  // A friend who adds this explorer by code joins the friend leaderboard too.
+  const friendCount = friends?.friends.length;
+  useEffect(() => {
+    if (friendCount !== undefined) void refreshLeaderboard();
+  }, [friendCount, refreshLeaderboard]);
 
   useEffect(() => {
     if (match?.status !== "completed") return;
@@ -395,6 +459,8 @@ export function useWildlifeMatch() {
     cardOptions,
     restCards,
     leaderboard,
+    friends,
+    friendsError,
     pending,
     error,
     restError,
@@ -412,6 +478,8 @@ export function useWildlifeMatch() {
     refreshMatch,
     refreshRest,
     refreshLeaderboard,
+    refreshFriends,
+    addFriend,
     refreshCardOptions,
     recoverCurrent,
   };

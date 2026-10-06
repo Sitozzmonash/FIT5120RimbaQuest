@@ -373,6 +373,34 @@ wildlife_leaderboard = Table(
     Column("points", Integer, nullable=False, default=0),
 )
 
+# Friends are new tables (not columns on child_profiles) because production
+# relies on create_all, which never alters an existing table.
+wildlife_friend_codes = Table(
+    "wildlife_friend_codes",
+    metadata,
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("code", String(12), nullable=False, unique=True),
+)
+
+# One row per direction, so "my friends" is a single indexed lookup.
+wildlife_friendships = Table(
+    "wildlife_friendships",
+    metadata,
+    Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("friend_child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    CheckConstraint("child_id <> friend_child_id", name="ck_wildlife_friend_not_self"),
+)
+
+# A friend match created from the Friend List is reserved for one invitee.
+wildlife_match_invites = Table(
+    "wildlife_match_invites",
+    metadata,
+    Column("match_id", String(36), ForeignKey("wildlife_matches.id", ondelete="CASCADE"), primary_key=True),
+    Column("invitee_child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), nullable=False),
+)
+Index("ix_wildlife_match_invites_invitee", wildlife_match_invites.c.invitee_child_id)
+
 wildlife_requests = Table(
     "wildlife_requests",
     metadata,
