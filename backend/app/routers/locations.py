@@ -34,6 +34,7 @@ KL_SELANGOR_LOCATION_IDS = (
     "loc_botani_shah_alam",
     "loc_bukit_melawati",
     "loc_kg_kuantan_firefly",
+    "loc_just_farm",
 )
 
 LOCATION_TYPES = (
@@ -65,7 +66,7 @@ def list_locations(
     id_placeholders = ", ".join(f":id{i}" for i in range(len(KL_SELANGOR_LOCATION_IDS)))
     statement = (
         "SELECT id, name, type, area, lat, lng, verified, description, facilities, "
-        "best_time, distance_km, why_recommended, typical_wildlife FROM locations "
+        "best_time, distance_km, why_recommended, typical_wildlife, official_website FROM locations "
         f"WHERE id IN ({id_placeholders})"
     )
     params: dict[str, Any] = dict(id_params)

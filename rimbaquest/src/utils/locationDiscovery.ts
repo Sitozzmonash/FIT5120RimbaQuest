@@ -39,7 +39,8 @@ export function sortLocations(
 
 export function formatDistance(distance: number | undefined): string | null {
   if (distance === undefined) return null;
-  return distance < 1 ? `${Math.round(distance * 1000)} m away` : `${distance.toFixed(1).replace(/\.0$/, '')} km away`;
+  const value = distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1).replace(/\.0$/, '')} km`;
+  return `${value} straight-line`;
 }
 
 /** A key-free, shareable Google Maps destination URL. */

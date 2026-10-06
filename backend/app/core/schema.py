@@ -179,6 +179,8 @@ locations = Table(
     Column("why_recommended", Text),
     Column("area", String),
     Column("typical_wildlife", String),
+    # Optional: only show a link when an attraction publishes an official site.
+    Column("official_website", String),
 )
 
 quizzes = Table(

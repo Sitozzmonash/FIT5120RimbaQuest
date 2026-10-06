@@ -234,10 +234,13 @@ def test_locations_search_and_iteration_one_scope():
     locations = client.get("/api/v1/locations")
     assert locations.status_code == 200
     items = locations.json()["items"]
-    assert len(items) == 21
+    assert len(items) == 22
     names = [item["name"] for item in items]
     assert any("Gasing" in name for name in names)
     assert any("Zoo Negara" in name for name in names)
+    just_farm = next(item for item in items if item["id"] == "loc_just_farm")
+    assert just_farm["type"] == "Petting Zoo"
+    assert just_farm["official_website"] == "https://www.justfarm.com.my/"
     assert all("Bako" not in name and "Cherating" not in name for name in names)
     assert client.get("/api/v1/locations?query=gasing").json()["items"]
     zoo = client.get("/api/v1/locations?category=Zoo").json()["items"]

@@ -80,20 +80,13 @@ export function LocationDetailScreen() {
             ) : null}
 
             {formatDistance(distance) ? (
-              <Info label="APPROXIMATE DISTANCE" value={formatDistance(distance) as string} />
+              <Info label="STRAIGHT-LINE DISTANCE" value={formatDistance(distance) as string} />
             ) : null}
 
             {typeof location.rating === 'number' ? (
               <Info
                 label="RATING"
                 value={`${location.rating.toFixed(1)}${location.review_count ? ` from ${location.review_count} reviews` : ''}`}
-              />
-            ) : null}
-
-            {location.typical_wildlife ? (
-              <Info
-                label="ANIMALS YOU MAY SEE"
-                value={`${location.typical_wildlife}\nPeople have seen these animals here before, but you may not see them today.`}
               />
             ) : null}
 

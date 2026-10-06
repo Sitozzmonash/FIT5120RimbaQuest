@@ -67,7 +67,7 @@ export function LocationMapView({
           })}
         </Svg>
       </View>
-      <Text style={styles.caption}>Schematic map of the matching locations</Text>
+      <Text style={styles.caption}>Schematic map only — not to scale and not a route map.</Text>
       {selected ? (
         <View style={styles.preview}>
           <Text style={styles.name}>{selected.name}</Text>

@@ -115,17 +115,17 @@ export function LocationsScreen() {
             })}
           </View>
           <Tap
-            label="Show distances from my location"
+            label="Show straight-line distances from my location"
             style={styles.distanceButton}
             onPress={() => void requestDistances()}
             disabled={distanceStatus === 'loading'}
           >
             <Text style={styles.distanceButtonText}>
-              {distanceStatus === 'loading' ? 'Finding distances...' : distanceStatus === 'available' ? 'Distances updated' : 'Show distances'}
+              {distanceStatus === 'loading' ? 'Finding distances...' : distanceStatus === 'available' ? 'Straight-line distances updated' : 'Show straight-line distances'}
             </Text>
           </Tap>
         </View>
-        {distanceNotice ? <Text style={styles.notice}>{distanceNotice}</Text> : null}
+        {distanceNotice ? <Text style={styles.notice}>{distanceNotice}</Text> : distanceStatus === 'available' ? <Text style={styles.notice}>Distances are straight-line estimates from your device. Use Get Directions for a road route and travel distance.</Text> : null}
         <PlacesSectionHeader count={filteredLocations.length} />
         {filteredLocations.length && viewMode === 'map' ? (
           <LocationMapView locations={filteredLocations} distances={distances} onSelect={handleSelectLocation} />

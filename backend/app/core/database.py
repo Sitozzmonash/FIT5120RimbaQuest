@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.engine import Engine
 
 from app.core.config import DATABASE_URL
@@ -43,6 +43,15 @@ def initialise_database() -> None:
     """
     metadata.create_all(engine)
     with engine.begin() as connection:
+        # ``create_all`` does not add columns to an existing Render/SQLite
+        # database. Keep this narrow migration beside the seed it enables.
+        location_columns = {
+            column["name"] for column in inspect(connection).get_columns("locations")
+        }
+        if "official_website" not in location_columns:
+            connection.exec_driver_sql(
+                "ALTER TABLE locations ADD COLUMN official_website VARCHAR"
+            )
         seed_iteration_one(connection)
         seed_iteration_three_fun_facts(connection)
         seed_iteration_two_chat_evidence(connection)

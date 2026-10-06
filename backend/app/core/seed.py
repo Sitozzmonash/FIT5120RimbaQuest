@@ -60,6 +60,26 @@ LOCATION_ENRICHMENTS = {
     ),
 }
 
+# Links are deliberately limited to attraction or managing-authority sites
+# that were checked by the team. Entries without an official public site omit
+# the field, so the client never renders an unreliable third-party link.
+LOCATION_OFFICIAL_WEBSITES = {
+    "loc_frim": "https://www.frim.gov.my/",
+    "loc_kuala_selangor": "https://www.mns.my/ksnp-centre/",
+    "loc_per_paya_indah": "https://www.wildlife.gov.my/en/paya-indah-wetlands/",
+    "loc_perdana_botanical": "https://www.dbkl.gov.my/fasiliti-awam/taman-awam/taman-botani-perdana",
+    "loc_zoo_negara": "https://www.zoonegara.my/",
+    "loc_aquaria_klcc": "https://aquariaklcc.com/",
+    "loc_kl_bird_park": "https://www.klbirdpark.com/",
+    "loc_kl_butterfly_park": "https://www.klbutterflypark.com/",
+    "loc_farm_in_the_city": "https://farminthecity.my/",
+    "loc_taman_tugu": "https://tamantugu.my/",
+    "loc_kota_damansara_cf": "https://www.forestry.gov.my/en/selangor/taman-eko-rimba-kota-damansara",
+    "loc_taman_rimba_kiara": "https://www.dbkl.gov.my/fasiliti-awam/taman-awam/taman-rimba-kiara",
+    "loc_botani_shah_alam": "http://www.tbnsa.gov.my/",
+    "loc_just_farm": "https://www.justfarm.com.my/",
+}
+
 EXTRA_LOCATIONS = [
     {
         "id": "loc_kl_forest_eco_park",
@@ -165,6 +185,21 @@ EXTRA_LOCATIONS = [
         "why_recommended": "Hands-on feeding and petting — the friendliest animals for younger explorers.",
         "area": "Lot 40160, Jalan PS 7, Prima Saujana, 43300 Seri Kembangan, Selangor",
         "typical_wildlife": "Goats, Rabbits, Tortoises, Birds",
+    },
+    {
+        "id": "loc_just_farm",
+        "name": "Just Farm",
+        "type": "Petting Zoo",
+        "lat": 3.1551,
+        "lng": 101.6075,
+        "verified": True,
+        "description": "A fully indoor petting zoo inside IOI Mall Damansara, with staff-guided animal encounters for families.",
+        "facilities": ["Indoor animal encounters", "Animal feeding", "Mall parking"],
+        "best_time": "Daily, 10:30 AM–8:30 PM",
+        "distance_km": 0,
+        "why_recommended": "A weather-proof, air-conditioned place for supervised animal encounters in Petaling Jaya.",
+        "area": "Lot 1F-01, IOI Mall Damansara, 2A Persiaran Surian, 47810 Petaling Jaya, Selangor",
+        "typical_wildlife": "",
     },
     {
         "id": "loc_taman_tugu",
@@ -362,7 +397,7 @@ def seed_iteration_one(connection: Connection) -> None:
     # LOCATION_ENRICHMENTS / EXTRA_LOCATIONS would be skipped on databases that
     # already carry an older seed.sql hash.
     location_seed_content = json.dumps(
-        [LOCATION_ENRICHMENTS, LOCATION_TYPE_OVERRIDES, EXTRA_LOCATIONS],
+        [LOCATION_ENRICHMENTS, LOCATION_TYPE_OVERRIDES, LOCATION_OFFICIAL_WEBSITES, EXTRA_LOCATIONS],
         sort_keys=True,
         ensure_ascii=False,
     ).encode("utf-8")
@@ -389,6 +424,12 @@ def seed_iteration_one(connection: Connection) -> None:
         row["area"], row["typical_wildlife"] = LOCATION_ENRICHMENTS[row["id"]]
         row["type"] = LOCATION_TYPE_OVERRIDES[row["id"]]
 
+    location_items = [*location_rows, *EXTRA_LOCATIONS]
+    for row in location_items:
+        # Keep the nullable key on every row: SQLAlchemy executemany uses the
+        # first row's keys to build its insert statement.
+        row["official_website"] = LOCATION_OFFICIAL_WEBSITES.get(row["id"])
+
     _upsert_rows(connection, species, species_rows)
     _upsert_rows(connection, quizzes, quiz_rows)
     # Reference-image metadata is entirely seed-owned. Replacing it as a set
@@ -400,7 +441,7 @@ def seed_iteration_one(connection: Connection) -> None:
             species_images.insert(),
             [{key: value for key, value in row.items() if key != "id"} for row in image_rows],
         )
-    _upsert_rows(connection, locations, [*location_rows, *EXTRA_LOCATIONS])
+    _upsert_rows(connection, locations, location_items)
     existing_version = connection.execute(
         select(app_metadata.c.key).where(app_metadata.c.key == "iteration_1_seed_sha256")
     ).first()
