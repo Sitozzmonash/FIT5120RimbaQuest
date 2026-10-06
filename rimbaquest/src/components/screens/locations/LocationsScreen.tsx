@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LocationItem } from "../../../types";
 import {
+  LOCATION_CATEGORY_FILTERS,
   locationMatchesCategory,
   locationMatchesQuery,
 } from "../../../constants/seed";
@@ -18,14 +19,14 @@ import { PlacesStatus } from "./components/PlacesStatus";
 import { SightingsWarningBanner } from "./components/SightingsWarningBanner";
 import { LOCATION_COLORS } from "./locationsTheme";
 
-// Place details aren't opened from the list yet.
-const PLACE_DETAILS_ENABLED = true;
-
 export function LocationsScreen() {
   const insets = useSafeAreaInsets();
   const locations = useLocationsStore((state) => state.locations);
   const search = useLocationsStore((state) => state.search);
   const categoryFilter = useLocationsStore((state) => state.categoryFilter);
+  const setCategoryFilter = useLocationsStore(
+    (state) => state.setCategoryFilter,
+  );
   const loading = useLocationsStore((state) => state.loading);
   const error = useLocationsStore((state) => state.error);
   const loadLocations = useLocationsStore((state) => state.loadLocations);
@@ -90,13 +91,17 @@ export function LocationsScreen() {
             <PlaceCard
               key={loc.id}
               location={loc}
-              disabled={!PLACE_DETAILS_ENABLED}
-              // onPress={() => handleSelectLocation(loc)}
-              onPress={() => {}}
+              onPress={() => handleSelectLocation(loc)}
             />
           ))
         ) : (
-          <PlacesStatus message="We could not find a place with that name." />
+          <PlacesStatus
+            message={
+              search.trim()
+                ? "We could not find a place with that name."
+                : "No places in this category yet."
+            }
+          />
         )}
       </ScrollView>
     );
@@ -110,6 +115,31 @@ export function LocationsScreen() {
       />
       <SightingsWarningBanner />
       <LocationSearchBar />
+      <View style={styles.chipsWrap}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chips}
+        >
+          {LOCATION_CATEGORY_FILTERS.map((item) => {
+            const active = categoryFilter === item.id;
+            return (
+              <Tap
+                key={item.id}
+                label={`Filter ${item.label}`}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setCategoryFilter(item.id)}
+              >
+                <Text
+                  style={[styles.chipText, active && styles.chipTextActive]}
+                >
+                  {item.label}
+                </Text>
+              </Tap>
+            );
+          })}
+        </ScrollView>
+      </View>
       <View style={styles.panel}>{renderPlaces()}</View>
     </View>
   );
@@ -117,6 +147,21 @@ export function LocationsScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, gap: 8, backgroundColor: LOCATION_COLORS.forest },
+  chipsWrap: { paddingHorizontal: 16 },
+  chips: { gap: 8, paddingVertical: 6 },
+  chip: {
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  chipActive: { backgroundColor: LOCATION_COLORS.paper },
+  chipText: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.9)",
+    fontWeight: "700",
+  },
+  chipTextActive: { color: LOCATION_COLORS.ink },
   panel: {
     flex: 1,
     overflow: "hidden",

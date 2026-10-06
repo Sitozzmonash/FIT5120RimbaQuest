@@ -234,11 +234,16 @@ def test_locations_search_and_iteration_one_scope():
     locations = client.get("/api/v1/locations")
     assert locations.status_code == 200
     items = locations.json()["items"]
-    assert len(items) == 6
+    assert len(items) == 21
     names = [item["name"] for item in items]
     assert any("Gasing" in name for name in names)
+    assert any("Zoo Negara" in name for name in names)
     assert all("Bako" not in name and "Cherating" not in name for name in names)
     assert client.get("/api/v1/locations?query=gasing").json()["items"]
+    zoo = client.get("/api/v1/locations?category=Zoo").json()["items"]
+    assert len(zoo) == 1 and zoo[0]["name"] == "Zoo Negara"
+    assert client.get("/api/v1/locations?category=Forest+Park").json()["items"]
+    assert client.get("/api/v1/locations?category=Mammal").json()["items"] == []
 
 
 def test_photo_upload_discovery_collection_and_progress(monkeypatch):

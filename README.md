@@ -464,7 +464,7 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 
 - PostgreSQL is the production source of truth; SQLite is a local/test fallback.
 - The static seed contains 152 supported species and one quiz per species.
-- The runtime catalogue exposes six supported wildlife locations.
+- The runtime catalogue exposes 21 KL/Selangor wildlife locations across seven categories (Zoo, Wildlife Park, Petting Zoo, Aquarium, Forest Park, Nature Park, Botanical Garden).
 - New passwords are hashed with Argon2.
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.

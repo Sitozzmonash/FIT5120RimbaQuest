@@ -39,12 +39,18 @@ export const WILDLIFE_FILTERS = [
   { id: 'Reptile', label: 'Reptiles' },
 ];
 
-const CATEGORY_NEEDLES: Record<string, string[]> = {
-  Mammal: ['mammal'],
-  Bird: ['bird'],
-  Butterfly: ['butterfl', 'insect'],
-  Reptile: ['reptile'],
-};
+// Epic 2 filters the locations list by place category instead of state.
+// The ids must match the backend location ``type`` values.
+export const LOCATION_CATEGORY_FILTERS = [
+  { id: 'All', label: 'All' },
+  { id: 'Zoo', label: 'Zoos' },
+  { id: 'Wildlife Park', label: 'Wildlife Parks' },
+  { id: 'Petting Zoo', label: 'Petting Zoos' },
+  { id: 'Aquarium', label: 'Aquariums' },
+  { id: 'Forest Park', label: 'Forest Parks' },
+  { id: 'Nature Park', label: 'Nature Parks' },
+  { id: 'Botanical Garden', label: 'Botanical Gardens' },
+];
 
 export function locationMatchesQuery(loc: LocationItem, query: string): boolean {
   const q = query.trim().toLowerCase();
@@ -56,6 +62,5 @@ export function locationMatchesQuery(loc: LocationItem, query: string): boolean 
 
 export function locationMatchesCategory(loc: LocationItem, category: string): boolean {
   if (category === 'All') return true;
-  const hay = `${loc.typical_wildlife || ''} ${loc.description || ''} ${loc.why_recommended || ''}`.toLowerCase();
-  return (CATEGORY_NEEDLES[category] || [category.toLowerCase()]).some((needle) => hay.includes(needle));
+  return (loc.type || '').toLowerCase() === category.toLowerCase();
 }
