@@ -23,6 +23,8 @@ import {
   WildlifeCardOption,
   WildlifeCombatant,
   WildlifeEvent,
+  WildlifeFriend,
+  WildlifeFriends,
   WildlifeLeaderboardEntry,
   WildlifeMatch,
 } from "../../../types/wildlifeMatch";
@@ -145,6 +147,7 @@ function Leaderboard({ entries, childId, error, onRetry }: {
         <Text style={styles.sectionTitle}>Friend leaderboard</Text>
         <Tap label="Refresh leaderboard" onPress={onRetry}><MaterialIcons name="refresh" size={21} color="#176B40" /></Tap>
       </View>
+      <Text style={styles.mutedText}>You and your friends. Friend battle wins earn +5; losses cost 3.</Text>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {entries === null ? <ActivityIndicator color="#176B40" /> : entries.length === 0 ? (
         <Text style={styles.mutedText}>No ranked friend battles yet.</Text>
@@ -159,12 +162,68 @@ function Leaderboard({ entries, childId, error, onRetry }: {
   );
 }
 
+function FriendsPanel({ data, error, busy, onAdd, onInvite }: {
+  data: WildlifeFriends | null;
+  error: string | null;
+  busy: boolean;
+  onAdd: (code: string) => Promise<WildlifeFriend | null>;
+  onInvite: (friend: WildlifeFriend) => void;
+}) {
+  const [code, setCode] = useState("");
+  const [added, setAdded] = useState<string | null>(null);
+  const submit = async () => {
+    setAdded(null);
+    const friend = await onAdd(code);
+    if (friend) {
+      setCode("");
+      setAdded(`${friend.display_name} is in your Friend List.`);
+    }
+  };
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Friends</Text>
+      <Text style={styles.smallText}>Your friend code</Text>
+      <Text selectable style={styles.inviteCode} accessibilityLabel={`Your friend code ${data?.friend_code ?? "loading"}`}>{data?.friend_code ?? "······"}</Text>
+      <Text style={styles.mutedText}>Share this code so a friend can add you.</Text>
+      <TextInput
+        style={styles.inviteInput}
+        value={code}
+        onChangeText={(value) => { setCode(value); setAdded(null); }}
+        onSubmitEditing={() => void submit()}
+        autoCapitalize="characters"
+        autoCorrect={false}
+        placeholder="Enter a friend's code"
+        placeholderTextColor="#85988B"
+        accessibilityLabel="Friend code"
+        maxLength={32}
+      />
+      <InfoButton label="Add friend" onPress={() => void submit()} disabled={!code.trim() || busy} />
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {added ? <Text style={styles.successText}>{added}</Text> : null}
+      <Text style={styles.subTitle}>Friend List</Text>
+      {data === null ? <ActivityIndicator color="#176B40" /> : data.friends.length === 0 ? (
+        <Text style={styles.mutedText}>No friends yet. Add a friend with their code to invite them to a battle.</Text>
+      ) : data.friends.map((friend) => (
+        <View key={friend.child_id} style={styles.friendRow}>
+          <MaterialIcons name="person" size={20} color="#176B40" />
+          <View style={styles.flex}>
+            <Text style={styles.friendName} numberOfLines={1}>{friend.display_name}</Text>
+            <Text style={styles.mutedText}>{friend.points} pts</Text>
+          </View>
+          <Tap label={`Invite ${friend.display_name} to battle`} onPress={() => onInvite(friend)} disabled={busy} style={[styles.smallButton, busy && styles.disabled]}>
+            <Text style={styles.smallButtonText}>Invite to battle</Text>
+          </Tap>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
   const battle = useWildlifeMatch();
   const species = useUnlockedBattleSpecies();
   const restingCards = battle.restCards?.filter((card) => card.remaining > 0);
   const childId = useUserStore((state) => state.currentUser.id);
-  const [inviteCode, setInviteCode] = useState("");
   const [selectedSpeciesId, setSelectedSpeciesId] = useState<string | null>(null);
   const [leaveVisible, setLeaveVisible] = useState(false);
   const [editingWaitingCard, setEditingWaitingCard] = useState(false);
@@ -237,6 +296,8 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
   const myTurn = match?.status === "active" && match.state?.turn === mySide;
   const countdown = secondsLeft(match?.deadline_at, battle.serverClock);
   const canAct = myTurn && !battle.pending;
+  const invitedFriend = battle.friends?.outgoing_invites.find((item) => item.match_id === match?.id);
+  const incomingInvites = battle.friends?.incoming_invites ?? [];
 
   const actionButtons = myCard ? ACTIONS.map((entry) => {
     const skill = entry.slot === undefined ? undefined : myCard.abilities?.find((ability) => ability.slot === entry.slot);
@@ -308,24 +369,32 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
               <Text style={styles.sectionTitle}>Play a new match</Text>
               <Text style={styles.smallText}>A completed match makes its card rest for your next two battles. If every card is resting, the one closest to ready can still play.</Text>
               <PrimaryButton label="Practice against a bot" icon="smart-toy" onPress={() => void battle.start("bot")} disabled={Boolean(battle.pending)} loading={battle.pending === "Creating match"} />
-              <PrimaryButton label="Challenge a friend" icon="people" onPress={() => void battle.start("friend")} disabled={Boolean(battle.pending)} />
-              <Text style={styles.mutedText}>Bot practice does not change leaderboard points. Friend wins earn +5; losses cost 3.</Text>
+              <Text style={styles.mutedText}>Bot practice does not change leaderboard points. To battle a friend, add them below and tap Invite to battle.</Text>
             </View>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Join a friend's match</Text>
-              <TextInput
-                style={styles.inviteInput}
-                value={inviteCode}
-                onChangeText={setInviteCode}
-                autoCapitalize="characters"
-                autoCorrect={false}
-                placeholder="Enter invitation code"
-                placeholderTextColor="#85988B"
-                accessibilityLabel="Invitation code"
-                maxLength={32}
-              />
-              <InfoButton label="Preview invitation" onPress={() => void battle.previewInvite(inviteCode)} disabled={!inviteCode.trim() || Boolean(battle.pending)} />
-            </View>
+            {incomingInvites.length ? (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Battle invitations</Text>
+                {incomingInvites.map((item) => (
+                  <View key={item.match_id} style={styles.friendRow}>
+                    <MaterialIcons name="mail" size={20} color="#176B40" />
+                    <View style={styles.flex}>
+                      <Text style={styles.friendName} numberOfLines={1}>{item.friend_display_name} invited you</Text>
+                      <Text style={styles.mutedText}>{friendlyHabitat(item.habitat)} habitat</Text>
+                    </View>
+                    <Tap label={`Accept ${item.friend_display_name}'s battle invitation`} onPress={() => void battle.previewInvite(item.invite_code)} disabled={Boolean(battle.pending)} style={[styles.smallButton, Boolean(battle.pending) && styles.disabled]}>
+                      <Text style={styles.smallButtonText}>Accept</Text>
+                    </Tap>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            <FriendsPanel
+              data={battle.friends}
+              error={battle.friendsError}
+              busy={Boolean(battle.pending)}
+              onAdd={battle.addFriend}
+              onInvite={(friend) => void battle.start("friend", friend.child_id)}
+            />
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Card recovery</Text>
               {battle.restCards === null ? <Text style={styles.mutedText}>{battle.restError ?? "Loading card recovery…"}</Text> : restingCards?.length ? restingCards.map((card) => {
@@ -342,7 +411,11 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
         {selecting && habitat ? (
           <>
             <HabitatPanel habitat={habitat} />
-            {battle.invite ? <Text style={styles.sectionIntro}>Join code {battle.invite.code}. Pick one ready card to enter your friend's match.</Text> : (
+            {battle.invite ? (
+              <Text style={styles.sectionIntro}>Pick one ready card to accept {battle.invite.host_display_name ? `${battle.invite.host_display_name}'s` : "your friend's"} battle.</Text>
+            ) : invitedFriend ? (
+              <Text style={styles.sectionIntro}>Pick one ready card to battle {invitedFriend.friend_display_name}. They get your invitation once you choose.</Text>
+            ) : (
               <Text style={styles.sectionIntro}>Pick one ready card. Your opponent will only see your choice when the match begins.</Text>
             )}
             <View style={styles.section}>
@@ -395,9 +468,18 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
           <>
             <HabitatPanel habitat={match.habitat} />
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Waiting for your friend</Text>
-              <Text style={styles.smallText}>Give your friend this invitation code. The match starts when they choose a card.</Text>
-              <Text selectable style={styles.inviteCode} accessibilityLabel={`Invitation code ${match.invite_code ?? ""}`}>{match.invite_code ?? "—"}</Text>
+              {invitedFriend ? (
+                <>
+                  <Text style={styles.sectionTitle}>Waiting for {invitedFriend.friend_display_name}</Text>
+                  <Text style={styles.smallText}>Your battle invitation is in {invitedFriend.friend_display_name}'s Battle invitations. The match starts when they accept and choose a card.</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.sectionTitle}>Waiting for your friend</Text>
+                  <Text style={styles.smallText}>Give your friend this invitation code. The match starts when they choose a card.</Text>
+                  <Text selectable style={styles.inviteCode} accessibilityLabel={`Invitation code ${match.invite_code ?? ""}`}>{match.invite_code ?? "—"}</Text>
+                </>
+              )}
               <Text style={styles.mutedText}>This screen checks for your friend automatically.</Text>
               <InfoButton label="Check for friend now" onPress={() => void battle.refreshMatch()} disabled={Boolean(battle.pending)} />
               <InfoButton label="Change your card" onPress={() => {
@@ -417,7 +499,7 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
               <CombatantPanel combatant={opponentCard} label={match.mode === "bot" ? "BOT CARD" : "FRIEND'S CARD"} />
             </View>
             <View style={styles.turnPanel}>
-              <Text style={styles.turnTitle}>{myTurn ? "Your turn" : "Waiting for opponent"}</Text>
+              <Text style={styles.turnTitle}>{myTurn ? "Your turn" : match.mode === "bot" ? "Bot is choosing a move…" : "Waiting for your friend"}</Text>
               {match.mode === "friend" ? (
                 <Text style={styles.turnTimer} accessibilityLabel={`${countdown ?? "unknown"} seconds left in turn`}>
                   {countdown === null ? "Timer syncing…" : countdown === 0 ? "Deadline reached · server checking…" : `${countdown}s left`}
@@ -539,6 +621,12 @@ const styles = StyleSheet.create({
   resultPanel: { backgroundColor: "#E7F7E9", borderWidth: 1, borderColor: "#B5E1BF", borderRadius: 18, padding: 18, gap: 9 },
   resultTitle: { color: "#14552F", fontSize: 25, fontWeight: "900" },
   resultText: { color: "#245B38", fontSize: 14, fontWeight: "700" },
+  subTitle: { color: "#193D29", fontSize: 14, fontWeight: "800", marginTop: 4 },
+  successText: { color: "#176B40", fontSize: 12, fontWeight: "700" },
+  friendRow: { flexDirection: "row", alignItems: "center", gap: 10, borderBottomWidth: 1, borderBottomColor: "#EEF3EF", paddingVertical: 8 },
+  friendName: { color: "#193D29", fontSize: 13, fontWeight: "800" },
+  smallButton: { minHeight: 36, borderRadius: 10, borderWidth: 1, borderColor: "#9BC6A5", paddingHorizontal: 12, justifyContent: "center", alignItems: "center", backgroundColor: "#F2FBF5" },
+  smallButtonText: { color: "#176B40", fontSize: 12, fontWeight: "800" },
   leaderboardRow: { flexDirection: "row", alignItems: "center", gap: 8, borderBottomWidth: 1, borderBottomColor: "#EEF3EF", paddingVertical: 7 },
   myLeaderboardRow: { backgroundColor: "#F1F9F3" },
   rankText: { width: 38, color: "#176B40", fontSize: 12, fontWeight: "900" },

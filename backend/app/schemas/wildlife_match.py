@@ -11,7 +11,13 @@ class _Input(BaseModel):
 
 class CreateMatchIn(_Input):
     mode: Literal["bot", "friend"]
+    # Friend matches started from the Friend List are reserved for this friend.
+    friend_child_id: int | None = Field(default=None, ge=1)
     client_request_id: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+class AddFriendIn(_Input):
+    code: str = Field(min_length=1, max_length=32)
 
 
 class SelectCardIn(_Input):

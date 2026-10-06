@@ -7,7 +7,7 @@ from typing import Annotated, Any
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import and_, case, insert, or_, select, update
+from sqlalchemy import and_, case, func, insert, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -16,8 +16,10 @@ from app.core.auth import AuthenticatedUser, get_current_user
 from app.core.database import engine
 from app.core.schema import (
     child_profiles, collection_entries, species, wildlife_card_rest,
-    wildlife_leaderboard, wildlife_matches, wildlife_requests,
+    wildlife_friendships, wildlife_leaderboard, wildlife_match_invites, wildlife_matches,
+    wildlife_requests,
 )
+from app.routers.friends import are_friends
 from app.schemas.wildlife_match import ActionIn, CancelIn, CreateMatchIn, ForfeitIn, SelectCardIn
 from app.services.battle_catalogue import get_battle_definition, get_catalogue
 from app.services.battle_engine import get_unlocked_abilities_for_child
@@ -28,6 +30,9 @@ from app.services import wildlife_battle
 router = APIRouter(prefix="/api/v1/wildlife-battles", tags=["Wildlife Card Battle"])
 TURN_SECONDS = 30
 MATCH_HOURS = 2
+# The bot's opening move waits for the client's next poll, so the explorer
+# first sees both cards at their starting Energy instead of after a recharge.
+BOT_OPENING_DELAY = timedelta(seconds=2)
 
 
 def _now() -> datetime:
@@ -109,6 +114,14 @@ def _require_no_other_open_match(connection, child_id: int, *, excluding: str | 
             "message": "Finish or cancel your current wildlife match first.",
             "match_id": existing["id"],
         })
+
+
+def _require_invitee(connection, row, child_id: int) -> None:
+    invitee = connection.execute(select(wildlife_match_invites.c.invitee_child_id).where(
+        wildlife_match_invites.c.match_id == row["id"],
+    )).scalar_one_or_none()
+    if invitee is not None and invitee != child_id and child_id != row["owner_child_id"]:
+        raise HTTPException(403, "This battle invitation is for another explorer.")
 
 
 def _side(row, child_id: int) -> str:
@@ -290,7 +303,7 @@ def _bot_turn(state: dict) -> tuple[dict, list[dict]]:
 
 
 def _refresh_timers(match_id: str, child_id: int) -> list[dict]:
-    """Advance every elapsed friend turn; no energy is awarded by skipping."""
+    """Advance elapsed friend turns (no Energy for skipping) and a due bot opening move."""
     for _attempt in range(2):
         try:
             with engine.begin() as connection:
@@ -306,7 +319,18 @@ def _refresh_timers(match_id: str, child_id: int) -> list[dict]:
                     if changed.rowcount != 1:
                         continue
                     return []
-                if row["mode"] != "friend" or row["status"] != "active" or row["deadline_at"] is None:
+                if row["mode"] == "bot":
+                    # Only the bot's opening move is deferred; later bot moves
+                    # resolve in the same request as the explorer's action.
+                    if (
+                        row["status"] != "active" or row["state"]["turn"] != "opponent"
+                        or now < _aware(row["updated_at"]) + BOT_OPENING_DELAY
+                    ):
+                        return []
+                    state, events = _bot_turn(row["state"])
+                    _update_state(connection, row, state, events, deadline_at=None)
+                    return events
+                if row["status"] != "active" or row["deadline_at"] is None:
                     return []
                 deadline = _aware(row["deadline_at"])
                 if now < deadline:
@@ -357,6 +381,11 @@ def create_match(payload: CreateMatchIn, user: Annotated[AuthenticatedUser, Depe
                         return cached
                     raise HTTPException(409, "This request ID was already used.")
             _require_no_other_open_match(connection, user.child_id)
+            if payload.friend_child_id is not None:
+                if payload.mode != "friend":
+                    raise HTTPException(400, "Only friend matches can invite a friend.")
+                if not are_friends(connection, user.child_id, payload.friend_child_id):
+                    raise HTTPException(403, "Add this explorer as a friend before inviting them.")
             cards, selectable = _rest_status(connection, user.child_id)
             habitat = wildlife_battle.choose_habitat(
                 [raw_habitat for species_id, raw_habitat, _ in cards if species_id in selectable],
@@ -374,6 +403,10 @@ def create_match(payload: CreateMatchIn, user: Annotated[AuthenticatedUser, Depe
                 expires_at=now + timedelta(hours=MATCH_HOURS),
                 created_at=now, updated_at=now, settled=False,
             ))
+            if payload.friend_child_id is not None:
+                connection.execute(insert(wildlife_match_invites).values(
+                    match_id=match_id, invitee_child_id=payload.friend_child_id,
+                ))
             row = _match(connection, match_id)
             response = _response(row, user.child_id)
             _save_request(connection, match_id, user.child_id, payload.client_request_id, "create", request, response)
@@ -426,18 +459,26 @@ def current_match(user: Annotated[AuthenticatedUser, Depends(get_current_user)])
 
 @router.get("/leaderboard")
 def leaderboard(user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
+    # The friend leaderboard ranks the explorer and their friends; anyone
+    # without a ranked friend battle yet appears with 0 points.
+    points = func.coalesce(wildlife_leaderboard.c.points, 0)
+    friend_ids = select(wildlife_friendships.c.friend_child_id).where(
+        wildlife_friendships.c.child_id == user.child_id,
+    )
     with engine.connect() as connection:
         rows = connection.execute(select(
-            wildlife_leaderboard.c.child_id, child_profiles.c.display_name, wildlife_leaderboard.c.points,
-        ).select_from(wildlife_leaderboard.join(
-            child_profiles, child_profiles.c.id == wildlife_leaderboard.c.child_id,
-        )).order_by(wildlife_leaderboard.c.points.desc(), child_profiles.c.display_name, wildlife_leaderboard.c.child_id)).all()
+            child_profiles.c.id, child_profiles.c.display_name, points,
+        ).select_from(child_profiles.outerjoin(
+            wildlife_leaderboard, wildlife_leaderboard.c.child_id == child_profiles.c.id,
+        )).where(or_(
+            child_profiles.c.id == user.child_id, child_profiles.c.id.in_(friend_ids),
+        )).order_by(points.desc(), child_profiles.c.display_name, child_profiles.c.id)).all()
     entries = [
-        {"rank": rank, "child_id": child_id, "display_name": name, "points": points}
-        for rank, (child_id, name, points) in enumerate(rows, start=1)
+        {"rank": rank, "child_id": child_id, "display_name": name, "points": score}
+        for rank, (child_id, name, score) in enumerate(rows, start=1)
     ]
-    own = next((entry for entry in entries if entry["child_id"] == user.child_id), None)
-    return {"entries": entries, "viewer": own or {"child_id": user.child_id, "points": 0, "rank": None}}
+    own = next(entry for entry in entries if entry["child_id"] == user.child_id)
+    return {"entries": entries, "viewer": own}
 
 
 @router.get("/invites/{code}")
@@ -451,9 +492,13 @@ def invite_preview(code: str, user: Annotated[AuthenticatedUser, Depends(get_cur
         _require_live(row)
         if row["status"] != "waiting":
             raise HTTPException(409, "This invite is no longer open.")
+        _require_invitee(connection, row, user.child_id)
+        host_name = connection.execute(select(child_profiles.c.display_name).where(
+            child_profiles.c.id == row["owner_child_id"],
+        )).scalar_one()
         return {"invite": {
             "code": code, "match_id": row["id"], "habitat": row["habitat"],
-            "status": row["status"],
+            "status": row["status"], "host_display_name": host_name,
             "can_join": user.child_id != row["owner_child_id"],
         }}
 
@@ -471,6 +516,7 @@ def invite_cards_preview(code: str, user: Annotated[AuthenticatedUser, Depends(g
             raise HTTPException(409, "This invite is no longer open.")
         if user.child_id == row["owner_child_id"]:
             raise HTTPException(403, "You cannot join your own match.")
+        _require_invitee(connection, row, user.child_id)
         return _cards(connection, user.child_id, row["habitat"])
 
 
@@ -486,6 +532,7 @@ def join_match(code: str, payload: SelectCardIn, user: Annotated[AuthenticatedUs
                 raise HTTPException(404, "Invite not found.")
             if user.child_id == row["owner_child_id"]:
                 raise HTTPException(403, "You cannot join your own match.")
+            _require_invitee(connection, row, user.child_id)
             cached = _cached(connection, row["id"], user.child_id, payload.client_request_id, "join", request)
             if cached is not None:
                 return cached
@@ -564,7 +611,6 @@ def select_card(match_id: str, payload: SelectCardIn, user: Annotated[Authentica
                 raise HTTPException(409, "Card selection is closed for this match.")
             player_def, player_habitat = _owned_card(connection, user.child_id, payload.species_id)
             values: dict[str, Any] = {"owner_species_id": payload.species_id, "updated_at": _now()}
-            events: list[dict] = []
             if row["mode"] == "friend":
                 values["status"] = "waiting"
             else:
@@ -587,26 +633,16 @@ def select_card(match_id: str, payload: SelectCardIn, user: Annotated[Authentica
                     player_unlocked=unlocked, opponent_unlocked=opponent_unlocked,
                     mode="bot", initiative=secrets.choice(("player", "opponent")),
                 )
-                state, events = _bot_turn(state)
-                values.update(
-                    guest_species_id=opponent_def["species_id"],
-                    status=state["status"], state=state,
-                    settled=state["status"] == "completed",
-                )
+                # A bot with initiative moves on a later poll (BOT_OPENING_DELAY).
+                values.update(guest_species_id=opponent_def["species_id"], status="active", state=state)
             updated = connection.execute(update(wildlife_matches).where(
                 wildlife_matches.c.id == match_id, wildlife_matches.c.version == row["version"],
                 wildlife_matches.c.status == row["status"],
             ).values(**values, version=row["version"] + 1))
             if updated.rowcount != 1:
                 raise HTTPException(409, "The match changed. Refresh and retry.")
-            if values.get("settled"):
-                settled_row = _match(connection, match_id)
-                owner_delta, guest_delta = _settle(connection, settled_row, values["state"])
-                connection.execute(update(wildlife_matches).where(wildlife_matches.c.id == match_id).values(
-                    owner_leaderboard_delta=owner_delta, guest_leaderboard_delta=guest_delta,
-                ))
             current = _match(connection, match_id)
-            response = _response(current, user.child_id, events)
+            response = _response(current, user.child_id)
             _save_request(connection, match_id, user.child_id, payload.client_request_id, "select", request, response)
             return response
     except (IntegrityError, OperationalError, HTTPException) as error:
