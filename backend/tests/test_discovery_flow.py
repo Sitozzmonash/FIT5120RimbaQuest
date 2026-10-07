@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import tempfile
 from pathlib import Path
@@ -43,6 +44,35 @@ def register(prefix: str = "explorer") -> tuple[int, str, str]:
 
 def headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+def _sample_jpeg() -> bytes:
+    """A small generated JPEG; tests never use real user photos."""
+    from PIL import Image
+
+    output = io.BytesIO()
+    Image.new("RGB", (64, 48), (90, 140, 70)).save(output, "JPEG")
+    return output.getvalue()
+
+
+SAMPLE_JPEG = _sample_jpeg()
+
+
+class _GenuinePhotoDetector:
+    """The screen-recapture model is stubbed out here; tests/test_recapture.py
+    covers the real model"""
+
+    def predict(self, _data: bytes) -> dict:
+        return {"p_recapture": 0.01, "is_recapture": False, "verdict": "genuine", "threshold": 0.607,
+                "low_resolution": False, "width": 4000, "height": 3000}
+
+    def info(self) -> dict:
+        return {"sha256": "test-model"}
+
+
+@pytest.fixture(autouse=True)
+def genuine_photo_detector(monkeypatch):
+    monkeypatch.setattr("app.routers.discoveries.get_detector", _GenuinePhotoDetector)
 
 
 def poll_verification_status(child_id: int, auth: dict[str, str], trace_id: str) -> dict:
@@ -289,7 +319,7 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife.jpg", b"jpeg-data", "image/jpeg")},
+        files={"photo": ("wildlife.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
     assert pending.status_code == 200, pending.text
     assert pending.json()["status"] == "pending"
@@ -349,7 +379,7 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     reported_pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("reported.jpg", b"reported-photo", "image/jpeg")},
+        files={"photo": ("reported.jpg", SAMPLE_JPEG, "image/jpeg")},
     ).json()
     reported = poll_verification_status(child_id, auth, reported_pending["trace_id"])
     report_result = client.post(
@@ -367,7 +397,7 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     verified_again_pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife-again.jpg", b"jpeg-data-two", "image/jpeg")},
+        files={"photo": ("wildlife-again.jpg", SAMPLE_JPEG, "image/jpeg")},
     ).json()
     verified_again = poll_verification_status(
         child_id, auth, verified_again_pending["trace_id"]
@@ -439,7 +469,7 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
     uncertain = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("unclear.jpg", b"unclear", "image/jpeg")},
+        files={"photo": ("unclear.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
     assert uncertain.status_code == 200
     assert uncertain.json()["status"] == "pending"
@@ -457,7 +487,7 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
     failed = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife.jpg", b"wildlife", "image/jpeg")},
+        files={"photo": ("wildlife.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
     assert failed.status_code == 200
     failed_status = poll_verification_status(child_id, auth, failed.json()["trace_id"])

@@ -9,4 +9,8 @@ httpx==0.28.1
 pypdf>=5,<7
 boto3>=1.35,<2
 python-dotenv>=1.0,<2
+ai-edge-litert>=2.1,<3
+numpy>=1.26,<3
+pillow>=10.4,<13
+pillow-heif>=0.18,<2
 pytest==8.3.4

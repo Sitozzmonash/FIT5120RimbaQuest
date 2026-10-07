@@ -82,6 +82,7 @@ export type VerificationErrorKind =
   | 'no_animal_detected'
   | 'low_confidence'
   | 'species_not_in_catalog'
+  | 'try_another_photo'
   | 'failed';
 
 export type VerificationError = {

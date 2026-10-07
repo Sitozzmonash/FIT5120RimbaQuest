@@ -10,6 +10,7 @@ import {
   VerificationErrorKind,
 } from "../types";
 import { OFFLINE_SPECIES } from "../constants/seed";
+import { PhotoContext } from "../utils/photoContext";
 import { useNavigationStore } from "./useNavigationStore";
 import { useSelectedSpeciesStore } from "./useSelectedSpeciesStore";
 import { useUserStore } from "./useUserStore";
@@ -17,6 +18,7 @@ import { useUserStore } from "./useUserStore";
 type DiscoveryState = {
   photoUri: string | null;
   photoMimeType: string | null;
+  photoContext: PhotoContext | null;
   photoError: string | null;
   verifyingPhoto: boolean;
   verificationError: VerificationError | null;
@@ -45,6 +47,7 @@ type DiscoveryState = {
 
 export type PhotoCheckStage =
   | "uploading"
+  | "screening"
   | "identifying"
   | "matching"
   | "saving"
@@ -73,7 +76,11 @@ type DiscoveryActions = {
   retake: () => void;
   discard: () => void;
 
-  submitPhoto: (uri: string, mimeType: string) => Promise<boolean>;
+  submitPhoto: (
+    uri: string,
+    mimeType: string,
+    context?: PhotoContext | null,
+  ) => Promise<boolean>;
   retryPhoto: () => Promise<void>;
 
   evaluateIdentification: (item: Species) => Promise<void>;
@@ -87,7 +94,7 @@ type DiscoveryActions = {
   saveDiscovery: (speciesId: string) => Promise<SaveDiscoveryResult | null>;
 
   start: (presetLocation?: string) => void;
-  capturePhoto: (uri: string, mimeType?: string) => void;
+  capturePhoto: (uri: string, mimeType?: string, context?: PhotoContext) => void;
   discardAndExit: () => void;
   continueToConfirm: (item: Species) => void;
   confirmAndSave: () => Promise<boolean>;
@@ -122,6 +129,7 @@ const PHOTO_CHECK_POLL_INTERVAL_MS = 700;
 const initialState: DiscoveryState = {
   photoUri: null,
   photoMimeType: null,
+  photoContext: null,
   photoError: null,
   verifyingPhoto: false,
   verificationError: null,
@@ -233,6 +241,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       verificationAttempt: state.verificationAttempt + 1,
       photoUri: null,
       photoMimeType: null,
+      photoContext: null,
       photoError: null,
       verificationError: null,
       photoCheckStage: null,
@@ -254,7 +263,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     }));
   },
 
-  submitPhoto: async (uri, mimeType) => {
+  submitPhoto: async (uri, mimeType, context = null) => {
     const { currentUser, authHeaders } = useUserStore.getState();
     const childId = currentUser.id;
     cancelActivePhotoVerification();
@@ -265,6 +274,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       verificationAttempt: attempt,
       photoUri: uri,
       photoMimeType: mimeType,
+      photoContext: context,
       photoError: null,
       verificationError: null,
       photoCheckStage: "uploading",
@@ -283,7 +293,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         ? "png"
         : mimeType === "image/webp"
           ? "webp"
-          : "jpg";
+          : mimeType === "image/heic" || mimeType === "image/heif"
+            ? "heic"
+            : "jpg";
     if (Platform.OS === "web") {
       const blob = await fetch(uri).then((response) => response.blob());
       form.append("photo", blob, `discovery.${ext}`);
@@ -293,6 +305,11 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
         name: `discovery.${ext}`,
         type: mimeType,
       } as unknown as Blob);
+    }
+    
+    if (context) {
+      form.append("source", context.source);
+      form.append("metadata", JSON.stringify(context.metadata));
     }
 
     if (controller.signal.aborted || attempt !== get().verificationAttempt) {
@@ -393,7 +410,9 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
               ? statusData.reason
               : "no_animal_detected";
           const kind: VerificationErrorKind =
-            reason === "low_confidence" || reason === "species_not_in_catalog"
+            reason === "low_confidence" ||
+            reason === "species_not_in_catalog" ||
+            reason === "try_another_photo"
               ? reason
               : "no_animal_detected";
           set({
@@ -463,6 +482,7 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     await get().submitPhoto(
       state.photoUri,
       state.photoMimeType ?? "image/jpeg",
+      state.photoContext,
     );
   },
 
@@ -670,11 +690,11 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
     useNavigationStore.getState().resetTo("photo");
   },
 
-  capturePhoto: (uri, mimeType = "image/jpeg") => {
+  capturePhoto: (uri, mimeType = "image/jpeg", context) => {
     useNavigationStore.getState().open("photo_preview");
     // Don't jump straight to the species screen: the preview screen shows a
     // success popup and the user taps its button to continue.
-    void get().submitPhoto(uri, mimeType);
+    void get().submitPhoto(uri, mimeType, context);
   },
 
   discardAndExit: () => {

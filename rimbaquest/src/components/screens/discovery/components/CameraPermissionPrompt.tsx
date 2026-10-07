@@ -5,6 +5,7 @@ import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { Tap } from "../../../common/Tap";
 import { GameButton } from "../../../common/game/GameButton";
+import { PHOTO_GUIDANCE } from "./ViewfinderOverlay";
 
 export function CameraPermissionPrompt({
   onRequestPermission,
@@ -28,6 +29,7 @@ export function CameraPermissionPrompt({
         Point your camera at an animal, then take a photo or choose one you
         already have.
       </Text>
+      <Text style={styles.guidance}>{PHOTO_GUIDANCE}</Text>
       {photoError ? <Text style={styles.errorBanner}>{photoError}</Text> : null}
       <View style={styles.actions}>
         <GameButton label="Use Camera" onPress={onRequestPermission} />
@@ -67,6 +69,13 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     lineHeight: 24,
+  },
+  guidance: {
+    color: "#C9D6CC",
+    fontSize: 13,
+    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 19,
   },
   actions: { alignSelf: "stretch", gap: 8 },
   errorBanner: {

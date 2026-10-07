@@ -1,12 +1,24 @@
 from __future__ import annotations
 
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import CORS_ORIGINS, IS_POSTGRES
+from app.core.auth import get_current_user
+from app.core.config import CORS_ORIGINS, IS_POSTGRES, RECAPTURE_API_ENABLED
+from app.ml.recapture_detector import get_detector, router as recapture_router
 from app.routers import auth, battle_sessions, battles, chat, discoveries, friends, locations, quizzes, species, wildlife_matches
 
-app = FastAPI(title="RimbaQuest API", version="2.0.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Load the screen-recapture model once per worker, not on the first photo.
+    get_detector()
+    yield
+
+
+app = FastAPI(title="RimbaQuest API", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -33,3 +45,11 @@ app.include_router(battle_sessions.router)
 app.include_router(wildlife_matches.router)
 app.include_router(friends.router)
 app.include_router(chat.router)
+
+if RECAPTURE_API_ENABLED:
+    app.include_router(
+        recapture_router,
+        prefix="/api/v1/recapture",
+        tags=["recapture"],
+        dependencies=[Depends(get_current_user)],
+    )
