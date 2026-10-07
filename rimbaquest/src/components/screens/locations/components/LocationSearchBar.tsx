@@ -19,5 +19,5 @@ export function LocationSearchBar() {
 }
 
 const styles = StyleSheet.create({
-  section: { paddingHorizontal: 16, paddingVertical: 12 },
+  section: { paddingHorizontal: 16, paddingTop: 8 },
 });

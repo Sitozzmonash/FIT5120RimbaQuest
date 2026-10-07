@@ -1,5 +1,6 @@
 import React from "react";
-import { ImageSourcePropType } from "react-native";
+import { ImageSourcePropType, StyleSheet, Text } from "react-native";
+import { FONTS } from "../../../../constants/fonts";
 import { HOME_MAP_IMAGES } from "../../../../constants/images";
 import { WoodModal } from "../../../common/game/WoodModal";
 
@@ -13,13 +14,19 @@ export type HomeMenu =
 // Copy shown before leaving the map for each menu.
 const MENU_COPY: Record<
   HomeMenu,
-  { icon?: ImageSourcePropType; title: string; message: string }
+  {
+    icon?: ImageSourcePropType;
+    title: string;
+    message: string;
+    note?: string;
+  }
 > = {
   discover: {
     icon: HOME_MAP_IMAGES.iconDiscover,
     title: "Go Discover?",
     message:
       "You're heading out to explore places where you can spot wild animals.",
+    note: "Wildlife sightings are never guaranteed!",
   },
   capture: {
     icon: HOME_MAP_IMAGES.iconCapture,
@@ -73,6 +80,18 @@ export function MenuConfirmModal({
       onAction={onEnter}
       secondaryLabel="No Thanks"
       onSecondary={onCancel}
-    />
+    >
+      {copy.note ? <Text style={styles.note}>{copy.note}</Text> : null}
+    </WoodModal>
   );
 }
+
+const styles = StyleSheet.create({
+  note: {
+    fontFamily: FONTS.bodyBlack,
+    color: "#1A1A1A",
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+});

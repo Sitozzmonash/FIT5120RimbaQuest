@@ -25,6 +25,7 @@ import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile'
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useWebPageColors } from '../hooks/useWebPageColors';
 import { useDiscoveryStore } from '../store/useDiscoveryStore';
+import { useLocationsStore } from '../store/useLocationsStore';
 import { useNavigationStore } from '../store/useNavigationStore';
 import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
 import { useUserStore } from '../store/useUserStore';
@@ -50,6 +51,13 @@ export default function RimbaQuest() {
   // goBack() lands here once its history stack is empty.
   useEffect(() => {
     useNavigationStore.getState().setFallbackScreen(isLoggedIn ? 'home' : 'account_entry');
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      useLocationsStore.getState().stopLocationUpdates();
+      useLocationsStore.setState({ sessionConsent: false });
+    }
   }, [isLoggedIn]);
 
   const [exitConfirmVisible, setExitConfirmVisible] = useState(false);
