@@ -102,7 +102,7 @@ def test_create_request_replays_same_habitat_and_rejects_reuse():
     assert conflict.status_code == 409
 
 
-def test_bot_forfeit_rest_countdown_and_zero_leaderboard_points():
+def test_bot_forfeit_two_hour_rest_and_zero_leaderboard_points():
     child_id, headers = _user("rest")
     _own(child_id, *CARDS[:3])
     first = _select(_create(headers)["id"], headers, CARDS[0])
@@ -112,19 +112,27 @@ def test_bot_forfeit_rest_countdown_and_zero_leaderboard_points():
     completed = _forfeit(first, headers)
     assert completed.status_code == 200, completed.text
     assert completed.json()["match"]["leaderboard_delta"] == 0
-    rest = {card["species_id"]: card["remaining"] for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
-    assert rest[CARDS[0]] == 2
+    rest = {card["species_id"]: card for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
+    rest_until = datetime.fromisoformat(rest[CARDS[0]]["rest_until"])
+    assert timedelta(hours=1, minutes=59) < rest_until - datetime.now(timezone.utc) <= timedelta(hours=2)
     setup = _create(headers)
     blocked = client.post(f"{BASE}/{setup['id']}/select", json={"species_id": CARDS[0]}, headers=headers)
     assert blocked.status_code == 409
     second = _select(setup["id"], headers, CARDS[1])
     assert _forfeit(second, headers).status_code == 200
-    rest = {card["species_id"]: card["remaining"] for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
-    assert rest[CARDS[0]] == 1 and rest[CARDS[1]] == 2
+    rest = {card["species_id"]: card for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
+    assert rest[CARDS[0]]["rest_until"] == rest_until.isoformat()
+    assert rest[CARDS[1]]["rest_until"] is not None
     third = _select(_create(headers)["id"], headers, CARDS[2])
     assert _forfeit(third, headers).status_code == 200
-    rest = {card["species_id"]: card["remaining"] for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
-    assert rest[CARDS[0]] == 0 and rest[CARDS[1]] == 1 and rest[CARDS[2]] == 2
+    rest = {card["species_id"]: card for card in client.get(f"{BASE}/me/rest", headers=headers).json()["cards"]}
+    assert all(rest[species_id]["rest_until"] for species_id in CARDS[:3])
+    assert not any(rest[species_id]["selectable"] for species_id in CARDS[:3])
+    with engine.begin() as connection:
+        connection.execute(update(wildlife_card_rest).where(
+            wildlife_card_rest.c.child_id == child_id,
+            wildlife_card_rest.c.species_id == CARDS[0],
+        ).values(rest_until=datetime.now(timezone.utc) - timedelta(seconds=1)))
     assert _select(_create(headers)["id"], headers, CARDS[0])["status"] == "active"
     board = client.get(f"{BASE}/leaderboard", headers=headers).json()
     assert board["viewer"]["points"] == 0
@@ -140,49 +148,29 @@ def _preview(match_id: str, headers: dict[str, str]) -> dict[str, dict]:
     return {card["species_id"]: card for card in response.json()["cards"]}
 
 
-def test_small_collections_use_least_rested_card_instead_of_locking_out():
-    # Rest only counts down when a battle completes. Without a fallback, one
-    # or two cards would all be resting and the explorer could never battle.
+def test_single_card_becomes_ready_when_two_hours_pass_without_another_battle():
     one_id, one = _user("onecard")
     _own(one_id, CARDS[0])
-    for _ in range(3):
-        setup = _create(one)
-        card = _preview(setup["id"], one)[CARDS[0]]
-        assert card["selectable"] is True
-        assert _forfeit(_select(setup["id"], one, CARDS[0]), one).status_code == 200
-    assert card["rest_remaining"] == 2 and card["ready_early"] is True
-
-    two_id, two = _user("twocard")
-    _own(two_id, CARDS[0], CARDS[1])
-    assert _forfeit(_select(_create(two)["id"], two, CARDS[0]), two).status_code == 200
-    setup = _create(two)
-    cards = _preview(setup["id"], two)
-    # A fully rested card exists, so the resting card stays blocked.
-    assert cards[CARDS[0]]["selectable"] is False and cards[CARDS[0]]["ready_early"] is False
-    assert cards[CARDS[1]]["selectable"] is True and cards[CARDS[1]]["ready_early"] is False
-    assert client.post(f"{BASE}/{setup['id']}/select", json={"species_id": CARDS[0]}, headers=two).status_code == 409
-    assert _forfeit(_select(setup["id"], two, CARDS[1]), two).status_code == 200
-    # Both cards now rest; only the one closest to ready may battle.
-    setup = _create(two)
-    cards = _preview(setup["id"], two)
-    assert (cards[CARDS[0]]["rest_remaining"], cards[CARDS[1]]["rest_remaining"]) == (1, 2)
-    assert cards[CARDS[0]]["selectable"] is True and cards[CARDS[0]]["ready_early"] is True
-    assert cards[CARDS[1]]["selectable"] is False
-    assert client.post(f"{BASE}/{setup['id']}/select", json={"species_id": CARDS[1]}, headers=two).status_code == 409
-    assert _forfeit(_select(setup["id"], two, CARDS[0]), two).status_code == 200
-    rest = {card["species_id"]: card for card in client.get(f"{BASE}/me/rest", headers=two).json()["cards"]}
-    assert (rest[CARDS[0]]["remaining"], rest[CARDS[1]]["remaining"]) == (2, 1)
-    assert rest[CARDS[1]]["selectable"] is True and rest[CARDS[0]]["selectable"] is False
+    assert _forfeit(_select(_create(one)["id"], one, CARDS[0]), one).status_code == 200
+    setup = _create(one)
+    assert _preview(setup["id"], one)[CARDS[0]]["selectable"] is False
+    with engine.begin() as connection:
+        connection.execute(update(wildlife_card_rest).where(
+            wildlife_card_rest.c.child_id == one_id,
+            wildlife_card_rest.c.species_id == CARDS[0],
+        ).values(rest_until=datetime.now(timezone.utc) - timedelta(seconds=1)))
+    assert _preview(setup["id"], one)[CARDS[0]]["selectable"] is True
+    assert _select(setup["id"], one, CARDS[0])["status"] == "active"
 
 
-def test_friend_join_accepts_host_card_that_is_ready_early():
+def test_friend_join_accepts_host_card_after_rest_expires():
     owner, h1 = _user("hostone")
     guest, h2 = _user("guestone")
     _own(owner, CARDS[0])
     _own(guest, CARDS[1])
     with engine.begin() as connection:
         connection.execute(insert(wildlife_card_rest).values(
-            child_id=owner, species_id=CARDS[0], remaining=2,
+            child_id=owner, species_id=CARDS[0], rest_until=datetime.now(timezone.utc) - timedelta(seconds=1),
         ))
     waiting = _select(_create(h1, "friend")["id"], h1, CARDS[0])
     joined = client.post(f"{BASE}/invites/{waiting['invite_code']}/join", json={
@@ -299,6 +287,7 @@ def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
     assert finished.status_code == 200, finished.text
     assert finished.json()["match"]["status"] == "completed"
     assert finished.json()["match"]["leaderboard_delta"] == -3
+    assert isinstance(finished.json()["match"]["move_count"], int)
     assert _forfeit(skipped, h1, finish_id).json() == finished.json()
     assert _forfeit(skipped, h1).status_code == 409
     with engine.connect() as connection:
@@ -306,10 +295,11 @@ def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
             wildlife_leaderboard.c.child_id, wildlife_leaderboard.c.points,
         ).where(wildlife_leaderboard.c.child_id.in_([owner, guest]))).all())
         rest = dict(connection.execute(select(
-            wildlife_card_rest.c.child_id, wildlife_card_rest.c.remaining,
+            wildlife_card_rest.c.child_id, wildlife_card_rest.c.rest_until,
         ).where(wildlife_card_rest.c.child_id.in_([owner, guest]))).all())
     assert points == {owner: -3, guest: 5}
-    assert rest == {owner: 2, guest: 2}
+    assert set(rest) == {owner, guest}
+    assert all(timedelta(hours=1, minutes=59) < expiry.replace(tzinfo=expiry.tzinfo or timezone.utc) - datetime.now(timezone.utc) <= timedelta(hours=2) for expiry in rest.values())
     board = client.get(f"{BASE}/leaderboard", headers=h2).json()
     assert board["viewer"]["points"] == 5
     assert board["entries"][0]["child_id"] == guest
@@ -334,7 +324,7 @@ def test_host_can_cancel_waiting_invite_without_rest_or_points():
         "species_id": CARDS[1], "client_request_id": str(uuid4()),
     }, headers=h2).status_code == 409
     assert client.get(f"{BASE}/invites/{waiting['invite_code']}", headers=h2).status_code == 409
-    assert all(card["remaining"] == 0 for card in client.get(f"{BASE}/me/rest", headers=h1).json()["cards"])
+    assert all(card["rest_until"] is None for card in client.get(f"{BASE}/me/rest", headers=h1).json()["cards"])
     assert client.get(f"{BASE}/leaderboard", headers=h1).json()["viewer"]["points"] == 0
     assert client.get(f"{BASE}/me/current", headers=h1).json() == {"match": None}
 
@@ -452,7 +442,7 @@ def test_host_rest_between_invite_and_join_requires_reselection():
     waiting = _select(_create(h1, "friend")["id"], h1, CARDS[0])
     with engine.begin() as connection:
         connection.execute(insert(wildlife_card_rest).values(
-            child_id=owner, species_id=CARDS[0], remaining=2,
+            child_id=owner, species_id=CARDS[0], rest_until=datetime.now(timezone.utc) + timedelta(hours=2),
         ))
     blocked = client.post(f"{BASE}/invites/{waiting['invite_code']}/join", json={
         "species_id": CARDS[1], "client_request_id": str(uuid4()),

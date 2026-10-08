@@ -142,6 +142,32 @@ def test_quiz_submit_enforces_sequential_difficulty():
     assert progress["unlocked_abilities"] == [1]
 
 
+def test_all_quiz_progression_lists_every_discovered_card():
+    child_id, token = register_test_user("all_prog")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    empty = client.get("/api/v1/quiz-progression", headers=headers)
+    assert empty.status_code == 200
+    assert empty.json() == {"progression": {}}
+
+    unlock_species(child_id, "sp_malayan_tiger")
+    unlock_species(child_id, "sp_malayan_tapir")
+    easy_submit = client.post(
+        "/api/v1/species/sp_malayan_tiger/quiz/submit",
+        json={"difficulty": "easy", "set_index": 0, "answers": correct_answers("sp_malayan_tiger", "easy")},
+        headers=headers,
+    )
+    assert easy_submit.status_code == 200
+
+    progression = client.get("/api/v1/quiz-progression", headers=headers).json()["progression"]
+    # Matches the per-species endpoint; an untouched card has nothing unlocked.
+    assert progression == {"sp_malayan_tiger": [1], "sp_malayan_tapir": []}
+    single = client.get("/api/v1/species/sp_malayan_tiger/quiz-progression", headers=headers).json()
+    assert progression["sp_malayan_tiger"] == single["unlocked_abilities"]
+
+    assert client.get("/api/v1/quiz-progression").status_code == 401
+
+
 def test_quiz_progression_flow():
     child_id, token = register_test_user("progression")
     headers = {"Authorization": f"Bearer {token}"}

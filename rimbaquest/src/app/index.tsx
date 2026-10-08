@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, BackHandler, Platform, StatusBar, View } from 'react-native';
+import { BackHandler, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screen } from '../types';
 import { styles } from '../styles/theme';
@@ -14,8 +14,9 @@ import {
   SuccessScreen,
 } from '../components/screens/discovery';
 import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
-import { WildlifeBattleExperience } from '../components/screens/wildlifeBattle';
+import { GlobalInvitePopup, WildlifeBattleExperience } from '../components/screens/wildlifeBattle';
 import { AppLoadingModal } from '../components/common/AppLoadingModal';
+import { AppLoadingScreen } from '../components/common/AppLoadingScreen';
 import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
@@ -24,13 +25,14 @@ import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { useWebPageColors } from '../hooks/useWebPageColors';
+import { useBattleInviteStore } from '../store/useBattleInviteStore';
 import { useDiscoveryStore } from '../store/useDiscoveryStore';
 import { useLocationsStore } from '../store/useLocationsStore';
 import { useNavigationStore } from '../store/useNavigationStore';
 import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
 import { useUserStore } from '../store/useUserStore';
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz', 'species', 'confirm', 'success'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz', 'species', 'confirm', 'success', 'battle_select'];
 
 export default function RimbaQuest() {
   const screen = useNavigationStore((state) => state.screen);
@@ -55,6 +57,7 @@ export default function RimbaQuest() {
 
   useEffect(() => {
     if (!isLoggedIn) {
+      useBattleInviteStore.getState().reset();
       useLocationsStore.getState().stopLocationUpdates();
       useLocationsStore.setState({ sessionConsent: false });
     }
@@ -84,13 +87,7 @@ export default function RimbaQuest() {
   const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
 
   if (!bootstrapped) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.loading}>
-          <ActivityIndicator color="#0BA84A" size="large" />
-        </View>
-      </SafeAreaView>
-    );
+    return <AppLoadingScreen />;
   }
 
   const fullBleed = (screen === 'home' && isLoggedIn) || GRADIENT_SCREENS.includes(screen);
@@ -147,6 +144,7 @@ export default function RimbaQuest() {
         {screen === 'progress' && <ProfileScreen />}
       </View>
 
+      {isLoggedIn && screen !== 'battle_select' && <GlobalInvitePopup />}
       <AppLoadingModal />
       <ExitConfirmModal
         visible={exitConfirmVisible}

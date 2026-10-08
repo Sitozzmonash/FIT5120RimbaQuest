@@ -10,6 +10,7 @@ export function WoodPlank({
   title,
   centered = false,
   large = false,
+  compact = false,
   accessory,
 }: {
   title: string;
@@ -17,6 +18,8 @@ export function WoodPlank({
   centered?: boolean;
   // Bigger 24px title, e.g. an animal's name.
   large?: boolean;
+  // Slim 16px centered bar without rivets, e.g. the battle move tray.
+  compact?: boolean;
   // Shown beside the title, e.g. a category badge.
   accessory?: React.ReactNode;
 }) {
@@ -24,8 +27,9 @@ export function WoodPlank({
     <Text
       style={[
         styles.title,
-        centered && styles.titleCentered,
+        (centered || compact) && styles.titleCentered,
         large && styles.titleLarge,
+        compact && styles.titleCompact,
       ]}
     >
       {title}
@@ -38,6 +42,7 @@ export function WoodPlank({
         styles.plank,
         centered && styles.plankCentered,
         large && styles.plankLarge,
+        compact && styles.plankCompact,
       ]}
     >
       {/* wood stripes */}
@@ -47,8 +52,12 @@ export function WoodPlank({
       <View style={styles.highlight} />
 
       {/* rivets are the wood holes */}
-      <View style={[styles.rivet, { left: 11 }]} />
-      <View style={[styles.rivet, { right: 11 }]} />
+      {compact ? null : (
+        <>
+          <View style={[styles.rivet, { left: 11 }]} />
+          <View style={[styles.rivet, { right: 11 }]} />
+        </>
+      )}
 
       {accessory ? (
         <View style={styles.titleRow}>
@@ -78,6 +87,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   plankLarge: { paddingVertical: 12 },
+  plankCompact: { paddingTop: 6, paddingBottom: 9, alignItems: "center" },
   titleRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -117,4 +127,5 @@ const styles = StyleSheet.create({
   },
   titleCentered: { textAlign: "center" },
   titleLarge: { fontSize: 24, lineHeight: 29 },
+  titleCompact: { fontSize: 16, lineHeight: 19 },
 });

@@ -30,6 +30,7 @@ from app.services import wildlife_battle
 router = APIRouter(prefix="/api/v1/wildlife-battles", tags=["Wildlife Card Battle"])
 TURN_SECONDS = 30
 MATCH_HOURS = 2
+CARD_REST_HOURS = 2
 # The bot's opening move waits for the client's next poll, so the explorer
 # first sees both cards at their starting Energy instead of after a recharge.
 BOT_OPENING_DELAY = timedelta(seconds=2)
@@ -145,12 +146,15 @@ def _response(row, child_id: int, events: list[dict[str, Any]] | None = None) ->
         "status": row["status"],
         "version": row["version"],
         "viewer_side": side,
+        "my_species_id": row["owner_species_id"] if side == "player" else row["guest_species_id"],
+        "opponent_child_id": None if row["mode"] != "friend" else (row["guest_child_id"] if side == "player" else row["owner_child_id"]),
         "invite_code": row["invite_code"] if row["status"] in ("waiting", "active", "completed") else None,
         "deadline_at": _aware(row["deadline_at"]).isoformat() if row["deadline_at"] else None,
         "server_now": _now().isoformat(),
         "expires_at": _aware(row["expires_at"]).isoformat(),
         "state": state,
         "events": recent_events,
+        "move_count": sum(1 for event in history if event.get("type") == "action"),
         "leaderboard_delta": delta,
     }
     return {"match": match}
@@ -186,16 +190,11 @@ def _require_live(row) -> None:
         raise HTTPException(410, "This wildlife match has expired.")
 
 
-def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, int]], set[str]]:
-    """Return owned active cards and the IDs that may enter a battle.
-
-    Resting cards normally cannot be selected. Rest only counts down when a
-    battle completes, so an explorer whose every card is resting (fewer than
-    three cards) could never battle again. In that case the least-rested cards
-    stay selectable instead.
-    """
+def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, datetime | None]], set[str]]:
+    """Return owned active cards and cards whose two-hour rest has expired."""
+    now = _now()
     rows = connection.execute(select(
-        species.c.id, species.c.habitat, wildlife_card_rest.c.remaining,
+        species.c.id, species.c.habitat, wildlife_card_rest.c.rest_until,
     ).select_from(
         collection_entries.join(species, collection_entries.c.species_id == species.c.id)
         .outerjoin(wildlife_card_rest, and_(
@@ -206,11 +205,10 @@ def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, int]],
         collection_entries.c.child_id == child_id,
         species.c.is_active.is_(True),
     ).order_by(species.c.id)).all()
-    cards = [(species_id, raw_habitat or "", max(0, remaining or 0)) for species_id, raw_habitat, remaining in rows]
-    if not cards:
-        return cards, set()
-    least_rest = min(remaining for _, _, remaining in cards)
-    return cards, {species_id for species_id, _, remaining in cards if remaining == least_rest}
+    cards = [(species_id, raw_habitat or "", _aware(rest_until) if rest_until else None)
+             for species_id, raw_habitat, rest_until in rows]
+    return cards, {species_id for species_id, _, rest_until in cards
+                   if rest_until is None or rest_until <= now}
 
 
 def _owned_card(connection, child_id: int, species_id: str) -> tuple[dict, str]:
@@ -219,7 +217,7 @@ def _owned_card(connection, child_id: int, species_id: str) -> tuple[dict, str]:
     if card is None:
         raise HTTPException(403, "Discover this active species before selecting its card.")
     if species_id not in selectable:
-        raise HTTPException(409, f"This card must rest for {card[2]} more completed battles.")
+        raise HTTPException(409, "This card is resting. Try again after its two-hour rest ends.")
     try:
         definition = get_battle_definition(species_id)
     except ValueError as error:
@@ -233,12 +231,10 @@ def _cards(connection, child_id: int, habitat: str) -> dict:
         {
             "species_id": species_id,
             "habitat_match": wildlife_battle.habitat_matches(raw_habitat, habitat),
-            "rest_remaining": remaining,
+            "rest_until": rest_until.isoformat() if rest_until and rest_until > _now() else None,
             "selectable": species_id in selectable,
-            # Every card is resting, so this least-rested card may battle now.
-            "ready_early": remaining > 0 and species_id in selectable,
         }
-        for species_id, raw_habitat, remaining in cards
+        for species_id, raw_habitat, rest_until in cards
     ]}
 
 
@@ -250,15 +246,11 @@ def _settle(connection, row, state: dict) -> tuple[int, int | None]:
         players.append((row["guest_child_id"], row["guest_species_id"], "opponent"))
     deltas: dict[str, int] = {}
     for child_id, used_species, side in players:
-        # A rest counts completed battles after the battle that created it.
-        connection.execute(update(wildlife_card_rest).where(
-            wildlife_card_rest.c.child_id == child_id,
-            wildlife_card_rest.c.remaining > 0,
-        ).values(remaining=wildlife_card_rest.c.remaining - 1))
+        rest_until = _now() + timedelta(hours=CARD_REST_HOURS)
         stmt = _insert_for(connection, wildlife_card_rest).values(
-            child_id=child_id, species_id=used_species, remaining=2,
+            child_id=child_id, species_id=used_species, remaining=0, rest_until=rest_until,
         ).on_conflict_do_update(
-            index_elements=["child_id", "species_id"], set_={"remaining": 2},
+            index_elements=["child_id", "species_id"], set_={"remaining": 0, "rest_until": rest_until},
         )
         connection.execute(stmt)
         delta = (5 if side == winner else -3) if row["mode"] == "friend" and winner else 0
@@ -434,7 +426,7 @@ def my_rest(user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
     with engine.connect() as connection:
         cards = _cards(connection, user.child_id, "")
     return {"cards": [
-        {"species_id": card["species_id"], "remaining": card["rest_remaining"], "selectable": card["selectable"]}
+        {"species_id": card["species_id"], "rest_until": card["rest_until"], "selectable": card["selectable"]}
         for card in cards["cards"]
     ]}
 

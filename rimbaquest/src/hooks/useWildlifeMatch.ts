@@ -183,6 +183,26 @@ export function useWildlifeMatch() {
     }
   }, [request, isCurrent, refreshFriends, refreshLeaderboard]);
 
+  // Saying no to a friend's battle invitation cancels their waiting match.
+  const declineInvite = useCallback(async (matchId: string): Promise<boolean> => {
+    if (mutationLocked.current) return false;
+    mutationLocked.current = true;
+    setPending("Declining invitation");
+    setFriendsError(null);
+    const captured = generation.current;
+    try {
+      await request(`/api/v1/friends/invites/${encodeURIComponent(matchId)}/decline`, {});
+      if (isCurrent(captured)) void refreshFriends();
+      return true;
+    } catch (caught) {
+      if (isCurrent(captured)) setFriendsError(errorMessage(caught));
+      return false;
+    } finally {
+      mutationLocked.current = false;
+      if (isCurrent(captured)) setPending(null);
+    }
+  }, [request, isCurrent, refreshFriends]);
+
   const refreshCardOptions = useCallback(async (target: { matchId?: string; code?: string }) => {
     const captured = generation.current;
     setCardOptions(null);
@@ -452,6 +472,23 @@ export function useWildlifeMatch() {
     void refreshLeaderboard();
   }, [match?.id, match?.status, refreshRest, refreshLeaderboard]);
 
+  useEffect(() => {
+    const deadlines = [...(restCards ?? []), ...(cardOptions ?? [])]
+      .map((card) => card.rest_until ? Date.parse(card.rest_until) : NaN)
+      .filter((deadline) => Number.isFinite(deadline) && deadline > Date.now());
+    if (!deadlines.length) return;
+    const delay = Math.min(...deadlines) - Date.now() + 100;
+    const timer = setTimeout(() => {
+      void refreshRest();
+      if (match?.status === "setup" || match?.status === "waiting") {
+        void refreshCardOptions({ matchId: match.id });
+      } else if (invite) {
+        void refreshCardOptions({ code: invite.code });
+      }
+    }, Math.max(100, delay));
+    return () => clearTimeout(timer);
+  }, [restCards, cardOptions, match?.id, match?.status, invite?.code, refreshRest, refreshCardOptions]);
+
   return {
     match,
     serverClock,
@@ -480,6 +517,7 @@ export function useWildlifeMatch() {
     refreshLeaderboard,
     refreshFriends,
     addFriend,
+    declineInvite,
     refreshCardOptions,
     recoverCurrent,
   };

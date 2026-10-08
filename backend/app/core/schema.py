@@ -365,6 +365,7 @@ wildlife_card_rest = Table(
     Column("child_id", Integer, ForeignKey("child_profiles.id", ondelete="CASCADE"), primary_key=True),
     Column("species_id", String, ForeignKey("species.id", ondelete="CASCADE"), primary_key=True),
     Column("remaining", Integer, nullable=False, default=0),
+    Column("rest_until", DateTime(timezone=True)),
     CheckConstraint("remaining >= 0 AND remaining <= 2", name="ck_wildlife_rest_remaining"),
 )
 

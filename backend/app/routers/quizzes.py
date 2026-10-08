@@ -94,6 +94,37 @@ def require_difficulty_unlocked(progress: dict[str, Any], difficulty: str) -> No
         raise HTTPException(400, "Hard quiz is locked. Pass Medium with 5/5 first.")
 
 
+@router.get("/api/v1/quiz-progression")
+def get_all_quiz_progression(
+    user: Annotated[AuthenticatedUser, Depends(get_current_user)],
+):
+    """
+    Requires child access. Unlocked ability slots for every discovered species
+    in one call, so screens like the battle card picker can preload them:
+    { "progression": { "<species_id>": [1, 2], ... } }
+    Species without a progress row yet have nothing unlocked. Read-only.
+    """
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT ce.species_id, p.easy_passed, p.medium_passed, p.hard_passed
+                FROM collection_entries ce
+                LEFT JOIN child_quiz_progress p
+                  ON p.child_id = ce.child_id AND p.species_id = ce.species_id
+                WHERE ce.child_id = :child_id
+                """
+            ),
+            {"child_id": user.child_id},
+        ).mappings().all()
+
+    progression: dict[str, list[int]] = {}
+    for row in rows:
+        passed = [row["easy_passed"], row["medium_passed"], row["hard_passed"]]
+        progression[row["species_id"]] = [slot for slot, ok in enumerate(passed, start=1) if ok]
+    return {"progression": progression}
+
+
 @router.get("/api/v1/species/{species_id}/quiz-progression")
 def get_quiz_progression(
     species_id: str,

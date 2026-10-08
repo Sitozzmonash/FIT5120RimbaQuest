@@ -116,6 +116,28 @@ def test_invite_a_friend_from_the_friend_list_to_battle():
     assert _friends(hf)["incoming_invites"] == [] and _friends(hh)["outgoing_invites"] == []
 
 
+def test_invited_friend_can_decline_and_the_host_match_is_canceled():
+    host, hh = _user("host", CARDS[0])
+    friend, hf = _user("friend", CARDS[1])
+    stranger, hs = _user("stranger", CARDS[1])
+    _befriend(hh, hf)
+    match = client.post(BASE, json={"mode": "friend", "friend_child_id": friend}, headers=hh).json()["match"]
+    selected = client.post(f"{BASE}/{match['id']}/select", json={"species_id": CARDS[0]}, headers=hh)
+    assert selected.status_code == 200 and selected.json()["match"]["my_species_id"] == CARDS[0]
+
+    incoming = _friends(hf)["incoming_invites"]
+    assert incoming[0]["expires_at"] and _friends(hh)["outgoing_invites"][0]["expires_at"]
+
+    # Only the invited friend can decline.
+    assert client.post(f"/api/v1/friends/invites/{match['id']}/decline", headers=hs).status_code == 404
+    declined = client.post(f"/api/v1/friends/invites/{match['id']}/decline", headers=hf)
+    assert declined.status_code == 200 and declined.json() == {"declined": True}
+    assert _friends(hf)["incoming_invites"] == []
+    assert client.get(f"{BASE}/{match['id']}", headers=hh).json()["match"]["status"] == "canceled"
+    # Declining twice is harmless.
+    assert client.post(f"/api/v1/friends/invites/{match['id']}/decline", headers=hf).json() == {"declined": False}
+
+
 def test_friend_leaderboard_ranks_me_and_my_friends_only():
     me, hm = _user("me", CARDS[0])
     pal, hp = _user("pal", CARDS[1])

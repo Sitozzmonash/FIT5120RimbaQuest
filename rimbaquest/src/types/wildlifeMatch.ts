@@ -9,6 +9,8 @@ export interface WildlifeAbility {
   description?: string;
   cost: number;
   unlocked: boolean;
+  effects?: Array<{ type: string; value: number; target: "self" | "opponent" }>;
+  vfx?: string;
 }
 
 export interface WildlifeCombatant {
@@ -20,6 +22,9 @@ export interface WildlifeCombatant {
   max_energy: number;
   shield?: number;
   habitat_advantage?: boolean;
+  /** Mammal, Bird, Reptile or Butterfly. */
+  category?: string;
+  role?: string;
   abilities: WildlifeAbility[];
 }
 
@@ -37,6 +42,12 @@ export interface WildlifeEvent {
   id?: number;
   message: string;
   type?: string;
+  side?: WildlifeSide;
+  target?: WildlifeSide;
+  action?: WildlifeAction;
+  value?: number;
+  cost?: number;
+  shield_absorbed?: number;
 }
 
 export interface WildlifeMatch {
@@ -47,6 +58,9 @@ export interface WildlifeMatch {
   version: number;
   server_now: string;
   viewer_side: WildlifeSide;
+  my_species_id?: string | null;
+  opponent_child_id?: number | null;
+  move_count?: number;
   invite_code?: string | null;
   expires_at?: string | null;
   deadline_at?: string | null;
@@ -75,6 +89,7 @@ export interface WildlifeIncomingInvite {
   match_id: string;
   invite_code: string;
   habitat: string;
+  expires_at?: string;
   friend_child_id: number;
   friend_display_name: string;
 }
@@ -82,6 +97,7 @@ export interface WildlifeIncomingInvite {
 export interface WildlifeOutgoingInvite {
   match_id: string;
   status: "setup" | "waiting";
+  expires_at?: string;
   friend_child_id: number;
   friend_display_name: string;
 }
@@ -96,10 +112,8 @@ export interface WildlifeFriends {
 export interface WildlifeCardOption {
   species_id: string;
   habitat_match: boolean;
-  rest_remaining: number;
+  rest_until: string | null;
   selectable: boolean;
-  // Every card is resting, so this least-rested card may battle anyway.
-  ready_early?: boolean;
 }
 
 export interface WildlifeLeaderboardEntry {
@@ -111,6 +125,6 @@ export interface WildlifeLeaderboardEntry {
 
 export interface WildlifeRestCard {
   species_id: string;
-  remaining: number;
+  rest_until: string | null;
   selectable?: boolean;
 }
