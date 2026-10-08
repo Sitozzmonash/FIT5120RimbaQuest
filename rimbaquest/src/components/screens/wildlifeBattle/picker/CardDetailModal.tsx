@@ -48,12 +48,6 @@ export function CardDetailModal({
           <View style={styles.detail}>
             <View style={styles.media}>
               {picture ? <SpeciesPhoto source={picture} /> : null}
-              {card.option.habitat_match ? (
-                <View style={styles.boost}>
-                  <Image source={BATTLE_IMAGES.zap} style={{ width: 13, height: 16 }} resizeMode="contain" />
-                  <Text style={styles.boostText}>+20% Attack & Defence</Text>
-                </View>
-              ) : null}
             </View>
             <ScrollView
               style={styles.scroll}
@@ -111,25 +105,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
     borderBottomColor: INK,
     backgroundColor: "#2F6B3E",
-  },
-  boost: {
-    position: "absolute",
-    left: 16,
-    bottom: 13,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: GAME_COLORS.goldLight,
-    borderWidth: 2,
-    borderColor: INK,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  boostText: {
-    fontFamily: FONTS.button,
-    fontSize: 12,
-    color: GAME_COLORS.headerGreen,
   },
   scroll: { flexGrow: 0 },
   body: { gap: 10, paddingTop: 14, paddingBottom: 18, paddingHorizontal: 16 },

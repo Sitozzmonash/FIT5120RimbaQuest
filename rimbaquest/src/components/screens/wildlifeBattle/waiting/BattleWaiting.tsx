@@ -70,7 +70,6 @@ export function BattleWaiting({
         />
         <YourCardRow
           card={myCard}
-          habitat={habitat}
           disabled={pending}
           onChange={onChangeCard}
         />

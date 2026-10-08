@@ -208,12 +208,11 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
 
   if (match?.status === "waiting" && !editingWaitingCard) {
     const mySpecies = species.find((item) => item.id === match.my_species_id);
-    const myOption = battle.cardOptions?.find((option) => option.species_id === match.my_species_id);
     return (
       <BattleWaiting
         match={match}
         invitedFriendName={invitedFriend?.friend_display_name}
-        myCard={mySpecies ? { name: mySpecies.common_name, image: imageFor(mySpecies), habitatMatch: myOption?.habitat_match } : null}
+        myCard={mySpecies ? { name: mySpecies.common_name, image: imageFor(mySpecies) } : null}
         pending={Boolean(battle.pending)}
         error={battle.error}
         onBack={handleBack}

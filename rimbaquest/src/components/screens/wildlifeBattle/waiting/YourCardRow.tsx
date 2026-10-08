@@ -10,17 +10,14 @@ const INK = GAME_COLORS.ink;
 export interface WaitingCard {
   name: string;
   image?: number;
-  habitatMatch?: boolean;
 }
 
 export function YourCardRow({
   card,
-  habitat,
   disabled,
   onChange,
 }: {
   card: WaitingCard | null;
-  habitat: string;
   disabled: boolean;
   onChange: () => void;
 }) {
@@ -41,13 +38,6 @@ export function YourCardRow({
         <Text style={styles.name} numberOfLines={1}>
           {card?.name ?? "Your card"}
         </Text>
-        {card?.habitatMatch === undefined ? null : (
-          <Text style={[styles.bonus, card.habitatMatch && styles.bonusOn]}>
-            {card.habitatMatch
-              ? `${habitat} bonus +20%`
-              : `No ${habitat} bonus`}
-          </Text>
-        )}
       </View>
       <ScaleTap
         label="Change card"
@@ -97,8 +87,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: GAME_COLORS.heading,
   },
-  bonus: { fontFamily: FONTS.bodyExtraBold, fontSize: 11.5, color: "#8C8570" },
-  bonusOn: { color: "#1F6B33" },
   change: {
     height: 40,
     paddingHorizontal: 12,
