@@ -7,7 +7,7 @@ import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, insert, select, update
+from sqlalchemy import case, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import IntegrityError
@@ -59,13 +59,14 @@ def are_friends(connection, child_id: int, friend_child_id: int) -> bool:
     )).first() is not None
 
 
-def _points():
-    return func.coalesce(wildlife_leaderboard.c.points, 0)
+def _floored_points():
+    points = func.coalesce(wildlife_leaderboard.c.points, 0)
+    return case((points < 0, 0), else_=points)
 
 
 def _friend_rows(connection, child_id: int, *, only: int | None = None):
     statement = select(
-        child_profiles.c.id, child_profiles.c.display_name, child_profiles.c.avatar, _points(),
+        child_profiles.c.id, child_profiles.c.display_name, child_profiles.c.avatar, _floored_points(),
     ).select_from(
         wildlife_friendships
         .join(child_profiles, child_profiles.c.id == wildlife_friendships.c.friend_child_id)

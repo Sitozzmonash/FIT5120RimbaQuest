@@ -9,6 +9,7 @@ import { DETAIL_COLORS } from "./components/detail/detailTheme";
 import { TabStatus } from "./components/detail/TabStatus";
 import { QuizFooter } from "./components/quiz/QuizFooter";
 import { QuizOption } from "./components/quiz/QuizOption";
+import { QuizReview } from "./components/quiz/QuizReview";
 import { QuizGiveUpConfirmModal } from "./components/QuizGiveUpConfirmModal";
 import { QuizResultModal } from "./components/QuizResultModal";
 import { QuizStepIndicator } from "./components/QuizStepIndicator";
@@ -21,6 +22,7 @@ export function AbilityQuizScreen() {
   const loadingQuiz = useAbilityQuizStore((state) => state.loadingQuiz);
   const submitting = useAbilityQuizStore((state) => state.submitting);
   const errorMsg = useAbilityQuizStore((state) => state.errorMsg);
+  const reviewing = useAbilityQuizStore((state) => state.reviewing);
 
   const currentQuestion = questions[currentIndex];
   const selected = currentQuestion ? answers[currentQuestion.id] : undefined;
@@ -29,6 +31,8 @@ export function AbilityQuizScreen() {
   // Backing out of the first question (or the header) asks before quitting.
   const goBack = () =>
     currentIndex === 0 ? quiz().openGiveUpConfirm() : quiz().goPrevious();
+
+  if (reviewing) return <QuizReview />;
 
   return (
     <View style={styles.root}>
@@ -54,8 +58,6 @@ export function AbilityQuizScreen() {
         <DetailCard style={styles.card}>
           {loadingQuiz ? (
             <TabStatus loading message="Getting your questions ready..." />
-          ) : errorMsg ? (
-            <TabStatus message={errorMsg} />
           ) : currentQuestion ? (
             <>
               <ScrollView
@@ -80,6 +82,7 @@ export function AbilityQuizScreen() {
                     onPress={() => quiz().selectAnswer(option)}
                   />
                 ))}
+                {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
               </ScrollView>
               <QuizFooter
                 isLastQuestion={currentIndex === questions.length - 1}
@@ -89,6 +92,8 @@ export function AbilityQuizScreen() {
                 onNext={() => quiz().goNext()}
               />
             </>
+          ) : errorMsg ? (
+            <TabStatus message={errorMsg} />
           ) : null}
         </DetailCard>
       </View>
@@ -119,4 +124,5 @@ const styles = StyleSheet.create({
     color: DETAIL_COLORS.ink,
     fontSize: 20,
   },
+  error: { fontFamily: FONTS.bodyBold, color: "#9B2424", fontSize: 13 },
 });

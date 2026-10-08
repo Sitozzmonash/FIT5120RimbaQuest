@@ -282,11 +282,14 @@ def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
     assert any(event["type"] == "timeout" for event in skipped["events"])
     assert client.get(f"{BASE}/{current['id']}", headers=h1).json()["match"]["version"] == skipped["version"]
 
+    # The loser only has 2 points, so the -3 loss stops at 0.
+    with engine.begin() as connection:
+        connection.execute(insert(wildlife_leaderboard).values(child_id=owner, points=2))
     finish_id = str(uuid4())
     finished = _forfeit(skipped, h1, finish_id)
     assert finished.status_code == 200, finished.text
     assert finished.json()["match"]["status"] == "completed"
-    assert finished.json()["match"]["leaderboard_delta"] == -3
+    assert finished.json()["match"]["leaderboard_delta"] == -2
     assert isinstance(finished.json()["match"]["move_count"], int)
     assert _forfeit(skipped, h1, finish_id).json() == finished.json()
     assert _forfeit(skipped, h1).status_code == 409
@@ -297,7 +300,7 @@ def test_friend_invite_action_timeout_forfeit_and_exact_once_scores():
         rest = dict(connection.execute(select(
             wildlife_card_rest.c.child_id, wildlife_card_rest.c.rest_until,
         ).where(wildlife_card_rest.c.child_id.in_([owner, guest]))).all())
-    assert points == {owner: -3, guest: 5}
+    assert points == {owner: 0, guest: 5}
     assert set(rest) == {owner, guest}
     assert all(timedelta(hours=1, minutes=59) < expiry.replace(tzinfo=expiry.tzinfo or timezone.utc) - datetime.now(timezone.utc) <= timedelta(hours=2) for expiry in rest.values())
     board = client.get(f"{BASE}/leaderboard", headers=h2).json()

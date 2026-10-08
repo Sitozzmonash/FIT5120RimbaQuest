@@ -7,6 +7,7 @@ import { useUnlockedBattleSpecies } from "../../../hooks/useUnlockedBattleSpecie
 import { useBattleInviteStore } from "../../../store/useBattleInviteStore";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
+import { useSpeciesCatalogStore } from "../../../store/useSpeciesCatalogStore";
 import { useUserStore } from "../../../store/useUserStore";
 import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
@@ -40,7 +41,21 @@ export function HomeScreen() {
   const [battleHintVisible, setBattleHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingMenu, setPendingMenu] = useState<HomeMenu | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const avatar = avatarImageFor(currentUser.avatar);
+
+  const refreshHome = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        useUserStore.getState().refreshProfile(),
+        useSpeciesCatalogStore.getState().loadSpecies(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const enterMenu = () => {
     const menu = pendingMenu;
@@ -68,7 +83,7 @@ export function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      <HomeHeader />
+      <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
 
       <View
         style={styles.body}

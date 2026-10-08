@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Easing } from "react-native";
 import { useReduceMotion } from "../../shared/useLoop";
 import { preloadBattleSounds, scheduleFXSounds } from "./BattleSFX";
+import { scheduleHitHaptics } from "./battleHaptics";
 import { FXSide, PlayOptions, Motion, ActiveFX } from "./fxTypes";
 import { recipe } from "./fxRecipes";
 
@@ -19,11 +20,15 @@ export function useBattleFX() {
   const gain = useRef(new Animated.Value(0)).current;
   const [state, setState] = useState<ActiveFX | null>(null);
   const cancelSounds = useRef<(() => void) | null>(null);
+  const cancelHaptics = useRef<(() => void) | null>(null);
 
   // Load the hit sounds before the first move, and stop pending ones if the arena closes mid-effect.
   useEffect(() => {
     preloadBattleSounds();
-    return () => cancelSounds.current?.();
+    return () => {
+      cancelSounds.current?.();
+      cancelHaptics.current?.();
+    };
   }, []);
 
   /** Plays one effect. Resolves when it finishes, so HP changes can land after the hit. */
@@ -43,6 +48,15 @@ export function useBattleFX() {
         setState({ ...opts, r, parts, overs });
         cancelSounds.current?.();
         cancelSounds.current = scheduleFXSounds(opts.type, r.impactAt);
+        cancelHaptics.current?.();
+        cancelHaptics.current =
+          opts.hitsMe && opts.damage
+            ? scheduleHitHaptics(
+                r.impactAt,
+                r.numberTicks ?? 1,
+                Boolean(r.motion.screen),
+              )
+            : null;
 
         const pop = Animated.sequence([
           Animated.delay(r.word?.delay ?? 0),
