@@ -43,12 +43,17 @@ export function formatDistance(distance: number | undefined): string | null {
   return `${value} straight-line`;
 }
 
-/** A key-free, shareable Google Maps destination URL. */
+/**
+ * A key-free, shareable Google Maps destination URL.
+ *
+ * Navigation deliberately uses the place name plus its saved address instead
+ * of the display pin. A pin is only a map marker and can be adjusted as venue
+ * entrances move; asking Google Maps to resolve the named venue prevents a
+ * stale coordinate from sending a family to a nearby road or the wrong side
+ * of a large park.
+ */
 export function directionsUrl(location: LocationItem): string {
-  const destination =
-    typeof location.lat === 'number' && typeof location.lng === 'number'
-      ? `${location.lat},${location.lng}`
-      : `${location.name}, ${location.area}`;
+  const destination = `${location.name}, ${location.area}`;
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
 }
 

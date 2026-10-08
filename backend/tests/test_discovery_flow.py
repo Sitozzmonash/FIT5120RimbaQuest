@@ -271,6 +271,19 @@ def test_locations_search_and_iteration_one_scope():
     just_farm = next(item for item in items if item["id"] == "loc_just_farm")
     assert just_farm["type"] == "Petting Zoo"
     assert just_farm["official_website"] == "https://www.justfarm.com.my/"
+    # Checked against the named venues and their real addresses. Keep the
+    # high-impact pins from quietly regressing to nearby roads or districts.
+    expected_coordinates = {
+        "loc_just_farm": (3.1487454, 101.5947478),
+        "loc_frim": (3.2345053, 101.6317402),
+        "loc_kuala_selangor": (3.3337767, 101.2403342),
+        "loc_kota_damansara_cf": (3.1765262, 101.5957436),
+        "loc_botani_shah_alam": (3.1120112, 101.5084788),
+        "loc_kg_kuantan_firefly": (3.3612245, 101.3015929),
+    }
+    for location_id, coordinates in expected_coordinates.items():
+        item = next(item for item in items if item["id"] == location_id)
+        assert (item["lat"], item["lng"]) == coordinates
     assert all("Bako" not in name and "Cherating" not in name for name in names)
     assert client.get("/api/v1/locations?query=gasing").json()["items"]
     zoo = client.get("/api/v1/locations?category=Zoo").json()["items"]
