@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +43,11 @@ def initialise_database() -> None:
     populated from seed.sql in the same pass.
     """
     metadata.create_all(engine)
+    # Existing battle-count rows have no expiry and are treated as ready.
+    with engine.begin() as connection:
+        rest_columns = {column["name"] for column in inspect(connection).get_columns("wildlife_card_rest")}
+        if "rest_until" not in rest_columns:
+            connection.exec_driver_sql("ALTER TABLE wildlife_card_rest ADD COLUMN rest_until TIMESTAMP WITH TIME ZONE")
     with engine.begin() as connection:
         # ``create_all`` does not add columns to an existing Render/SQLite
         # database. Keep this narrow migration beside the seed it enables.

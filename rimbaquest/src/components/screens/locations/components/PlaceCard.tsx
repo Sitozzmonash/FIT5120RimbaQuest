@@ -5,6 +5,7 @@ import { LocationItem } from "../../../../types";
 import { ScaleTap } from "../../../common/ScaleTap";
 import { openingHoursPills } from "../formatOpeningHours";
 import { LOCATION_COLORS } from "../locationsTheme";
+import { DistancePill } from "./DistancePill";
 import { InfoPill } from "./InfoPill";
 import { WoodPlank } from "../../../common/game/WoodPlank";
 
@@ -51,14 +52,18 @@ export function PlaceCard({
               ))}
             </View>
           )}
-          {distanceLabel ? <Text style={styles.distance}>{distanceLabel}</Text> : null}
+          {distanceLabel ? <DistancePill label={distanceLabel} /> : null}
         </View>
-        {/* <View style={styles.goSlot}>
+        <View style={styles.goSlot}>
           <View style={[styles.goCircle, styles.goShadow]} />
           <View style={[styles.goCircle, styles.goFace]}>
-            <Image source={CHEVRON_RIGHT} style={styles.chevron} resizeMode="contain" />
+            <Image
+              source={CHEVRON_RIGHT}
+              style={styles.chevron}
+              resizeMode="contain"
+            />
           </View>
-        </View> */}
+        </View>
       </View>
     </ScaleTap>
   );
@@ -92,7 +97,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyExtraBold,
   },
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  distance: { color: '#0B7A43', fontSize: 12, fontFamily: FONTS.bodyExtraBold },
   goSlot: { width: GO_SIZE, height: GO_SIZE + 3 },
   goCircle: {
     position: "absolute",

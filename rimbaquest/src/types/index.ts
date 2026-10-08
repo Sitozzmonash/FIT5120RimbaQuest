@@ -82,6 +82,7 @@ export type VerificationErrorKind =
   | 'no_animal_detected'
   | 'low_confidence'
   | 'species_not_in_catalog'
+  | 'try_another_photo'
   | 'failed';
 
 export type VerificationError = {
@@ -109,9 +110,9 @@ export type LocationItem = {
   distance_km: number;
   why_recommended: string;
   typical_wildlife?: string;
-  /** Only locally maintained, verified fields are rendered. API fields remain optional. */
   official_website?: string;
   responsible_exploration?: string;
+  image_url?: string;
   rating?: number;
   review_count?: number;
 };

@@ -46,6 +46,7 @@ type AbilityQuizState = {
 
 type AbilityQuizActions = {
   fetchProgression: (speciesId: string) => Promise<void>;
+  fetchAllProgression: () => Promise<void>;
   openUnlockModal: (species: Species, slot: number) => void;
   closeUnlockModal: () => void;
   beginChallenge: () => Promise<void>;
@@ -64,6 +65,7 @@ type AbilityQuizActions = {
 export type AbilityQuizStore = AbilityQuizState & AbilityQuizActions;
 
 const progressionRequestSeq: Record<string, number> = {};
+let allProgressionRequest: Promise<void> | null = null;
 
 async function loadQuizQuestions(
   speciesId: string,
@@ -124,6 +126,27 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   result: null,
   giveUpConfirmVisible: false,
   newPerk: null,
+
+  fetchAllProgression: () => {
+    allProgressionRequest ??= (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/quiz-progression`, {
+          headers: useUserStore.getState().authHeaders(),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.progression || typeof data.progression !== "object") return;
+        set((state) => ({
+          progressionBySpecies: { ...state.progressionBySpecies, ...data.progression },
+        }));
+      } catch {
+        // Keep whatever's cached; screens fall back to per-species loads.
+      } finally {
+        allProgressionRequest = null;
+      }
+    })();
+    return allProgressionRequest;
+  },
 
   fetchProgression: async (speciesId) => {
     const hasCache = speciesId in get().progressionBySpecies;

@@ -37,6 +37,46 @@ export const COLLECTION_IMAGES = {
   vineBottomRight: require('../../assets/collection/vine-bottom-right.png'),
 };
 
+export const BATTLE_IMAGES = {
+  health: require('../../assets/battle/health.png'),
+  energy: require('../../assets/battle/energy.png'),
+  lock: require('../../assets/battle/lock.png'),
+  habitatBonus: require('../../assets/home/map/sprout.png'),
+  swords: require('../../assets/collection/detail-swords.png'),
+  leafShield: require('../../assets/battle/leaf-shield.png'),
+  close: require('../../assets/collection/chat-close.png'),
+  zap: require('../../assets/battle/zap.png'),
+  chevronRight: require('../../assets/locations/chevron-right.png'),
+  clock: require('../../assets/locations/clock.png'),
+  lobbyHero: require('../../assets/battle/battle_lobby_screen.png'),
+};
+
+// Battle backgrounds, one per habitat (853x1844, tall enough for the arena).
+const HABITAT_BACKGROUNDS = {
+  rainforest: require('../../assets/battle/bg_rainforest_forest.png'),
+  wetland: require('../../assets/battle/bg_rivers_wetlands_mangroves.png'),
+  grassland: require('../../assets/battle/bg_grassland_scrub_farmland.png'),
+  coastal: require('../../assets/battle/bg_coastal_marine.png'),
+  highland: require('../../assets/battle/bg_highland_montane.png'),
+  urban: require('../../assets/battle/bg_gardens_parks_urban.png'),
+};
+
+// Battle habitat names from the server ("Mangrove", "Wetland"...) mapped to their background.
+const HABITAT_BACKGROUND_WORDS: Array<[RegExp, keyof typeof HABITAT_BACKGROUNDS]> = [
+  [/rainforest|forest/i, 'rainforest'],
+  [/mangrove|wetland|river|swamp/i, 'wetland'],
+  [/grassland|scrub|farm/i, 'grassland'],
+  [/coast|marine|beach|sea/i, 'coastal'],
+  [/highland|montane|mountain/i, 'highland'],
+  [/garden|park|urban/i, 'urban'],
+];
+
+/** The background for a battle habitat; rainforest if the name isn't recognised. */
+export function habitatBackground(habitat: string | null | undefined): number {
+  const match = HABITAT_BACKGROUND_WORDS.find(([words]) => words.test(habitat ?? ''));
+  return HABITAT_BACKGROUNDS[match ? match[1] : 'rainforest'];
+}
+
 export const AUTH_IMAGES = {
   heroElephantTiger: require('../../assets/auth/hero-elephant-tiger.png'),
   heroTigerElephantTapir: require('../../assets/auth/hero-tiger-elephant-tapir.png'),

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import json
@@ -14,26 +15,41 @@ from fastapi import (
     BackgroundTasks,
     Depends,
     File,
+    Form,
     HTTPException,
     UploadFile,
 )
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
 
 from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.config import (
     DISCOVERY_VERIFICATION_TTL_MINUTES,
+    MAX_DISCOVERY_PHOTO_BYTES,
     MAX_PHOTO_BYTES,
     PRIMARY_VISION_MODEL,
+    RECAPTURE_BLOCK_THRESHOLD,
+    RECAPTURE_TIMEOUT_SECONDS,
     VISION_PROVIDER_ORDER,
 )
 from app.core.database import engine, rows
 from app.core.schema import discovery_verifications
+from app.ml.recapture_detector import InvalidImage, get_detector
 from app.schemas.discovery import DiscoveryIn, IdentificationAnswerIn
+from app.services.authenticity import (
+    CAPTURE_SOURCES,
+    POTENTIALLY_EXTERNAL,
+    classify,
+    evaluate_metadata,
+    parse_client_metadata,
+)
 from app.services.battle_engine import calculate_battle_stats
 from app.services.activity import record_species_activity
 from app.services.storage import (
     CONTENT_EXTENSIONS,
+    UPLOAD_CONTENT_TYPES,
     StorageUnavailable,
+    prepare_discovery_photo,
     signed_photo_url,
     upload_discovery_photo,
 )
@@ -49,6 +65,8 @@ router = APIRouter(tags=["Discoveries & Collection"])
 logger = logging.getLogger("uvicorn.error")
 UNVERIFIED_MESSAGE = "We couldn't verify this animal. Please try another wildlife photo."
 VERIFICATION_FAILED_MESSAGE = "We couldn't check your wildlife photo right now. Please try again."
+UNREADABLE_PHOTO_MESSAGE = "We couldn't open this photo. Please try a different one."
+AUTHENTICITY_RETRY_MESSAGE = "We couldn't check this photo right now. Please try again."
 
 # Child-facing messages for each specific reason a photo check comes back
 # unverified. Keyed to app.services.vision.IdentificationOutcome.reason.
@@ -56,6 +74,11 @@ UNVERIFIED_MESSAGES: dict[str, str] = {
     "no_animal_detected": "We couldn't find an animal in this photo. Please try a clearer wildlife photo.",
     "low_confidence": "We're not quite sure about this one. Try moving closer or taking the photo in better light.",
     "species_not_in_catalog": "We spotted an animal, but it isn't one of RimbaQuest's supported species yet.",
+    # Epic 7: neutral wording; never says the photo is fake.
+    "try_another_photo": (
+        "Please try another photo. Use a photo of wildlife you encountered, "
+        "not a picture from a book, website or another screen."
+    ),
 }
 
 _TERMINAL_JOB_STAGES = {"done", "unverified", "failed", "cancelled"}
@@ -159,11 +182,53 @@ async def upload_photo(
     return {"photo_path": object_path, "photo_url": signed_photo_url(object_path)}
 
 
+def _check_authenticity(
+    content: bytes,
+    source: str | None,
+    client_metadata: dict[str, str | None],
+) -> dict:
+    detector = get_detector()
+    recapture = detector.predict(content)
+    metadata = evaluate_metadata(content, client_metadata)
+    outcome, reasons = classify(source, metadata, recapture, RECAPTURE_BLOCK_THRESHOLD)
+    return {
+        "outcome": outcome,
+        "reasons": reasons,
+        "signals": {
+            "source": source,
+            "metadata": metadata,
+            "recapture": {
+                key: recapture[key]
+                for key in ("p_recapture", "is_recapture", "threshold", "low_resolution", "width", "height")
+            },
+        },
+        "model_sha256": detector.info()["sha256"],
+    }
+
+
+def _log_authenticity_check(trace_id: str, child_id: int, source: str | None, check: dict) -> None:
+    recapture = check["signals"]["recapture"]
+    logger.info(
+        "discovery_authenticity_check trace_id=%s child_id=%s outcome=%s reasons=%s source=%s p_recapture=%.4f low_resolution=%s metadata_available=%s model_sha256=%s",
+        trace_id,
+        child_id,
+        check["outcome"],
+        ",".join(check["reasons"]) or "-",
+        source or "unknown",
+        recapture["p_recapture"],
+        recapture["low_resolution"],
+        check["signals"]["metadata"]["available"],
+        check["model_sha256"],
+    )
+
+
 async def _run_verification_job(
     trace_id: str,
     child_id: int,
     content: bytes,
     content_type: str,
+    source: str | None = None,
+    client_metadata: dict[str, str | None] | None = None,
 ) -> None:
     """Do the real identification work in the background so the request can
     return immediately; the status endpoint below reports true progress."""
@@ -185,6 +250,58 @@ async def _run_verification_job(
         PRIMARY_VISION_MODEL,
         VISION_PROVIDER_ORDER,
     )
+
+    job.stage = "screening"
+    try:
+        check = await asyncio.wait_for(
+            run_in_threadpool(_check_authenticity, content, source, client_metadata),
+            RECAPTURE_TIMEOUT_SECONDS,
+        )
+    except InvalidImage:
+        logger.info(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=authenticity reason=undecodable",
+            trace_id,
+            child_id,
+        )
+        job.error = {"kind": "failed", "message": UNREADABLE_PHOTO_MESSAGE}
+        job.stage = "failed"
+        return
+    except Exception as error:  # noqa: BLE001 - a technical failure is never suspicion
+        logger.warning(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=authenticity reason=%s",
+            trace_id,
+            child_id,
+            type(error).__name__,
+        )
+        job.error = {"kind": "failed", "message": AUTHENTICITY_RETRY_MESSAGE}
+        job.stage = "failed"
+        return
+    
+    _log_authenticity_check(trace_id, child_id, source, check)
+    
+    if job.cancelled:
+        job.stage = "cancelled"
+        return
+    if check["outcome"] == POTENTIALLY_EXTERNAL:
+        job.result = {
+            "reason": "try_another_photo",
+            "message": UNVERIFIED_MESSAGES["try_another_photo"],
+        }
+        job.stage = "unverified"
+        return
+    
+    try:
+        content, content_type = await run_in_threadpool(prepare_discovery_photo, content, content_type)
+    except Exception as error:
+        logger.warning(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=prepare reason=%s",
+            trace_id,
+            child_id,
+            type(error).__name__,
+        )
+        job.error = {"kind": "failed", "message": AUTHENTICITY_RETRY_MESSAGE}
+        job.stage = "failed"
+        return
 
     with engine.connect() as connection:
         catalogue = rows(connection.execute(text("""SELECT
@@ -320,23 +437,35 @@ async def verify_discovery_photo(
     background_tasks: BackgroundTasks,
     _: Annotated[AuthenticatedUser, Depends(require_child_access)],
     photo: UploadFile = File(...),
+    source: str | None = Form(None, description="camera or gallery (supporting context only)"),
+    metadata: str | None = Form(
+        None, description="JSON of whitelisted EXIF fields read by the app: make, model, software, datetime_original"
+    ),
 ):
     """Kick off a photo verification job. The app polls the status endpoint
     below for real progress instead of guessing with a client-side timer."""
     trace_id = uuid4().hex[:12]
     content_type = (photo.content_type or "").lower()
-    if content_type not in CONTENT_EXTENSIONS:
-        raise HTTPException(415, "Please upload a JPEG, PNG, or WebP image.")
-    content = await photo.read(MAX_PHOTO_BYTES + 1)
+    if content_type not in UPLOAD_CONTENT_TYPES:
+        raise HTTPException(415, "Please upload a JPEG, PNG, WebP, or HEIC image.")
+    content = await photo.read(MAX_DISCOVERY_PHOTO_BYTES + 1)
     if not content:
         raise HTTPException(400, "The selected photo is empty.")
-    if len(content) > MAX_PHOTO_BYTES:
-        raise HTTPException(413, "The photo must be 5 MB or smaller.")
+    if len(content) > MAX_DISCOVERY_PHOTO_BYTES:
+        raise HTTPException(
+            413, f"The photo must be {MAX_DISCOVERY_PHOTO_BYTES // (1024 * 1024)} MB or smaller."
+        )
 
     _purge_stale_verification_jobs()
     _verification_jobs[trace_id] = _VerificationJob()
     background_tasks.add_task(
-        _run_verification_job, trace_id, child_id, content, content_type
+        _run_verification_job,
+        trace_id,
+        child_id,
+        content,
+        content_type,
+        source if source in CAPTURE_SOURCES else None,
+        parse_client_metadata(metadata),
     )
     return {"status": "pending", "trace_id": trace_id}
 

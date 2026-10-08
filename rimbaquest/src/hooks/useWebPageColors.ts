@@ -17,6 +17,7 @@ const SCREEN_COLORS: Partial<Record<Screen, PageColors>> = {
   forgot_password: { top: "#FDF2D9", bottom: GAME_GREEN },
   reset_password: { top: "#FDF2D9", bottom: GAME_GREEN },
   locations: { top: GAME_GREEN, bottom: "#F5EDD6" },
+  location_detail: { top: GAME_GREEN, bottom: "#F5EDD6" },
   collection: { top: GAME_GREEN, bottom: GAME_GREEN },
   about: { top: GAME_GREEN, bottom: GAME_GREEN },
   facts: { top: GAME_GREEN, bottom: GAME_GREEN },

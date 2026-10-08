@@ -42,6 +42,10 @@ const FAILURE_COPY: Record<
     title: "That animal isn't one of our supported species.",
     allowRetry: false,
   },
+  try_another_photo: {
+    title: "Let's use a different photo.",
+    allowRetry: false,
+  },
   failed: {
     title: "We couldn't check your wildlife photo right now.",
     allowRetry: true,
@@ -52,6 +56,8 @@ function stageProgress(stage: PhotoCheckStage | null, attempt: number): number {
   switch (stage) {
     case "uploading":
       return 8;
+    case "screening":
+      return 15;
     case "identifying":
       return Math.min(75, 25 + Math.max(0, attempt - 1) * 20);
     case "matching":
@@ -69,6 +75,8 @@ function stageLabel(stage: PhotoCheckStage | null, attempt: number): string {
   switch (stage) {
     case "uploading":
       return "Uploading your photo";
+    case "screening":
+      return "Checking your photo";
     case "identifying":
       return attempt > 1
         ? "Trying a backup AI model"

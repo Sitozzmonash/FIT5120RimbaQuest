@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useUserStore } from "../../../store/useUserStore";
+import { photoContextFromExif } from "../../../utils/photoContext";
 import { CameraPermissionPrompt } from "./components/CameraPermissionPrompt";
 import { CameraHeaderBar } from "./components/CameraHeaderBar";
 import { ViewfinderOverlay } from "./components/ViewfinderOverlay";
@@ -19,8 +20,12 @@ export function CameraScreen() {
 
   const takePhoto = async () => {
     try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
-      if (photo?.uri) useDiscoveryStore.getState().capturePhoto(photo.uri, "image/jpeg");
+      const photo = await cameraRef.current?.takePictureAsync({ quality: 1, exif: true });
+      if (photo?.uri) {
+        useDiscoveryStore
+          .getState()
+          .capturePhoto(photo.uri, "image/jpeg", photoContextFromExif("camera", photo.exif));
+      }
     } catch {
       useDiscoveryStore
         .getState()
@@ -32,13 +37,19 @@ export function CameraScreen() {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 1,
+        exif: true,
       });
-      if (!result.canceled && result.assets[0]?.uri) {
+      const asset = result.canceled ? undefined : result.assets[0];
+      if (asset?.uri) {
         useDiscoveryStore
           .getState()
-          .capturePhoto(result.assets[0].uri, result.assets[0].mimeType || "image/jpeg");
+          .capturePhoto(
+            asset.uri,
+            asset.mimeType || "image/jpeg",
+            photoContextFromExif("gallery", asset.exif),
+          );
       }
     } catch {
       useDiscoveryStore

@@ -60,6 +60,9 @@ STORAGE_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "").strip()
 STORAGE_REGION = os.getenv("AWS_REGION", "us-east-2").strip()
 STORAGE_BUCKET = os.getenv("DATABASE_STORAGE_BUCKET", "image").strip()
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
+# Discovery checks receive the original camera file so the screen-recapture
+# check sees full-resolution pixels; the server shrinks it afterwards.
+MAX_DISCOVERY_PHOTO_BYTES = 20 * 1024 * 1024
 SIGNED_PHOTO_TTL_SECONDS = 60 * 60
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-rimbaquest-secret-change-before-deploy")
@@ -128,6 +131,15 @@ PRIMARY_VISION_MODEL = {
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
 VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "20"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))
+
+RECAPTURE_THRESHOLD = (
+    float(os.environ["RECAPTURE_THRESHOLD"]) if os.getenv("RECAPTURE_THRESHOLD", "").strip() else None
+)
+RECAPTURE_BLOCK_THRESHOLD = float(os.getenv("RECAPTURE_BLOCK_THRESHOLD", "0.6"))
+RECAPTURE_TIMEOUT_SECONDS = float(os.getenv("RECAPTURE_TIMEOUT_SECONDS", "15"))
+RECAPTURE_MAX_UPLOAD_MB = int(os.getenv("RECAPTURE_MAX_UPLOAD_MB", "40"))
+RECAPTURE_THREADS = int(os.getenv("RECAPTURE_THREADS", "1"))
+RECAPTURE_API_ENABLED = os.getenv("RECAPTURE_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
 
 # Epic 6: server-side only.  No Expo environment variable may contain this
 # credential.  If it is absent, the endpoint uses a deterministic approved-

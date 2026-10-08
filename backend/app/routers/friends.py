@@ -7,7 +7,7 @@ import secrets
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func, insert, select
+from sqlalchemy import func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.exc import IntegrityError
@@ -87,7 +87,7 @@ def _invites(connection, child_id: int) -> tuple[list[dict], list[dict]]:
     rows = connection.execute(select(
         wildlife_matches.c.id, wildlife_matches.c.status, wildlife_matches.c.invite_code,
         wildlife_matches.c.habitat, wildlife_matches.c.owner_child_id, host.c.display_name,
-        wildlife_match_invites.c.invitee_child_id, invitee.c.display_name,
+        wildlife_match_invites.c.invitee_child_id, invitee.c.display_name, wildlife_matches.c.expires_at,
     ).select_from(
         wildlife_match_invites
         .join(wildlife_matches, wildlife_matches.c.id == wildlife_match_invites.c.match_id)
@@ -99,16 +99,17 @@ def _invites(connection, child_id: int) -> tuple[list[dict], list[dict]]:
         (wildlife_matches.c.owner_child_id == child_id) | (wildlife_match_invites.c.invitee_child_id == child_id),
     ).order_by(wildlife_matches.c.created_at.desc())).all()
     incoming, outgoing = [], []
-    for match_id, status, code, habitat, host_id, host_name, invitee_id, invitee_name in rows:
+    for match_id, status, code, habitat, host_id, host_name, invitee_id, invitee_name, expires_at in rows:
+        expires = (expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)).isoformat()
         if host_id == child_id:
             outgoing.append({
-                "match_id": match_id, "status": status,
+                "match_id": match_id, "status": status, "expires_at": expires,
                 "friend_child_id": invitee_id, "friend_display_name": invitee_name,
             })
         elif status == "waiting":
             # The host has not picked a card yet while the match is in setup.
             incoming.append({
-                "match_id": match_id, "invite_code": code, "habitat": habitat,
+                "match_id": match_id, "invite_code": code, "habitat": habitat, "expires_at": expires,
                 "friend_child_id": host_id, "friend_display_name": host_name,
             })
     return incoming, outgoing
@@ -149,3 +150,28 @@ def add_friend(payload: AddFriendIn, user: Annotated[AuthenticatedUser, Depends(
             ).on_conflict_do_nothing(index_elements=["child_id", "friend_child_id"]))
         friend = _friend_rows(connection, user.child_id, only=friend_id)[0]
     return {"friend": friend, "already_friends": already}
+
+
+@router.post("/invites/{match_id}/decline")
+def decline_invite(match_id: str, user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
+    """The invited friend says no: the match is canceled, so the host's waiting screen ends."""
+    with engine.begin() as connection:
+        row = connection.execute(select(wildlife_matches.c.status, wildlife_matches.c.version).select_from(
+            wildlife_match_invites.join(wildlife_matches, wildlife_matches.c.id == wildlife_match_invites.c.match_id)
+        ).where(
+            wildlife_match_invites.c.match_id == match_id,
+            wildlife_match_invites.c.invitee_child_id == user.child_id,
+        )).first()
+        if row is None:
+            raise HTTPException(404, "That battle invitation was not found.")
+        if row.status not in ("setup", "waiting"):
+            # Already started, finished, canceled or expired: nothing left to decline.
+            return {"declined": False}
+        changed = connection.execute(update(wildlife_matches).where(
+            wildlife_matches.c.id == match_id,
+            wildlife_matches.c.version == row.version,
+            wildlife_matches.c.status == row.status,
+        ).values(status="canceled", version=row.version + 1, updated_at=datetime.now(timezone.utc)))
+        if changed.rowcount != 1:
+            raise HTTPException(409, "The invitation changed. Refresh and try again.")
+    return {"declined": True}

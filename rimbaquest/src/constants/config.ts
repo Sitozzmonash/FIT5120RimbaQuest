@@ -6,3 +6,6 @@ export const API_BASE = configuredApiBase || Platform.select({
   web: 'http://127.0.0.1:8000',
   default: 'http://127.0.0.1:8000'
 });
+
+// CARTO raster basemap key
+export const CARTO_API_KEY = process.env.EXPO_PUBLIC_CARTO_API_KEY?.trim() ?? '';

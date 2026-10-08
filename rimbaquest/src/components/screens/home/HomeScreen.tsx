@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { avatarImageFor, HOME_MAP_IMAGES } from "../../../constants/images";
 import { useDisplayProgress } from "../../../hooks/useDisplayProgress";
 import { useUnlockedBattleSpecies } from "../../../hooks/useUnlockedBattleSpecies";
+import { useBattleInviteStore } from "../../../store/useBattleInviteStore";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useNavigationStore } from "../../../store/useNavigationStore";
 import { useUserStore } from "../../../store/useUserStore";
@@ -32,6 +33,7 @@ export function HomeScreen() {
   const currentUser = useUserStore((state) => state.currentUser);
   const progress = useDisplayProgress();
   const battleReady = useUnlockedBattleSpecies().length > 0;
+  const inviteCount = useBattleInviteStore((state) => state.incomingCount);
   const open = useNavigationStore.getState().open;
   const insets = useSafeAreaInsets();
   const [bodyHeight, setBodyHeight] = useState(0);
@@ -109,13 +111,16 @@ export function HomeScreen() {
             label="Battle"
             accessibilityLabel={
               battleReady
-                ? "Battle"
+                ? inviteCount > 0
+                  ? `Battle, ${inviteCount} ${inviteCount === 1 ? "invitation" : "invitations"} waiting`
+                  : "Battle"
                 : "Battle, locked. Capture an animal to unlock battles"
             }
             icon={HOME_MAP_IMAGES.iconBattle}
             iconSize={{ width: 50, height: 45.31 }}
             color="#FFD3BD"
             locked={!battleReady}
+            badge={inviteCount > 0 ? String(inviteCount) : undefined}
             onPress={battleReady ? () => setPendingMenu("battle") : showBattleHint}
           />
           {!battleReady && battleHintVisible && (
