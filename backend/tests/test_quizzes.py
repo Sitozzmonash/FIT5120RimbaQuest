@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.core.database import engine
+from app.routers.quizzes import build_quiz_presets, get_quiz_presets
 from app.main import app
 
 client = TestClient(app)
@@ -39,7 +40,7 @@ def unlock_species(child_id: int, species_id: str) -> None:
 
 
 def load_presets() -> dict:
-    return json.loads(Path("data/species_quiz_presets.json").read_text(encoding="utf-8"))
+    return get_quiz_presets()
 
 
 def correct_answers(species_id: str, difficulty: str, set_index: int = 0) -> dict[str, str]:
@@ -47,11 +48,28 @@ def correct_answers(species_id: str, difficulty: str, set_index: int = 0) -> dic
     return {question["id"]: question["correct_answer"] for question in questions}
 
 
-def test_quiz_presets_file_validity():
-    presets_file = Path("data/species_quiz_presets.json")
-    assert presets_file.exists()
-    presets = json.loads(presets_file.read_text(encoding="utf-8"))
-    assert len(presets) >= 152
+def test_ai_quiz_questions_file_validity():
+    questions_file = Path("data/ai_quiz_questions.json")
+    assert questions_file.exists()
+    rows = json.loads(questions_file.read_text(encoding="utf-8"))
+    presets = build_quiz_presets(rows)
+    assert len(rows) == 6840
+    assert len(presets) == 152
+    assert presets["sp_common_mormon"]["easy"][0][0]["question"] == rows[0]["question"]
+    assert all(
+        isinstance(option, str) and isinstance(question["correct_answer"], str)
+        for levels in presets.values()
+        for sets in levels.values()
+        for questions in sets
+        for question in questions
+        for option in question["options"]
+    )
+    numeric_question = next(
+        question for question in presets["sp_malaysian_mole"]["medium"][1]
+        if question["id"] == "sp_malaysian_mole_medium_s2_q5"
+    )
+    assert numeric_question["options"] == ["1901", "1937", "2005"]
+    assert numeric_question["correct_answer"] == "1937"
 
     # Check structure of species quizzes
     for sp_id, levels in list(presets.items())[:5]:
@@ -68,6 +86,33 @@ def test_quiz_presets_file_validity():
                     assert len(q["options"]) == 3  # exactly 3 options
                     assert "correct_answer" in q
                     assert q["correct_answer"] in q["options"]
+
+
+def test_numeric_ai_options_use_frontend_string_answers(monkeypatch):
+    child_id, token = register_test_user("numeric_quiz")
+    headers = {"Authorization": f"Bearer {token}"}
+    species_id = "sp_malaysian_mole"
+    unlock_species(child_id, species_id)
+    progression = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers)
+    assert progression.status_code == 200
+    with engine.begin() as connection:
+        connection.execute(text("""
+            UPDATE child_quiz_progress SET easy_passed = TRUE
+            WHERE child_id = :child_id AND species_id = :species_id
+        """), {"child_id": child_id, "species_id": species_id})
+    monkeypatch.setattr("app.routers.quizzes.random.choice", lambda candidates: 1)
+    response = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=medium", headers=headers)
+    assert response.status_code == 200
+    quiz = response.json()
+    assert quiz["set_index"] == 1
+    numeric = next(question for question in quiz["questions"] if question["id"].endswith("_s2_q5"))
+    assert numeric["options"] == ["1901", "1937", "2005"]
+    submitted = client.post(f"/api/v1/species/{species_id}/quiz/submit", json={
+        "difficulty": "medium", "set_index": 1,
+        "answers": correct_answers(species_id, "medium", 1),
+    }, headers=headers)
+    assert submitted.status_code == 200
+    assert submitted.json()["score"] == 5
 
 
 def test_quiz_requires_discovered_wildlife_card():
@@ -204,10 +249,11 @@ def test_quiz_progression_flow():
     # Ensure correct_answer is NOT exposed to client
     for q in questions:
         assert "correct_answer" not in q
+        assert "source_refs" not in q
         assert len(q["options"]) == 3
 
     # Load preset ground truth to answer
-    presets = json.loads(Path("data/species_quiz_presets.json").read_text(encoding="utf-8"))
+    presets = load_presets()
     easy_set = presets[species_id]["easy"][easy_quiz["set_index"]]
 
     # 4. Fail easy quiz (score < 5)
@@ -222,6 +268,13 @@ def test_quiz_progression_flow():
     assert fail_data["passed"] is False
     assert fail_data["score"] == 0
     assert fail_data["ability_unlocked"] is None
+    assert len(fail_data["review"]) == 5
+    assert {item["id"] for item in fail_data["review"]} == {question["id"] for question in questions}
+    assert all(set(item) == {"id", "source_type", "source_refs"} for item in fail_data["review"])
+    assert fail_data["review"] == [
+        {"id": question["id"], "source_type": question["source_type"], "source_refs": question["source_refs"]}
+        for question in easy_set
+    ]
 
     # Fetch Easy quiz again: should rotate away from failed set
     res_easy_retry = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=easy", headers=headers)
@@ -242,6 +295,8 @@ def test_quiz_progression_flow():
     assert pass_data["passed"] is True
     assert pass_data["score"] == 5
     assert pass_data["ability_unlocked"] == 1
+    assert len(pass_data["review"]) == 5
+    assert all("correct_answer" not in item and "correct_option" not in item for item in pass_data["review"])
 
     # Check progression: Ability 1 unlocked
     res = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers)

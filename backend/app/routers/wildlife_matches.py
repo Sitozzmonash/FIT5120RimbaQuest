@@ -19,7 +19,7 @@ from app.core.schema import (
     wildlife_friendships, wildlife_leaderboard, wildlife_match_invites, wildlife_matches,
     wildlife_requests,
 )
-from app.routers.friends import are_friends
+from app.routers.friends import are_friends, _floored_points
 from app.schemas.wildlife_match import ActionIn, CancelIn, CreateMatchIn, ForfeitIn, SelectCardIn
 from app.services.battle_catalogue import get_battle_definition, get_catalogue
 from app.services.battle_engine import get_unlocked_abilities_for_child
@@ -254,6 +254,11 @@ def _settle(connection, row, state: dict) -> tuple[int, int | None]:
         )
         connection.execute(stmt)
         delta = (5 if side == winner else -3) if row["mode"] == "friend" and winner else 0
+        if delta < 0:
+            current = connection.execute(select(wildlife_leaderboard.c.points).where(
+                wildlife_leaderboard.c.child_id == child_id,
+            )).scalar() or 0
+            delta = -min(-delta, max(current, 0))
         deltas[side] = delta
         if delta:
             stmt = _insert_for(connection, wildlife_leaderboard).values(
@@ -453,7 +458,7 @@ def current_match(user: Annotated[AuthenticatedUser, Depends(get_current_user)])
 def leaderboard(user: Annotated[AuthenticatedUser, Depends(get_current_user)]):
     # The friend leaderboard ranks the explorer and their friends; anyone
     # without a ranked friend battle yet appears with 0 points.
-    points = func.coalesce(wildlife_leaderboard.c.points, 0)
+    points = _floored_points()
     friend_ids = select(wildlife_friendships.c.friend_child_id).where(
         wildlife_friendships.c.child_id == user.child_id,
     )

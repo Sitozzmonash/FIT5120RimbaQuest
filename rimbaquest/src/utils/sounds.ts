@@ -22,8 +22,29 @@ let currentTrack: MusicTrack = "main";
 // Whether the soundtrack should be playing (the app may still pause it while
 // it's in the background).
 let musicWanted = false;
+let audioMuted = false;
+
+export function isAudioMuted() {
+  return audioMuted;
+}
+
+export function setAudioMuted(muted: boolean) {
+  if (audioMuted === muted) return;
+  audioMuted = muted;
+  if (muted) {
+    try {
+      clickPlayer?.pause();
+      Object.values(musicPlayers).forEach((player) => player.pause());
+    } catch {
+      // Audio is optional.
+    }
+  } else {
+    resumeBackgroundMusic();
+  }
+}
 
 export function playButtonClick() {
+  if (audioMuted) return;
   try {
     clickPlayer ??= createAudioPlayer(BUTTON_CLICK);
     void clickPlayer.seekTo(0).catch(() => {});
@@ -35,6 +56,7 @@ export function playButtonClick() {
 }
 
 export function playCaptureSuccess() {
+  if (audioMuted) return;
   try {
     const player = createAudioPlayer(CAPTURE_SUCCESS_MUSIC);
     player.play();
@@ -58,6 +80,7 @@ function musicPlayer(track: MusicTrack): AudioPlayer {
 // Starts the looping soundtrack (safe to call again while it's playing).
 export function startBackgroundMusic() {
   musicWanted = true;
+  if (audioMuted) return;
   try {
     musicPlayer(currentTrack).play();
   } catch {
@@ -107,7 +130,7 @@ export function pauseBackgroundMusic() {
 // Picks the soundtrack back up if it's meant to be playing. Called on every
 // button tap so a play the browser blocked (no user gesture) gets retried.
 export function resumeBackgroundMusic() {
-  if (!musicWanted) return;
+  if (!musicWanted || audioMuted) return;
   try {
     musicPlayers[currentTrack]?.play();
   } catch {

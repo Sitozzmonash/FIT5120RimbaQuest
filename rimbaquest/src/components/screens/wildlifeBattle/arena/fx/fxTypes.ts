@@ -30,6 +30,7 @@ export type PlayOptions = {
   from: Point; // attacker centre, in stage coordinates
   to: Point; // target centre (impact point)
   damage?: number;
+  hitsMe?: boolean;
   gain?: { label: string; color: string };
   /** Override the default picture: one of your icon PNGs, or an emoji. */
   projectile?: ImageSourcePropType;

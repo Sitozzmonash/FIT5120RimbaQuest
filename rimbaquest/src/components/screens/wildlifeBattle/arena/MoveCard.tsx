@@ -48,13 +48,11 @@ export function MoveCard({
           >
             {move.name}
           </Text>
-          <View style={[styles.costPill, styles.costPillLocked]}>
-            <Image
-              source={BATTLE_IMAGES.lock}
-              style={styles.lockIcon as ImageStyle}
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={BATTLE_IMAGES.lock}
+            style={styles.lockIcon as ImageStyle}
+            resizeMode="contain"
+          />
         </View>
         <Text
           style={[styles.moveNote, styles.moveNoteLocked]}
@@ -159,14 +157,6 @@ const styles = StyleSheet.create({
     paddingLeft: 3,
     paddingRight: 8,
   },
-  // Lock only: even padding so the icon sits centred (the cost pill's is lopsided for the number).
-  costPillLocked: {
-    justifyContent: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    backgroundColor: "#E4DCC6",
-    borderColor: "#8C8570",
-  },
   costIcon: { width: 16, height: 20.27 },
   costText: { fontFamily: FONTS.display, fontSize: 15, color: "#7A3500" },
   moveDescription: {
@@ -177,5 +167,5 @@ const styles = StyleSheet.create({
   },
   moveNote: { fontFamily: FONTS.bodyBlack, fontSize: 10.5, color: "#7A3500" },
   moveNoteLocked: { color: "#6F6A55" },
-  lockIcon: { width: 14, height: 16.5 },
+  lockIcon: { width: 18, height: 21 },
 });

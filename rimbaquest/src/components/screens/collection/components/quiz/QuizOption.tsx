@@ -9,16 +9,19 @@ export function QuizOption({
   label,
   selected,
   onPress,
+  disabled = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  disabled?: boolean;
 }) {
   return (
     <ScaleTap
       label={label}
       style={[styles.option, selected ? styles.selected : styles.idle]}
       onPress={onPress}
+      disabled={disabled}
       pressedScale={0.97}
     >
       {/* {selected && <View style={styles.shade} />} */}

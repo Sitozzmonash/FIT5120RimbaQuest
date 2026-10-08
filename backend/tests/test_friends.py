@@ -156,7 +156,7 @@ def test_friend_leaderboard_ranks_me_and_my_friends_only():
     assert finished.status_code == 200, finished.text
 
     board = client.get(f"{BASE}/leaderboard", headers=hm).json()
-    assert [(entry["child_id"], entry["points"], entry["rank"]) for entry in board["entries"]] == [(me, 5, 1), (pal, -3, 2)]
+    assert [(entry["child_id"], entry["points"], entry["rank"]) for entry in board["entries"]] == [(me, 5, 1), (pal, 0, 2)]
     assert outsider not in [entry["child_id"] for entry in board["entries"]]
     assert [entry["child_id"] for entry in client.get(f"{BASE}/leaderboard", headers=ho).json()["entries"]] == [outsider]
 

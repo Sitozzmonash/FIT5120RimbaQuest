@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { FONTS } from "../../constants/fonts";
 
@@ -19,6 +20,7 @@ const LOADING_MESSAGES = [
 export function AppLoadingScreen() {
   const [messageIndex, setMessageIndex] = useState(0);
   const opacity = useRef(new Animated.Value(0)).current;
+  const { height } = useWindowDimensions();
 
   useEffect(() => {
     const animation = Animated.sequence([
@@ -42,7 +44,7 @@ export function AppLoadingScreen() {
   }, [messageIndex, opacity]);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { height }]}>
       <ImageBackground
         source={LOADING_BACKGROUND}
         resizeMode="cover"
@@ -67,11 +69,18 @@ export function AppLoadingScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#68BCEC" },
-  image: {
-    flex: 1,
+  root: {
     width: "100%",
-    maxWidth: 520,
+    justifyContent: "center",
+    overflow: "hidden",
+    backgroundColor: "#68BCEC",
+  },
+  // Caps keep the portrait art (841x1870) from blowing up on desktop web.
+  image: {
+    width: "100%",
+    height: "100%",
+    maxWidth: 480,
+    maxHeight: 1067,
     alignSelf: "center",
     justifyContent: "flex-end",
   },

@@ -49,6 +49,8 @@ Implemented behaviour includes:
 - Repeat sightings are retained in the species gallery without duplicating the card or its first-discovery reward.
 - Collection ordering with unlocked species before undiscovered species.
 - Species About, Fun Facts, Gallery, three-level Quiz progression, ability unlocking, and battle interfaces.
+- The quiz API reads `backend/data/ai_quiz_questions.json` and groups its 1-based question sets into the three 0-based sets used by quiz progression. The older `species_quiz_presets.json` is no longer served.
+- After submitting a quiz, explorers can review each question and their own choice. The submission response includes only About-field or Fun Fact references for hints; it does not reveal the correct answers.
 - Overall and per-category progress based on the authenticated child's records.
 
 Current Iteration 2 boundaries:
@@ -67,7 +69,7 @@ Each card has HP, a Basic Attack, and three quiz-unlocked abilities. Easy, Mediu
 
 Friend matches use an invitation code and a server-enforced 30-second action window. The client refreshes the match every second; a missed turn is skipped without its Energy recharge. A friend win adds 5 leaderboard points and a loss subtracts 3. AI Bot matches change leaderboard points by 0. Leaderboard points are stored separately from Explorer XP. The AI Bot uses the same combat rules as a child and chooses only legal actions. Its offline training reward is kept separate from player scores.
 
-After a completed match, the used card rests for the next two completed matches by that explorer. Resting cards cannot be selected. Rest only counts down when a match completes, so if every card an explorer owns is resting (a collection of one or two cards), the cards closest to ready stay selectable instead of locking the explorer out. Each explorer can have one unfinished match at a time, and the battle screen can recover it after a refresh. The match, rest count, action replay protection, and leaderboard settlement are kept on the server so refreshing or repeating a request cannot grant extra points.
+After a completed match, the used card rests for two hours. The server stores its expiry time, so the cooldown continues while the app is closed. Resting cards cannot be selected, even if every card in the collection is resting. Each explorer can have one unfinished match at a time, and the battle screen can recover it after a refresh. The match, rest expiry, action replay protection, and leaderboard settlement are kept on the server so refreshing or repeating a request cannot grant extra points.
 
 ## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
 

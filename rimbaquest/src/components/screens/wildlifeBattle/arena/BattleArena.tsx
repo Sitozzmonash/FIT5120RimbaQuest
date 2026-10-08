@@ -28,6 +28,8 @@ import { StatusPanel } from "./StatusPanel";
 import { useBattleReplay } from "./useBattleReplay";
 import { VsBadge } from "./VsBadge";
 
+const VS_GAP = 40; // space between the two cards; the VS coin is 54px wide
+
 export type { BattleMove } from "./MoveCard";
 
 // The habitat art is 780x1686, drawn full width and nudged up like the design.
@@ -94,10 +96,12 @@ export function BattleArena({
     cards,
     fx,
     centres,
+    mySide,
     onReplayed,
   });
 
-  const cardWidth = Math.min(170, Math.max(130, (width - 72) / 2));
+  // Cards hug the screen edges and leave VS_GAP between them, so the VS coin only nips their inner edges.
+  const cardWidth = Math.min(170, Math.max(120, (width - 24 - VS_GAP) / 2));
   // The cards shrink their photo to whatever height the stage has left, so the arena never scrolls.
   const photoHeight = Math.max(56, Math.min(130, stageHeight - 160));
   // The bubble follows the turn, but waits for the last hit to finish.
@@ -232,6 +236,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
   },
 });

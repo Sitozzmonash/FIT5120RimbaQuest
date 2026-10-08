@@ -7,6 +7,8 @@ import { useLoop } from "../shared/useLoop";
 import { outlined } from "./arenaText";
 
 const INK = GAME_COLORS.ink;
+const SIZE = 54;
+const LIFT = -5; // sits a little above centre so it covers less of the cards
 
 export function VsBadge() {
   const pulse = useLoop(900);
@@ -39,22 +41,22 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: "50%",
     top: "50%",
-    marginLeft: -35,
-    marginTop: -35,
+    marginLeft: -SIZE / 2,
+    marginTop: -SIZE / 2 - LIFT,
     zIndex: 5,
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: SIZE,
+    height: SIZE,
+    borderRadius: SIZE / 2,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFB938",
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: INK,
-    boxShadow: `0px 0px 0px 5px ${GAME_COLORS.woodText}, 0px 0px 0px 8px ${INK}, 0px 7px 0px 3px ${INK}`,
+    boxShadow: `0px 0px 0px 4px ${GAME_COLORS.woodText}, 0px 0px 0px 6px ${INK}, 0px 5px 0px 2px ${INK}`,
   },
   text: {
     fontFamily: FONTS.display,
-    fontSize: 28,
+    fontSize: 18,
     color: "#FFFFFF",
     ...outlined("#7A3500"),
   },

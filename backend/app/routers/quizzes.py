@@ -14,18 +14,55 @@ from app.schemas.quiz import QuizSubmitIn
 
 router = APIRouter(tags=["Species Quizzes & Progression"])
 
-PRESETS_PATH = Path(__file__).resolve().parents[2] / "data" / "species_quiz_presets.json"
+AI_QUESTIONS_PATH = Path(__file__).resolve().parents[2] / "data" / "ai_quiz_questions.json"
 _cached_presets: dict[str, Any] | None = None
 DISCOVERED_CARD_NOT_FOUND = "Discovered Wildlife Card not found"
+
+
+def build_quiz_presets(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Adapt flat AI question rows to the quiz API's three-set shape."""
+    presets: dict[str, Any] = {}
+    question_ids: set[str] = set()
+    for row in sorted(rows, key=lambda item: (item["species_id"], item["difficulty"], item["set_no"], item["question_no"])):
+        species_id = row["species_id"]
+        difficulty = row["difficulty"]
+        set_no = row["set_no"]
+        question_id = row["question_id"]
+        options = [str(option) for option in row["options"]]
+        answer = str(row["correct_answer"])
+        correct_option = row["correct_option"]
+        if (difficulty not in ("easy", "medium", "hard") or set_no not in (1, 2, 3)
+                or row["question_no"] not in (1, 2, 3, 4, 5)
+                or question_id in question_ids or len(options) != 3
+                or len(set(options)) != 3
+                or correct_option not in ("A", "B", "C")
+                or options[ord(correct_option) - ord("A")] != answer):
+            raise ValueError(f"Invalid AI quiz question: {question_id}")
+        question_ids.add(question_id)
+        levels = presets.setdefault(species_id, {level: [[], [], []] for level in ("easy", "medium", "hard")})
+        levels[difficulty][set_no - 1].append({
+            "id": question_id,
+            "question": row["question"],
+            "options": options,
+            "correct_answer": answer,
+            "source_type": row["source_type"],
+            "source_refs": row["source_refs"],
+        })
+    for species_id, levels in presets.items():
+        for difficulty, sets in levels.items():
+            for set_no, questions in enumerate(sets, start=1):
+                if len(questions) != 5:
+                    raise ValueError(f"Expected five {difficulty} questions for {species_id} set {set_no}")
+    return presets
 
 
 def get_quiz_presets() -> dict[str, Any]:
     global _cached_presets
     if _cached_presets is None:
-        if not PRESETS_PATH.exists():
-            raise HTTPException(500, "Species quiz presets not found. Run generate_validated_quizzes.py first.")
-        with open(PRESETS_PATH, "r", encoding="utf-8") as f:
-            _cached_presets = json.load(f)
+        if not AI_QUESTIONS_PATH.exists():
+            raise HTTPException(500, "AI quiz questions file not found.")
+        with open(AI_QUESTIONS_PATH, "r", encoding="utf-8") as f:
+            _cached_presets = build_quiz_presets(json.load(f))
     return _cached_presets
 
 
@@ -273,6 +310,11 @@ def submit_quiz(
 
     questions = species_quizzes[difficulty][set_idx]
     total = len(questions)
+    review = [{
+        "id": question["id"],
+        "source_type": question["source_type"],
+        "source_refs": question["source_refs"],
+    } for question in questions]
 
     with engine.begin() as connection:
         require_discovered_species(connection, user.child_id, species_id)
@@ -329,6 +371,7 @@ def submit_quiz(
                 "total": total,
                 "passed": True,
                 "ability_unlocked": ability_unlocked,
+                "review": review,
                 "message": f"{correct_count} / {total} — Quiz Passed! Ability Unlocked!",
             }
         else:
@@ -352,5 +395,6 @@ def submit_quiz(
                 "total": total,
                 "passed": False,
                 "ability_unlocked": None,
+                "review": review,
                 "message": f"{correct_count} / {total} — Almost there! Get all 5 correct to unlock this ability.",
             }

@@ -1,6 +1,7 @@
 // Sound effects for the battle animations in BattleFX. Each effect can have
 // launch sounds (the move starting) and impact sounds (one picked at random per hit).
 import { AudioPlayer, createAudioPlayer } from "expo-audio";
+import { isAudioMuted } from "../../../../../utils/sounds";
 import type { FXType } from "./fxTypes";
 
 const SOUNDS = {
@@ -95,6 +96,7 @@ function pool(key: SoundKey) {
 }
 
 function playSound(key: SoundKey, volume = 1) {
+  if (isAudioMuted()) return;
   try {
     const entry = pool(key);
     const player = entry.players[entry.next];

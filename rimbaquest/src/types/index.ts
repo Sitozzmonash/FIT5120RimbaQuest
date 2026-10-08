@@ -210,4 +210,9 @@ export type QuizResult = {
   passed: boolean;
   ability_unlocked?: number | null;
   message: string;
+  review?: Array<{
+    id: string;
+    source_type: 'about' | 'fun_fact';
+    source_refs: Array<string | number>;
+  }>;
 };

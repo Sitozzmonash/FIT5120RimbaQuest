@@ -74,12 +74,14 @@ export function useBattleReplay({
   cards,
   fx,
   centres,
+  mySide,
   onReplayed,
 }: {
   events: WildlifeEvent[];
   cards: Cards;
   fx: FX;
   centres: MutableRefObject<Partial<Record<WildlifeSide, Point>>>;
+  mySide?: WildlifeSide;
   /** Called with the last event id once everything queued has played. */
   onReplayed?: (eventId: number) => void;
 }) {
@@ -191,6 +193,7 @@ export function useBattleReplay({
       from,
       to,
       damage: damageTaken || undefined,
+      hitsMe: defender === mySide,
       gain,
     });
     await new Promise((resolve) => setTimeout(resolve, PAUSE_MS / 2));
