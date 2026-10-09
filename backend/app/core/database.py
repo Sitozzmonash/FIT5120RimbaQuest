@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 
 from app.core.config import DATABASE_URL
@@ -34,6 +34,26 @@ if engine.dialect.name == "sqlite":
         dbapi_connection.execute("PRAGMA foreign_keys = ON")
 
 
+def _rename_child_profile_user_column(target_engine: Engine = engine) -> None:
+    """Rename the legacy ownership column without changing its relationship.
+
+    Earlier iterations called the authenticated account owner a "parent" even
+    though the current app creates child accounts directly.  Both SQLite and
+    PostgreSQL preserve the foreign key, uniqueness rule, and existing values
+    when a column is renamed.  Fresh databases simply skip this migration.
+    """
+    inspector = inspect(target_engine)
+    if not inspector.has_table("child_profiles"):
+        return
+    columns = {column["name"] for column in inspector.get_columns("child_profiles")}
+    if "parent_user_id" not in columns or "user_id" in columns:
+        return
+    with target_engine.begin() as connection:
+        connection.execute(
+            text("ALTER TABLE child_profiles RENAME COLUMN parent_user_id TO user_id")
+        )
+
+
 def initialise_database() -> None:
     """Create missing tables and seed the static catalogue.
 
@@ -41,6 +61,7 @@ def initialise_database() -> None:
     survive every restart; a fresh database (e.g. new Neon project) is
     populated from seed.sql in the same pass.
     """
+    _rename_child_profile_user_column()
     metadata.create_all(engine)
     with engine.begin() as connection:
         seed_iteration_one(connection)

@@ -84,7 +84,7 @@ def register(payload: RegisterIn):
             ).mappings().one()
             child = connection.execute(
                 text("""INSERT INTO child_profiles
-                    (parent_user_id, display_name, age_band, xp, level, safety_briefing_done,
+                    (user_id, display_name, age_band, xp, level, safety_briefing_done,
                      learning_streak, avatar, age)
                     VALUES (:user_id, :display_name, :age_band, 0, 1, :safety, 0, :avatar, :age)
                     RETURNING id, display_name, xp, level, avatar, age"""),
@@ -122,7 +122,7 @@ def login(payload: LoginIn):
             )
         child = connection.execute(
             text("""SELECT id, display_name, xp, level, avatar, age
-                    FROM child_profiles WHERE parent_user_id=:user_id LIMIT 1"""),
+                    FROM child_profiles WHERE user_id=:user_id LIMIT 1"""),
             {"user_id": user["id"]},
         ).mappings().first()
         if not child:
@@ -193,11 +193,11 @@ def reset_password(payload: ResetPasswordIn):
 def _profile(child_id: int) -> dict[str, Any]:
     with engine.connect() as connection:
         child = connection.execute(
-            text("""SELECT child_profiles.id, child_profiles.parent_user_id,
+            text("""SELECT child_profiles.id, child_profiles.user_id,
                            users.username, users.email, child_profiles.display_name, child_profiles.age,
                            child_profiles.age_band, child_profiles.xp, child_profiles.level,
                            child_profiles.avatar
-                    FROM child_profiles JOIN users ON users.id=child_profiles.parent_user_id
+                    FROM child_profiles JOIN users ON users.id=child_profiles.user_id
                     WHERE child_profiles.id=:id"""),
             {"id": child_id},
         ).mappings().first()
@@ -242,7 +242,7 @@ def update_child_profile(
 ):
     with engine.begin() as connection:
         child = connection.execute(
-            text("SELECT id, parent_user_id FROM child_profiles WHERE id=:id"), {"id": child_id}
+            text("SELECT id, user_id FROM child_profiles WHERE id=:id"), {"id": child_id}
         ).mappings().first()
         if not child:
             raise HTTPException(404, "Child profile not found")
@@ -251,7 +251,7 @@ def update_child_profile(
         if payload.username is not None:
             duplicate = connection.execute(
                 text("SELECT id FROM users WHERE lower(username)=lower(:username) AND id!=:user_id"),
-                {"username": payload.username, "user_id": child["parent_user_id"]},
+                {"username": payload.username, "user_id": child["user_id"]},
             ).first()
             if duplicate:
                 raise HTTPException(400, "That username is already taken. Try another one.")
@@ -272,6 +272,6 @@ def update_child_profile(
                 assignments = ", ".join(f"{key}=:{key}" for key in user_updates)
                 connection.execute(
                     text(f"UPDATE users SET {assignments} WHERE id=:user_id"),
-                    {**user_updates, "user_id": child["parent_user_id"]},
+                    {**user_updates, "user_id": child["user_id"]},
                 )
     return _profile(child_id)

@@ -17,7 +17,7 @@ erDiagram
 
     CHILD_PROFILES {
         int id PK
-        int parent_user_id FK, UK
+        int user_id FK, UK
         string display_name
         string age_band
         int xp
@@ -174,7 +174,7 @@ erDiagram
 
 ## Important constraints
 
-- `child_profiles.parent_user_id` is unique: one user has at most one child profile.
+- `child_profiles.user_id` is unique: one authenticated user has at most one explorer profile.
 - `collection_entries`, `child_species_activity`, and `child_quiz_progress` each have a unique `(child_id, species_id)` pair.
 - `species_fun_facts` has a unique `(species_id, display_order)` pair, preserving the ten-fact order.
 - `quizzes` has a unique `(species_id, version)` pair.

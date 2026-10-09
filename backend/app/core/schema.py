@@ -47,7 +47,7 @@ child_profiles = Table(
     "child_profiles",
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("parent_user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True),
+    Column("user_id", Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True),
     Column("display_name", String(30), nullable=False),
     Column("age_band", String(20), nullable=False, default="8-11"),
     Column("xp", Integer, nullable=False, default=0),
