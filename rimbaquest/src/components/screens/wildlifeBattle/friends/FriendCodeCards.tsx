@@ -3,7 +3,7 @@ import { Share, StyleSheet, Text, View } from "react-native";
 import { FONTS } from "../../../../constants/fonts";
 import { GameButton } from "../../../common/game/GameButton";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
-import { WildlifeFriend } from "../../../../types/wildlifeMatch";
+import { AddFriendResult } from "../../../../types/wildlifeMatch";
 import { errorTextStyle } from "../shared/ErrorNote";
 import { AddFriendRow } from "./AddFriendRow";
 import { Paper } from "./Paper";
@@ -20,7 +20,7 @@ type Props = {
   code: string;
   busy: boolean;
   error: string | null;
-  onAdd: (code: string) => Promise<WildlifeFriend | null>;
+  onAdd: (code: string) => Promise<AddFriendResult | null>;
 };
 
 /** Before the first friend: a big code to share, then a separate Add a Friend card. */

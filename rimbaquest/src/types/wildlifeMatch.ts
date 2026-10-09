@@ -85,6 +85,11 @@ export interface WildlifeFriend {
   points: number;
 }
 
+export interface AddFriendResult {
+  friend: WildlifeFriend;
+  alreadyFriends: boolean;
+}
+
 export interface WildlifeIncomingInvite {
   match_id: string;
   invite_code: string;

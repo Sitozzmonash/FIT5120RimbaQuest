@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE } from "../constants/config";
 import { useUserStore } from "../store/useUserStore";
 import {
+  AddFriendResult,
   WildlifeAction,
   WildlifeCardOption,
   WildlifeFriend,
@@ -157,7 +158,7 @@ export function useWildlifeMatch() {
     }
   }, [request, isCurrent]);
 
-  const addFriend = useCallback(async (rawCode: string): Promise<WildlifeFriend | null> => {
+  const addFriend = useCallback(async (rawCode: string): Promise<AddFriendResult | null> => {
     if (mutationLocked.current) return null;
     const code = rawCode.trim();
     if (!code) {
@@ -169,11 +170,11 @@ export function useWildlifeMatch() {
     setFriendsError(null);
     const captured = generation.current;
     try {
-      const data = await request<{ friend: WildlifeFriend }>("/api/v1/friends", { code });
+      const data = await request<{ friend: WildlifeFriend; already_friends: boolean }>("/api/v1/friends", { code });
       if (!isCurrent(captured)) return null;
       void refreshFriends();
       void refreshLeaderboard();
-      return data.friend;
+      return { friend: data.friend, alreadyFriends: data.already_friends };
     } catch (caught) {
       if (isCurrent(captured)) setFriendsError(errorMessage(caught));
       return null;

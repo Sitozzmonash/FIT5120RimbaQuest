@@ -1,10 +1,11 @@
-// Friend-code input and Add button; confirms who was added.
+// Friend-code input and Add button; confirms who was added, or that they already were.
 import React, { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { FONTS } from "../../../../constants/fonts";
 import { GameButton } from "../../../common/game/GameButton";
+import { WoodModal } from "../../../common/game/WoodModal";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
-import { WildlifeFriend } from "../../../../types/wildlifeMatch";
+import { AddFriendResult } from "../../../../types/wildlifeMatch";
 
 const INK = GAME_COLORS.ink;
 
@@ -14,17 +15,23 @@ export function AddFriendRow({
   compact,
 }: {
   busy: boolean;
-  onAdd: (code: string) => Promise<WildlifeFriend | null>;
+  onAdd: (code: string) => Promise<AddFriendResult | null>;
   compact: boolean;
 }) {
   const [code, setCode] = useState("");
   const [added, setAdded] = useState<string | null>(null);
+  const [alreadyFriend, setAlreadyFriend] = useState("");
+  const [showAlready, setShowAlready] = useState(false);
   const submit = async () => {
     setAdded(null);
-    const friend = await onAdd(code);
-    if (friend) {
-      setCode("");
-      setAdded(`${friend.display_name} is in your Friend List.`);
+    const result = await onAdd(code);
+    if (!result) return;
+    setCode("");
+    if (result.alreadyFriends) {
+      setAlreadyFriend(result.friend.display_name);
+      setShowAlready(true);
+    } else {
+      setAdded(`${result.friend.display_name} is in your Friend List.`);
     }
   };
   return (
@@ -55,6 +62,16 @@ export function AddFriendRow({
         />
       </View>
       {added ? <Text style={styles.successText}>{added}</Text> : null}
+      <WoodModal
+        visible={showAlready}
+        onRequestClose={() => setShowAlready(false)}
+        icon="alert"
+        positive={false}
+        title="Already Friends"
+        message={`${alreadyFriend} is already in your Friend List.`}
+        actionLabel="OK"
+        onAction={() => setShowAlready(false)}
+      />
     </>
   );
 }
