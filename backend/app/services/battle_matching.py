@@ -9,10 +9,17 @@ class ChoiceRng(Protocol):
     def choice(self, values: list[Any]) -> Any: ...
 
 
+_COSTS = {1: 1, 2: 2, 3: 4}
+_HARD_SKILL_DAMAGE_BONUS = 10
+_OPENING_SHIELD_BY_MAX_SLOT = {0: 4, 1: 9, 2: 10, 3: 13}
+
+
 def _utility_value(effect: dict[str, Any], base_attack: float = 10.0) -> float:
     kind = effect.get("type")
     value = float(effect.get("value", 0) or 0)
     if kind in ("shield", "heal"):
+        return value * 0.85
+    elif kind == "heal_hp":
         return value * 0.85
     elif kind == "guard":
         return (value / 100.0) * base_attack
@@ -25,51 +32,63 @@ def _utility_value(effect: dict[str, Any], base_attack: float = 10.0) -> float:
     return 0.0
 
 
+def _runtime_effect(effect: dict[str, Any]) -> dict[str, Any]:
+    kind = effect.get("type")
+    value = max(0.0, float(effect.get("value", 0) or 0))
+    if kind == "heal":
+        kind = "heal_hp"
+    elif kind == "reroll":
+        kind, value = "guard", 20.0
+    elif kind == "reduce_damage":
+        kind = "block"
+    return {"type": kind, "value": value, "target": effect.get("target", "self")}
+
+
+def _move_score(effects: list[dict[str, Any]], base_attack: float) -> float:
+    damage = sum(float(e.get("value", 0) or 0) for e in effects if e.get("type") == "damage")
+    utility = sum(_utility_value(e, base_attack) for e in effects if e.get("type") != "damage")
+    return damage + utility
+
+
+def _opening_shield_value(unlocked_slots: list[int]) -> float:
+    highest = max((slot for slot in unlocked_slots if slot in _COSTS), default=0)
+    return float(_OPENING_SHIELD_BY_MAX_SLOT[highest])
+
+
+def _third_ability_score(definition: dict[str, Any], base_attack: float) -> float:
+    passive = definition.get("passive") or {}
+    characteristic = []
+    for effect in passive.get("effects", []):
+        if effect.get("type") == "reroll":
+            characteristic.append({"type": "guard", "value": 40.0, "target": "self"})
+        else:
+            characteristic.append(_runtime_effect(effect))
+    bonus_damage = sum(e["value"] for e in characteristic if e["type"] == "damage")
+    runtime_effects = [
+        {"type": "damage", "value": base_attack + _HARD_SKILL_DAMAGE_BONUS + bonus_damage, "target": "opponent"},
+        *(e for e in characteristic if e["type"] != "damage"),
+    ]
+    # High-cost hard skills are strong but appear less often than basic or
+    # low-cost moves because the energy cap is 8 and recharge is +2 per turn.
+    return _move_score(runtime_effects, base_attack) * 0.75
+
+
 def compute_effective_rating(definition: dict[str, Any], unlocked_slots: list[int]) -> float:
-    """Estimate combat power using HP, base attack, unlocked abilities, passive EV, and opening shield."""
+    """Estimate energy-mode power from HP, moves, unlock tier, and opening shield."""
     hp = float(definition.get("hp", 100) or 100)
     base_attack = float(definition.get("base_attack", 10) or 10)
     unlocked = set(unlocked_slots)
 
-    active_abilities = [a for a in definition.get("abilities", []) if a.get("slot") in unlocked]
-    if active_abilities:
-        move_scores: list[float] = []
-        for ab in active_abilities:
-            effects = ab.get("effects", [])
-            dmg = sum(float(e.get("value", 0) or 0) for e in effects if e.get("type") == "damage")
-            util = sum(_utility_value(e, base_attack) for e in effects if e.get("type") != "damage")
-            move_scores.append(dmg + util)
-        expected_move = sum(move_scores) / len(move_scores)
-    else:
-        expected_move = base_attack
-
-    passive_value = 0.0
+    move_scores = [base_attack]
+    for ability in definition.get("abilities", []):
+        if ability.get("slot") in unlocked:
+            move_scores.append(_move_score([_runtime_effect(e) for e in ability.get("effects", [])], base_attack))
     if 3 in unlocked and definition.get("passive"):
-        passive = definition["passive"]
-        trigger = passive.get("trigger")
-        effects = passive.get("effects", [])
-        for e in effects:
-            val = float(e.get("value", 0) or 0)
-            if trigger == "battle_start":
-                passive_value += val * 0.9
-            elif trigger == "first_active":
-                passive_value += val * (0.9 if active_abilities else 0.0)
-            elif trigger in ("first_incoming_active", "first_incoming_basic"):
-                passive_value += val * 0.8
-            elif trigger == "every_third_action_damage":
-                passive_value += val * 2.2
-            elif trigger == "every_third_action_heal":
-                passive_value += val * 1.8
-            elif trigger == "low_energy":
-                passive_value += val * 0.85
-            elif trigger == "first_lucky":
-                passive_value += val * 0.75
-            elif trigger == "low_roll_reroll":
-                max_trig = float(passive.get("max_triggers", 2) or 2)
-                passive_value += max_trig * 1.8
+        move_scores.append(_third_ability_score(definition, base_attack))
 
-    opening_shield_ev = 3.75
-    return round(hp + (expected_move * 4.2) + passive_value + opening_shield_ev, 2)
+    expected_move = sum(move_scores) / len(move_scores)
+    opening_shield_ev = _opening_shield_value(list(unlocked))
+    return round(hp + (expected_move * 4.2) + opening_shield_ev, 2)
 
 
 # Alias for backwards compatibility if needed

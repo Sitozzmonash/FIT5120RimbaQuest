@@ -10,8 +10,9 @@ import pytest
 from app.services.battle_catalogue import get_battle_definition, get_catalogue
 from app.services.wildlife_ai import _load_policy, _score_action
 from app.services.wildlife_battle import (
-    HABITATS, ability_previews, choose_ai_action, choose_habitat, forfeit,
-    habitat_matches, legal_actions, new_match, perform_action, skip_turn,
+    HABITATS, HABITAT_BONUSES, ability_previews, choose_ai_action,
+    choose_habitat, forfeit, habitat_matches, legal_actions, new_match,
+    perform_action, skip_turn,
 )
 
 
@@ -39,13 +40,14 @@ def definition(species_id: str, *, hp: int = 50, attack: int = 10,
 
 
 def match(*, player: dict | None = None, opponent: dict | None = None,
+          habitat: str = "Rainforest",
           player_habitat: str = "forest", opponent_habitat: str = "coast",
           player_unlocked: list[int] | None = None,
           opponent_unlocked: list[int] | None = None,
           initiative: str = "player") -> dict:
     return new_match(
         player or definition("player"), opponent or definition("opponent"),
-        habitat="Rainforest", player_habitat=player_habitat,
+        habitat=habitat, player_habitat=player_habitat,
         opponent_habitat=opponent_habitat,
         player_unlocked=[1, 2, 3] if player_unlocked is None else player_unlocked,
         opponent_unlocked=[1, 2, 3] if opponent_unlocked is None else opponent_unlocked,
@@ -53,24 +55,44 @@ def match(*, player: dict | None = None, opponent: dict | None = None,
     )
 
 
+def clear_shields(state: dict) -> dict:
+    state["player"]["shield"] = 0
+    state["opponent"]["shield"] = 0
+    return state
+
+
 def test_habitat_is_known_before_selection_and_matching_uses_species_text():
-    assert HABITATS == ("Rainforest", "Mangrove", "Wetland", "Grassland", "Coastal")
+    assert HABITATS == ("Rainforest", "Mangrove", "Wetland", "Grassland", "Coastal", "Montane")
+    assert set(HABITAT_BONUSES) == set(HABITATS)
     assert habitat_matches("Mangrove and riverine forest", "Mangrove")
     assert habitat_matches("Mangrove and riverine forest", "Wetland")
     assert habitat_matches("Coastal waters and seagrass beds", "Coastal")
+    assert habitat_matches("Montane forests of Borneo", "Montane")
+    assert habitat_matches("Lowland and hill forests", "Montane")
     assert habitat_matches("Tropical forest", "Rainforest")
     assert not habitat_matches("Mangrove forest", "Rainforest")
+    assert not habitat_matches("Montane forests of Borneo", "Rainforest")
     assert not habitat_matches(None, "Rainforest")
     assert not habitat_matches("forest", "Coastal")
     state = match()
     assert state["habitat"] == "Rainforest"
     assert state["player"]["habitat_advantage"]
+    assert state["player"]["habitat_bonus"] == HABITAT_BONUSES["Rainforest"]
     assert not state["opponent"]["habitat_advantage"]
+    assert state["opponent"]["habitat_bonus"] is None
+
+
+def test_second_mover_gets_tiered_opening_shield():
+    assert match(player_unlocked=[], opponent_unlocked=[], initiative="player")["opponent"]["shield"] == 4
+    assert match(player_unlocked=[1], opponent_unlocked=[1], initiative="player")["opponent"]["shield"] == 9
+    assert match(player_unlocked=[1, 2], opponent_unlocked=[1, 2], initiative="player")["opponent"]["shield"] == 10
+    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2, 3], initiative="player")["opponent"]["shield"] == 13
+    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2], initiative="opponent")["player"]["shield"] == 13
 
 
 def test_habitat_attack_and_defence_apply_whole_match():
-    state = match(player=definition("player", attack=13),
-                  opponent_habitat="tropical forest")
+    state = clear_shields(match(player=definition("player", attack=13),
+                                opponent_habitat="tropical forest"))
     original = copy.deepcopy(state)
     state, events = perform_action(state, "player", "basic")
     # Half-up rounding: 13 * 1.2 = 15.6 -> 16, then 16 * .8 = 12.8 -> 13.
@@ -88,13 +110,35 @@ def test_habitat_attack_and_defence_apply_whole_match():
 def test_habitat_bonus_rounds_half_up_for_catalogue_attacks(attack):
     # Plain floor() turned the 20% bonus into about 15% for catalogue attacks
     # of 11-13 while making the 20% defence cut closer to 25%.
-    bonus = match(player=definition("player", attack=attack), opponent_habitat="coast")
+    bonus = clear_shields(match(player=definition("player", attack=attack), opponent_habitat="coast"))
     damage = next(e for e in perform_action(bonus, "player", "basic")[1] if e["type"] == "damage")
     assert damage["value"] == round(attack * 1.2)
-    defence = match(player=definition("player", attack=attack), player_habitat="coast",
-                    opponent_habitat="forest")
+    defence = clear_shields(match(player=definition("player", attack=attack), player_habitat="coast",
+                                  opponent_habitat="forest"))
     damage = next(e for e in perform_action(defence, "player", "basic")[1] if e["type"] == "damage")
     assert damage["value"] == round(attack * 0.8)
+
+
+def test_each_habitat_uses_its_own_attack_and_defence_bonus():
+    grass = clear_shields(match(
+        habitat="Grassland",
+        player=definition("player", attack=10),
+        player_habitat="open grassland",
+        opponent_habitat="forest",
+    ))
+    damage = next(e for e in perform_action(grass, "player", "basic")[1] if e["type"] == "damage")
+    assert grass["player"]["habitat_bonus"]["attack_percent"] == 25
+    assert damage["value"] == 13  # 10 * 1.25 rounds half-up.
+
+    montane = clear_shields(match(
+        habitat="Montane",
+        player=definition("player", attack=12),
+        player_habitat="lowland forest",
+        opponent_habitat="montane forests",
+    ))
+    damage = next(e for e in perform_action(montane, "player", "basic")[1] if e["type"] == "damage")
+    assert montane["opponent"]["habitat_bonus"]["defence_percent"] == 25
+    assert damage["value"] == 9  # 12 * 0.75.
 
 
 def test_habitat_draw_prefers_habitats_that_split_the_ready_cards():
@@ -124,7 +168,11 @@ def test_ability_previews_match_the_battle_and_drop_legacy_dice_text():
             for ability in state["player"]["abilities"]
         ]
         assert [preview["cost"] for preview in previews] == [1, 2, 4]
-        assert not any("die" in p["description"] or "roll" in p["description"] for p in previews)
+        assert not any(
+            "die" in f"{p['name']} {p['description']}".casefold()
+            or "roll" in f"{p['name']} {p['description']}".casefold()
+            for p in previews
+        )
 
 
 def test_cost_unlock_recharge_and_one_action_per_turn():
@@ -150,7 +198,7 @@ def test_hp_healing_is_separate_from_turn_energy_recharge():
         {"type": "damage", "value": 12, "target": "opponent"},
         {"type": "heal", "value": 5, "target": "self"},
     ])
-    state = match(player=player, initiative="opponent")
+    state = clear_shields(match(player=player, initiative="opponent"))
     assert state["player"]["abilities"][0]["description"] == "Deal 12 damage; Restore 5 HP."
     state, _ = perform_action(state, "opponent", "basic")
     assert state["player"]["hp"] == 42
@@ -172,6 +220,9 @@ def test_slot_three_adapts_dice_and_original_passive_effects():
         assert third["name"] == species["passive"]["name"]
         assert third["kind"] == "active" and third["cost"] == 4
         assert third["effects"][0]["type"] == "damage"
+        assert third["effects"][0]["value"] >= max(
+            ability["effects"][0]["value"] for ability in state["player"]["abilities"][:2]
+        )
         assert all(e["type"] != "reroll" for a in state["player"]["abilities"] for e in a["effects"])
         for action in ("ability_1", "ability_2", "ability_3"):
             result, events = perform_action(state, "player", action)
@@ -226,10 +277,10 @@ def test_one_hit_defences_and_hp_healing_are_bounded():
     state["opponent"]["block"] = 2
     state["opponent"]["shield"] = 3
     result, events = perform_action(state, "player", "ability_3")
-    # 10+5+4 is one attack; block 2, guard 25% (17 -> 12), habitat defence
-    # 20% (9.6 -> 10), then Shield 3. The guard and block are consumed once.
+    # 10+10+4 is one attack; block 2, guard 25% (22 -> 16), habitat defence
+    # 20% (13), then Shield 3. The guard and block are consumed once.
     damage = next(e for e in events if e["type"] == "damage")
-    assert damage["value"] == 7
+    assert damage["value"] == 10
     assert result["opponent"]["guard"] == 0
     assert result["opponent"]["block"] == 0
     assert result["opponent"]["shield"] == 0

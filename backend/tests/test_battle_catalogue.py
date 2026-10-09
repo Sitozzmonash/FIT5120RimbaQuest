@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 import pytest
 from sqlalchemy import select
 
@@ -34,10 +35,18 @@ def test_catalogue_structure_and_deterministic_rows() -> None:
     for sid, entry in catalogue.items():
         assert entry["species_id"] == sid and isinstance(entry["role"], str) and entry["role"].strip()
         assert 90 <= entry["hp"] <= 128 and 9 <= entry["base_attack"] <= 14
+        assert isinstance(entry.get("source_hp"), int) and 90 <= entry["source_hp"] <= 128
+        assert isinstance(entry.get("source_base_attack"), int) and 9 <= entry["source_base_attack"] <= 14
         abilities = entry.get("abilities", [])
         assert len(abilities) == 2 and {a["slot"] for a in abilities} == {1, 2} and all(a["kind"] == "active" for a in abilities)
         passive = entry.get("passive")
         assert isinstance(passive, dict) and passive["slot"] == 3 and passive["kind"] == "passive" and passive.get("max_triggers", 0) >= 1
+        visible_text = " ".join(
+            [f"{a['name']} {a['description']}" for a in abilities]
+            + [f"{passive['name']} {passive['description']}"]
+        ).casefold()
+        assert not re.search(r"\b(die|dice|roll|reroll)\b", visible_text)
+        assert "energy" not in visible_text
         row = entry.get("source_row")
         assert isinstance(row, int) and row > 0
         source_rows.add(row)

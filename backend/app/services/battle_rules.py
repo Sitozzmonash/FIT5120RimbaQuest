@@ -117,6 +117,18 @@ def _make_combatant(definition: dict[str, Any], unlocked_slots: list[int]) -> di
     }
 
 
+def _opening_shield(unlocked_slots: list[int]) -> int:
+    """Return the tiered opening shield for the side that moves second."""
+    unlocked = {slot for slot in unlocked_slots if slot in (1, 2, 3)}
+    if 3 in unlocked:
+        return int(RULES.get("opening_shield_slot_3", RULES.get("opening_shield_active", 0)))
+    if 2 in unlocked:
+        return int(RULES.get("opening_shield_slot_2", RULES.get("opening_shield_active", 0)))
+    if 1 in unlocked:
+        return int(RULES.get("opening_shield_slot_1", RULES.get("opening_shield_active", 0)))
+    return int(RULES.get("opening_shield_basic", 0))
+
+
 def _status_matches(status: dict[str, Any], status_id: str) -> bool:
     """Match stable IDs while accepting the original fixture names."""
     sid = status.get("id")
@@ -369,10 +381,8 @@ def new_battle(
                 )
 
     # The second mover gets visible protection to offset the opening action.
-    first = state[initiative]
     second_side = "player" if initiative == "opponent" else "opponent"
-    shield_key = "opening_shield_active" if any(slot in first["unlocked_abilities"] for slot in (1, 2)) else "opening_shield_basic"
-    protection = RULES.get(shield_key, 0)
+    protection = _opening_shield(state[second_side]["unlocked_abilities"])
     if protection:
         _apply_shield(state, events, second_side, protection)
         _emit_event(state, events, "initiative", f"{state[second_side]['name']} receives {protection} opening Shield for moving second.", "shield", side=second_side, target=second_side)

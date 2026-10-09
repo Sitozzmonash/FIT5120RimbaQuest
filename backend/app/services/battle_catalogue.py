@@ -174,7 +174,7 @@ def get_battle_definition(species_id: str) -> dict[str, Any]:
     return copy.deepcopy(definition)
 
 
-def get_rules() -> dict[str, int]:
+def get_rules() -> dict[str, Any]:
     return copy.deepcopy(_load()["rules"])
 
 

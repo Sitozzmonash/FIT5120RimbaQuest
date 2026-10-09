@@ -14,6 +14,7 @@ from app.services.battle_catalogue import (
     get_source_catalogue,
     validate_catalogue,
 )
+from app.services.wildlife_battle import HABITAT_BONUSES
 
 
 def test_catalogue_v2_has_all_152_species_bounded():
@@ -24,13 +25,12 @@ def test_catalogue_v2_has_all_152_species_bounded():
         assert entry["species_id"] == sid
         assert isinstance(entry["source_row"], int) and entry["source_row"] > 0
 
-        # HP roughly 100-118
+        # HP and attack now preserve the source catalogue balance range.
         hp = entry["hp"]
-        assert isinstance(hp, int) and 100 <= hp <= 118, f"{sid} hp {hp} out of bounds"
+        assert isinstance(hp, int) and 90 <= hp <= 128, f"{sid} hp {hp} out of bounds"
 
-        # ATK roughly 10-13
         atk = entry["base_attack"]
-        assert isinstance(atk, int) and 10 <= atk <= 13, f"{sid} atk {atk} out of bounds"
+        assert isinstance(atk, int) and 9 <= atk <= 14, f"{sid} atk {atk} out of bounds"
 
         # Active abilities
         abilities = entry.get("abilities", [])
@@ -137,6 +137,13 @@ def test_catalogue_rules_and_immutability():
     assert rules["lucky_basic_bonus"] == 3
     assert rules["max_rounds"] == 30
     assert rules.get("brace_shield") == 6
+    assert rules["habitat_bonuses"] == {
+        habitat: {
+            "attack_percent": bonus["attack_percent"],
+            "defence_percent": bonus["defence_percent"],
+        }
+        for habitat, bonus in HABITAT_BONUSES.items()
+    }
 
     # Test deepcopy immutability
     c1 = get_catalogue()
