@@ -34,7 +34,7 @@ def test_catalogue_structure_and_deterministic_rows() -> None:
     source_rows = set()
     for sid, entry in catalogue.items():
         assert entry["species_id"] == sid and isinstance(entry["role"], str) and entry["role"].strip()
-        assert 90 <= entry["hp"] <= 128 and 9 <= entry["base_attack"] <= 14
+        assert 74 <= entry["hp"] <= 104 and 9 <= entry["base_attack"] <= 14
         assert isinstance(entry.get("source_hp"), int) and 90 <= entry["source_hp"] <= 128
         assert isinstance(entry.get("source_base_attack"), int) and 9 <= entry["source_base_attack"] <= 14
         abilities = entry.get("abilities", [])

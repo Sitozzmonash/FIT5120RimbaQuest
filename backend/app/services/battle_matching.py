@@ -11,7 +11,7 @@ class ChoiceRng(Protocol):
 
 _COSTS = {1: 1, 2: 2, 3: 4}
 _HARD_SKILL_DAMAGE_BONUS = 10
-_OPENING_SHIELD_BY_MAX_SLOT = {0: 4, 1: 9, 2: 10, 3: 13}
+_OPENING_SHIELD_BY_MAX_SLOT = {0: 3, 1: 7, 2: 8, 3: 10}
 
 
 def _utility_value(effect: dict[str, Any], base_attack: float = 10.0) -> float:

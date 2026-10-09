@@ -45,7 +45,7 @@ _COSTS = {1: 1, 2: 2, 3: 4}
 _SHIELD_CAP = 25
 _MAX_ENERGY = 8
 _HARD_SKILL_DAMAGE_BONUS = 10
-_OPENING_SHIELD_BY_MAX_SLOT = {0: 4, 1: 9, 2: 10, 3: 13}
+_OPENING_SHIELD_BY_MAX_SLOT = {0: 3, 1: 7, 2: 8, 3: 10}
 
 
 def habitat_matches(habitat_text: str | None, habitat: str) -> bool:

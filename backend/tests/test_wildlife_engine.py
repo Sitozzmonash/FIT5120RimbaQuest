@@ -83,11 +83,11 @@ def test_habitat_is_known_before_selection_and_matching_uses_species_text():
 
 
 def test_second_mover_gets_tiered_opening_shield():
-    assert match(player_unlocked=[], opponent_unlocked=[], initiative="player")["opponent"]["shield"] == 4
-    assert match(player_unlocked=[1], opponent_unlocked=[1], initiative="player")["opponent"]["shield"] == 9
-    assert match(player_unlocked=[1, 2], opponent_unlocked=[1, 2], initiative="player")["opponent"]["shield"] == 10
-    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2, 3], initiative="player")["opponent"]["shield"] == 13
-    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2], initiative="opponent")["player"]["shield"] == 13
+    assert match(player_unlocked=[], opponent_unlocked=[], initiative="player")["opponent"]["shield"] == 3
+    assert match(player_unlocked=[1], opponent_unlocked=[1], initiative="player")["opponent"]["shield"] == 7
+    assert match(player_unlocked=[1, 2], opponent_unlocked=[1, 2], initiative="player")["opponent"]["shield"] == 8
+    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2, 3], initiative="player")["opponent"]["shield"] == 10
+    assert match(player_unlocked=[1, 2, 3], opponent_unlocked=[1, 2], initiative="opponent")["player"]["shield"] == 10
 
 
 def test_habitat_attack_and_defence_apply_whole_match():

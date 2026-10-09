@@ -16,10 +16,10 @@
     "lucky_basic_bonus": 3,
     "max_rounds": 30,
     "brace_shield": 6,
-    "opening_shield_basic": 4,
-    "opening_shield_slot_1": 9,
-    "opening_shield_slot_2": 10,
-    "opening_shield_slot_3": 13,
+    "opening_shield_basic": 3,
+    "opening_shield_slot_1": 7,
+    "opening_shield_slot_2": 8,
+    "opening_shield_slot_3": 10,
     "habitat_bonuses": {
       "Rainforest": {
         "attack_percent": 20,
@@ -53,7 +53,7 @@
       "name": "Common Mormon",
       "category": "Butterfly",
       "role": "Trickster",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 10,
       "abilities": [
         {
@@ -170,7 +170,7 @@
       "name": "Tailed Jay",
       "category": "Butterfly",
       "role": "Agile",
-      "hp": 90,
+      "hp": 74,
       "base_attack": 10,
       "abilities": [
         {
@@ -287,7 +287,7 @@
       "name": "Oriental Pied Hornbill",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 10,
       "abilities": [
         {
@@ -404,7 +404,7 @@
       "name": "Rhinoceros Hornbill",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 11,
       "abilities": [
         {
@@ -511,7 +511,7 @@
       "name": "Asian Elephant",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 128,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -620,7 +620,7 @@
       "name": "Malayan Tiger",
       "category": "Mammal",
       "role": "Power",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -727,7 +727,7 @@
       "name": "Malayan Tapir",
       "category": "Mammal",
       "role": "Guardian",
-      "hp": 118,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -844,7 +844,7 @@
       "name": "Malayan Sun Bear",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 12,
       "abilities": [
         {
@@ -951,7 +951,7 @@
       "name": "Proboscis Monkey",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 106,
+      "hp": 86,
       "base_attack": 10,
       "abilities": [
         {
@@ -1068,7 +1068,7 @@
       "name": "Lesser Mouse-deer",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 94,
+      "hp": 78,
       "base_attack": 11,
       "abilities": [
         {
@@ -1185,7 +1185,7 @@
       "name": "Sunda Colugo",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 94,
+      "hp": 78,
       "base_attack": 10,
       "abilities": [
         {
@@ -1302,7 +1302,7 @@
       "name": "Malayan Pangolin",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 124,
+      "hp": 102,
       "base_attack": 9,
       "abilities": [
         {
@@ -1409,7 +1409,7 @@
       "name": "Green Sea Turtle",
       "category": "Reptile",
       "role": "Defense",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 9,
       "abilities": [
         {
@@ -1526,7 +1526,7 @@
       "name": "Reticulated Python",
       "category": "Reptile",
       "role": "Control",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 11,
       "abilities": [
         {
@@ -1635,7 +1635,7 @@
       "name": "Saltwater Crocodile",
       "category": "Reptile",
       "role": "Tank",
-      "hp": 124,
+      "hp": 102,
       "base_attack": 12,
       "abilities": [
         {
@@ -1742,7 +1742,7 @@
       "name": "Yellow-bellied Bulbul",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -1859,7 +1859,7 @@
       "name": "White-breasted Waterhen",
       "category": "Bird",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -1966,7 +1966,7 @@
       "name": "Asian Small-clawed Otter",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -2073,7 +2073,7 @@
       "name": "Bornean Partridge",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -2182,7 +2182,7 @@
       "name": "Binturong",
       "category": "Mammal",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -2289,7 +2289,7 @@
       "name": "Small-toothed Palm Civet",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -2406,7 +2406,7 @@
       "name": "Great Argus",
       "category": "Bird",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -2515,7 +2515,7 @@
       "name": "Asiatic Brush-tailed Porcupine",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 122,
+      "hp": 100,
       "base_attack": 9,
       "abilities": [
         {
@@ -2632,7 +2632,7 @@
       "name": "Gaur",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -2741,7 +2741,7 @@
       "name": "Banteng",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -2850,7 +2850,7 @@
       "name": "Barred Eagle-owl",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -2957,7 +2957,7 @@
       "name": "Green-backed Heron",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -3074,7 +3074,7 @@
       "name": "Grey-bellied Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -3191,7 +3191,7 @@
       "name": "Plantain Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -3308,7 +3308,7 @@
       "name": "Prevost's Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -3425,7 +3425,7 @@
       "name": "Serow",
       "category": "Mammal",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -3542,7 +3542,7 @@
       "name": "Malay Ground-cuckoo",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -3659,7 +3659,7 @@
       "name": "Borneo Bay Cat",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -3768,7 +3768,7 @@
       "name": "Asiatic Golden Cat",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -3877,7 +3877,7 @@
       "name": "Green-billed Coucal",
       "category": "Bird",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -3984,7 +3984,7 @@
       "name": "Greater Coucal",
       "category": "Bird",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -4091,7 +4091,7 @@
       "name": "Common Emerald Dove",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -4208,7 +4208,7 @@
       "name": "White-rumped Shama",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -4325,7 +4325,7 @@
       "name": "Rufous-tailed shama",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -4442,7 +4442,7 @@
       "name": "Oriental Magpie-robin",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -4549,7 +4549,7 @@
       "name": "Blue-breasted Quail",
       "category": "Bird",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -4658,7 +4658,7 @@
       "name": "Dhole",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -4767,7 +4767,7 @@
       "name": "Otter civet",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -4884,7 +4884,7 @@
       "name": "Lesser Dog-faced Fruit Bat",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -4991,7 +4991,7 @@
       "name": "Black-rumped Flameback",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -5100,7 +5100,7 @@
       "name": "Hose's Civet",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -5217,7 +5217,7 @@
       "name": "Mountain Imperial-pigeon",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -5334,7 +5334,7 @@
       "name": "Moonrat",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -5441,7 +5441,7 @@
       "name": "White-crowned Forktail",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -5558,7 +5558,7 @@
       "name": "Black-crowned Pitta",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -5675,7 +5675,7 @@
       "name": "Malaysian Rail-babbler",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -5782,7 +5782,7 @@
       "name": "Malaysian Mole",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 122,
+      "hp": 100,
       "base_attack": 9,
       "abilities": [
         {
@@ -5899,7 +5899,7 @@
       "name": "Common Sun Skink",
       "category": "Reptile",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -6006,7 +6006,7 @@
       "name": "Yellow-rumped Flycatcher",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -6123,7 +6123,7 @@
       "name": "Red Junglefowl",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -6230,7 +6230,7 @@
       "name": "Sunda Laughingthrush",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -6347,7 +6347,7 @@
       "name": "Orange-headed Thrush",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -6454,7 +6454,7 @@
       "name": "Chestnut-capped Thrush",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -6561,7 +6561,7 @@
       "name": "Malayan Night-Heron",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -6678,7 +6678,7 @@
       "name": "Common Hill Myna",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -6795,7 +6795,7 @@
       "name": "Crimson-headed Partridge",
       "category": "Bird",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -6904,7 +6904,7 @@
       "name": "Banded Civet",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -7021,7 +7021,7 @@
       "name": "Cinereous Bulbul",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -7138,7 +7138,7 @@
       "name": "Small Indian Mongoose",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -7247,7 +7247,7 @@
       "name": "Short-tailed Mongoose",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -7364,7 +7364,7 @@
       "name": "Collared Mongoose",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -7473,7 +7473,7 @@
       "name": "Crab-eating Mongoose",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -7580,7 +7580,7 @@
       "name": "Long-tailed Sibia",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -7687,7 +7687,7 @@
       "name": "Blue-headed Pitta",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -7804,7 +7804,7 @@
       "name": "Malay Banded Pitta",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -7911,7 +7911,7 @@
       "name": "Bornean Banded Pitta",
       "category": "Bird",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -8028,7 +8028,7 @@
       "name": "Lar Gibbon",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -8145,7 +8145,7 @@
       "name": "Malayan Porcupine",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 122,
+      "hp": 100,
       "base_attack": 9,
       "abilities": [
         {
@@ -8262,7 +8262,7 @@
       "name": "Thick-spined Porcupine",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 122,
+      "hp": 100,
       "base_attack": 9,
       "abilities": [
         {
@@ -8379,7 +8379,7 @@
       "name": "Striped Wren-babbler",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -8496,7 +8496,7 @@
       "name": "Buffy Fish-owl",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -8603,7 +8603,7 @@
       "name": "Tiger Shrike",
       "category": "Bird",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -8712,7 +8712,7 @@
       "name": "Borneo Earless Monitor",
       "category": "Reptile",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -8819,7 +8819,7 @@
       "name": "Four-striped Ground Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -8936,7 +8936,7 @@
       "name": "Three-striped Ground Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -9053,7 +9053,7 @@
       "name": "Noisy Rat",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -9170,7 +9170,7 @@
       "name": "White-tailed Wattled Pheasant",
       "category": "Bird",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -9279,7 +9279,7 @@
       "name": "Rufous-tailed Pheasant",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -9388,7 +9388,7 @@
       "name": "Vieillot's Fireback",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -9505,7 +9505,7 @@
       "name": "Malay Crested Fireback",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -9614,7 +9614,7 @@
       "name": "Smooth-coated Otter",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -9721,7 +9721,7 @@
       "name": "Stump-tailed Macaque",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -9828,7 +9828,7 @@
       "name": "Crab-eating Macaque",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -9935,7 +9935,7 @@
       "name": "Southern Pig-tailed Macaque",
       "category": "Mammal",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -10052,7 +10052,7 @@
       "name": "Sooty-capped Babbler",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -10169,7 +10169,7 @@
       "name": "Yellow-throated Marten",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -10276,7 +10276,7 @@
       "name": "Bornean Yellow Muntjac",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -10385,7 +10385,7 @@
       "name": "Southern Red Muntjac",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -10494,7 +10494,7 @@
       "name": "Malay Weasel",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -10603,7 +10603,7 @@
       "name": "Sunda Stink-badger",
       "category": "Mammal",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -10710,7 +10710,7 @@
       "name": "Sunda Clouded Leopard",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -10819,7 +10819,7 @@
       "name": "Clouded Leopard",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -10928,7 +10928,7 @@
       "name": "Blyth's Hawk-Eagle",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -11035,7 +11035,7 @@
       "name": "Changeable Hawk-eagle",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -11142,7 +11142,7 @@
       "name": "Dark-necked Tailorbird",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -11249,7 +11249,7 @@
       "name": "Ashy Tailorbird",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -11356,7 +11356,7 @@
       "name": "Masked Palm Civet",
       "category": "Mammal",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -11463,7 +11463,7 @@
       "name": "Leopard",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -11572,7 +11572,7 @@
       "name": "Common Palm Civet",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -11679,7 +11679,7 @@
       "name": "Marbled Cat",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -11788,7 +11788,7 @@
       "name": "Rufous-browed Babbler",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -11905,7 +11905,7 @@
       "name": "Short-tailed Babbler",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -12012,7 +12012,7 @@
       "name": "Honey Buzzard",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -12119,7 +12119,7 @@
       "name": "Spotted Giant Flying Squirrel",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -12226,7 +12226,7 @@
       "name": "Crimson-winged Woodpecker",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -12335,7 +12335,7 @@
       "name": "Western Hooded Pitta",
       "category": "Bird",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -12442,7 +12442,7 @@
       "name": "Malayan Peacock-Pheasant",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -12559,7 +12559,7 @@
       "name": "Bornean Orangutan",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -12676,7 +12676,7 @@
       "name": "Banded Leaf Monkey",
       "category": "Mammal",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -12793,7 +12793,7 @@
       "name": "White-fronted Langur",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -12900,7 +12900,7 @@
       "name": "Hose's Langur",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -13007,7 +13007,7 @@
       "name": "Yellow-handed Mitered Langur",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -13124,7 +13124,7 @@
       "name": "Maroon Sureli",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -13231,7 +13231,7 @@
       "name": "White-thighed Surili",
       "category": "Mammal",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -13348,7 +13348,7 @@
       "name": "Mainland Leopard Cat",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -13457,7 +13457,7 @@
       "name": "Flat-headed Cat",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -13566,7 +13566,7 @@
       "name": "Banded Linsang",
       "category": "Mammal",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -13673,7 +13673,7 @@
       "name": "Brown Rat",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -13790,7 +13790,7 @@
       "name": "Malaysian Field Rat",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -13897,7 +13897,7 @@
       "name": "Pale Giant Squirrel",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -14006,7 +14006,7 @@
       "name": "Black Giant Squirrel",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -14115,7 +14115,7 @@
       "name": "Tufted Ground Squirrel",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -14224,7 +14224,7 @@
       "name": "Shrew-faced Squirrel",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -14341,7 +14341,7 @@
       "name": "Sunda Pied Fantail",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -14458,7 +14458,7 @@
       "name": "Indomalayan Bamboo Rat",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -14565,7 +14565,7 @@
       "name": "Crested Partridge",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -14682,7 +14682,7 @@
       "name": "Sambar",
       "category": "Mammal",
       "role": "Power",
-      "hp": 114,
+      "hp": 94,
       "base_attack": 13,
       "abilities": [
         {
@@ -14791,7 +14791,7 @@
       "name": "Crested Serpent-eagle",
       "category": "Bird",
       "role": "Precision",
-      "hp": 110,
+      "hp": 90,
       "base_attack": 13,
       "abilities": [
         {
@@ -14898,7 +14898,7 @@
       "name": "Horse-tailed Squirrel",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -15007,7 +15007,7 @@
       "name": "Bearded Pig",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -15116,7 +15116,7 @@
       "name": "Wild Boar",
       "category": "Mammal",
       "role": "Tank",
-      "hp": 126,
+      "hp": 104,
       "base_attack": 10,
       "abilities": [
         {
@@ -15225,7 +15225,7 @@
       "name": "Asian Blue Quail",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -15334,7 +15334,7 @@
       "name": "Asiatic Striped Squirrels",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -15441,7 +15441,7 @@
       "name": "Chestnut-capped Babbler",
       "category": "Bird",
       "role": "Support",
-      "hp": 108,
+      "hp": 88,
       "base_attack": 9,
       "abilities": [
         {
@@ -15558,7 +15558,7 @@
       "name": "Dusky Leaf Monkey",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -15675,7 +15675,7 @@
       "name": "Greater Oriental Chevrotain",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -15782,7 +15782,7 @@
       "name": "Long-tailed Porcupine",
       "category": "Mammal",
       "role": "Defense",
-      "hp": 122,
+      "hp": 100,
       "base_attack": 9,
       "abilities": [
         {
@@ -15899,7 +15899,7 @@
       "name": "Chestnut-necklaced Partridge",
       "category": "Bird",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -16008,7 +16008,7 @@
       "name": "White-crested hornbill",
       "category": "Bird",
       "role": "Guardian",
-      "hp": 116,
+      "hp": 96,
       "base_attack": 10,
       "abilities": [
         {
@@ -16125,7 +16125,7 @@
       "name": "Northern Treeshrew",
       "category": "Mammal",
       "role": "Balanced",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 11,
       "abilities": [
         {
@@ -16234,7 +16234,7 @@
       "name": "Common Treeshrew",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -16341,7 +16341,7 @@
       "name": "Large Treeshrew",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -16458,7 +16458,7 @@
       "name": "Roughneck Monitor",
       "category": "Reptile",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -16565,7 +16565,7 @@
       "name": "Common Water Monitor",
       "category": "Reptile",
       "role": "Control",
-      "hp": 112,
+      "hp": 92,
       "base_attack": 10,
       "abilities": [
         {
@@ -16672,7 +16672,7 @@
       "name": "Large-spotted Civet",
       "category": "Mammal",
       "role": "Trickster",
-      "hp": 102,
+      "hp": 84,
       "base_attack": 10,
       "abilities": [
         {
@@ -16789,7 +16789,7 @@
       "name": "Malay Civet",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {
@@ -16896,7 +16896,7 @@
       "name": "Large Indian Civet",
       "category": "Mammal",
       "role": "Agile",
-      "hp": 98,
+      "hp": 80,
       "base_attack": 11,
       "abilities": [
         {

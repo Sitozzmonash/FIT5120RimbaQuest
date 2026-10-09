@@ -3,7 +3,7 @@
 Verifies role-wide balance contracts and safe broad gates using production rules
 and matchmaking:
 - Safe broad gates: overall role/tier mean 0.40-0.60
-- Round progression: mean round 6-10 and p95 <= 12 for pilot/representative fixture
+- Round progression: mean round 6.5-8.5 and p95 <= 10 for pilot/representative fixture
 - Both initiatives ('player' and 'opponent') evaluated
 - All 4 tiers (tier 0: [], tier 1: [1], tier 2: [1, 2], tier 3: [1, 2, 3])
 - Matching returns actual opponent slots without client-faked state
@@ -166,11 +166,11 @@ def simulate_pilot_suite(
         if not (0.40 <= rate <= 0.60):
             outliers.append(f"Role '{role}' overall winrate {rate:.3f} outside [0.40, 0.60]")
 
-    if not (6.0 <= overall_mean_rnd <= 10.0):
-        outliers.append(f"Overall mean round {overall_mean_rnd:.2f} outside [6.0, 10.0]")
+    if not (6.5 <= overall_mean_rnd <= 8.5):
+        outliers.append(f"Overall mean round {overall_mean_rnd:.2f} outside [6.5, 8.5]")
 
-    if overall_p95_rnd > 12:
-        outliers.append(f"Overall p95 round {overall_p95_rnd} exceeds 12")
+    if overall_p95_rnd > 10:
+        outliers.append(f"Overall p95 round {overall_p95_rnd} exceeds 10")
 
     return {
         "overall_tier_mean": overall_tier_mean,
@@ -208,9 +208,9 @@ def test_balance_simulator_safe_broad_gates():
     for role, rate in results["role_means"].items():
         assert 0.40 <= rate <= 0.60, f"Role '{role}' rate {rate:.3f} failed gate:{report}"
 
-    # 3. Round progression safe gates: mean round 6-10 and p95 <= 12
-    assert 6.0 <= results["overall_mean_rnd"] <= 10.0, f"Mean rounds failed gate:{report}"
-    assert results["overall_p95_rnd"] <= 12, f"p95 rounds failed gate:{report}"
+    # 3. Round progression safe gates: mean round 6.5-8.5 and p95 <= 10
+    assert 6.5 <= results["overall_mean_rnd"] <= 8.5, f"Mean rounds failed gate:{report}"
+    assert results["overall_p95_rnd"] <= 10, f"p95 rounds failed gate:{report}"
 
 
 def test_simulation_matching_actual_opponent_slots():

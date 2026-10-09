@@ -113,8 +113,8 @@ def validate_catalogue(data: Any) -> None:
             if not isinstance(entry.get(key), str) or not entry[key].strip():
                 raise ValueError(f"{context}: missing {key}")
         hp = entry.get("hp")
-        if not isinstance(hp, int) or isinstance(hp, bool) or not math.isfinite(hp) or not 90 <= hp <= 128:
-            raise ValueError(f"{context}: hp outside 90-128")
+        if not isinstance(hp, int) or isinstance(hp, bool) or not math.isfinite(hp) or not 74 <= hp <= 104:
+            raise ValueError(f"{context}: hp outside 74-104")
         base_attack = entry.get("base_attack")
         if not isinstance(base_attack, int) or isinstance(base_attack, bool) or not math.isfinite(base_attack) or not 9 <= base_attack <= 14:
             raise ValueError(f"{context}: base_attack outside 9-14")
