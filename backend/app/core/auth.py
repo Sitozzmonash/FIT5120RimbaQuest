@@ -32,7 +32,7 @@ def get_current_user(
 
     with engine.connect() as connection:
         owned = connection.execute(
-            text("SELECT 1 FROM child_profiles WHERE id=:child AND parent_user_id=:user"),
+            text("SELECT 1 FROM child_profiles WHERE id=:child AND user_id=:user"),
             {"child": child_id, "user": user_id},
         ).first()
     if not owned:
@@ -52,7 +52,7 @@ def get_optional_current_user(
 
     with engine.connect() as connection:
         owned = connection.execute(
-            text("SELECT 1 FROM child_profiles WHERE id=:child AND parent_user_id=:user"),
+            text("SELECT 1 FROM child_profiles WHERE id=:child AND user_id=:user"),
             {"child": child_id, "user": user_id},
         ).first()
     if not owned:

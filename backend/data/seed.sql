@@ -67,7 +67,7 @@ CREATE TABLE child_badges (
 );
 CREATE TABLE child_profiles (
 	id INTEGER NOT NULL, 
-	parent_user_id INTEGER NOT NULL, 
+	user_id INTEGER NOT NULL,
 	display_name VARCHAR, 
 	age_band VARCHAR, 
 	xp INTEGER, 
@@ -75,7 +75,7 @@ CREATE TABLE child_profiles (
 	safety_briefing_done BOOLEAN, 
 	learning_streak INTEGER, 
 	PRIMARY KEY (id), 
-	FOREIGN KEY(parent_user_id) REFERENCES users (id)
+	FOREIGN KEY(user_id) REFERENCES users (id)
 );
 INSERT INTO "child_profiles" VALUES(1,1,'Aisyah','8-11',0,1,0,0);
 CREATE TABLE collection_entries (
