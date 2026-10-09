@@ -25,9 +25,9 @@ def test_catalogue_v2_has_all_152_species_bounded():
         assert entry["species_id"] == sid
         assert isinstance(entry["source_row"], int) and entry["source_row"] > 0
 
-        # HP and attack now preserve the source catalogue balance range.
+        # Runtime HP is shortened for child-friendly battles; source_hp keeps provenance.
         hp = entry["hp"]
-        assert isinstance(hp, int) and 90 <= hp <= 128, f"{sid} hp {hp} out of bounds"
+        assert isinstance(hp, int) and 74 <= hp <= 104, f"{sid} hp {hp} out of bounds"
 
         atk = entry["base_attack"]
         assert isinstance(atk, int) and 9 <= atk <= 14, f"{sid} atk {atk} out of bounds"
