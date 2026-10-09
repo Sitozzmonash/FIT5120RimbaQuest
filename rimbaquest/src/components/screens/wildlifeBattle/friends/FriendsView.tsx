@@ -11,6 +11,7 @@ import { AUTH_IMAGES } from "../../../../constants/images";
 import { FONTS } from "../../../../constants/fonts";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
 import {
+  AddFriendResult,
   WildlifeFriend,
   WildlifeFriends,
   WildlifeIncomingInvite,
@@ -48,7 +49,7 @@ export function FriendsView({
   data: WildlifeFriends | null;
   error: string | null;
   busy: boolean;
-  onAdd: (code: string) => Promise<WildlifeFriend | null>;
+  onAdd: (code: string) => Promise<AddFriendResult | null>;
   onInvite: (friend: WildlifeFriend) => void;
   onAcceptInvite: (invite: WildlifeIncomingInvite) => void;
   onDeclineInvite: (invite: WildlifeIncomingInvite) => void;

@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GameScreenHeader } from "../../../common/game/GameScreenHeader";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
 import {
+  AddFriendResult,
   WildlifeFriend,
   WildlifeFriends,
   WildlifeIncomingInvite,
@@ -41,7 +42,7 @@ export function FriendsScreen({
   childId: number;
   myAvatar: string;
   busy: boolean;
-  onAdd: (code: string) => Promise<WildlifeFriend | null>;
+  onAdd: (code: string) => Promise<AddFriendResult | null>;
   onInvite: (friend: WildlifeFriend) => void;
   onAcceptInvite: (invite: WildlifeIncomingInvite) => void;
   onDeclineInvite: (invite: WildlifeIncomingInvite) => void;
