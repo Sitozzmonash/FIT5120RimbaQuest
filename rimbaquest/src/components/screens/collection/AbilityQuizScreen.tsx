@@ -1,43 +1,45 @@
 import React from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FONTS } from "../../../constants/fonts";
 import { useAbilityQuizStore } from "../../../store/useAbilityQuizStore";
-import { Tap } from "../../common/Tap";
-import { QuizStepIndicator } from "./components/QuizStepIndicator";
+import { GameScreenHeader } from "../../common/game/GameScreenHeader";
+import { DetailCard } from "./components/detail/DetailCard";
+import { DETAIL_COLORS } from "./components/detail/detailTheme";
+import { TabStatus } from "./components/detail/TabStatus";
+import { QuizFooter } from "./components/quiz/QuizFooter";
+import { QuizOption } from "./components/quiz/QuizOption";
+import { QuizReview } from "./components/quiz/QuizReview";
 import { QuizGiveUpConfirmModal } from "./components/QuizGiveUpConfirmModal";
 import { QuizResultModal } from "./components/QuizResultModal";
+import { QuizStepIndicator } from "./components/QuizStepIndicator";
 
 export function AbilityQuizScreen() {
+  const insets = useSafeAreaInsets();
   const questions = useAbilityQuizStore((state) => state.questions);
   const currentIndex = useAbilityQuizStore((state) => state.currentIndex);
   const answers = useAbilityQuizStore((state) => state.answers);
   const loadingQuiz = useAbilityQuizStore((state) => state.loadingQuiz);
   const submitting = useAbilityQuizStore((state) => state.submitting);
   const errorMsg = useAbilityQuizStore((state) => state.errorMsg);
+  const reviewing = useAbilityQuizStore((state) => state.reviewing);
 
   const currentQuestion = questions[currentIndex];
   const selected = currentQuestion ? answers[currentQuestion.id] : undefined;
-  const isLastQuestion = currentIndex === questions.length - 1;
+  const quiz = useAbilityQuizStore.getState;
+
+  // Backing out of the first question (or the header) asks before quitting.
+  const goBack = () =>
+    currentIndex === 0 ? quiz().openGiveUpConfirm() : quiz().goPrevious();
+
+  if (reviewing) return <QuizReview />;
 
   return (
     <View style={styles.root}>
-      <View style={styles.headerBar}>
-        <Text style={styles.headerTitle} numberOfLines={1}>
-          Animal Quiz
-        </Text>
-        <Tap
-          label="Stop this quiz"
-          style={styles.giveUpBtn}
-          onPress={() => useAbilityQuizStore.getState().openGiveUpConfirm()}
-        >
-          <Text style={styles.giveUpBtnText}>Stop</Text>
-        </Tap>
-      </View>
+      <GameScreenHeader
+        title="Prove Your Knowledge!"
+        onBack={() => quiz().openGiveUpConfirm()}
+      />
 
       {questions.length > 0 && (
         <QuizStepIndicator
@@ -46,88 +48,55 @@ export function AbilityQuizScreen() {
         />
       )}
 
-      <ScrollView
-        contentContainerStyle={styles.body}
-        showsVerticalScrollIndicator={false}
+      <View
+        style={[
+          styles.body,
+          { paddingBottom: 16 + insets.bottom },
+          questions.length === 0 && styles.bodySpaced,
+        ]}
       >
-        {loadingQuiz ? (
-          <View style={styles.centerBox}>
-            <ActivityIndicator size="large" color="#0A4D26" />
-            <Text style={styles.hintText}>Getting your questions ready...</Text>
-          </View>
-        ) : errorMsg ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{errorMsg}</Text>
-          </View>
-        ) : currentQuestion ? (
-          <View style={styles.questionBlock}>
-            <Text style={styles.questionText}>{currentQuestion.question}</Text>
-            <View style={styles.choices}>
-              {currentQuestion.options.map((opt, i) => {
-                const isSelected = selected === opt;
-                return (
-                  <Tap
-                    key={i}
-                    label={opt}
-                    style={[
-                      styles.choiceCard,
-                      isSelected && styles.choiceCardSelected,
-                    ]}
-                    onPress={() =>
-                      useAbilityQuizStore.getState().selectAnswer(opt)
-                    }
-                  >
-                    <View
-                      style={[
-                        styles.radioDot,
-                        isSelected && styles.radioDotSelected,
-                      ]}
-                    />
-                    <Text
-                      style={[
-                        styles.choiceText,
-                        isSelected && styles.choiceTextSelected,
-                      ]}
-                    >
-                      {opt}
+        <DetailCard style={styles.card}>
+          {loadingQuiz ? (
+            <TabStatus loading message="Getting your questions ready..." />
+          ) : currentQuestion ? (
+            <>
+              <ScrollView
+                contentContainerStyle={styles.question}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.header}>
+                  <View style={styles.stepPill}>
+                    <Text style={styles.stepPillText}>
+                      Question {currentIndex + 1} of {questions.length}
                     </Text>
-                  </Tap>
-                );
-              })}
-            </View>
-          </View>
-        ) : null}
-      </ScrollView>
-
-      {currentQuestion && (
-        <View style={styles.footer}>
-          <Tap
-            label="Back"
-            style={styles.backBtn}
-            onPress={() =>
-              currentIndex === 0
-                ? useAbilityQuizStore.getState().openGiveUpConfirm()
-                : useAbilityQuizStore.getState().goPrevious()
-            }
-          >
-            <Text style={styles.backBtnText}>Back</Text>
-          </Tap>
-          <Tap
-            label={isLastQuestion ? "Check My Answers" : "Next"}
-            style={[styles.nextBtn, !selected && styles.nextBtnDisabled]}
-            disabled={!selected || submitting}
-            onPress={() => useAbilityQuizStore.getState().goNext()}
-          >
-            {submitting ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.nextBtnText}>
-                {isLastQuestion ? "Check My Answers" : "Next"}
-              </Text>
-            )}
-          </Tap>
-        </View>
-      )}
+                  </View>
+                  <Text style={styles.questionText}>
+                    {currentQuestion.question}
+                  </Text>
+                </View>
+                {currentQuestion.options.map((option, i) => (
+                  <QuizOption
+                    key={i}
+                    label={option}
+                    selected={selected === option}
+                    onPress={() => quiz().selectAnswer(option)}
+                  />
+                ))}
+                {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+              </ScrollView>
+              <QuizFooter
+                isLastQuestion={currentIndex === questions.length - 1}
+                canContinue={Boolean(selected)}
+                submitting={submitting}
+                onBack={goBack}
+                onNext={() => quiz().goNext()}
+              />
+            </>
+          ) : errorMsg ? (
+            <TabStatus message={errorMsg} />
+          ) : null}
+        </DetailCard>
+      </View>
 
       <QuizGiveUpConfirmModal />
       <QuizResultModal />
@@ -136,108 +105,24 @@ export function AbilityQuizScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F8FCF9" },
-  headerBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: 56,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  headerTitle: { flex: 1, color: "#1A1A1A", fontSize: 22, fontWeight: "800" },
-  giveUpBtn: {
-    backgroundColor: "#FEE2E2",
-    borderRadius: 100,
+  root: { flex: 1, backgroundColor: DETAIL_COLORS.background },
+  body: { flex: 1, paddingHorizontal: 16 },
+  bodySpaced: { paddingTop: 16 },
+  card: { flex: 1, paddingTop: 20, paddingBottom: 18, paddingHorizontal: 18 },
+  question: { gap: 12, paddingBottom: 4 },
+  header: { gap: 8 },
+  stepPill: {
+    alignSelf: "flex-start",
     paddingHorizontal: 12,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 4,
+    backgroundColor: DETAIL_COLORS.green,
+    borderRadius: 999,
   },
-  giveUpBtnText: { color: "#DC2626", fontSize: 14, fontWeight: "800" },
-  body: {
-    flexGrow: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 16,
-    paddingTop: 24,
-  },
-  centerBox: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 60,
-    gap: 10,
-  },
-  hintText: { fontSize: 13, color: "#6A776E" },
-  errorBox: {
-    backgroundColor: "#FFF6F6",
-    borderWidth: 1,
-    borderColor: "#F2C4C4",
-    borderRadius: 14,
-    padding: 16,
-    alignItems: "center",
-  },
-  errorText: {
-    fontSize: 13,
-    color: "#8C1D24",
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  questionBlock: { gap: 12 },
+  stepPillText: { fontFamily: FONTS.bodyBlack, color: "#FFFFFF", fontSize: 12 },
   questionText: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#000000",
-    lineHeight: 32,
+    fontFamily: FONTS.display,
+    color: DETAIL_COLORS.ink,
+    fontSize: 20,
   },
-  choices: { gap: 10 },
-  choiceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 999,
-    backgroundColor: "#F4F4F4",
-  },
-  choiceCardSelected: { backgroundColor: "#3FBE00" },
-  radioDot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#98A2B3",
-  },
-  radioDotSelected: { backgroundColor: "#FFFFFF" },
-  choiceText: { fontSize: 16, fontWeight: "500", color: "#667085" },
-  choiceTextSelected: { color: "#FFFFFF", fontWeight: "700" },
-  footer: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-    paddingTop: 8,
-    backgroundColor: "#F8FCF9",
-  },
-  backBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 999,
-    borderWidth: 2,
-    borderColor: "#0A4D26",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backBtnText: { color: "#0A4D26", fontSize: 16, fontWeight: "800" },
-  nextBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 999,
-    backgroundColor: "#0A4D26",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  nextBtnDisabled: { opacity: 0.5 },
-  nextBtnText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
+  error: { fontFamily: FONTS.bodyBold, color: "#9B2424", fontSize: 13 },
 });

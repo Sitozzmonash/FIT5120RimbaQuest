@@ -2,20 +2,24 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from uuid import uuid4
+
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app.core.database import engine
+from app.routers.quizzes import build_quiz_presets, get_quiz_presets
 from app.main import app
 
 client = TestClient(app)
 
 
 def register_test_user(suffix: str = "quiz_user"):
+    unique = f"{suffix[:8]}_{uuid4().hex[:6]}"
     payload = {
-        "username": f"u_{suffix}",
+        "username": f"u_{unique}"[:20],
         "age": 10,
-        "email": f"{suffix}@rimba.test",
+        "email": f"{unique}@rimba.test",
         "password": "quizPassword123!",
         "avatar": "hornbill",
     }
@@ -25,11 +29,47 @@ def register_test_user(suffix: str = "quiz_user"):
     return data["child_id"], data["access_token"]
 
 
-def test_quiz_presets_file_validity():
-    presets_file = Path("data/species_quiz_presets.json")
-    assert presets_file.exists()
-    presets = json.loads(presets_file.read_text(encoding="utf-8"))
-    assert len(presets) >= 152
+def unlock_species(child_id: int, species_id: str) -> None:
+    with engine.begin() as connection:
+        connection.execute(
+            text("""INSERT INTO collection_entries
+                (child_id, species_id, unlock_reason, observed_boolean)
+                VALUES (:child_id, :species_id, 'test', TRUE)"""),
+            {"child_id": child_id, "species_id": species_id},
+        )
+
+
+def load_presets() -> dict:
+    return get_quiz_presets()
+
+
+def correct_answers(species_id: str, difficulty: str, set_index: int = 0) -> dict[str, str]:
+    questions = load_presets()[species_id][difficulty][set_index]
+    return {question["id"]: question["correct_answer"] for question in questions}
+
+
+def test_ai_quiz_questions_file_validity():
+    questions_file = Path("data/ai_quiz_questions.json")
+    assert questions_file.exists()
+    rows = json.loads(questions_file.read_text(encoding="utf-8"))
+    presets = build_quiz_presets(rows)
+    assert len(rows) == 6840
+    assert len(presets) == 152
+    assert presets["sp_common_mormon"]["easy"][0][0]["question"] == rows[0]["question"]
+    assert all(
+        isinstance(option, str) and isinstance(question["correct_answer"], str)
+        for levels in presets.values()
+        for sets in levels.values()
+        for questions in sets
+        for question in questions
+        for option in question["options"]
+    )
+    numeric_question = next(
+        question for question in presets["sp_malaysian_mole"]["medium"][1]
+        if question["id"] == "sp_malaysian_mole_medium_s2_q5"
+    )
+    assert numeric_question["options"] == ["1901", "1937", "2005"]
+    assert numeric_question["correct_answer"] == "1937"
 
     # Check structure of species quizzes
     for sp_id, levels in list(presets.items())[:5]:
@@ -48,10 +88,136 @@ def test_quiz_presets_file_validity():
                     assert q["correct_answer"] in q["options"]
 
 
+def test_numeric_ai_options_use_frontend_string_answers(monkeypatch):
+    child_id, token = register_test_user("numeric_quiz")
+    headers = {"Authorization": f"Bearer {token}"}
+    species_id = "sp_malaysian_mole"
+    unlock_species(child_id, species_id)
+    progression = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers)
+    assert progression.status_code == 200
+    with engine.begin() as connection:
+        connection.execute(text("""
+            UPDATE child_quiz_progress SET easy_passed = TRUE
+            WHERE child_id = :child_id AND species_id = :species_id
+        """), {"child_id": child_id, "species_id": species_id})
+    monkeypatch.setattr("app.routers.quizzes.random.choice", lambda candidates: 1)
+    response = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=medium", headers=headers)
+    assert response.status_code == 200
+    quiz = response.json()
+    assert quiz["set_index"] == 1
+    numeric = next(question for question in quiz["questions"] if question["id"].endswith("_s2_q5"))
+    assert numeric["options"] == ["1901", "1937", "2005"]
+    submitted = client.post(f"/api/v1/species/{species_id}/quiz/submit", json={
+        "difficulty": "medium", "set_index": 1,
+        "answers": correct_answers(species_id, "medium", 1),
+    }, headers=headers)
+    assert submitted.status_code == 200
+    assert submitted.json()["score"] == 5
+
+
+def test_quiz_requires_discovered_wildlife_card():
+    child_id, token = register_test_user("undiscovered")
+    headers = {"Authorization": f"Bearer {token}"}
+    species_id = "sp_malayan_tiger"
+
+    easy_get = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=easy", headers=headers)
+    assert easy_get.status_code == 404
+    assert easy_get.json()["detail"] == "Discovered Wildlife Card not found"
+
+    easy_submit = client.post(
+        f"/api/v1/species/{species_id}/quiz/submit",
+        json={"difficulty": "easy", "set_index": 0, "answers": correct_answers(species_id, "easy")},
+        headers=headers,
+    )
+    assert easy_submit.status_code == 404
+    assert easy_submit.json()["detail"] == "Discovered Wildlife Card not found"
+
+    unlock_species(child_id, species_id)
+    unlocked_get = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=easy", headers=headers)
+    assert unlocked_get.status_code == 200
+    assert unlocked_get.json()["difficulty"] == "easy"
+
+
+def test_quiz_submit_enforces_sequential_difficulty():
+    child_id, token = register_test_user("seq_lock")
+    headers = {"Authorization": f"Bearer {token}"}
+    species_id = "sp_malayan_tiger"
+    unlock_species(child_id, species_id)
+
+    medium_submit = client.post(
+        f"/api/v1/species/{species_id}/quiz/submit",
+        json={"difficulty": "medium", "set_index": 0, "answers": correct_answers(species_id, "medium")},
+        headers=headers,
+    )
+    assert medium_submit.status_code == 400
+    assert "locked" in medium_submit.json()["detail"].lower()
+
+    progress = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers).json()
+    assert progress["easy_passed"] is False
+    assert progress["medium_passed"] is False
+    assert progress["unlocked_abilities"] == []
+
+    hard_submit = client.post(
+        f"/api/v1/species/{species_id}/quiz/submit",
+        json={"difficulty": "hard", "set_index": 0, "answers": correct_answers(species_id, "hard")},
+        headers=headers,
+    )
+    assert hard_submit.status_code == 400
+    assert "locked" in hard_submit.json()["detail"].lower()
+
+    easy_submit = client.post(
+        f"/api/v1/species/{species_id}/quiz/submit",
+        json={"difficulty": "easy", "set_index": 0, "answers": correct_answers(species_id, "easy")},
+        headers=headers,
+    )
+    assert easy_submit.status_code == 200
+    assert easy_submit.json()["ability_unlocked"] == 1
+
+    hard_after_easy = client.post(
+        f"/api/v1/species/{species_id}/quiz/submit",
+        json={"difficulty": "hard", "set_index": 0, "answers": correct_answers(species_id, "hard")},
+        headers=headers,
+    )
+    assert hard_after_easy.status_code == 400
+
+    progress = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers).json()
+    assert progress["easy_passed"] is True
+    assert progress["medium_passed"] is False
+    assert progress["hard_passed"] is False
+    assert progress["unlocked_abilities"] == [1]
+
+
+def test_all_quiz_progression_lists_every_discovered_card():
+    child_id, token = register_test_user("all_prog")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    empty = client.get("/api/v1/quiz-progression", headers=headers)
+    assert empty.status_code == 200
+    assert empty.json() == {"progression": {}}
+
+    unlock_species(child_id, "sp_malayan_tiger")
+    unlock_species(child_id, "sp_malayan_tapir")
+    easy_submit = client.post(
+        "/api/v1/species/sp_malayan_tiger/quiz/submit",
+        json={"difficulty": "easy", "set_index": 0, "answers": correct_answers("sp_malayan_tiger", "easy")},
+        headers=headers,
+    )
+    assert easy_submit.status_code == 200
+
+    progression = client.get("/api/v1/quiz-progression", headers=headers).json()["progression"]
+    # Matches the per-species endpoint; an untouched card has nothing unlocked.
+    assert progression == {"sp_malayan_tiger": [1], "sp_malayan_tapir": []}
+    single = client.get("/api/v1/species/sp_malayan_tiger/quiz-progression", headers=headers).json()
+    assert progression["sp_malayan_tiger"] == single["unlocked_abilities"]
+
+    assert client.get("/api/v1/quiz-progression").status_code == 401
+
+
 def test_quiz_progression_flow():
     child_id, token = register_test_user("progression")
     headers = {"Authorization": f"Bearer {token}"}
     species_id = "sp_asian_elephant"
+    unlock_species(child_id, species_id)
 
     # 1. Initial progression check
     res = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers)
@@ -83,10 +249,11 @@ def test_quiz_progression_flow():
     # Ensure correct_answer is NOT exposed to client
     for q in questions:
         assert "correct_answer" not in q
+        assert "source_refs" not in q
         assert len(q["options"]) == 3
 
     # Load preset ground truth to answer
-    presets = json.loads(Path("data/species_quiz_presets.json").read_text(encoding="utf-8"))
+    presets = load_presets()
     easy_set = presets[species_id]["easy"][easy_quiz["set_index"]]
 
     # 4. Fail easy quiz (score < 5)
@@ -101,6 +268,13 @@ def test_quiz_progression_flow():
     assert fail_data["passed"] is False
     assert fail_data["score"] == 0
     assert fail_data["ability_unlocked"] is None
+    assert len(fail_data["review"]) == 5
+    assert {item["id"] for item in fail_data["review"]} == {question["id"] for question in questions}
+    assert all(set(item) == {"id", "source_type", "source_refs"} for item in fail_data["review"])
+    assert fail_data["review"] == [
+        {"id": question["id"], "source_type": question["source_type"], "source_refs": question["source_refs"]}
+        for question in easy_set
+    ]
 
     # Fetch Easy quiz again: should rotate away from failed set
     res_easy_retry = client.get(f"/api/v1/species/{species_id}/quiz?difficulty=easy", headers=headers)
@@ -121,6 +295,8 @@ def test_quiz_progression_flow():
     assert pass_data["passed"] is True
     assert pass_data["score"] == 5
     assert pass_data["ability_unlocked"] == 1
+    assert len(pass_data["review"]) == 5
+    assert all("correct_answer" not in item and "correct_option" not in item for item in pass_data["review"])
 
     # Check progression: Ability 1 unlocked
     res = client.get(f"/api/v1/species/{species_id}/quiz-progression", headers=headers)

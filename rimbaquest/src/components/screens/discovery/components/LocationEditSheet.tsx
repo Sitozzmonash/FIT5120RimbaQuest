@@ -1,11 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FONTS } from "../../../../constants/fonts";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
-import { Tap } from "../../../common/Tap";
-import { PrimaryButton } from "../../../common/PrimaryButton";
+import { useLocationsStore } from "../../../../store/useLocationsStore";
+import { GameButton } from "../../../common/game/GameButton";
+import { WoodenTab, WoodenTabBar } from "../../../common/game/WoodenTabBar";
+import { outlinedTitleStyle } from "../../../common/game/gameTheme";
+import { ScaleTap } from "../../../common/ScaleTap";
+import { DISCOVERY_COLORS } from "./discoveryTheme";
 import { LocationAutoSection } from "./LocationAutoSection";
 import { LocationManualSection } from "./LocationManualSection";
+import { SpotDropdown } from "./SpotDropdown";
+
+type LocationTab = "auto" | "manual" | "select";
+
+const TABS: WoodenTab<LocationTab>[] = [
+  { key: "auto", label: "Auto" },
+  { key: "manual", label: "Manual" },
+  { key: "select", label: "Select" },
+];
 
 export function LocationEditSheet({
   visible,
@@ -14,84 +29,61 @@ export function LocationEditSheet({
   visible: boolean;
   onClose: () => void;
 }) {
-  const locationMode = useDiscoveryStore((state) => state.locationMode);
-  const setLocationMode = useDiscoveryStore((state) => state.setLocationMode);
-
   const locationNotice = useDiscoveryStore((state) => state.locationNotice);
+  const insets = useSafeAreaInsets();
+  const [tab, setTab] = useState<LocationTab>("auto");
+
+  // Each time the sheet opens, start on the tab that matches the current answer.
+  useEffect(() => {
+    if (!visible) return;
+    const { locationMode, discoveryLocation } = useDiscoveryStore.getState();
+    const isSpot = useLocationsStore
+      .getState()
+      .locations.some((spot) => spot.name === discoveryLocation);
+    setTab(locationMode === "auto" ? "auto" : isSpot ? "select" : "manual");
+  }, [visible]);
+
+  const changeTab = (next: LocationTab) => {
+    setTab(next);
+    // Opening Auto looks the location up straight away.
+    if (next === "auto") useDiscoveryStore.getState().setLocationMode("auto");
+  };
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <Tap label="Close" style={StyleSheet.absoluteFill} onPress={onClose}>
-          <View />
-        </Tap>
         <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>Where Did You Find It?</Text>
-
-          <View style={styles.modeRow}>
-            <Tap
-              label="Use my current location"
-              style={[
-                styles.modeChip,
-                locationMode === "auto" && styles.modeChipActive,
-              ]}
-              onPress={() => setLocationMode("auto")}
-            >
+          <View style={styles.header}>
+            <Text style={styles.title} numberOfLines={1}>
+              Where Did You Find It?
+            </Text>
+            <ScaleTap label="Close" style={styles.close} onPress={onClose}>
               <MaterialIcons
-                name="my-location"
-                size={16}
-                color={locationMode === "auto" ? "#087B35" : "#68716C"}
+                name="close"
+                size={22}
+                color={DISCOVERY_COLORS.ink}
               />
-              <Text
-                style={[
-                  styles.modeText,
-                  locationMode === "auto" && styles.modeTextActive,
-                ]}
-              >
-                Automatic
-              </Text>
-            </Tap>
-            <Tap
-              label="Enter location manually"
-              style={[
-                styles.modeChip,
-                locationMode === "manual" && styles.modeChipActive,
-              ]}
-              onPress={() => setLocationMode("manual")}
-            >
-              <MaterialIcons
-                name="edit-location-alt"
-                size={16}
-                color={locationMode === "manual" ? "#087B35" : "#68716C"}
-              />
-              <Text
-                style={[
-                  styles.modeText,
-                  locationMode === "manual" && styles.modeTextActive,
-                ]}
-              >
-                Type a Place
-              </Text>
-            </Tap>
+            </ScaleTap>
           </View>
 
-          {locationNotice ? (
-            <Text style={styles.notice}>{locationNotice}</Text>
-          ) : null}
+          <View style={[styles.body, { paddingBottom: 20 + insets.bottom }]}>
+            <WoodenTabBar tabs={TABS} active={tab} onChange={changeTab} />
 
-          {locationMode === "auto" ? (
-            <LocationAutoSection />
-          ) : (
-            <LocationManualSection />
-          )}
+            {locationNotice ? (
+              <Text style={styles.notice}>{locationNotice}</Text>
+            ) : null}
 
-          <PrimaryButton label="Done" style={styles.doneBtn} onPress={onClose} />
+            {tab === "auto" && <LocationAutoSection />}
+            {tab === "manual" && <LocationManualSection />}
+            {tab === "select" && <SpotDropdown />}
+
+            <GameButton label="Done" onPress={onClose} style={styles.done} />
+          </View>
         </View>
       </View>
     </Modal>
@@ -101,47 +93,61 @@ export function LocationEditSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "flex-end",
+    backgroundColor: "rgba(8, 22, 14, 0.45)",
   },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    width: "100%",
+    maxWidth: 520,
+    alignSelf: "center",
+    backgroundColor: DISCOVERY_COLORS.paper,
+    borderWidth: 3,
+    borderBottomWidth: 0,
+    borderColor: DISCOVERY_COLORS.ink,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    padding: 20,
-    gap: 12,
+    overflow: "hidden",
   },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#D8EDD8",
-    alignSelf: "center",
-    marginBottom: 4,
-  },
-  title: { color: "#1A1A1A", fontSize: 18, fontWeight: "900" },
-  modeRow: { flexDirection: "row", gap: 8 },
-  modeChip: {
-    flex: 1,
+  header: {
     flexDirection: "row",
-    gap: 6,
-    borderWidth: 1,
-    borderColor: "#C8D1CA",
-    borderRadius: 14,
-    paddingVertical: 10,
+    alignItems: "center",
+    gap: 12,
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    backgroundColor: DISCOVERY_COLORS.forest,
+    borderBottomWidth: 3,
+    borderBottomColor: DISCOVERY_COLORS.ink,
+  },
+  title: {
+    ...outlinedTitleStyle,
+    textShadowColor: DISCOVERY_COLORS.ink,
+    flex: 1,
+    fontSize: 20,
+  },
+  close: {
+    width: 40,
+    height: 40 + 3,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: DISCOVERY_COLORS.paper,
+    borderWidth: 3,
+    borderBottomWidth: 6,
+    borderColor: DISCOVERY_COLORS.ink,
+    borderRadius: 20,
   },
-  modeChipActive: { borderColor: "#0A4D26", backgroundColor: "#EDF5EF" },
-  modeText: { fontSize: 12, fontWeight: "800", color: "#68716C" },
-  modeTextActive: { color: "#087B35" },
+  body: { gap: 14, paddingTop: 18, paddingHorizontal: 20 },
   notice: {
-    color: "#8B5D00",
-    backgroundColor: "#FFF7DD",
-    borderRadius: 10,
     padding: 10,
+    backgroundColor: "#FEF3C7",
+    borderWidth: 2,
+    borderColor: "#F59E0B",
+    borderRadius: 12,
+    overflow: "hidden",
+    fontFamily: FONTS.bodyBold,
+    color: "#92400E",
     fontSize: 12,
+    lineHeight: 17,
   },
-  doneBtn: { marginTop: 4 },
+  done: { marginTop: 4 },
 });

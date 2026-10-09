@@ -49,15 +49,27 @@ Implemented behaviour includes:
 - Repeat sightings are retained in the species gallery without duplicating the card or its first-discovery reward.
 - Collection ordering with unlocked species before undiscovered species.
 - Species About, Fun Facts, Gallery, three-level Quiz progression, ability unlocking, and battle interfaces.
+- The quiz API reads `backend/data/ai_quiz_questions.json` and groups its 1-based question sets into the three 0-based sets used by quiz progression. The older `species_quiz_presets.json` is no longer served.
+- After submitting a quiz, explorers can review each question and their own choice. The submission response includes only About-field or Fun Fact references for hints; it does not reveal the correct answers.
 - Overall and per-category progress based on the authenticated child's records.
 
 Current Iteration 2 boundaries:
 
 - DeepSeek Flash, Gemini 3.8 Flash, Groq Qwen3.8-27B, and GLM-4.6V-Flash are active only for wildlife-photo verification according to `SCEQUENCE`.
 - `DEEPSEEK_API_KEY` is separately used for the Epic 6 current-card chatbot; it is never exposed to Expo and is never treated as a factual source.
-- The team-confirmed 10 Fun Facts per supported species are child-facing, team-verified RimbaQuest evidence. The dataset records the group reviewer as `RimbaQuest content team`; no historical per-fact date is invented where one was not supplied.
+- The Iteration 3 dataset provides 10 team-verified Fun Facts for each of the 152 supported species. The group reviewer is `RimbaQuest content team`, and each fact retains its reviewed source URL or URLs for child-facing citations. For a question not covered by a card or Fun Fact, the backend retrieves matching HTML/PDF text from every fixed, verified source URL for that current card. These workbook links are not limited to the separate dynamic-source whitelist, and a child's input can never select a URL to retrieve.
 - Epic 6 uses an evidence-first retrieval flow: approved card material and team-reviewed Fun Facts first, then approved source excerpts and a limited GBIF taxonomy lookup when relevant. Evidence removed from a later reviewed seed is marked `revoked` on deployment and cannot be used in a reply.
-- Iteration 3 social and expanded gameplay features are out of scope.
+- Other Iteration 3 social features remain out of scope; the Wildlife Card Battle flow below includes friend matches.
+
+## Wildlife Card Battle
+
+An explorer can start a practice match against the strategic AI Bot or invite another explorer to a friend match. The server picks and shows one of six habitats before either explorer chooses a discovered Wildlife Card: Rainforest, Mangrove, Wetland, Grassland, Coastal, or Montane. Most catalogued species live in forest, so the random draw prefers habitats where some of the creator's ready cards match and others do not; if no habitat splits them, any habitat can be drawn. A matching card receives the server-controlled habitat bonus for the whole match, rounded half up: Rainforest +20% Attack and 20% less incoming damage; Mangrove +15% Attack and 25% less incoming damage; Wetland +15% Attack and 20% less incoming damage; Grassland +25% Attack and 10% less incoming damage; Coastal +20% Attack and 15% less incoming damage; Montane +10% Attack and 25% less incoming damage. Unmatched cards use their normal stats. The server verifies card ownership and quiz unlocks before the match begins.
+
+Each card has HP, a Basic Attack, and three quiz-unlocked abilities. Easy, Medium, and Hard quizzes unlock Abilities 1, 2, and 3. A battle begins with 5 Energy out of a maximum of 8. Basic Attack costs 0 Energy; Abilities 1, 2, and 3 cost 1, 2, and 4. Each completed turn restores 2 Energy. A card wins by reducing the opponent's HP to zero. The first turn is chosen randomly. This battle mode adapts the catalogue's former passive third trait into an active move so that the Hard Quiz unlock follows the document's energy rule. The species API returns these battle-mode descriptions as `wildlife_abilities`, which the collection screen shows instead of the legacy dice wording.
+
+Friend matches use an invitation code and a server-enforced 30-second action window. The client refreshes the match every second; a missed turn is skipped without its Energy recharge. A friend win adds 5 leaderboard points and a loss subtracts 3. AI Bot matches change leaderboard points by 0. Leaderboard points are stored separately from Explorer XP. The AI Bot uses the same combat rules as a child and chooses only legal actions. Its offline training reward is kept separate from player scores.
+
+After a completed match, the used card rests for two hours. The server stores its expiry time, so the cooldown continues while the app is closed. Resting cards cannot be selected, even if every card in the collection is resting. Each explorer can have one unfinished match at a time, and the battle screen can recover it after a refresh. The match, rest expiry, action replay protection, and leaderboard settlement are kept on the server so refreshing or repeating a request cannot grant extra points.
 
 ## Iteration 2 — Epic 6: Species-Specific Wildlife Chatbot
 
@@ -65,16 +77,18 @@ An authenticated child can open the **WildGuide** drawer from an already discove
 
 - The endpoint verifies the child's ownership of the current discovered card before answering.
 - Guardrails redirect questions about another species, unrelated topics, inappropriate content, and prompt-injection attempts.
-- DeepSeek receives only evidence IDs, topics, and excerpts for the current card. It selects the evidence IDs to use; the backend rejects unknown IDs, resolves citations itself, and renders the child-facing factual text from the approved excerpt rather than trusting provider-written claims.
-- The only permitted external source families are MyBIS, PERHILITAN, GBIF, and IUCN. Stored excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. MyBIS, PERHILITAN, and IUCN excerpts must be team-reviewed before storage. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only; arbitrary webpage scraping is not implemented.
+- DeepSeek receives only evidence IDs, topics, and excerpts for the current card. It selects the evidence IDs to use; the backend rejects unknown IDs, resolves citations itself, and renders the child-facing factual text from the approved excerpt rather than trusting provider-written claims. It is instructed to recognise paraphrased questions. The deterministic local fallback also matches reviewed Fun Facts for common paraphrases.
+- The separate dynamic-source whitelist permits MyBIS, PERHILITAN, GBIF, IUCN, the EAZA Elephant Best Practice Guidelines, Dale (2010), and the English/Chinese Wikipedia editions. Stored dynamic excerpts must use an HTTPS URL from that exact source family, a recognised approval status, a named reviewer, and a review timestamp. This does not restrict the team-verified Iteration 3 Fun Fact workbook. Its fixed source URLs are fetched without redirects, with HTTPS, response-size, timeout, and content-type limits; HTML and PDF text is searched only for the current card. Wikipedia can also supply a tightly bounded live overview of the current species for a general question; it is supplementary and cannot be used for numerical, medical, legal, or conservation claims. GBIF is limited to its public taxonomy API, an exact scientific-name match, and taxonomy fields only.
+
+`backend/data/iteration3_fun_facts.json` is the deployment-ready version of the supplied workbook. It contains 1,520 `team-verified` rows, including source links. For each answer drawn from a Fun Fact or a matching source-page passage, the API returns the approved source link and the app displays a visually distinct **View source** link. The server never fetches a child-supplied URL.
 - If information is unavailable, the chatbot returns the controlled reliable-information fallback rather than guessing. A deterministic approved-data fallback supports local development and tests when `DEEPSEEK_API_KEY` is absent.
 - Successful chat interactions update one deduplicated Continue Learning record without changing discovery history or awarding XP.
 
 ### Epic 6 evidence review workflow
 
-`backend/data/iteration2_chat_evidence.json` is intentionally empty until a
-team member approves a source excerpt. Each record must use one of
-`mybis`, `perhilitan`, `gbif`, or `iucn`, match that source's domain, and have
+`backend/data/iteration2_chat_evidence.json` contains only team-approved
+source excerpts. Each record must use one of `mybis`, `perhilitan`, `gbif`,
+`iucn`, `eaza`, `dale_2010`, or `wikipedia`, match that source's domain, and have
 `verification_status: "team-verified"` (or `approved` / `verified`). It must
 include `species_id`, `source_id`, an HTTPS `source_url`, `topic`, a concise
 child-appropriate `excerpt`, `retrieved_at`, `verified_by`, and `verified_at`.
@@ -85,9 +99,20 @@ IUCN is stored as an allowed reviewed source but is not queried live: its API
 terms must be confirmed for the team's production deployment before adding an
 IUCN retriever.
 
+EAZA/Dale evidence currently supports the Asian-elephant newborn-calf shoulder
+height question. Wikipedia is live only for a safe, general overview of the
+current species: the server sends its fixed card name to Wikipedia's Action API
+and never sends a child question, identifier, URL, or another species' name.
+It is not used for numeric, medical, legal, or conservation answers; EAZA/Dale
+or other team-reviewed evidence remains required for those claims.
+
 GBIF retrieval defaults to off for local development and tests. Render enables
 it explicitly through `GBIF_API_ENABLED=true`; it does not require a key and
 is still bounded to the taxonomy flow above.
+
+Wikipedia retrieval also defaults to off outside the Render blueprint. Render
+enables it through `WIKIPEDIA_API_ENABLED=true`; it is limited to the plain-text
+introductory extract of the exact current-card article.
 
 Example review record (replace every placeholder only after the content team
 has checked the source and wording):
@@ -146,10 +171,11 @@ flowchart LR
 2. FastAPI first supplies the first provider named by `SCEQUENCE` with the image and an explicit allow-list of supported catalogue IDs.
 3. Provider errors, timeouts, rate limits, malformed envelopes, or invalid model JSON fall through to the next `SCEQUENCE` provider. Missing provider keys are skipped.
 4. A valid response that explicitly says the image is unsupported/unclear, or reports confidence below the threshold, stops immediately without asking another model to guess.
-5. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
-6. The client receives four shuffled candidates but not the verified species ID.
-7. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
-8. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
+5. Retaking, discarding, or cancelling the check aborts the client request. FastAPI detects the disconnect, cancels the active provider request, and does not store a photo or verification record.
+6. For a confident supported match, FastAPI stores the photo privately and creates a child-owned, 30-minute verification record including the provider model actually used.
+7. The client receives four shuffled candidates but not the verified species ID.
+8. The child answers the category and species questions; the server records the first answer and then reveals the verified result and identifying features.
+9. Saving uses only the server-side verified species. A client-supplied alternative cannot unlock a card.
 9. The first sighting of that species creates one collection entry and awards 100 XP; repeat sightings remain separate gallery records.
 
 ## Technology stack
@@ -308,7 +334,7 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `ZHIPU_VISION_MODEL` | No | Defaults to `glm-4.6v-flash` |
 | `SCEQUENCE` | No | Comma-separated image-recognition priority order, for example `deepseek,groq,zhipu`; `VISION_PROVIDER_SEQUENCE` is also accepted |
 | `VISION_MIN_CONFIDENCE` | No | Rejects model matches below this threshold; defaults to `0.65` |
-| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `45` |
+| `VISION_TIMEOUT_SECONDS` | No | Provider request timeout; defaults to `20` |
 | `DISCOVERY_VERIFICATION_TTL_MINUTES` | No | Time allowed to finish a verified discovery; defaults to `30` |
 | `SEED_SQL_PATH` | No | Overrides the default `./data/seed.sql` path |
 | `DEEPSEEK_API_KEY` | Yes for live Epic 6 chat | Server-only DeepSeek key used by the Species-Specific Wildlife Chatbot |
@@ -316,9 +342,15 @@ Anything beginning with `EXPO_PUBLIC_` is included in the client bundle and must
 | `DEEPSEEK_API_BASE_URL` | No | Defaults to `https://api.deepseek.com` |
 | `CHAT_TIMEOUT_SECONDS` | No | Defaults to `20` |
 | `CHAT_MAX_OUTPUT_TOKENS` | No | Defaults to `80`; the provider returns only evidence IDs, not answer prose |
+| `ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED` | No | Enables retrieval from fixed, verified Fun Fact source URLs; defaults to `true` |
+| `ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS` | No | Per-source retrieval timeout in seconds; defaults to `6` |
+| `ITERATION_3_SOURCE_PAGE_MAX_BYTES` | No | Maximum source-page download size; defaults to `8388608` |
 | `GBIF_API_ENABLED` | No | Enables the restricted public GBIF taxonomy lookup; defaults to `false` outside the Render blueprint |
 | `GBIF_API_BASE_URL` | No | Defaults to `https://api.gbif.org/v1` |
 | `GBIF_TIMEOUT_SECONDS` | No | Defaults to `8` |
+| `WIKIPEDIA_API_ENABLED` | No | Enables the constrained live Wikipedia overview lookup; defaults to `false` outside the Render blueprint |
+| `WIKIPEDIA_API_BASE_URL` | No | Defaults to `https://en.wikipedia.org/w/api.php` |
+| `WIKIPEDIA_TIMEOUT_SECONDS` | No | Defaults to `8` |
 
 Never place `DATABASE_URL`, `AWS_SECRET_ACCESS_KEY`, `JWT_SECRET`, or model-provider keys in the Expo project.
 
@@ -350,6 +382,7 @@ DATABASE_STORAGE_BUCKET=image
 JWT_SECRET=GENERATE_A_RANDOM_VALUE_OF_AT_LEAST_32_BYTES
 DEEPSEEK_API_KEY=<paste the Wildlife Chatbot key from DeepSeek>
 GBIF_API_ENABLED=true
+WIKIPEDIA_API_ENABLED=true
 CORS_ALLOWED_ORIGINS=*
 GEMINI_API_KEY=<server-side Google Gemini API key>
 GEMINI_VISION_MODEL=gemini-3.8-flash
@@ -358,6 +391,7 @@ GROQ_VISION_MODEL=qwen/qwen3.8-27b
 PIC_DEEPSEEK_API_KEY=<server-side DeepSeek Flash vision key>
 PIC_DEEPSEEK_VISION_MODEL=deepseek-flash
 SCEQUENCE=deepseek,groq,zhipu
+VISION_TIMEOUT_SECONDS=20
 ZHIPU_API_KEY=<server-side Zhipu API key>
 ZHIPU_VISION_MODEL=glm-4.6v-flash
 ```
@@ -432,7 +466,7 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 
 - PostgreSQL is the production source of truth; SQLite is a local/test fallback.
 - The static seed contains 152 supported species and one quiz per species.
-- The runtime catalogue exposes six supported wildlife locations.
+- The runtime catalogue exposes 21 KL/Selangor wildlife locations across seven categories (Zoo, Wildlife Park, Petting Zoo, Aquarium, Forest Park, Nature Park, Botanical Garden).
 - New passwords are hashed with Argon2.
 - A valid login using a legacy SHA-256 password upgrades that password hash once.
 - Registration and login issue a 30-day bearer JWT.
@@ -444,8 +478,8 @@ EAS Update can deliver JavaScript and bundled-asset changes only to an already i
 - Discovery photos use paths such as `children/{child_id}/discoveries/{uuid}.jpg` in a private bucket.
 - The client never receives the storage secret access key.
 - The client never receives `DEEPSEEK_API_KEY`; Render supplies it only to the FastAPI service.
-- The chat service sends no child data, source URLs, or other-species facts to DeepSeek. It supplies only server-selected evidence excerpts and rejects an answer without known evidence IDs.
-- The chat service only returns citations resolved from approved RimbaQuest evidence, reviewed MyBIS/PERHILITAN/GBIF/IUCN excerpts, or the restricted GBIF taxonomy API.
+- The chat service sends no child data or other-species facts to DeepSeek. It supplies only server-selected evidence excerpts and rejects an answer without known evidence IDs.
+- The chat service only returns citations resolved from approved RimbaQuest evidence, the current card's fixed verified source URLs, reviewed MyBIS/PERHILITAN/GBIF/IUCN excerpts, or the restricted GBIF taxonomy API.
 - Native sessions use Expo SecureStore; Web sessions use browser local storage because SecureStore is not available on Web.
 
 This is still an educational prototype. A public child-facing launch additionally requires guardian-consent design, photo retention/deletion controls, rate limiting, audit/monitoring, backups, production CORS restrictions, and a reviewed privacy policy.

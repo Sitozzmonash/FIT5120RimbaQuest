@@ -1,39 +1,46 @@
-import React, { useEffect } from 'react';
-import { ActivityIndicator, StatusBar, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { BackHandler, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Screen } from '../types';
 import { styles } from '../styles/theme';
 
-import { HomeScreen } from '../components/screens/HomeScreen';
+import { HomeScreen } from '../components/screens/home';
 import { LocationDetailScreen, LocationsScreen } from '../components/screens/locations';
 import {
   CameraScreen,
   PhotoPreviewScreen,
-  CategoryScreen,
   ConfirmScreen,
   SpeciesScreen,
   SuccessScreen,
 } from '../components/screens/discovery';
 import { AbilityQuizScreen, CollectionScreen, LockedScreen, SpeciesDetailScreen } from '../components/screens/collection';
-import { BattleArenaScreen, BattlePreparingModal, BattleSelectScreen } from '../components/screens/battle';
+import { GlobalInvitePopup, WildlifeBattleExperience } from '../components/screens/wildlifeBattle';
 import { AppLoadingModal } from '../components/common/AppLoadingModal';
+import { AppLoadingScreen } from '../components/common/AppLoadingScreen';
+import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
 import { ForgotPasswordScreen, ResetPasswordScreen } from '../components/screens/passwordRecovery';
 import { ProfileEditScreen, ProfileScreen } from '../components/screens/profile';
+import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
+import { useWebPageColors } from '../hooks/useWebPageColors';
+import { useBattleInviteStore } from '../store/useBattleInviteStore';
 import { useDiscoveryStore } from '../store/useDiscoveryStore';
+import { useLocationsStore } from '../store/useLocationsStore';
 import { useNavigationStore } from '../store/useNavigationStore';
 import { useSpeciesCatalogStore } from '../store/useSpeciesCatalogStore';
 import { useUserStore } from '../store/useUserStore';
 
-const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit'];
+const GRADIENT_SCREENS: Screen[] = ['account_entry', 'login', 'create_account', 'forgot_password', 'reset_password', 'collection', 'locations', 'location_detail', 'progress', 'profile_edit', 'locked', 'about', 'facts', 'battle_stats', 'gallery', 'quiz', 'species', 'confirm', 'success', 'battle_select'];
 
 export default function RimbaQuest() {
   const screen = useNavigationStore((state) => state.screen);
+  useWebPageColors(screen);
 
   const bootstrapped = useUserStore((state) => state.bootstrapped);
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  useBackgroundMusic(screen, isLoggedIn);
 
   useEffect(() => {
     void useUserStore.getState().restoreSession();
@@ -48,16 +55,39 @@ export default function RimbaQuest() {
     useNavigationStore.getState().setFallbackScreen(isLoggedIn ? 'home' : 'account_entry');
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      useBattleInviteStore.getState().reset();
+      useLocationsStore.getState().stopLocationUpdates();
+      useLocationsStore.setState({ sessionConsent: false });
+    }
+  }, [isLoggedIn]);
+
+  const [exitConfirmVisible, setExitConfirmVisible] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const onHardwareBackPress = () => {
+      const { screen: currentScreen, history, goBack } = useNavigationStore.getState();
+      // The battle flow confirms a forfeit before leaving an active match.
+      if (currentScreen === 'battle_select') return false;
+      if (history.length > 0) {
+        goBack();
+        return true;
+      }
+
+      setExitConfirmVisible(true);
+      return true;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onHardwareBackPress);
+    return () => subscription.remove();
+  }, []);
+
   const discoveryPhotoUri = useDiscoveryStore((state) => state.photoUri);
 
   if (!bootstrapped) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.loading}>
-          <ActivityIndicator color="#0BA84A" size="large" />
-        </View>
-      </SafeAreaView>
-    );
+    return <AppLoadingScreen />;
   }
 
   const fullBleed = (screen === 'home' && isLoggedIn) || GRADIENT_SCREENS.includes(screen);
@@ -79,8 +109,6 @@ export default function RimbaQuest() {
 
         {screen === 'photo_preview' && discoveryPhotoUri && <PhotoPreviewScreen />}
 
-        {screen === 'category' && discoveryPhotoUri && <CategoryScreen />}
-
         {screen === 'species' && discoveryPhotoUri && <SpeciesScreen />}
 
         {screen === 'confirm' && discoveryPhotoUri && <ConfirmScreen />}
@@ -97,9 +125,9 @@ export default function RimbaQuest() {
 
         {screen === 'locked' && <LockedScreen />}
 
-        {screen === 'battle_select' && <BattleSelectScreen />}
-
-        {screen === 'battle_arena' && <BattleArenaScreen />}
+        {screen === 'battle_select' && (
+          <WildlifeBattleExperience onBack={() => useNavigationStore.getState().goBack()} />
+        )}
 
         {screen === 'account_entry' && <AccountEntryScreen />}
 
@@ -116,8 +144,13 @@ export default function RimbaQuest() {
         {screen === 'progress' && <ProfileScreen />}
       </View>
 
-      <BattlePreparingModal />
+      {isLoggedIn && screen !== 'battle_select' && <GlobalInvitePopup />}
       <AppLoadingModal />
+      <ExitConfirmModal
+        visible={exitConfirmVisible}
+        onStay={() => setExitConfirmVisible(false)}
+        onLeave={() => BackHandler.exitApp()}
+      />
     </SafeAreaView>
   );
 }

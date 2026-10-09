@@ -4,13 +4,14 @@ import json
 import hashlib
 import re
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy import Connection, Table, select
 
-from app.core.config import ITERATION_2_CHAT_EVIDENCE, ITERATION_2_FUN_FACTS_PILOT, SEED_SQL
+from app.core.config import ITERATION_2_CHAT_EVIDENCE, ITERATION_3_FUN_FACTS, SEED_SQL
 from app.core.schema import (
     app_metadata,
     locations,
@@ -30,43 +31,325 @@ ITERATION_1_LOCATION_IDS = {
     "loc_per_paya_indah",
 }
 
+# Epic 2 narrows the catalogue to KL + Selangor and introduces location
+# categories (zoo, wildlife park, petting zoo, aquarium, forest park, nature
+# park, botanical garden) as the child-facing filter.
+LOCATION_TYPE_OVERRIDES = {
+    "loc_bukit_gasing": "Forest Park",
+    "loc_frim": "Forest Park",
+    "loc_kuala_selangor": "Nature Park",
+    "loc_per_paya_indah": "Nature Park",
+}
+
 LOCATION_ENRICHMENTS = {
-    "loc_bukit_gasing": ("Petaling Jaya, Selangor", "Butterflies, Birds, Small Mammals"),
-    "loc_frim": ("Kepong, Kuala Lumpur", "Rainforest Canopy Birds, Mammals, Butterflies"),
-    "loc_kuala_selangor": ("Kuala Selangor, Selangor", "Mangrove Birds, Reptiles, Fireflies"),
-    "loc_per_paya_indah": ("Dengkil, Selangor", "Wetland Birds, Sun Bears, Crocodiles, Reptiles"),
+    "loc_bukit_gasing": (
+        "Persiaran Bukit Gasing, Seksyen 5, 46000 Petaling Jaya, Selangor",
+        "Butterflies, Birds, Small Mammals",
+    ),
+    "loc_frim": (
+        "Forest Research Institute Malaysia, 52109 Kepong, Selangor",
+        "Rainforest Canopy Birds, Mammals, Butterflies",
+    ),
+    "loc_kuala_selangor": (
+        "Kuala Selangor Nature Park, Jalan Klinik, 45000 Kuala Selangor, Selangor",
+        "Mangrove Birds, Reptiles, Fireflies",
+    ),
+    "loc_per_paya_indah": (
+        "Paya Indah Wetlands, Persiaran Paya Indah, 43800 Dengkil, Selangor",
+        "Wetland Birds, Sun Bears, Crocodiles, Reptiles",
+    ),
+}
+
+# Links are deliberately limited to attraction or managing-authority sites
+# that were checked by the team. Entries without an official public site omit
+# the field, so the client never renders an unreliable third-party link.
+LOCATION_OFFICIAL_WEBSITES = {
+    "loc_frim": "https://www.frim.gov.my/",
+    "loc_kuala_selangor": "https://www.mns.my/ksnp-centre/",
+    "loc_per_paya_indah": "https://www.wildlife.gov.my/en/paya-indah-wetlands/",
+    "loc_perdana_botanical": "https://www.dbkl.gov.my/fasiliti-awam/taman-awam/taman-botani-perdana",
+    "loc_zoo_negara": "https://www.zoonegara.my/",
+    "loc_aquaria_klcc": "https://aquariaklcc.com/",
+    "loc_kl_bird_park": "https://www.klbirdpark.com/",
+    "loc_kl_butterfly_park": "https://www.klbutterflypark.com/",
+    "loc_farm_in_the_city": "https://farminthecity.my/",
+    "loc_taman_tugu": "https://tamantugu.my/",
+    "loc_kota_damansara_cf": "https://www.forestry.gov.my/en/selangor/taman-eko-rimba-kota-damansara",
+    "loc_taman_rimba_kiara": "https://www.dbkl.gov.my/fasiliti-awam/taman-awam/taman-rimba-kiara",
+    "loc_botani_shah_alam": "http://www.tbnsa.gov.my/",
+    "loc_just_farm": "https://www.justfarm.com.my/",
 }
 
 EXTRA_LOCATIONS = [
     {
         "id": "loc_kl_forest_eco_park",
         "name": "KL Forest Eco Park",
-        "type": "Forest park",
-        "lat": 3.151,
-        "lng": 101.703,
+        "type": "Forest Park",
+        "lat": 3.1529313,
+        "lng": 101.7026923,
         "verified": True,
         "description": "A pocket of lowland rainforest in the heart of Kuala Lumpur, beside the KL Tower.",
         "facilities": ["Trails", "Boardwalk", "Rest area"],
         "best_time": "Daily, 8:00 AM–4:30 PM",
         "distance_km": 3.5,
         "why_recommended": "Easy city-centre forest paths where birds and small mammals have previously been observed.",
-        "area": "Kuala Lumpur",
+        "area": "Jalan Raja Chulan, Bukit Nanas, 50250 Kuala Lumpur",
         "typical_wildlife": "Birds, Small Mammals, Butterflies",
     },
     {
         "id": "loc_perdana_botanical",
         "name": "Perdana Botanical Gardens",
-        "type": "Botanical garden",
-        "lat": 3.143,
-        "lng": 101.685,
+        "type": "Botanical Garden",
+        "lat": 3.1437954,
+        "lng": 101.6848169,
         "verified": True,
         "description": "Kuala Lumpur's main botanical gardens with lakes, lawns and planted forest edges.",
         "facilities": ["Paths", "Parking", "Restroom", "Playground"],
         "best_time": "Daily, 6:30 AM–10:00 PM",
         "distance_km": 2.0,
         "why_recommended": "Open garden paths where butterflies and garden birds may be encountered.",
-        "area": "Kuala Lumpur",
+        "area": "Jalan Kebun Bunga, Perdana Botanical Gardens, 55100 Kuala Lumpur",
         "typical_wildlife": "Butterflies, Birds",
+    },
+    {
+        "id": "loc_zoo_negara",
+        "name": "Zoo Negara",
+        "type": "Zoo",
+        "lat": 3.2106626,
+        "lng": 101.7577617,
+        "verified": True,
+        "description": "Malaysia's national zoo, where you can meet tigers, orangutans, elephants and many other animals in one safe park.",
+        "facilities": ["Animal exhibits", "Feeding shows", "Playground", "Food stalls"],
+        "best_time": "Daily, 9:00 AM–5:00 PM",
+        "distance_km": 8.0,
+        "why_recommended": "The easiest way to see many Malaysian animals close up, with feeding shows all day.",
+        "area": "Zoo Negara, Jalan Ulu Klang, 68000 Ampang, Selangor",
+        "typical_wildlife": "Malayan Tigers, Orangutans, Elephants, Birds, Reptiles",
+    },
+    {
+        "id": "loc_aquaria_klcc",
+        "name": "Aquaria KLCC",
+        "type": "Aquarium",
+        "lat": 3.1533436,
+        "lng": 101.7130586,
+        "verified": True,
+        "description": "An indoor aquarium beneath KLCC with a see-through tunnel where sharks and rays swim overhead.",
+        "facilities": ["Tunnel aquarium", "Touch pool", "Gift shop"],
+        "best_time": "Daily, 10:00 AM–8:00 PM",
+        "distance_km": 1.0,
+        "why_recommended": "Perfect for a rainy day — watch sharks, rays and sea turtles up close without getting wet.",
+        "area": "Kuala Lumpur Convention Centre, Jalan Pinang, 50088 Kuala Lumpur",
+        "typical_wildlife": "Sharks, Rays, Sea Turtles, Tropical Fish",
+    },
+    {
+        "id": "loc_kl_bird_park",
+        "name": "KL Bird Park",
+        "type": "Wildlife Park",
+        "lat": 3.1436519,
+        "lng": 101.6889297,
+        "verified": True,
+        "description": "The world's largest free-flight walk-in bird park, with hornbills, flamingos and parrots flying freely.",
+        "facilities": ["Free-flight aviaries", "Bird shows", "Trails", "Parking"],
+        "best_time": "Daily, 9:00 AM–6:00 PM",
+        "distance_km": 2.5,
+        "why_recommended": "Walk among hundreds of birds under a huge netted canopy — sightings are almost guaranteed.",
+        "area": "920 Jalan Cenderawasih, Perdana Botanical Gardens, 50480 Kuala Lumpur",
+        "typical_wildlife": "Hornbills, Flamingos, Parrots, Peacocks",
+    },
+    {
+        "id": "loc_kl_butterfly_park",
+        "name": "KL Butterfly Park",
+        "type": "Wildlife Park",
+        "lat": 3.1453135,
+        "lng": 101.6887756,
+        "verified": True,
+        "description": "A shaded garden alive with thousands of tropical butterflies and small waterfalls.",
+        "facilities": ["Enclosed garden", "Waterfalls", "Rest area"],
+        "best_time": "Daily, 9:00 AM–6:00 PM",
+        "distance_km": 2.6,
+        "why_recommended": "Butterflies land right on you in this calm garden beside the Bird Park.",
+        "area": "Jalan Cenderawasih, Perdana Botanical Gardens, 50480 Kuala Lumpur",
+        "typical_wildlife": "Butterflies, Dragonflies",
+    },
+    {
+        "id": "loc_farm_in_the_city",
+        "name": "Farm in the City",
+        "type": "Petting Zoo",
+        "lat": 2.9925,
+        "lng": 101.713,
+        "verified": True,
+        "description": "An open farm in the city where you can feed and pet friendly farm animals like goats, rabbits and tortoises.",
+        "facilities": ["Animal feeding", "Playground", "Food stalls", "Parking"],
+        "best_time": "Daily, 9:30 AM–6:00 PM",
+        "distance_km": 18.0,
+        "why_recommended": "Hands-on feeding and petting — the friendliest animals for younger explorers.",
+        "area": "Lot 40160, Jalan PS 7, Prima Saujana, 43300 Seri Kembangan, Selangor",
+        "typical_wildlife": "Goats, Rabbits, Tortoises, Birds",
+    },
+    {
+        "id": "loc_just_farm",
+        "name": "Just Farm",
+        "type": "Petting Zoo",
+        "lat": 3.1487454,
+        "lng": 101.5947478,
+        "verified": True,
+        "description": "A fully indoor petting zoo inside IOI Mall Damansara, with staff-guided animal encounters for families.",
+        "facilities": ["Indoor animal encounters", "Animal feeding", "Mall parking"],
+        "best_time": "Daily, 10:30 AM–8:30 PM",
+        "distance_km": 0,
+        "why_recommended": "A weather-proof, air-conditioned place for supervised animal encounters in Petaling Jaya.",
+        "area": "Lot 1F-01, IOI Mall Damansara, 2A Persiaran Surian, 47810 Petaling Jaya, Selangor",
+        "typical_wildlife": "",
+    },
+    {
+        "id": "loc_taman_tugu",
+        "name": "Taman Tugu",
+        "type": "Forest Park",
+        "lat": 3.153362,
+        "lng": 101.6843969,
+        "verified": True,
+        "description": "A young urban forest of 4,000 trees at the heart of KL, with gentle walking trails.",
+        "facilities": ["Trails", "Interpretive boards", "Rest area"],
+        "best_time": "Daily, 7:00 AM–7:00 PM",
+        "distance_km": 2.8,
+        "why_recommended": "Quiet forest paths minutes from the city centre.",
+        "area": "Jalan Tugu, 50480 Kuala Lumpur",
+        "typical_wildlife": "Birds, Butterflies, Small Mammals",
+    },
+    {
+        "id": "loc_templer_park",
+        "name": "Templer's Park",
+        "type": "Forest Park",
+        "lat": 3.3,
+        "lng": 101.631,
+        "verified": True,
+        "description": "A free jungle park with waterfalls, streams and tall rainforest trees.",
+        "facilities": ["Waterfall pools", "Trails", "Picnic area", "Parking"],
+        "best_time": "Daily, 7:00 AM–7:00 PM",
+        "distance_km": 20.0,
+        "why_recommended": "Swim at the waterfall, then look for monkeys and birds along the jungle trails.",
+        "area": "Jalan Templer, 48000 Rawang, Selangor",
+        "typical_wildlife": "Birds, Butterflies, Long-tailed Macaques",
+    },
+    {
+        "id": "loc_kanching",
+        "name": "Kanching Rainforest Waterfall",
+        "type": "Forest Park",
+        "lat": 3.26,
+        "lng": 101.633,
+        "verified": True,
+        "description": "A seven-tier waterfall forest park with clear pools for a family picnic.",
+        "facilities": ["Waterfall pools", "Picnic area", "Parking"],
+        "best_time": "Daily, 7:00 AM–6:00 PM",
+        "distance_km": 25.0,
+        "why_recommended": "Cool waterfall pools and easy paths — a great weekend escape.",
+        "area": "Jalan Rawang–Batu Caves, 48000 Rawang, Selangor",
+        "typical_wildlife": "Birds, Butterflies",
+    },
+    {
+        "id": "loc_eko_rimba_komanwel",
+        "name": "Taman Eko Rimba Komanwel",
+        "type": "Forest Park",
+        "lat": 3.279,
+        "lng": 101.564,
+        "verified": True,
+        "description": "A forest park with a treetop canopy walkway and gentle lake trails.",
+        "facilities": ["Canopy walkway", "Trails", "Parking"],
+        "best_time": "Daily, 8:00 AM–6:00 PM",
+        "distance_km": 30.0,
+        "why_recommended": "A safe canopy walk above the forest where birds and butterflies pass close by.",
+        "area": "Bandar Tasik Puteri, 48020 Rawang, Selangor",
+        "typical_wildlife": "Birds, Butterflies, Small Mammals",
+    },
+    {
+        "id": "loc_sungai_chongkak",
+        "name": "Sungai Chongkak Recreational Forest",
+        "type": "Forest Park",
+        "lat": 3.116,
+        "lng": 101.833,
+        "verified": True,
+        "description": "A riverside forest park with clear water, ideal for picnics and spotting kingfishers.",
+        "facilities": ["River beach", "Picnic area", "BBQ pits", "Parking"],
+        "best_time": "Daily, 8:00 AM–6:00 PM",
+        "distance_km": 35.0,
+        "why_recommended": "Shallow clear river pools and shaded banks full of birdlife.",
+        "area": "Jalan Sungai Chongkak, 43100 Hulu Langat, Selangor",
+        "typical_wildlife": "Birds, Kingfishers, Small Mammals",
+    },
+    {
+        "id": "loc_kota_damansara_cf",
+        "name": "Kota Damansara Community Forest",
+        "type": "Forest Park",
+        "lat": 3.1765262,
+        "lng": 101.5957436,
+        "verified": True,
+        "description": "A community forest with walking trails through secondary rainforest.",
+        "facilities": ["Trails", "Rest area"],
+        "best_time": "Daily, 7:00 AM–7:00 PM",
+        "distance_km": 15.0,
+        "why_recommended": "Easy forest trails where birds, butterflies and squirrels are often seen.",
+        "area": "Jalan Merbah 10/1, Kota Damansara, 47810 Petaling Jaya, Selangor",
+        "typical_wildlife": "Birds, Butterflies, Squirrels",
+    },
+    {
+        "id": "loc_taman_rimba_kiara",
+        "name": "Taman Rimba Kiara",
+        "type": "Forest Park",
+        "lat": 3.1382851,
+        "lng": 101.6328005,
+        "verified": True,
+        "description": "A hilly forest reserve in TTDI with shaded trails and a stream.",
+        "facilities": ["Trails", "Stream", "Rest area"],
+        "best_time": "Daily, 6:30 AM–7:00 PM",
+        "distance_km": 9.0,
+        "why_recommended": "Gentle shaded trails near the city, popular for birds and butterflies.",
+        "area": "Jalan Abang Haji Openg, Taman Tun Dr Ismail, 60000 Kuala Lumpur",
+        "typical_wildlife": "Birds, Butterflies, Squirrels",
+    },
+    {
+        "id": "loc_botani_shah_alam",
+        "name": "Taman Botani Negara Shah Alam",
+        "type": "Botanical Garden",
+        "lat": 3.1120112,
+        "lng": 101.5084788,
+        "verified": True,
+        "description": "A huge lakeside botanical park in Shah Alam with themed gardens and bamboo forests.",
+        "facilities": ["Themed gardens", "Lakeside trails", "Bicycle rental", "Parking"],
+        "best_time": "Daily, 8:00 AM–6:00 PM",
+        "distance_km": 30.0,
+        "why_recommended": "Room to run, bikes to ride, and plenty of butterflies in the flower gardens.",
+        "area": "Jalan Taman Botani, 40100 Shah Alam, Selangor",
+        "typical_wildlife": "Butterflies, Birds",
+    },
+    {
+        "id": "loc_bukit_melawati",
+        "name": "Bukit Melawati",
+        "type": "Nature Park",
+        "lat": 3.34151,
+        "lng": 101.2446063,
+        "verified": True,
+        "description": "A hilltop fort in Kuala Selangor where silver leaf monkeys live right on the paths.",
+        "facilities": ["Fort", "Lookout", "Boardwalk", "Parking"],
+        "best_time": "Daily, 7:00 AM–7:00 PM",
+        "distance_km": 62.0,
+        "why_recommended": "Silver leaf monkeys and flying foxes are almost guaranteed near the fort.",
+        "area": "Bukit Melawati, 45000 Kuala Selangor, Selangor",
+        "typical_wildlife": "Silver Leaf Monkeys, Birds",
+    },
+    {
+        "id": "loc_kg_kuantan_firefly",
+        "name": "Kampung Kuantan Firefly Park",
+        "type": "Nature Park",
+        "lat": 3.3612245,
+        "lng": 101.3015929,
+        "verified": True,
+        "description": "A riverside kampung where night boat tours watch thousands of fireflies flashing in the mangroves.",
+        "facilities": ["Night boat tours", "Jetty", "Parking"],
+        "best_time": "Nightly, 7:30 PM–11:00 PM",
+        "distance_km": 68.0,
+        "why_recommended": "A magical evening boat ride as fireflies light up the mangrove trees.",
+        "area": "Jalan Bukit Belimbing, 45000 Kuala Selangor, Selangor",
+        "typical_wildlife": "Fireflies",
     },
 ]
 
@@ -110,7 +393,15 @@ def _upsert_rows(connection: Connection, table: Table, items: list[dict[str, Any
 
 
 def seed_iteration_one(connection: Connection) -> None:
-    seed_version = hashlib.sha256(SEED_SQL.read_bytes()).hexdigest()
+    # The version must cover the seed.py location data too, otherwise edits to
+    # LOCATION_ENRICHMENTS / EXTRA_LOCATIONS would be skipped on databases that
+    # already carry an older seed.sql hash.
+    location_seed_content = json.dumps(
+        [LOCATION_ENRICHMENTS, LOCATION_TYPE_OVERRIDES, LOCATION_OFFICIAL_WEBSITES, EXTRA_LOCATIONS],
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    seed_version = hashlib.sha256(SEED_SQL.read_bytes() + location_seed_content).hexdigest()
     current_version = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == "iteration_1_seed_sha256")
     ).scalar_one_or_none()
@@ -131,6 +422,13 @@ def seed_iteration_one(connection: Connection) -> None:
         row["verified"] = bool(row.get("verified"))
         row["facilities"] = _json_value(row.get("facilities"))
         row["area"], row["typical_wildlife"] = LOCATION_ENRICHMENTS[row["id"]]
+        row["type"] = LOCATION_TYPE_OVERRIDES[row["id"]]
+
+    location_items = [*location_rows, *EXTRA_LOCATIONS]
+    for row in location_items:
+        # Keep the nullable key on every row: SQLAlchemy executemany uses the
+        # first row's keys to build its insert statement.
+        row["official_website"] = LOCATION_OFFICIAL_WEBSITES.get(row["id"])
 
     _upsert_rows(connection, species, species_rows)
     _upsert_rows(connection, quizzes, quiz_rows)
@@ -143,7 +441,7 @@ def seed_iteration_one(connection: Connection) -> None:
             species_images.insert(),
             [{key: value for key, value in row.items() if key != "id"} for row in image_rows],
         )
-    _upsert_rows(connection, locations, [*location_rows, *EXTRA_LOCATIONS])
+    _upsert_rows(connection, locations, location_items)
     existing_version = connection.execute(
         select(app_metadata.c.key).where(app_metadata.c.key == "iteration_1_seed_sha256")
     ).first()
@@ -209,25 +507,26 @@ def _previous_seed_keys(connection: Connection, key: str) -> set[str]:
     return {item for item in decoded if isinstance(item, str)} if isinstance(decoded, list) else set()
 
 
-def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
-    """Load source-linked Fun Facts and reject non-child-facing seed records.
+def seed_iteration_three_fun_facts(connection: Connection) -> None:
+    """Load the team-verified Iteration 3 Fun Fact corpus.
 
-    Source-linked facts can be displayed without individual reviewer metadata.
-    Scraped page artefacts, RimbaQuest system statements, and uncertainty-only
-    placeholders remain traceable but do not enter the public feed.
+    The source workbook contains 10 reviewed facts for each supported species.
+    Every source URL belongs to the reviewed record, so it remains available
+    as a citation without passing the separate live-source whitelist. Content
+    that is not child-facing remains rejected even if it is source-linked.
     """
-    if not ITERATION_2_FUN_FACTS_PILOT.exists():
+    if not ITERATION_3_FUN_FACTS.exists():
         return
 
     seed_version = hashlib.sha256(
-        ITERATION_2_FUN_FACTS_PILOT.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
+        ITERATION_3_FUN_FACTS.read_bytes() + FUN_FACT_CONTENT_POLICY_VERSION.encode()
     ).hexdigest()
-    version_key = "iteration_2_fun_facts_pilot_sha256"
-    keys_key = "iteration_2_fun_facts_pilot_seed_keys"
+    version_key = "iteration_3_fun_facts_sha256"
+    keys_key = "iteration_3_fun_facts_seed_keys"
     current_version = connection.execute(
         select(app_metadata.c.value).where(app_metadata.c.key == version_key)
     ).scalar_one_or_none()
-    records = json.loads(ITERATION_2_FUN_FACTS_PILOT.read_text(encoding="utf-8"))
+    records = json.loads(ITERATION_3_FUN_FACTS.read_text(encoding="utf-8"))
     current_keys = {
         _seed_key(record["species_id"], record["display_order"])
         for record in records
@@ -259,14 +558,65 @@ def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
         )
 
     for record in records:
+        fact_text = str(record.get("fun_fact") or record.get("fact_text") or "").strip()
+        source_url = str(record.get("source_url") or "").strip()
+        source_name = record.get("source_name")
+        if not source_name:
+            if source_url:
+                netloc = urlparse(source_url).netloc
+                source_name = netloc or "Reference Source"
+            else:
+                source_name = "Reference Source"
+        source_license = record.get("source_license") or "Web Reference"
+
+        raw_retrieved = record.get("retrieved_at")
+        if raw_retrieved:
+            if isinstance(raw_retrieved, str):
+                retrieved_at = datetime.fromisoformat(raw_retrieved.replace("Z", "+00:00"))
+            elif isinstance(raw_retrieved, datetime):
+                retrieved_at = raw_retrieved
+            else:
+                retrieved_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+        else:
+            retrieved_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+
+        if record.get("verified") == "PASS":
+            verification_status = "team-verified"
+            verified_by = record.get("verified_by") or "content team"
+            raw_verified_at = record.get("verified_at")
+            if raw_verified_at:
+                verified_at = (
+                    datetime.fromisoformat(raw_verified_at.replace("Z", "+00:00"))
+                    if isinstance(raw_verified_at, str)
+                    else raw_verified_at
+                )
+            else:
+                verified_at = datetime(2026, 9, 16, 0, 0, 0, tzinfo=timezone.utc)
+        else:
+            verification_status = record.get("verification_status", "source-linked-draft")
+            verified_by = record.get("verified_by")
+            raw_verified_at = record.get("verified_at")
+            if raw_verified_at:
+                verified_at = (
+                    datetime.fromisoformat(raw_verified_at.replace("Z", "+00:00"))
+                    if isinstance(raw_verified_at, str)
+                    else raw_verified_at
+                )
+            else:
+                verified_at = None
+
         values = {
-            **{key: value for key, value in record.items() if key != "additional_sources"},
-            "retrieved_at": datetime.fromisoformat(record["retrieved_at"].replace("Z", "+00:00")),
-            "verified_at": (
-                datetime.fromisoformat(record["verified_at"].replace("Z", "+00:00"))
-                if record.get("verified_at")
-                else None
-            ),
+            "species_id": record["species_id"],
+            "display_order": int(record["display_order"]),
+            "fact_text": fact_text,
+            "source_name": source_name,
+            "source_url": source_url,
+            "source_license": source_license,
+            "retrieved_at": retrieved_at,
+            "verification_status": verification_status,
+            "uncertainty_note": record.get("uncertainty_note"),
+            "verified_by": verified_by,
+            "verified_at": verified_at,
         }
         if not _is_child_facing_fun_fact(values["fact_text"]):
             values["verification_status"] = "rejected"
@@ -281,22 +631,15 @@ def seed_iteration_two_fun_facts_pilot(connection: Connection) -> None:
             connection.execute(species_fun_facts.insert().values(**values))
 
         fact_id = connection.execute(select(species_fun_facts.c.id).where(predicate)).scalar_one()
+        # Source links are seed-owned as a set. Replacing them avoids a
+        # withdrawn or changed workbook URL remaining visible to a child.
+        connection.execute(
+            species_fun_fact_sources.delete().where(species_fun_fact_sources.c.fact_id == fact_id)
+        )
         for source in record.get("additional_sources", []):
-            source_values = {"fact_id": fact_id, **source}
-            source_exists = connection.execute(
-                select(species_fun_fact_sources.c.id).where(
-                    species_fun_fact_sources.c.fact_id == fact_id,
-                    species_fun_fact_sources.c.source_url == source_values["source_url"],
-                )
-            ).first()
-            if source_exists:
-                connection.execute(
-                    species_fun_fact_sources.update()
-                    .where(species_fun_fact_sources.c.id == source_exists.id)
-                    .values(**source_values)
-                )
-            else:
-                connection.execute(species_fun_fact_sources.insert().values(**source_values))
+            connection.execute(
+                species_fun_fact_sources.insert().values(fact_id=fact_id, **source)
+            )
 
     _set_metadata(connection, version_key, seed_version)
     _set_metadata(connection, keys_key, json.dumps(sorted(current_keys)))

@@ -29,11 +29,23 @@ services:
         sync: false
       - key: DEEPSEEK_CHAT_MODEL
         value: deepseek-chat
-      # Public GBIF taxonomy lookup only; other external sources are reviewed
-      # evidence records rather than runtime web scraping.
+      # Public GBIF taxonomy lookup only. Other dynamic external sources are
+      # reviewed evidence records; verified Fun Fact source links are citations.
       - key: GBIF_API_ENABLED
+        value: "true"
+      # Narrow live Wikipedia overview lookup for safe, general questions
+      # about the current discovered species only.
+      - key: WIKIPEDIA_API_ENABLED
         value: "true"
       - key: ZHIPU_API_KEY
         sync: false
       - key: ZHIPU_VISION_MODEL
         value: glm-4.6v-flash
+      # Password-reset email via Brevo's HTTPS API. Render blocks outbound SMTP
+      # (smtp.gmail.com:587 -> "Network is unreachable"), so email goes over 443.
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: RimbaQuest Team

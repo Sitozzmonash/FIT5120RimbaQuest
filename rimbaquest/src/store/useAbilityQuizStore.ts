@@ -40,11 +40,15 @@ type AbilityQuizState = {
   submitting: boolean;
   errorMsg: string;
   result: QuizResult | null;
+  reviewing: boolean;
+  reviewIndex: number;
   giveUpConfirmVisible: boolean;
+  newPerk: { speciesId: string; slot: number } | null;
 };
 
 type AbilityQuizActions = {
   fetchProgression: (speciesId: string) => Promise<void>;
+  fetchAllProgression: () => Promise<void>;
   openUnlockModal: (species: Species, slot: number) => void;
   closeUnlockModal: () => void;
   beginChallenge: () => Promise<void>;
@@ -53,15 +57,21 @@ type AbilityQuizActions = {
   goPrevious: () => void;
   submitQuiz: () => Promise<void>;
   retryQuiz: () => void;
+  startReview: () => void;
+  stopReview: () => void;
+  nextReviewQuestion: () => void;
+  previousReviewQuestion: () => void;
   finishQuiz: () => void;
   openGiveUpConfirm: () => void;
   closeGiveUpConfirm: () => void;
   giveUp: () => void;
+  dismissNewPerk: () => void;
 };
 
 export type AbilityQuizStore = AbilityQuizState & AbilityQuizActions;
 
 const progressionRequestSeq: Record<string, number> = {};
+let allProgressionRequest: Promise<void> | null = null;
 
 async function loadQuizQuestions(
   speciesId: string,
@@ -120,13 +130,40 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   submitting: false,
   errorMsg: "",
   result: null,
+  reviewing: false,
+  reviewIndex: 0,
   giveUpConfirmVisible: false,
+  newPerk: null,
+
+  fetchAllProgression: () => {
+    allProgressionRequest ??= (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/quiz-progression`, {
+          headers: useUserStore.getState().authHeaders(),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data?.progression || typeof data.progression !== "object") return;
+        set((state) => ({
+          progressionBySpecies: { ...state.progressionBySpecies, ...data.progression },
+        }));
+      } catch {
+        // Keep whatever's cached; screens fall back to per-species loads.
+      } finally {
+        allProgressionRequest = null;
+      }
+    })();
+    return allProgressionRequest;
+  },
 
   fetchProgression: async (speciesId) => {
     const hasCache = speciesId in get().progressionBySpecies;
     if (!hasCache) {
       set((state) => ({
-        progressionLoadingSpecies: { ...state.progressionLoadingSpecies, [speciesId]: true },
+        progressionLoadingSpecies: {
+          ...state.progressionLoadingSpecies,
+          [speciesId]: true,
+        },
       }));
     }
 
@@ -174,11 +211,18 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       | "ability_1"
       | "ability_2"
       | "ability_3";
+    const abilityName =
+      slot === 3
+        ? species.passive?.name
+        : species.abilities?.find((ability) => ability.slot === slot)?.name;
     set({
       unlockModalVisible: true,
       pendingSlot: slot,
       pendingDifficulty: DIFFICULTY_BY_SLOT[slot] || "easy",
-      pendingAbilityName: species[abilityKey] || `Ability ${slot}`,
+      pendingAbilityName:
+        abilityName ||
+        species[abilityKey] ||
+        (slot === 3 ? "Wild Instinct" : `Ability ${slot}`),
       activeSpecies: species,
     });
   },
@@ -192,6 +236,8 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
       unlockModalVisible: false,
       activeDifficulty: pendingDifficulty,
       result: null,
+      reviewing: false,
+      reviewIndex: 0,
       giveUpConfirmVisible: false,
     });
     useNavigationStore.getState().open("quiz");
@@ -240,12 +286,18 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
         },
       );
       const data = await res.json();
-      set({ result: data, submitting: false });
-      if (res.ok) {
-        useContinueLearningStore
-          .getState()
-          .recordActivity(useUserStore.getState().currentUser.id, activeSpecies.id, "quiz");
+      if (!res.ok) {
+        set({ submitting: false, errorMsg: "We couldn't check your answers. Please try again." });
+        return;
       }
+      set({ result: data, submitting: false, reviewing: false, reviewIndex: 0 });
+      useContinueLearningStore
+        .getState()
+        .recordActivity(
+          useUserStore.getState().currentUser.id,
+          activeSpecies.id,
+          "quiz",
+        );
       if (data.passed) {
         await get().fetchProgression(activeSpecies.id);
       }
@@ -260,13 +312,31 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   retryQuiz: () => {
     const { activeSpecies, activeDifficulty } = get();
     if (!activeSpecies || !activeDifficulty) return;
-    set({ result: null });
+    set({ result: null, reviewing: false, reviewIndex: 0 });
     void loadQuizQuestions(activeSpecies.id, activeDifficulty);
   },
 
+  startReview: () => {
+    if (get().result?.review?.length) set({ reviewing: true, reviewIndex: 0 });
+  },
+  stopReview: () => set({ reviewing: false }),
+  nextReviewQuestion: () => set((state) => ({
+    reviewIndex: Math.min(state.reviewIndex + 1, state.questions.length - 1),
+  })),
+  previousReviewQuestion: () => set((state) => ({
+    reviewIndex: Math.max(state.reviewIndex - 1, 0),
+  })),
+
   finishQuiz: () => {
+    const { result, activeSpecies, pendingSlot } = get();
     set({
+      newPerk:
+        result?.passed && activeSpecies && pendingSlot
+          ? { speciesId: activeSpecies.id, slot: pendingSlot }
+          : null,
       result: null,
+      reviewing: false,
+      reviewIndex: 0,
       questions: [],
       currentIndex: 0,
       answers: {},
@@ -281,4 +351,6 @@ export const useAbilityQuizStore = create<AbilityQuizStore>((set, get) => ({
   closeGiveUpConfirm: () => set({ giveUpConfirmVisible: false }),
 
   giveUp: () => get().finishQuiz(),
+
+  dismissNewPerk: () => set({ newPerk: null }),
 }));

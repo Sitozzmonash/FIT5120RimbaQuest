@@ -22,38 +22,39 @@ export const OFFLINE_SPECIES = Array.from(
   new Map(SEED_SPECIES.map((item) => [item.id, item])).values(),
 );
 
-// export const OFFLINE_LOCATIONS: LocationItem[] = [
-//   { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest reserve', area: 'Petaling Jaya, Selangor', description: 'A family-friendly green lung with gentle forest trails. Birds and butterflies have previously been observed here.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: 'Daily, 6:00 AM–7:00 PM', distance_km: 1.2, why_recommended: 'Gentle trails and safe walking paths near the city.', typical_wildlife: 'Butterflies, Birds, Small Mammals' },
-//   { id: 'loc_perdana_botanical', name: 'Perdana Botanical Gardens', type: 'Botanical garden', area: 'Kuala Lumpur', description: 'Kuala Lumpur’s main gardens, where butterflies and garden birds may be encountered along open paths.', facilities: ['Paths', 'Parking', 'Restroom', 'Playground'], best_time: 'Daily, 6:30 AM–10:00 PM', distance_km: 2.0, why_recommended: 'Open, family-friendly paths in the city.', typical_wildlife: 'Butterflies, Birds' },
-//   { id: 'loc_kl_forest_eco_park', name: 'KL Forest Eco Park', type: 'Forest park', area: 'Kuala Lumpur', description: 'A pocket of rainforest beside the KL Tower. Birds and small mammals have previously been observed here.', facilities: ['Trails', 'Boardwalk', 'Rest area'], best_time: 'Daily, 8:00 AM–4:30 PM', distance_km: 3.5, why_recommended: 'Short city-centre forest walk.', typical_wildlife: 'Birds, Small Mammals, Butterflies' },
-//   { id: 'loc_frim', name: 'FRIM (Forest Research Institute Malaysia)', type: 'Research forest', area: 'Kepong, Kuala Lumpur', description: 'A research rainforest with a canopy walkway. Canopy birds and mammals may be encountered on the trails.', facilities: ['Canopy walkway', 'Trails', 'Visitor Centre', 'Parking'], best_time: 'Daily, 6:00 AM–7:00 PM; last entry 6:00 PM', distance_km: 12.0, why_recommended: 'Canopy walkway and rainforest trails.', typical_wildlife: 'Canopy Birds, Mammals, Butterflies' },
-//   { id: 'loc_per_paya_indah', name: 'Paya Indah Wetlands', type: 'Wetland reserve', area: 'Dengkil, Selangor', description: 'A wetland reserve with observation towers. Wetland birds and reptiles have previously been recorded around this area.', facilities: ['Wetland trails', 'Observation towers', 'Visitor Centre'], best_time: 'Daily, 8:00 AM–6:00 PM; Friday closed 12:00–2:45 PM', distance_km: 45.0, why_recommended: 'Boardwalks and hides for safe watching.', typical_wildlife: 'Wetland Birds, Crocodiles, Sun Bears, Reptiles' },
-//   { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature park', area: 'Kuala Selangor, Selangor', description: 'Mangrove boardwalks where wetland birds and reptiles may be encountered. Sightings are never guaranteed.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 65.0, why_recommended: 'Safe boardwalks over tidal wetlands.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies' },
-// ];
-
-export const CATEGORIES = ['Mammal', 'Bird', 'Butterfly', 'Reptile'];
-
-export const CATEGORY_APPEARANCE: Record<string, string> = {
-  Mammal: 'Look for fur or hair, ears, a nose, four legs, and often a tail.',
-  Bird: 'Look for feathers, a beak, two wings, two legs, and tail feathers.',
-  Butterfly: 'Look for a small body, six legs, two feelers, and four colourful wings.',
-  Reptile: 'Look for dry scales or a hard shell, a low body, and often a long tail.',
-};
+// A small, reviewed local catalogue keeps Discover usable if the optional
+// backend is unavailable. It does not call an external maps or places service.
+export const OFFLINE_LOCATIONS: LocationItem[] = [
+  { id: 'loc_bukit_gasing', name: 'Bukit Gasing Forest Reserve', type: 'Forest Park', area: 'Petaling Jaya, Selangor', lat: 3.0964, lng: 101.65, verified: true, description: 'A family-friendly green space with forest trails close to the city.', facilities: ['Trails', 'Parking', 'Rest area'], best_time: 'Daily, 6:00 AM–7:00 PM', distance_km: 0, why_recommended: 'Gentle trails for a calm family walk.', typical_wildlife: 'Butterflies, Birds, Small Mammals', responsible_exploration: 'Stay on marked paths and watch wildlife quietly from a distance.' },
+  { id: 'loc_kl_forest_eco_park', name: 'KL Forest Eco Park', type: 'Forest Park', area: 'Bukit Nanas, Kuala Lumpur', lat: 3.1529313, lng: 101.7026923, verified: true, description: 'A pocket of rainforest in central Kuala Lumpur.', facilities: ['Trails', 'Boardwalk', 'Rest area'], best_time: 'Daily, 8:00 AM–4:30 PM', distance_km: 0, why_recommended: 'A short city-centre forest walk.', typical_wildlife: 'Birds, Small Mammals, Butterflies', responsible_exploration: 'Keep to the boardwalk and never feed wild animals.' },
+  { id: 'loc_perdana_botanical', name: 'Perdana Botanical Gardens', type: 'Botanical Garden', area: 'Kuala Lumpur', lat: 3.1437954, lng: 101.6848169, verified: true, description: 'Kuala Lumpur gardens with open paths and planted forest edges.', facilities: ['Paths', 'Parking', 'Restroom', 'Playground'], best_time: 'Daily, 6:30 AM–10:00 PM', distance_km: 0, why_recommended: 'Open, family-friendly paths in the city.', typical_wildlife: 'Butterflies, Birds', official_website: 'https://www.dbkl.gov.my/fasiliti-awam/taman-awam/taman-botani-perdana', responsible_exploration: 'Look with your eyes, not your hands, and leave plants where they are.' },
+  { id: 'loc_zoo_negara', name: 'Zoo Negara', type: 'Zoo', area: 'Ampang, Selangor', lat: 3.2106626, lng: 101.7577617, verified: true, description: 'Malaysia’s national zoo with many animal exhibits.', facilities: ['Animal exhibits', 'Playground', 'Food stalls'], best_time: 'Daily, 9:00 AM–5:00 PM', distance_km: 0, why_recommended: 'A safe place to learn about many animals.', typical_wildlife: 'Mammals, Birds, Reptiles', official_website: 'https://www.zoonegara.my/', responsible_exploration: 'Follow zoo signs and give every animal plenty of space.' },
+  { id: 'loc_kl_bird_park', name: 'KL Bird Park', type: 'Wildlife Park', area: 'Perdana Botanical Gardens, Kuala Lumpur', lat: 3.1436519, lng: 101.6889297, verified: true, description: 'A walk-in bird park with large aviaries and trails.', facilities: ['Aviaries', 'Trails', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 0, why_recommended: 'A close look at many bird species.', typical_wildlife: 'Hornbills, Parrots, Waterbirds', official_website: 'https://www.klbirdpark.com/', responsible_exploration: 'Walk calmly and do not chase or touch birds.' },
+  { id: 'loc_farm_in_the_city', name: 'Farm in the City', type: 'Petting Zoo', area: 'Seri Kembangan, Selangor', lat: 2.9925, lng: 101.713, verified: true, description: 'An indoor and outdoor animal farm experience.', facilities: ['Animal feeding', 'Playground', 'Parking'], best_time: 'Daily, 9:30 AM–6:00 PM', distance_km: 0, why_recommended: 'A supervised way to meet friendly farm animals.', typical_wildlife: 'Goats, Rabbits, Tortoises, Birds', official_website: 'https://farminthecity.my/', responsible_exploration: 'Only feed animals with approved food and wash your hands afterwards.' },
+  { id: 'loc_just_farm', name: 'Just Farm', type: 'Petting Zoo', area: 'IOI Mall Damansara, Petaling Jaya, Selangor', lat: 3.1487454, lng: 101.5947478, verified: true, description: 'A fully indoor petting zoo inside IOI Mall Damansara.', facilities: ['Indoor animal encounters', 'Animal feeding', 'Mall parking'], best_time: 'Daily, 10:30 AM–8:30 PM', distance_km: 0, why_recommended: 'A weather-proof, air-conditioned place for supervised animal encounters.', official_website: 'https://www.justfarm.com.my/', responsible_exploration: 'Follow staff guidance, use approved food only, and wash your hands afterwards.' },
+  { id: 'loc_kuala_selangor', name: 'Kuala Selangor Nature Park', type: 'Nature Park', area: 'Kuala Selangor, Selangor', lat: 3.3337767, lng: 101.2403342, verified: true, description: 'Mangrove boardwalks and bird hides near coastal wetlands.', facilities: ['Mangrove boardwalk', 'Bird hides', 'Parking'], best_time: 'Daily, 9:00 AM–6:00 PM', distance_km: 0, why_recommended: 'A safe place to watch wetland wildlife.', typical_wildlife: 'Mangrove Birds, Reptiles, Fireflies', responsible_exploration: 'Stay on the boardwalk and never remove animals, shells or plants.' },
+];
 
 export const WILDLIFE_FILTERS = [
   { id: 'All', label: 'All Wildlife' },
   { id: 'Mammal', label: 'Mammals' },
   { id: 'Bird', label: 'Birds' },
-  { id: 'Butterfly', label: 'Butterflies / Insects' },
+  { id: 'Butterfly', label: 'Butterflies' },
   { id: 'Reptile', label: 'Reptiles' },
 ];
 
-const CATEGORY_NEEDLES: Record<string, string[]> = {
-  Mammal: ['mammal'],
-  Bird: ['bird'],
-  Butterfly: ['butterfl', 'insect'],
-  Reptile: ['reptile'],
-};
+// Epic 2 filters the locations list by place category instead of state.
+// The ids must match the backend location ``type`` values.
+export const LOCATION_CATEGORY_FILTERS = [
+  { id: 'All', label: 'All' },
+  { id: 'Zoo', label: 'Zoos' },
+  { id: 'Wildlife Park', label: 'Wildlife Parks' },
+  { id: 'Petting Zoo', label: 'Petting Zoos' },
+  { id: 'Aquarium', label: 'Aquariums' },
+  { id: 'Forest Park', label: 'Forest Parks' },
+  { id: 'Nature Park', label: 'Nature Parks' },
+  { id: 'Botanical Garden', label: 'Botanical Gardens' },
+];
 
 export function locationMatchesQuery(loc: LocationItem, query: string): boolean {
   const q = query.trim().toLowerCase();
@@ -65,6 +66,5 @@ export function locationMatchesQuery(loc: LocationItem, query: string): boolean 
 
 export function locationMatchesCategory(loc: LocationItem, category: string): boolean {
   if (category === 'All') return true;
-  const hay = `${loc.typical_wildlife || ''} ${loc.description || ''} ${loc.why_recommended || ''}`.toLowerCase();
-  return (CATEGORY_NEEDLES[category] || [category.toLowerCase()]).some((needle) => hay.includes(needle));
+  return (loc.type || '').toLowerCase() === category.toLowerCase();
 }

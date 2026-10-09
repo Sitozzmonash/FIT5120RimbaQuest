@@ -1,62 +1,47 @@
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
-import { HOME_IMAGES } from "../../../../constants/images";
+import { FONTS } from "../../../../constants/fonts";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
-import { Tap } from "../../../common/Tap";
+import { GAME_COLORS } from "../../../common/game/gameTheme";
+import { ScaleTap } from "../../../common/ScaleTap";
+import { LOCKED_IMAGES } from "./locked/lockedAssets";
 
 export function CollectionCaptureBanner() {
   return (
-    <View style={styles.collectionLevelUpBannerWrap}>
-      <View style={styles.collectionLevelUpBanner}>
-        <View style={styles.collectionLevelUpCopy}>
-          <Text style={styles.collectionLevelUpTitle}>Find More Animals</Text>
-          <Text style={styles.collectionLevelUpSubtitle}>
-            Take photos and add more.
-          </Text>
-        </View>
+    <View style={styles.row}>
+      <View style={styles.copy}>
+        <Text style={styles.title}>Find More Animals</Text>
+        <Text style={styles.subtitle}>Take photos and add more.</Text>
       </View>
-      <Tap
+      <ScaleTap
         label="Take a photo to find more animals"
-        style={styles.collectionCaptureDecor}
+        style={styles.camera}
         onPress={() => useDiscoveryStore.getState().start()}
       >
         <Image
-          source={HOME_IMAGES.tileCapture}
-          style={styles.collectionCaptureImage}
+          source={LOCKED_IMAGES.camera}
+          style={styles.cameraImage}
           resizeMode="contain"
         />
-      </Tap>
+      </ScaleTap>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  collectionLevelUpBannerWrap: {
-    position: "relative",
-    marginHorizontal: 24,
-    marginBottom: 18,
-    paddingTop: 8,
+  row: { flexDirection: "row", alignItems: "center", gap: 12 },
+  copy: { flex: 1, gap: 2 },
+  title: {
+    fontFamily: FONTS.display,
+    color: GAME_COLORS.heading,
+    fontSize: 19,
   },
-  collectionLevelUpBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  collectionLevelUpCopy: { flex: 1, gap: 4 },
-  collectionLevelUpTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "900" },
-  collectionLevelUpSubtitle: {
-    color: "rgba(255,255,255,0.85)",
+  subtitle: {
+    fontFamily: FONTS.bodyBold,
+    color: GAME_COLORS.body,
     fontSize: 13,
-    fontWeight: "600",
     lineHeight: 18,
   },
-  collectionCaptureDecor: {
-    position: "absolute",
-    bottom: -28,
-    right: -6,
-    width: 130,
-    height: 92,
-    zIndex: 3,
-  },
-  collectionCaptureImage: { width: "100%", height: "100%" },
+  camera: { width: 92, height: 64 },
+  cameraImage: { width: "100%", height: "100%" },
 });

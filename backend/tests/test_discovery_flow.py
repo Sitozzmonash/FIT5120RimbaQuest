@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import tempfile
 from pathlib import Path
@@ -43,6 +44,53 @@ def register(prefix: str = "explorer") -> tuple[int, str, str]:
 
 def headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
+
+
+def _sample_jpeg() -> bytes:
+    """A small generated JPEG; tests never use real user photos."""
+    from PIL import Image
+
+    output = io.BytesIO()
+    Image.new("RGB", (64, 48), (90, 140, 70)).save(output, "JPEG")
+    return output.getvalue()
+
+
+SAMPLE_JPEG = _sample_jpeg()
+
+
+class _GenuinePhotoDetector:
+    """The screen-recapture model is stubbed out here; tests/test_recapture.py
+    covers the real model"""
+
+    def predict(self, _data: bytes) -> dict:
+        return {"p_recapture": 0.01, "is_recapture": False, "verdict": "genuine", "threshold": 0.607,
+                "low_resolution": False, "width": 4000, "height": 3000}
+
+    def info(self) -> dict:
+        return {"sha256": "test-model"}
+
+
+@pytest.fixture(autouse=True)
+def genuine_photo_detector(monkeypatch):
+    monkeypatch.setattr("app.routers.discoveries.get_detector", _GenuinePhotoDetector)
+
+
+def poll_verification_status(child_id: int, auth: dict[str, str], trace_id: str) -> dict:
+    """Identification now runs as a background job; poll its real stage
+    until the job reaches a terminal one, mirroring what the app does."""
+    import time
+
+    for _ in range(50):
+        response = client.get(
+            f"/api/v1/children/{child_id}/discovery-verifications/status/{trace_id}",
+            headers=auth,
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        if payload["stage"] in {"done", "unverified", "failed", "cancelled"}:
+            return payload
+        time.sleep(0.05)
+    raise AssertionError(f"verification job {trace_id} never reached a terminal stage")
 
 
 def test_database_enforces_foreign_keys_and_collection_uniqueness():
@@ -216,11 +264,32 @@ def test_locations_search_and_iteration_one_scope():
     locations = client.get("/api/v1/locations")
     assert locations.status_code == 200
     items = locations.json()["items"]
-    assert len(items) == 6
+    assert len(items) == 22
     names = [item["name"] for item in items]
     assert any("Gasing" in name for name in names)
+    assert any("Zoo Negara" in name for name in names)
+    just_farm = next(item for item in items if item["id"] == "loc_just_farm")
+    assert just_farm["type"] == "Petting Zoo"
+    assert just_farm["official_website"] == "https://www.justfarm.com.my/"
+    # Checked against the named venues and their real addresses. Keep the
+    # high-impact pins from quietly regressing to nearby roads or districts.
+    expected_coordinates = {
+        "loc_just_farm": (3.1487454, 101.5947478),
+        "loc_frim": (3.2345053, 101.6317402),
+        "loc_kuala_selangor": (3.3337767, 101.2403342),
+        "loc_kota_damansara_cf": (3.1765262, 101.5957436),
+        "loc_botani_shah_alam": (3.1120112, 101.5084788),
+        "loc_kg_kuantan_firefly": (3.3612245, 101.3015929),
+    }
+    for location_id, coordinates in expected_coordinates.items():
+        item = next(item for item in items if item["id"] == location_id)
+        assert (item["lat"], item["lng"]) == coordinates
     assert all("Bako" not in name and "Cherating" not in name for name in names)
     assert client.get("/api/v1/locations?query=gasing").json()["items"]
+    zoo = client.get("/api/v1/locations?category=Zoo").json()["items"]
+    assert len(zoo) == 1 and zoo[0]["name"] == "Zoo Negara"
+    assert client.get("/api/v1/locations?category=Forest+Park").json()["items"]
+    assert client.get("/api/v1/locations?category=Mammal").json()["items"] == []
 
 
 def test_photo_upload_discovery_collection_and_progress(monkeypatch):
@@ -244,23 +313,30 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
         "app.routers.discoveries.signed_photo_url",
         lambda path: signed_url if path else None,
     )
+    from app.services.vision import IdentificationOutcome
+
+    async def verified_provider(content, content_type, catalogue, **_kwargs):
+        return IdentificationOutcome(
+            matched=True,
+            species_id=species_item["id"],
+            confidence=0.97,
+            provider="gemini",
+            model="gemini-3.8-flash",
+        )
+
     monkeypatch.setattr(
         "app.routers.discoveries.identify_supported_species",
-        lambda content, content_type, catalogue, **_kwargs: {
-            "species_id": species_item["id"],
-            "confidence": 0.97,
-            "provider": "gemini",
-            "model": "gemini-3.8-flash",
-        },
+        verified_provider,
     )
 
-    verified = client.post(
+    pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife.jpg", b"jpeg-data", "image/jpeg")},
+        files={"photo": ("wildlife.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
-    assert verified.status_code == 200, verified.text
-    verification = verified.json()
+    assert pending.status_code == 200, pending.text
+    assert pending.json()["status"] == "pending"
+    verification = poll_verification_status(child_id, auth, pending.json()["trace_id"])
     assert verification["status"] == "verified"
     assert len(verification["candidates"]) == 4
     assert species_item["id"] in {item["id"] for item in verification["candidates"]}
@@ -313,11 +389,12 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     )
     assert replay.status_code == 409
 
-    reported = client.post(
+    reported_pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("reported.jpg", b"reported-photo", "image/jpeg")},
+        files={"photo": ("reported.jpg", SAMPLE_JPEG, "image/jpeg")},
     ).json()
+    reported = poll_verification_status(child_id, auth, reported_pending["trace_id"])
     report_result = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications/{reported['verification_id']}/report",
         headers=auth,
@@ -330,11 +407,14 @@ def test_photo_upload_discovery_collection_and_progress(monkeypatch):
     )
     assert reported_save.status_code == 409
 
-    verified_again = client.post(
+    verified_again_pending = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife-again.jpg", b"jpeg-data-two", "image/jpeg")},
+        files={"photo": ("wildlife-again.jpg", SAMPLE_JPEG, "image/jpeg")},
     ).json()
+    verified_again = poll_verification_status(
+        child_id, auth, verified_again_pending["trace_id"]
+    )
     evaluated_again = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications/{verified_again['verification_id']}/evaluate",
         headers=auth,
@@ -389,32 +469,42 @@ def test_uncertain_and_failed_ai_verification_never_unlock(monkeypatch, caplog):
         raise AssertionError("An uncertain photo must not be stored")
 
     monkeypatch.setattr("app.routers.discoveries.upload_discovery_photo", unexpected_upload)
+
+    from app.services.vision import IdentificationOutcome
+
+    async def unverified_provider(*_args, **_kwargs):
+        return IdentificationOutcome(matched=False, reason="no_animal_detected")
+
     monkeypatch.setattr(
         "app.routers.discoveries.identify_supported_species",
-        lambda *_args, **_kwargs: None,
+        unverified_provider,
     )
     uncertain = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("unclear.jpg", b"unclear", "image/jpeg")},
+        files={"photo": ("unclear.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
     assert uncertain.status_code == 200
-    assert uncertain.json()["status"] == "unverified"
+    assert uncertain.json()["status"] == "pending"
+    uncertain_status = poll_verification_status(child_id, auth, uncertain.json()["trace_id"])
+    assert uncertain_status["stage"] == "unverified"
+    assert uncertain_status["reason"] == "no_animal_detected"
     assert upload_called is False
 
     from app.services.vision import VisionServiceUnavailable
 
-    def fail_provider(*_args, **_kwargs):
+    async def fail_provider(*_args, **_kwargs):
         raise VisionServiceUnavailable("timeout")
 
     monkeypatch.setattr("app.routers.discoveries.identify_supported_species", fail_provider)
     failed = client.post(
         f"/api/v1/children/{child_id}/discovery-verifications",
         headers=auth,
-        files={"photo": ("wildlife.jpg", b"wildlife", "image/jpeg")},
+        files={"photo": ("wildlife.jpg", SAMPLE_JPEG, "image/jpeg")},
     )
-    assert failed.status_code == 503
-    assert failed.headers.get("x-rimbaquest-trace-id")
+    assert failed.status_code == 200
+    failed_status = poll_verification_status(child_id, auth, failed.json()["trace_id"])
+    assert failed_status["stage"] == "failed"
     assert "phase=vision reason=timeout" in caplog.text
 
     collection = client.get(f"/api/v1/children/{child_id}/collection", headers=auth).json()["items"]

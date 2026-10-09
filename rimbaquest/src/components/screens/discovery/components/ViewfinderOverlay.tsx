@@ -3,6 +3,9 @@ import { StyleSheet, Text, View } from "react-native";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
 import { ViewfinderFrame } from "./ViewfinderFrame";
 
+export const PHOTO_GUIDANCE =
+  "Use a photo of wildlife you encountered. Please do not use pictures from books, websites or another screen.";
+
 export function ViewfinderOverlay() {
   const photoError = useDiscoveryStore((state) => state.photoError);
 
@@ -20,9 +23,7 @@ export function ViewfinderOverlay() {
       {photoError ? <Text style={styles.errorBanner}>{photoError}</Text> : null}
 
       <View style={styles.disclaimer}>
-        <Text style={styles.disclaimerText}>
-          Your photo helper will try to find the animal
-        </Text>
+        <Text style={styles.disclaimerText}>{PHOTO_GUIDANCE}</Text>
       </View>
     </View>
   );

@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigationStore } from "../../../../store/useNavigationStore";
-import { Tap } from "../../../common/Tap";
+import { GameScreenHeader } from "../../../common/game/GameScreenHeader";
 import { DiscardPhotoModal } from "./DiscardPhotoModal";
 
 export function DiscoveryHeader({
@@ -21,19 +19,11 @@ export function DiscoveryHeader({
 
   return (
     <>
-      <View style={styles.row}>
-        <Tap
-          label="Go back"
-          style={[styles.backBtn, disabled && styles.backBtnDisabled]}
-          disabled={disabled}
-          onPress={() => (confirmDiscard ? setConfirming(true) : goBack())}
-        >
-          <MaterialIcons name="chevron-left" size={20} color="#1B211C" />
-        </Tap>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
-      </View>
+      <GameScreenHeader
+        title={title}
+        disabled={disabled}
+        onBack={() => (confirmDiscard ? setConfirming(true) : goBack())}
+      />
 
       {confirmDiscard && (
         <DiscardPhotoModal
@@ -48,25 +38,3 @@ export function DiscoveryHeader({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 20,
-    minHeight: 56,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2ECE4",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backBtnDisabled: { opacity: 0.4 },
-  title: { color: "#1A1A1A", fontSize: 22, fontWeight: "900", flexShrink: 1 },
-});

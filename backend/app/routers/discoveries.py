@@ -1,34 +1,63 @@
 from __future__ import annotations
 
+import asyncio
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import json
 import logging
 import random
+import time
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+)
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy import text
 
 from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.config import (
     DISCOVERY_VERIFICATION_TTL_MINUTES,
+    MAX_DISCOVERY_PHOTO_BYTES,
     MAX_PHOTO_BYTES,
     PRIMARY_VISION_MODEL,
+    RECAPTURE_BLOCK_THRESHOLD,
+    RECAPTURE_TIMEOUT_SECONDS,
     VISION_PROVIDER_ORDER,
 )
 from app.core.database import engine, rows
 from app.core.schema import discovery_verifications
+from app.ml.recapture_detector import InvalidImage, get_detector
 from app.schemas.discovery import DiscoveryIn, IdentificationAnswerIn
+from app.services.authenticity import (
+    CAPTURE_SOURCES,
+    POTENTIALLY_EXTERNAL,
+    classify,
+    evaluate_metadata,
+    parse_client_metadata,
+)
 from app.services.battle_engine import calculate_battle_stats
 from app.services.activity import record_species_activity
 from app.services.storage import (
     CONTENT_EXTENSIONS,
+    UPLOAD_CONTENT_TYPES,
     StorageUnavailable,
+    prepare_discovery_photo,
     signed_photo_url,
     upload_discovery_photo,
 )
-from app.services.vision import VisionServiceUnavailable, identify_supported_species
+from app.services.vision import (
+    VisionRequestCancelled,
+    VisionServiceUnavailable,
+    identify_supported_species,
+)
 
 
 router = APIRouter(tags=["Discoveries & Collection"])
@@ -36,6 +65,48 @@ router = APIRouter(tags=["Discoveries & Collection"])
 logger = logging.getLogger("uvicorn.error")
 UNVERIFIED_MESSAGE = "We couldn't verify this animal. Please try another wildlife photo."
 VERIFICATION_FAILED_MESSAGE = "We couldn't check your wildlife photo right now. Please try again."
+UNREADABLE_PHOTO_MESSAGE = "We couldn't open this photo. Please try a different one."
+AUTHENTICITY_RETRY_MESSAGE = "We couldn't check this photo right now. Please try again."
+
+# Child-facing messages for each specific reason a photo check comes back
+# unverified. Keyed to app.services.vision.IdentificationOutcome.reason.
+UNVERIFIED_MESSAGES: dict[str, str] = {
+    "no_animal_detected": "We couldn't find an animal in this photo. Please try a clearer wildlife photo.",
+    "low_confidence": "We're not quite sure about this one. Try moving closer or taking the photo in better light.",
+    "species_not_in_catalog": "We spotted an animal, but it isn't one of RimbaQuest's supported species yet.",
+    # Epic 7: neutral wording; never says the photo is fake.
+    "try_another_photo": (
+        "Please try another photo. Use a photo of wildlife you encountered, "
+        "not a picture from a book, website or another screen."
+    ),
+}
+
+_TERMINAL_JOB_STAGES = {"done", "unverified", "failed", "cancelled"}
+_JOB_TTL_SECONDS = 180
+
+
+@dataclass
+class _VerificationJob:
+    stage: str = "uploading"
+    attempt: int = 0
+    result: dict | None = None
+    error: dict | None = None
+    cancelled: bool = False
+    created_at: float = field(default_factory=time.monotonic)
+
+
+_verification_jobs: dict[str, _VerificationJob] = {}
+
+
+def _purge_stale_verification_jobs() -> None:
+    now = time.monotonic()
+    stale = [
+        trace_id
+        for trace_id, job in _verification_jobs.items()
+        if now - job.created_at > _JOB_TTL_SECONDS
+    ]
+    for trace_id in stale:
+        _verification_jobs.pop(trace_id, None)
 
 
 def _species_payload(item: dict) -> dict:
@@ -111,22 +182,64 @@ async def upload_photo(
     return {"photo_path": object_path, "photo_url": signed_photo_url(object_path)}
 
 
-@router.post("/api/v1/children/{child_id}/discovery-verifications")
-async def verify_discovery_photo(
+def _check_authenticity(
+    content: bytes,
+    source: str | None,
+    client_metadata: dict[str, str | None],
+) -> dict:
+    detector = get_detector()
+    recapture = detector.predict(content)
+    metadata = evaluate_metadata(content, client_metadata)
+    outcome, reasons = classify(source, metadata, recapture, RECAPTURE_BLOCK_THRESHOLD)
+    return {
+        "outcome": outcome,
+        "reasons": reasons,
+        "signals": {
+            "source": source,
+            "metadata": metadata,
+            "recapture": {
+                key: recapture[key]
+                for key in ("p_recapture", "is_recapture", "threshold", "low_resolution", "width", "height")
+            },
+        },
+        "model_sha256": detector.info()["sha256"],
+    }
+
+
+def _log_authenticity_check(trace_id: str, child_id: int, source: str | None, check: dict) -> None:
+    recapture = check["signals"]["recapture"]
+    logger.info(
+        "discovery_authenticity_check trace_id=%s child_id=%s outcome=%s reasons=%s source=%s p_recapture=%.4f low_resolution=%s metadata_available=%s model_sha256=%s",
+        trace_id,
+        child_id,
+        check["outcome"],
+        ",".join(check["reasons"]) or "-",
+        source or "unknown",
+        recapture["p_recapture"],
+        recapture["low_resolution"],
+        check["signals"]["metadata"]["available"],
+        check["model_sha256"],
+    )
+
+
+async def _run_verification_job(
+    trace_id: str,
     child_id: int,
-    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
-    photo: UploadFile = File(...),
-):
-    """Verify a photo without exposing the model-selected answer to the child."""
-    trace_id = uuid4().hex[:12]
-    content_type = (photo.content_type or "").lower()
-    if content_type not in CONTENT_EXTENSIONS:
-        raise HTTPException(415, "Please upload a JPEG, PNG, or WebP image.")
-    content = await photo.read(MAX_PHOTO_BYTES + 1)
-    if not content:
-        raise HTTPException(400, "The selected photo is empty.")
-    if len(content) > MAX_PHOTO_BYTES:
-        raise HTTPException(413, "The photo must be 5 MB or smaller.")
+    content: bytes,
+    content_type: str,
+    source: str | None = None,
+    client_metadata: dict[str, str | None] | None = None,
+) -> None:
+    """Do the real identification work in the background so the request can
+    return immediately; the status endpoint below reports true progress."""
+    job = _verification_jobs[trace_id]
+
+    def _on_stage(stage: str, attempt: int) -> None:
+        job.stage = stage
+        job.attempt = attempt
+
+    async def _is_cancelled() -> bool:
+        return job.cancelled
 
     logger.info(
         "discovery_verification_started trace_id=%s child_id=%s content_type=%s photo_bytes=%s primary_model=%s provider_order=%s",
@@ -138,6 +251,58 @@ async def verify_discovery_photo(
         VISION_PROVIDER_ORDER,
     )
 
+    job.stage = "screening"
+    try:
+        check = await asyncio.wait_for(
+            run_in_threadpool(_check_authenticity, content, source, client_metadata),
+            RECAPTURE_TIMEOUT_SECONDS,
+        )
+    except InvalidImage:
+        logger.info(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=authenticity reason=undecodable",
+            trace_id,
+            child_id,
+        )
+        job.error = {"kind": "failed", "message": UNREADABLE_PHOTO_MESSAGE}
+        job.stage = "failed"
+        return
+    except Exception as error:  # noqa: BLE001 - a technical failure is never suspicion
+        logger.warning(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=authenticity reason=%s",
+            trace_id,
+            child_id,
+            type(error).__name__,
+        )
+        job.error = {"kind": "failed", "message": AUTHENTICITY_RETRY_MESSAGE}
+        job.stage = "failed"
+        return
+    
+    _log_authenticity_check(trace_id, child_id, source, check)
+    
+    if job.cancelled:
+        job.stage = "cancelled"
+        return
+    if check["outcome"] == POTENTIALLY_EXTERNAL:
+        job.result = {
+            "reason": "try_another_photo",
+            "message": UNVERIFIED_MESSAGES["try_another_photo"],
+        }
+        job.stage = "unverified"
+        return
+    
+    try:
+        content, content_type = await run_in_threadpool(prepare_discovery_photo, content, content_type)
+    except Exception as error:
+        logger.warning(
+            "discovery_verification_failed trace_id=%s child_id=%s phase=prepare reason=%s",
+            trace_id,
+            child_id,
+            type(error).__name__,
+        )
+        job.error = {"kind": "failed", "message": AUTHENTICITY_RETRY_MESSAGE}
+        job.stage = "failed"
+        return
+
     with engine.connect() as connection:
         catalogue = rows(connection.execute(text("""SELECT
             id, common_name, scientific_name, category, habitat, diet, fun_fact,
@@ -146,12 +311,22 @@ async def verify_discovery_photo(
             WHERE is_active=TRUE AND image_url IS NOT NULL AND image_url <> ''
             ORDER BY common_name""")))
     try:
-        match = identify_supported_species(
+        outcome = await identify_supported_species(
             content,
             content_type,
             catalogue,
             trace_id=trace_id,
+            cancellation_check=_is_cancelled,
+            on_stage=_on_stage,
         )
+    except VisionRequestCancelled:
+        logger.info(
+            "discovery_verification_cancelled trace_id=%s child_id=%s phase=vision",
+            trace_id,
+            child_id,
+        )
+        job.stage = "cancelled"
+        return
     except VisionServiceUnavailable as error:
         logger.warning(
             "discovery_verification_failed trace_id=%s child_id=%s phase=vision reason=%s",
@@ -159,23 +334,37 @@ async def verify_discovery_photo(
             child_id,
             error,
         )
-        raise HTTPException(
-            503,
-            VERIFICATION_FAILED_MESSAGE,
-            headers={"X-RimbaQuest-Trace-ID": trace_id},
-        ) from error
-    if not match:
+        job.error = {"kind": "failed", "message": VERIFICATION_FAILED_MESSAGE}
+        job.stage = "failed"
+        return
+    if job.cancelled:
+        job.stage = "cancelled"
+        return
+    if not outcome.matched:
+        reason = outcome.reason or "no_animal_detected"
         logger.info(
-            "discovery_verification_unverified trace_id=%s child_id=%s",
+            "discovery_verification_unverified trace_id=%s child_id=%s reason=%s",
             trace_id,
             child_id,
+            reason,
         )
-        return {"status": "unverified", "message": UNVERIFIED_MESSAGE}
+        job.result = {
+            "reason": reason,
+            "message": UNVERIFIED_MESSAGES.get(reason, UNVERIFIED_MESSAGE),
+        }
+        job.stage = "unverified"
+        return
 
+    job.stage = "matching"
     by_id = {item["id"]: item for item in catalogue}
-    verified = by_id.get(match["species_id"])
+    verified = by_id.get(outcome.species_id)
     if not verified:
-        return {"status": "unverified", "message": UNVERIFIED_MESSAGE}
+        job.result = {
+            "reason": "species_not_in_catalog",
+            "message": UNVERIFIED_MESSAGES["species_not_in_catalog"],
+        }
+        job.stage = "unverified"
+        return
     candidate_ids = _candidate_ids(verified, catalogue)
     if len(candidate_ids) != 4:
         logger.error(
@@ -184,12 +373,11 @@ async def verify_discovery_photo(
             child_id,
             len(candidate_ids),
         )
-        raise HTTPException(
-            503,
-            VERIFICATION_FAILED_MESSAGE,
-            headers={"X-RimbaQuest-Trace-ID": trace_id},
-        )
+        job.error = {"kind": "failed", "message": VERIFICATION_FAILED_MESSAGE}
+        job.stage = "failed"
+        return
 
+    job.stage = "saving"
     try:
         object_path = upload_discovery_photo(child_id, content, content_type)
     except StorageUnavailable as error:
@@ -199,11 +387,13 @@ async def verify_discovery_photo(
             child_id,
             error,
         )
-        raise HTTPException(
-            503,
-            str(error),
-            headers={"X-RimbaQuest-Trace-ID": trace_id},
-        ) from error
+        job.error = {"kind": "failed", "message": str(error)}
+        job.stage = "failed"
+        return
+
+    if job.cancelled:
+        job.stage = "cancelled"
+        return
 
     verification_id = str(uuid4())
     created_at = datetime.now(timezone.utc)
@@ -214,8 +404,8 @@ async def verify_discovery_photo(
             photo_path=object_path,
             verified_species_id=verified["id"],
             candidate_species_ids=candidate_ids,
-            confidence=match["confidence"],
-            model=match["model"],
+            confidence=outcome.confidence,
+            model=outcome.model,
             status="verified",
             created_at=created_at,
             expires_at=created_at + timedelta(minutes=DISCOVERY_VERIFICATION_TTL_MINUTES),
@@ -227,17 +417,97 @@ async def verify_discovery_photo(
         child_id,
         verification_id,
         verified["id"],
-        match["confidence"],
-        match["provider"],
-        match["model"],
+        outcome.confidence,
+        outcome.provider,
+        outcome.model,
     )
 
-    return {
+    job.result = {
         "status": "verified",
         "verification_id": verification_id,
         "photo_url": signed_photo_url(object_path),
         "candidates": [_species_payload(by_id[item_id]) for item_id in candidate_ids],
     }
+    job.stage = "done"
+
+
+@router.post("/api/v1/children/{child_id}/discovery-verifications")
+async def verify_discovery_photo(
+    child_id: int,
+    background_tasks: BackgroundTasks,
+    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
+    photo: UploadFile = File(...),
+    source: str | None = Form(None, description="camera or gallery (supporting context only)"),
+    metadata: str | None = Form(
+        None, description="JSON of whitelisted EXIF fields read by the app: make, model, software, datetime_original"
+    ),
+):
+    """Kick off a photo verification job. The app polls the status endpoint
+    below for real progress instead of guessing with a client-side timer."""
+    trace_id = uuid4().hex[:12]
+    content_type = (photo.content_type or "").lower()
+    if content_type not in UPLOAD_CONTENT_TYPES:
+        raise HTTPException(415, "Please upload a JPEG, PNG, WebP, or HEIC image.")
+    content = await photo.read(MAX_DISCOVERY_PHOTO_BYTES + 1)
+    if not content:
+        raise HTTPException(400, "The selected photo is empty.")
+    if len(content) > MAX_DISCOVERY_PHOTO_BYTES:
+        raise HTTPException(
+            413, f"The photo must be {MAX_DISCOVERY_PHOTO_BYTES // (1024 * 1024)} MB or smaller."
+        )
+
+    _purge_stale_verification_jobs()
+    _verification_jobs[trace_id] = _VerificationJob()
+    background_tasks.add_task(
+        _run_verification_job,
+        trace_id,
+        child_id,
+        content,
+        content_type,
+        source if source in CAPTURE_SOURCES else None,
+        parse_client_metadata(metadata),
+    )
+    return {"status": "pending", "trace_id": trace_id}
+
+
+@router.get(
+    "/api/v1/children/{child_id}/discovery-verifications/status/{trace_id}"
+)
+async def get_discovery_verification_status(
+    child_id: int,
+    trace_id: str,
+    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
+):
+    job = _verification_jobs.get(trace_id)
+    if job is None:
+        raise HTTPException(404, "This photo check has expired.")
+    if job.stage not in _TERMINAL_JOB_STAGES:
+        return {"stage": job.stage, "attempt": job.attempt}
+
+    payload: dict = {"stage": job.stage, "attempt": job.attempt}
+    if job.stage == "done" and job.result:
+        payload.update(job.result)
+    elif job.stage == "unverified":
+        payload["status"] = "unverified"
+        payload.update(job.result or {"message": UNVERIFIED_MESSAGE})
+    elif job.stage == "failed" and job.error:
+        payload.update(job.error)
+    _verification_jobs.pop(trace_id, None)
+    return payload
+
+
+@router.delete(
+    "/api/v1/children/{child_id}/discovery-verifications/status/{trace_id}"
+)
+async def cancel_discovery_verification(
+    child_id: int,
+    trace_id: str,
+    _: Annotated[AuthenticatedUser, Depends(require_child_access)],
+):
+    job = _verification_jobs.get(trace_id)
+    if job is not None:
+        job.cancelled = True
+    return {"status": "cancelled"}
 
 
 @router.post("/api/v1/children/{child_id}/discovery-verifications/{verification_id}/evaluate")

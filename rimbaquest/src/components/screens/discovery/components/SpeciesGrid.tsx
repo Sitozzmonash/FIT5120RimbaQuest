@@ -1,8 +1,10 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { imageFor } from "../../../../constants/images";
 import { Species } from "../../../../types";
-import { SpeciesOptionCard } from "./SpeciesOptionCard";
+import { PickCard } from "./PickCard";
 
+// Two-column grid of species to choose from.
 export function SpeciesGrid({
   speciesList,
   selectedId,
@@ -24,14 +26,16 @@ export function SpeciesGrid({
       {rows.map((row, index) => (
         <View key={index} style={styles.row}>
           {row.map((item) => (
-            <SpeciesOptionCard
+            <PickCard
               key={item.id}
-              species={item}
+              image={imageFor(item)}
+              label={item.common_name}
               selected={selectedId === item.id}
               disabled={disabled}
               onPress={() => onSelect(item)}
             />
           ))}
+          {row.length === 1 && <View style={styles.spacer} />}
         </View>
       ))}
     </View>
@@ -39,6 +43,7 @@ export function SpeciesGrid({
 }
 
 const styles = StyleSheet.create({
-  grid: { flex: 1, gap: 8 },
-  row: { flex: 1, flexDirection: "row", gap: 8 },
+  grid: { gap: 8, alignSelf: "stretch", paddingHorizontal: 0 },
+  row: { flexDirection: "row", gap: 8 },
+  spacer: { flex: 1 },
 });

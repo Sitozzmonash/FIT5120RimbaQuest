@@ -10,21 +10,25 @@ export const IMAGES = {
   recent: require('../../assets/wildlife/recent-marmoset.jpg'),
 };
 
-export const DISCOVERY_CATEGORY_IMAGES = {
-  Mammal: require('../../assets/discovery/mammals.png'),
-  Bird: require('../../assets/discovery/birds.png'),
-  Butterfly: require('../../assets/discovery/butterflies.png'),
-  Reptile: require('../../assets/discovery/reptiles.png'),
-};
-
 export const HOME_IMAGES = {
   brandLogo: require('../../assets/home/brand-logo.png'),
-  leafDecor: require('../../assets/home/image-decor.png'),
-  pandaDecor: require('../../assets/home/red-panda-bush-deco.png'),
-  collectionBook: require('../../assets/home/collection-book.png'),
-  tileDiscover: require('../../assets/home/tile-discover.png'),
-  tileCapture: require('../../assets/home/tile-capture.png'),
-  tileBattle: require('../../assets/home/tile-battle.png'),
+};
+
+export const HOME_MAP_IMAGES = {
+  brandLogo: require('../../assets/home/brand-logo.png'),
+  grassPatch: require('../../assets/home/map/grass-patch.png'),
+  grassTuft: require('../../assets/home/map/grass-tuft.png'),
+  sprout: require('../../assets/home/map/sprout.png'),
+  butterfly: require('../../assets/home/map/butterfly.png'),
+  pebbles: require('../../assets/home/map/pebbles.png'),
+  bush: require('../../assets/home/map/bush.png'),
+  rock: require('../../assets/home/map/rock.png'),
+  iconDiscover: require('../../assets/home/map/icon-discover.png'),
+  iconCapture: require('../../assets/home/map/icon-capture.png'),
+  iconCollection: require('../../assets/home/map/icon-collection.png'),
+  iconBattle: require('../../assets/home/map/icon-battle.png'),
+  chevron: require('../../assets/home/map/chevron.png'),
+  lock: require('../../assets/collection/locked-lock.png'),
 };
 
 export const COLLECTION_IMAGES = {
@@ -33,30 +37,83 @@ export const COLLECTION_IMAGES = {
   vineBottomRight: require('../../assets/collection/vine-bottom-right.png'),
 };
 
+export const BATTLE_IMAGES = {
+  health: require('../../assets/battle/health.png'),
+  energy: require('../../assets/battle/energy.png'),
+  lock: require('../../assets/battle/lock.png'),
+  habitatBonus: require('../../assets/home/map/sprout.png'),
+  swords: require('../../assets/collection/detail-swords.png'),
+  leafShield: require('../../assets/battle/leaf-shield.png'),
+  close: require('../../assets/collection/chat-close.png'),
+  zap: require('../../assets/battle/zap.png'),
+  chevronRight: require('../../assets/locations/chevron-right.png'),
+  clock: require('../../assets/locations/clock.png'),
+  lobbyHero: require('../../assets/battle/battle_lobby_screen.png'),
+};
+
+// Battle backgrounds, one per habitat (853x1844, tall enough for the arena).
+const HABITAT_BACKGROUNDS = {
+  rainforest: require('../../assets/battle/bg_rainforest_forest.png'),
+  wetland: require('../../assets/battle/bg_rivers_wetlands_mangroves.png'),
+  grassland: require('../../assets/battle/bg_grassland_scrub_farmland.png'),
+  coastal: require('../../assets/battle/bg_coastal_marine.png'),
+  highland: require('../../assets/battle/bg_highland_montane.png'),
+  urban: require('../../assets/battle/bg_gardens_parks_urban.png'),
+};
+
+// Battle habitat names from the server ("Mangrove", "Wetland"...) mapped to their background.
+const HABITAT_BACKGROUND_WORDS: Array<[RegExp, keyof typeof HABITAT_BACKGROUNDS]> = [
+  [/rainforest|forest/i, 'rainforest'],
+  [/mangrove|wetland|river|swamp/i, 'wetland'],
+  [/grassland|scrub|farm/i, 'grassland'],
+  [/coast|marine|beach|sea/i, 'coastal'],
+  [/highland|montane|mountain/i, 'highland'],
+  [/garden|park|urban/i, 'urban'],
+];
+
+/** The background for a battle habitat; rainforest if the name isn't recognised. */
+export function habitatBackground(habitat: string | null | undefined): number {
+  const match = HABITAT_BACKGROUND_WORDS.find(([words]) => words.test(habitat ?? ''));
+  return HABITAT_BACKGROUNDS[match ? match[1] : 'rainforest'];
+}
+
 export const AUTH_IMAGES = {
-  mascotWelcome: require('../../assets/auth/mascot-id-card.png'),
-  mascotLogin: require('../../assets/auth/mascot-wave.png'),
-  mascotForgot: require('../../assets/auth/mascot-key.png'),
-  mascotReset: require('../../assets/auth/mascot-shield.png'),
-  avatarTiger: require('../../assets/auth/avatar-tiger.png'),
-  avatarTapir: require('../../assets/auth/avatar-tapir.png'),
+  heroElephantTiger: require('../../assets/auth/hero-elephant-tiger.png'),
+  heroTigerElephantTapir: require('../../assets/auth/hero-tiger-elephant-tapir.png'),
+  heroTigerSunBear: require('../../assets/auth/hero-tiger-sunbear.png'),
+  heroTigerTapir: require('../../assets/auth/hero-tiger-tapir.png'),
   avatarPanda: require('../../assets/auth/avatar-panda.png'),
+
+  bottomLeftBush: require('../../assets/auth/bush.png'),
+  bottomRightBush: require('../../assets/auth/bush2.png'),
+  topLeftBush: require('../../assets/auth/foliage_left.png'),
+  topRightBush: require('../../assets/auth/foliage_right.png'),
+};
+
+export const AVATAR_ART = {
+  tiger: require('../../assets/profile/avatar-tiger.png'),
+  elephant: require('../../assets/profile/avatar-elephant.png'),
+  tapir: require('../../assets/profile/avatar-tapir.png'),
+  sunBear: require('../../assets/profile/avatar-sunbear.png'),
 };
 
 export const DEFAULT_AVATAR = 'hornbill';
 
 export const AVATAR_CHOICES = [
-  { key: 'hornbill', label: 'Tapir', image: AUTH_IMAGES.avatarTapir },
-  { key: 'tiger', label: 'Tiger', image: AUTH_IMAGES.avatarTiger },
-  { key: 'panda', label: 'Panda', image: AUTH_IMAGES.avatarPanda },
+  { key: 'tiger', label: 'Tiger', image: AVATAR_ART.tiger },
+  { key: 'elephant', label: 'Elephant', image: AVATAR_ART.elephant },
+  // The tapir is stored as 'hornbill' for existing accounts.
+  { key: 'hornbill', label: 'Tapir', image: AVATAR_ART.tapir },
+  { key: 'sunbear', label: 'Sun Bear', image: AVATAR_ART.sunBear },
 ] as const;
 
-export const AVATAR_IMAGES: Record<string, number> = Object.fromEntries(
-  AVATAR_CHOICES.map((choice) => [choice.key, choice.image]),
-);
+export const AVATAR_IMAGES: Record<string, number> = {
+  ...Object.fromEntries(AVATAR_CHOICES.map((choice) => [choice.key, choice.image])),
+  panda: AUTH_IMAGES.avatarPanda,
+};
 
 export function avatarImageFor(avatar: string): number {
-  return AVATAR_IMAGES[avatar] || AUTH_IMAGES.avatarTiger;
+  return AVATAR_IMAGES[avatar] || AVATAR_ART.tiger;
 }
 
 export const SPECIES_IMAGES: Record<string, number> = {

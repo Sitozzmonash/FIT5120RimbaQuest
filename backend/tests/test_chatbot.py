@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.core import seed
 from app.core.database import engine
 from app.main import app
 from app.services import chatbot
@@ -62,6 +63,8 @@ def chat(child_id: int, token: str, species_id: str, question: str):
 def use_deterministic_chat_fallback(monkeypatch):
     # No test can accidentally use a developer's live provider credential.
     monkeypatch.setattr(chatbot, "DEEPSEEK_API_KEY", "")
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", False)
+    monkeypatch.setattr(chatbot, "ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", False)
 
 
 def test_chat_requires_the_authenticated_childs_discovered_card():
@@ -89,14 +92,15 @@ def test_mock_answers_current_card_only_and_applies_guardrails():
 
     happy = chat(child_id, token, CURRENT_SPECIES_ID, "What does this animal eat?")
     assert happy.status_code == 200, happy.text
-    assert happy.json()["answer"] == "Asian Elephant's diet includes: Grasses, leaves, bark and fruit."
+    assert happy.json()["answer"] == "Asian Elephant eats: Grasses, leaves, bark and fruit."
     assert happy.json()["source"] == "mock"
     assert happy.json()["citations"] == [
         {
             "source_id": "rimbaquest-card",
             "source_name": "RimbaQuest verified Wildlife Card",
             "source_url": None,
-            "excerpt": "Diet: Grasses, leaves, bark and fruit.",
+            "source_urls": [],
+            "excerpt": "Asian Elephant eats: Grasses, leaves, bark and fruit.",
         }
     ]
 
@@ -152,10 +156,257 @@ def test_team_verified_fun_facts_are_available_as_chat_evidence():
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["source"] == "mock"
-    assert body["answer"].startswith("Here is a team-verified fun fact:")
+    assert body["answer"].startswith("Fun fact:")
     assert body["citations"][0]["source_id"] == "rimbaquest-fun-facts"
-    assert body["citations"][0]["source_name"] == "RimbaQuest team-verified Fun Facts"
-    assert body["citations"][0]["source_url"] is None
+    assert body["citations"][0]["source_name"] == "Verified source: worldwildlife.org"
+    assert body["citations"][0]["source_url"] == "https://www.worldwildlife.org/species/elephant/asian-elephant/"
+    assert body["citations"][0]["source_urls"] == [
+        "https://www.worldwildlife.org/species/elephant/asian-elephant/"
+    ]
+
+
+def test_verified_fun_fact_answers_a_paraphrased_question_with_its_source_link():
+    child_id, token = register_child("chat_paraphrase")
+    unlock(child_id, "sp_common_mormon")
+
+    response = chat(
+        child_id,
+        token,
+        "sp_common_mormon",
+        "How long does the whole life cycle take?",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert "30 to 43 days" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "rimbaquest-fun-facts",
+            "source_name": "Verified source: animaldiversity.org",
+            "source_url": "https://animaldiversity.org/accounts/Papilio_polytes/",
+            "source_urls": ["https://animaldiversity.org/accounts/Papilio_polytes/"],
+            "excerpt": (
+                "The Common Mormon's entire life cycle, from egg-laying to the death "
+                "of the adult, can last about 30 to 43 days."
+            ),
+        }
+    ]
+
+
+def test_verified_fun_fact_returns_every_reviewed_source_link_for_that_fact():
+    child_id, token = register_child("chat_multiple_sources")
+    unlock(child_id, "sp_tailed_jay")
+
+    response = chat(
+        child_id,
+        token,
+        "sp_tailed_jay",
+        "How does its osmeterium help discourage predators?",
+    )
+
+    assert response.status_code == 200, response.text
+    citation = response.json()["citations"][0]
+    assert citation["source_url"] == "https://en.wikipedia.org/wiki/Graphium_agamemnon"
+    assert citation["source_urls"] == [
+        "https://en.wikipedia.org/wiki/Graphium_agamemnon",
+        "https://en.wikipedia.org/wiki/Osmeterium",
+    ]
+@pytest.mark.parametrize(
+    "question",
+    ["what's size of elephant", "what's the average weight of asian elephant"],
+)
+def test_verified_source_page_content_answers_size_questions_and_cites_its_url(
+    monkeypatch,
+    question,
+):
+    child_id, token = register_child("chat_source_page")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", True)
+    loaded_urls: list[str] = []
+
+    def load_verified_page(source_url: str) -> str:
+        loaded_urls.append(source_url)
+        if source_url == "https://nationalzoo.si.edu/animals/asian-elephant":
+            return (
+                "Size\n"
+                "Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
+                "(2,750 and 5,420 kilograms). They typically stand 6 to 12 feet "
+                "(1.8 to 3.8 meters) tall at the shoulder."
+            )
+        return ""
+
+    monkeypatch.setattr(chatbot, "_load_verified_source_page", load_verified_page)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, question)
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["fallback"] is None
+    assert "6,000 and 12,000 pounds" in body["answer"]
+    assert body["citations"] == [
+        {
+            "source_id": "verified-source-page",
+            "source_name": "Verified source: nationalzoo.si.edu",
+            "source_url": "https://nationalzoo.si.edu/animals/asian-elephant",
+            "source_urls": ["https://nationalzoo.si.edu/animals/asian-elephant"],
+            "excerpt": (
+                "Adult Asian elephants weigh on average between 6,000 and 12,000 pounds "
+                "(2,750 and 5,420 kilograms)."
+            ),
+        }
+    ]
+    assert set(loaded_urls) == {
+        "https://www.worldwildlife.org/species/elephant/asian-elephant/",
+        "https://nationalzoo.si.edu/animals/asian-elephant",
+        "https://www.fauna-flora.org/species/asian-elephant/",
+    }
+def test_child_friendly_rendering_simplifies_technical_lifespan_evidence():
+    species = {
+        "common_name": "Common Mormon",
+        "scientific_name": "Papilio polytes",
+    }
+    evidence = chatbot.Evidence(
+        id="source-page:lifespan",
+        topic="team-verified source page",
+        source_id="verified-source-page",
+        source_name="Verified source: animaldiversity.org",
+        source_url="https://animaldiversity.org/accounts/Papilio_polytes/",
+        excerpt=(
+            "Lifespan/Longevity Adult Papilio polytes females typically live longer than "
+            "adult males, as females live an average of 6 to 8 days, while males live an "
+            "average of 3 to 4 days. It is possible that the production of mimetic patterns, "
+            "although beneficial by reducing predation, can also reduce the lifespan of "
+            "mimetic P. polytes."
+        ),
+    )
+
+    answer = chatbot._render_selected_evidence(species, [evidence])
+    citation = chatbot._child_citation(species, evidence)
+
+    assert answer == (
+        "Female Common Mormon adults usually live for 6 to 8 days. "
+        "Male adults usually live for 3 to 4 days."
+    )
+    assert citation.excerpt == answer
+    assert "Papilio" not in answer
+    assert "mimetic" not in answer.casefold()
+    assert len(answer) <= chatbot.MAX_CHILD_RESPONSE_CHARS
+
+
+def test_child_friendly_rendering_explains_protection_status_in_plain_language():
+    species = {"common_name": "Asian Elephant"}
+    evidence = chatbot.Evidence(
+        id="card:act716_status",
+        topic="act716_status",
+        source_id="rimbaquest-card",
+        source_name="RimbaQuest verified Wildlife Card",
+        source_url=None,
+        excerpt="Protection Status: Totally Protected",
+    )
+
+    answer = chatbot._render_selected_evidence(species, [evidence])
+
+    assert answer == (
+        "Asian Elephant is protected by law. This means people are not allowed to "
+        "catch, hurt, or keep it without special permission."
+    )
+
+
+def test_seeded_eaza_newborn_height_evidence_answers_the_supported_question():
+    child_id, token = register_child("chat_eaza")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    # Test against the committed review data, not a hand-written row, so a
+    # source or review-metadata change cannot silently remove this capability.
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+
+    response = chat(
+        child_id,
+        token,
+        CURRENT_SPECIES_ID,
+        "How tall is an Asian Elephant calf when it is born?",
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["source"] == "mock"
+    assert body["answer"] == "Newborn Asian Elephants are about 94 cm tall at the shoulder. Each calf can be a little taller or shorter."
+    assert body["citations"] == [
+        {
+            "source_id": "eaza",
+            "source_name": "EAZA Elephant Best Practice Guidelines",
+            "source_url": "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf",
+            "source_urls": [
+                "https://www.elephantmedicine.info/_files/ugd/c93da7_bccc89cac3e64d809930cdc0374d9312.pdf"
+            ],
+            "excerpt": (
+                "Newborn Asian Elephants are about 94 cm tall at the shoulder. "
+                "Each calf can be a little taller or shorter."
+            ),
+        }
+    ]
+
+
+def test_wikipedia_live_lookup_is_current_species_only_and_cited(monkeypatch):
+    child_id, token = register_child("chat_wikipedia")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+    requests: list[dict] = []
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "query": {
+                    "pages": {
+                        "1": {
+                            "title": "Asian elephant",
+                            "extract": "The Asian elephant is the only living species in the genus Elephas.",
+                        }
+                    }
+                }
+            }
+
+    def fake_get(url, **kwargs):
+        requests.append({"url": url, **kwargs})
+        return FakeResponse()
+
+    monkeypatch.setattr(chatbot.httpx, "get", fake_get)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "Tell me more about the Asian Elephant.")
+
+    assert response.status_code == 200, response.text
+    assert requests[0]["params"]["titles"] == "Asian Elephant"
+    assert "Tell me more" not in str(requests[0]["params"])
+    assert requests[0]["headers"]["User-Agent"] == chatbot.WIKIPEDIA_USER_AGENT
+    assert response.json()["answer"] == "Asian Elephant is the only living kind in a scientific group called Elephas."
+    assert response.json()["citations"] == [
+        {
+            "source_id": "wikipedia",
+            "source_name": "Wikipedia (live supplementary reference)",
+            "source_url": "https://en.wikipedia.org/wiki/Asian_elephant",
+            "source_urls": ["https://en.wikipedia.org/wiki/Asian_elephant"],
+            "excerpt": "Asian Elephant is the only living kind in a scientific group called Elephas.",
+        }
+    ]
+
+
+def test_wikipedia_is_not_requested_for_newborn_height(monkeypatch):
+    child_id, token = register_child("chat_wikipedia_limits")
+    unlock(child_id, CURRENT_SPECIES_ID)
+    monkeypatch.setattr(chatbot, "WIKIPEDIA_API_ENABLED", True)
+
+    def no_network(*_args, **_kwargs):
+        raise AssertionError("newborn-height questions must not use Wikipedia")
+
+    monkeypatch.setattr(chatbot.httpx, "get", no_network)
+    with engine.begin() as connection:
+        seed.seed_iteration_two_chat_evidence(connection)
+    response = chat(child_id, token, CURRENT_SPECIES_ID, "How tall is an Asian Elephant calf when it is born?")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["citations"][0]["source_id"] == "eaza"
 
 
 def test_configured_deepseek_must_cite_server_selected_evidence(monkeypatch):
@@ -194,7 +445,7 @@ def test_configured_deepseek_must_cite_server_selected_evidence(monkeypatch):
 
     assert response.status_code == 200, response.text
     assert response.json()["source"] == "deepseek"
-    assert response.json()["citations"][0]["excerpt"] == "Diet: Grasses, leaves, bark and fruit."
+    assert response.json()["citations"][0]["excerpt"] == "Asian Elephant eats: Grasses, leaves, bark and fruit."
     provider_input = json.loads(requests[0]["messages"][1]["content"])
     assert set(provider_input) == {"current_species", "question", "evidence"}
     assert any(item["id"] == "card:diet" for item in provider_input["evidence"])

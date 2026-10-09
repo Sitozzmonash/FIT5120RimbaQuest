@@ -1,0 +1,3514 @@
+{
+  "sp_common_mormon": {
+    "species_id": "sp_common_mormon",
+    "name": "Common Mormon",
+    "category": "Butterfly",
+    "role": "Trickster",
+    "archetype": "butterfly",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#212529",
+      "secondary": "#EFE3CA",
+      "accent": "#D15842",
+      "underbelly": "#FAF6EC"
+    },
+    "features": [
+      "mimetic_white_hindwing_patches",
+      "ruby_red_crescent_submarginal_spots",
+      "broad_scalloped_swallowtail_wings"
+    ],
+    "markings": "ruby_crecents",
+    "ear_variant": "clubbed_antennae",
+    "tail_variant": "swallowtail_lobes",
+    "beak_variant": "none"
+  },
+  "sp_tailed_jay": {
+    "species_id": "sp_tailed_jay",
+    "name": "Tailed Jay",
+    "category": "Butterfly",
+    "role": "Agile",
+    "archetype": "butterfly",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#212529",
+      "secondary": "#EFE3CA",
+      "accent": "#D15842",
+      "underbelly": "#FAF6EC"
+    },
+    "features": [
+      "mimetic_white_hindwing_patches",
+      "ruby_red_crescent_submarginal_spots",
+      "broad_scalloped_swallowtail_wings"
+    ],
+    "markings": "ruby_crecents",
+    "ear_variant": "clubbed_antennae",
+    "tail_variant": "swallowtail_lobes",
+    "beak_variant": "none"
+  },
+  "sp_oriental_pied_hornbill": {
+    "species_id": "sp_oriental_pied_hornbill",
+    "name": "Oriental Pied Hornbill",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "hornbill",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#2A3439",
+      "secondary": "#FFFFFF",
+      "accent": "#F0B843",
+      "underbelly": "#1B2F3D"
+    },
+    "features": [
+      "creamy_ivory_casque_with_black_patch",
+      "white_thighs_and_belly",
+      "white_outer_tail_feathers"
+    ],
+    "markings": "pied_contrast",
+    "ear_variant": "rounded",
+    "tail_variant": "long_broad",
+    "beak_variant": "heavy_casqued"
+  },
+  "sp_rhinoceros_hornbill": {
+    "species_id": "sp_rhinoceros_hornbill",
+    "name": "Rhinoceros Hornbill",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "hornbill",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1F2224",
+      "secondary": "#FFFFFF",
+      "accent": "#D9381E",
+      "underbelly": "#EAA728"
+    },
+    "features": [
+      "spectacular_upturned_scarlet_orange_casque",
+      "solid_white_tail_with_broad_black_band",
+      "heavy_downcurved_bill"
+    ],
+    "markings": "casque_and_tail_band",
+    "ear_variant": "rounded",
+    "tail_variant": "long_broad",
+    "beak_variant": "heavy_casqued"
+  },
+  "sp_asian_elephant": {
+    "species_id": "sp_asian_elephant",
+    "name": "Asian Elephant",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "elephant",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#7496A7",
+      "secondary": "#A9C5CA",
+      "accent": "#D5BDC0",
+      "underbelly": "#FFF0CE"
+    },
+    "features": [
+      "long_trunk",
+      "curved_tusks",
+      "broad_fan_ears",
+      "stout_columnar_legs"
+    ],
+    "markings": "solid",
+    "ear_variant": "elephant_fan",
+    "tail_variant": "tufted",
+    "beak_variant": "none"
+  },
+  "sp_malayan_tiger": {
+    "species_id": "sp_malayan_tiger",
+    "name": "Malayan Tiger",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#D67931",
+      "secondary": "#FFB441",
+      "accent": "#23333D",
+      "underbelly": "#FFF0CE"
+    },
+    "features": [
+      "bold_black_stripes",
+      "white_cheek_ruff",
+      "muscular_predator_torso",
+      "padded_paws"
+    ],
+    "markings": "tiger_stripes",
+    "ear_variant": "rounded_black_backed",
+    "tail_variant": "long_striped",
+    "beak_variant": "none"
+  },
+  "sp_malayan_tapir": {
+    "species_id": "sp_malayan_tapir",
+    "name": "Malayan Tapir",
+    "category": "Mammal",
+    "role": "Guardian",
+    "archetype": "tapir",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#2B3539",
+      "secondary": "#EDF2F4",
+      "accent": "#52616B",
+      "underbelly": "#F5F5F5"
+    },
+    "features": [
+      "saddle_bicolor",
+      "prehensile_proboscis_snout",
+      "white_torso_blanket",
+      "stout_body"
+    ],
+    "markings": "two_tone_saddle",
+    "ear_variant": "white_rimmed",
+    "tail_variant": "stub",
+    "beak_variant": "none"
+  },
+  "sp_sun_bear": {
+    "species_id": "sp_sun_bear",
+    "name": "Malayan Sun Bear",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "bear",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2328",
+      "secondary": "#42494D",
+      "accent": "#F4C06F",
+      "underbelly": "#FFF0CE"
+    },
+    "features": [
+      "chest_horseshoe_crescent",
+      "compact_stout_torso",
+      "short_muzzle",
+      "robust_foreclaws"
+    ],
+    "markings": "chest_crescent",
+    "ear_variant": "small_round",
+    "tail_variant": "vestigial",
+    "beak_variant": "none"
+  },
+  "sp_proboscis_monkey": {
+    "species_id": "sp_proboscis_monkey",
+    "name": "Proboscis Monkey",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C27339",
+      "secondary": "#DE9158",
+      "accent": "#E6A38B",
+      "underbelly": "#F5E6D8"
+    },
+    "features": [
+      "pendulous_bulbous_fleshy_nose",
+      "pot_bellied_torso",
+      "creamy_grey_rump_and_tail"
+    ],
+    "markings": "light_mantle",
+    "ear_variant": "small_naked",
+    "tail_variant": "long_pale",
+    "beak_variant": "none"
+  },
+  "sp_mouse_deer": {
+    "species_id": "sp_mouse_deer",
+    "name": "Lesser Mouse-deer",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#9C623B",
+      "secondary": "#BF7F54",
+      "accent": "#EAE0D0",
+      "underbelly": "#FFFBF5"
+    },
+    "features": [
+      "white_throat_chevron_stripes",
+      "dainty_pencil_thin_legs",
+      "protruding_canine_tushes_no_antlers"
+    ],
+    "markings": "throat_chevrons",
+    "ear_variant": "small_naked",
+    "tail_variant": "short_white_underside",
+    "beak_variant": "none"
+  },
+  "sp_sunda_colugo": {
+    "species_id": "sp_sunda_colugo",
+    "name": "Sunda Colugo",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "colugo",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#787E77",
+      "secondary": "#9CA39B",
+      "accent": "#C9CEB9",
+      "underbelly": "#EAEFE2"
+    },
+    "features": [
+      "extensive_gliding_patagium_enclosing_tail",
+      "lichen_mottled_camouflage_cryptic_spots",
+      "large_nocturnal_eyes"
+    ],
+    "markings": "lichen_mottled",
+    "ear_variant": "short_rounded",
+    "tail_variant": "patagium_webbed",
+    "beak_variant": "none"
+  },
+  "sp_malayan_pangolin": {
+    "species_id": "sp_malayan_pangolin",
+    "name": "Malayan Pangolin",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "pangolin",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8E6E53",
+      "secondary": "#B8977E",
+      "accent": "#D9C5B2",
+      "underbelly": "#EFE5DA"
+    },
+    "features": [
+      "imbricate_keeled_scales",
+      "tapered_prehensile_tail",
+      "cone_head",
+      "low_slung_body"
+    ],
+    "markings": "scaly_plates",
+    "ear_variant": "absent",
+    "tail_variant": "broad_scaly",
+    "beak_variant": "none"
+  },
+  "sp_green_sea_turtle": {
+    "species_id": "sp_green_sea_turtle",
+    "name": "Green Sea Turtle",
+    "category": "Reptile",
+    "role": "Defense",
+    "archetype": "turtle",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3E5C50",
+      "secondary": "#638474",
+      "accent": "#D4AF37",
+      "underbelly": "#EDE6CF"
+    },
+    "features": [
+      "large_streamlined_domed_carapace",
+      "elongated_paddle_like_swimming_flippers",
+      "beaked_jaw_with_no_teeth",
+      "radial_shell_scutes"
+    ],
+    "markings": "carapace_scutes",
+    "ear_variant": "none",
+    "tail_variant": "short_stub",
+    "beak_variant": "none"
+  },
+  "sp_reticulated_python": {
+    "species_id": "sp_reticulated_python",
+    "name": "Reticulated Python",
+    "category": "Reptile",
+    "role": "Control",
+    "archetype": "python",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#6A7E48",
+      "secondary": "#99AB63",
+      "accent": "#D7B46C",
+      "underbelly": "#FFF4D6"
+    },
+    "features": [
+      "complex_geometric_diamond_reticulations",
+      "heat_sensing_labial_pits",
+      "coiled_sinuous_body",
+      "glossy_subcaudal_plates"
+    ],
+    "markings": "geometric_diamond_reticulated",
+    "ear_variant": "none",
+    "tail_variant": "long_prehensile_taper",
+    "beak_variant": "none"
+  },
+  "sp_saltwater_crocodile": {
+    "species_id": "sp_saltwater_crocodile",
+    "name": "Saltwater Crocodile",
+    "category": "Reptile",
+    "role": "Tank",
+    "archetype": "crocodile",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#434C3E",
+      "secondary": "#66745F",
+      "accent": "#8C9B7E",
+      "underbelly": "#DFDAC5"
+    },
+    "features": [
+      "heavy_toothed_elongated_jaws",
+      "armored_keeled_dorsal_scutes",
+      "powerful_vertically_flattened_swimming_tail",
+      "low_sprawling_basking_gait"
+    ],
+    "markings": "armored_scutes",
+    "ear_variant": "none",
+    "tail_variant": "heavy_flattened_keeled",
+    "beak_variant": "none"
+  },
+  "sp_yellow_bellied_bulbul": {
+    "species_id": "sp_yellow_bellied_bulbul",
+    "name": "Yellow-bellied Bulbul",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#585341",
+      "secondary": "#A69E68",
+      "accent": "#DFBF38",
+      "underbelly": "#FAF6E6"
+    },
+    "features": [
+      "bright_yellow_vent_and_belly",
+      "slender_bushy_throat_feathers",
+      "cheerful_perching_profile"
+    ],
+    "markings": "yellow_vent",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_straight",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_white_breasted_waterhen": {
+    "species_id": "sp_white_breasted_waterhen",
+    "name": "White-breasted Waterhen",
+    "category": "Bird",
+    "role": "Control",
+    "archetype": "waterbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#32373C",
+      "secondary": "#FFFFFF",
+      "accent": "#A84C2C",
+      "underbelly": "#EFEFEF"
+    },
+    "features": [
+      "clean_stark_white_face_and_breast",
+      "dark_slate_grey_upperparts",
+      "cinnamon_rufous_undertail_coverts",
+      "long_yellow_toes"
+    ],
+    "markings": "white_face_chest",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_undertail",
+    "beak_variant": "spear_dagger"
+  },
+  "sp_asian_small_clawed_otter": {
+    "species_id": "sp_asian_small_clawed_otter",
+    "name": "Asian Small-clawed Otter",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "otter",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#5E4A3E",
+      "secondary": "#876D5D",
+      "accent": "#D9C8B4",
+      "underbelly": "#F4EDE4"
+    },
+    "features": [
+      "pale_buffy_throat_bib",
+      "rudimentary_blunt_claws",
+      "sensitive_whiskers",
+      "streamlined_torso"
+    ],
+    "markings": "throat_bib",
+    "ear_variant": "small_valvular",
+    "tail_variant": "tapered_conical",
+    "beak_variant": "none"
+  },
+  "sp_bornean_partridge": {
+    "species_id": "sp_bornean_partridge",
+    "name": "Bornean Partridge",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#76523B",
+      "secondary": "#A8795B",
+      "accent": "#C94E34",
+      "underbelly": "#F4ECE1"
+    },
+    "features": [
+      "crimson_facial_skin_and_legs",
+      "barred_chest_necklace",
+      "compact_rotund_ground_silhouette"
+    ],
+    "markings": "barred_necklace",
+    "ear_variant": "rounded",
+    "tail_variant": "short_down",
+    "beak_variant": "short_stout"
+  },
+  "sp_binturong": {
+    "species_id": "sp_binturong",
+    "name": "Binturong",
+    "category": "Mammal",
+    "role": "Control",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#202426",
+      "secondary": "#3D464A",
+      "accent": "#8F9CA2",
+      "underbelly": "#D5DCDE"
+    },
+    "features": [
+      "coarse_shaggy_black_coat",
+      "long_white_ear_tufts",
+      "thick_muscular_prehensile_tail"
+    ],
+    "markings": "silver_grizzle",
+    "ear_variant": "long_white_tufts",
+    "tail_variant": "prehensile_heavy",
+    "beak_variant": "none"
+  },
+  "sp_small_toothed_palm_civet": {
+    "species_id": "sp_small_toothed_palm_civet",
+    "name": "Small-toothed Palm Civet",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  },
+  "sp_great_argus": {
+    "species_id": "sp_great_argus",
+    "name": "Great Argus",
+    "category": "Bird",
+    "role": "Power",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5E4131",
+      "secondary": "#8F664F",
+      "accent": "#D6A868",
+      "underbelly": "#FAF0DD"
+    },
+    "features": [
+      "enormously_broad_secondary_wing_feathers_with_ocelli_eyes",
+      "extraordinarily_long_central_tail_plumes",
+      "bare_blue_neck_skin"
+    ],
+    "markings": "ocelli_eye_spots",
+    "ear_variant": "rounded",
+    "tail_variant": "monumental_streamers",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_asiatic_brush_tailed_porcupine": {
+    "species_id": "sp_asiatic_brush_tailed_porcupine",
+    "name": "Asiatic Brush-tailed Porcupine",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "porcupine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3E342F",
+      "secondary": "#78685E",
+      "accent": "#EDE6D6",
+      "underbelly": "#D6C7B2"
+    },
+    "features": [
+      "brush_tuft_tail",
+      "stout_body_quills",
+      "dark_dorsal_spines"
+    ],
+    "markings": "banded_quills",
+    "ear_variant": "small_quilled",
+    "tail_variant": "brush_tail",
+    "beak_variant": "none"
+  },
+  "sp_gaur": {
+    "species_id": "sp_gaur",
+    "name": "Gaur",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "bovine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#202022",
+      "secondary": "#3D3D42",
+      "accent": "#EDE8D5",
+      "underbelly": "#FFFDF7"
+    },
+    "features": [
+      "massive_dorsal_shoulder_ridge",
+      "pale_yellowish_green_curved_horns",
+      "white_stocking_legs"
+    ],
+    "markings": "white_stockings",
+    "ear_variant": "broad_drooping",
+    "tail_variant": "long_tufted_switch",
+    "beak_variant": "none"
+  },
+  "sp_banteng": {
+    "species_id": "sp_banteng",
+    "name": "Banteng",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "bovine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E4C2C",
+      "secondary": "#A86A41",
+      "accent": "#FAF7ED",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "conspicuous_white_rump_patch",
+      "slender_crescent_horns",
+      "white_stocking_lower_limbs"
+    ],
+    "markings": "white_rump_patch",
+    "ear_variant": "broad_drooping",
+    "tail_variant": "long_tufted_switch",
+    "beak_variant": "none"
+  },
+  "sp_barred_eagle_owl": {
+    "species_id": "sp_barred_eagle_owl",
+    "name": "Barred Eagle-owl",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "owl",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#473E38",
+      "secondary": "#73665D",
+      "accent": "#D9CFC4",
+      "underbelly": "#F4EFEA"
+    },
+    "features": [
+      "long_barred_erect_ear_tufts",
+      "dark_herringbone_barred_breast",
+      "deep_set_dark_brown_eyes"
+    ],
+    "markings": "barred_chest",
+    "ear_variant": "tall_tufts",
+    "tail_variant": "short_barred",
+    "beak_variant": "hooked_raptor"
+  },
+  "sp_green_backed_heron": {
+    "species_id": "sp_green_backed_heron",
+    "name": "Green-backed Heron",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "waterbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#40525C",
+      "secondary": "#6F8490",
+      "accent": "#7A5E3C",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "retracted_s_shaped_neck_silhouette",
+      "dagger_like_spearing_bill",
+      "black_crowned_crest_plumes"
+    ],
+    "markings": "crowned_crest",
+    "ear_variant": "rounded",
+    "tail_variant": "short_compact",
+    "beak_variant": "spear_dagger"
+  },
+  "sp_grey_bellied_squirrel": {
+    "species_id": "sp_grey_bellied_squirrel",
+    "name": "Grey-bellied Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E6C58",
+      "secondary": "#A2907A",
+      "accent": "#DE8943",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "orange_chestnut_belly",
+      "pale_lateral_side_flash",
+      "arched_bushy_tail"
+    ],
+    "markings": "orange_belly",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "bushy_curled",
+    "beak_variant": "none"
+  },
+  "sp_plantain_squirrel": {
+    "species_id": "sp_plantain_squirrel",
+    "name": "Plantain Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E6C58",
+      "secondary": "#A2907A",
+      "accent": "#DE8943",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "orange_chestnut_belly",
+      "pale_lateral_side_flash",
+      "arched_bushy_tail"
+    ],
+    "markings": "orange_belly",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "bushy_curled",
+    "beak_variant": "none"
+  },
+  "sp_prevost_s_squirrel": {
+    "species_id": "sp_prevost_s_squirrel",
+    "name": "Prevost's Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#202326",
+      "secondary": "#E0652B",
+      "accent": "#FFFFFF",
+      "underbelly": "#FAF8F5"
+    },
+    "features": [
+      "tri-color_black_back_white_lateral_stripe_chestnut_belly",
+      "plumed_black_tail",
+      "alert_large_eyes"
+    ],
+    "markings": "tricolor_stripe",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "plumed_bushy",
+    "beak_variant": "none"
+  },
+  "sp_serow": {
+    "species_id": "sp_serow",
+    "name": "Serow",
+    "category": "Mammal",
+    "role": "Guardian",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#333538",
+      "secondary": "#54585D",
+      "accent": "#A14436",
+      "underbelly": "#E4DCD3"
+    },
+    "features": [
+      "backward_curved_corrugated_horns",
+      "whitish_dorsal_mane",
+      "rufous_stocking_legs"
+    ],
+    "markings": "throat_patch",
+    "ear_variant": "long_donkey_like",
+    "tail_variant": "short_stout",
+    "beak_variant": "none"
+  },
+  "sp_malay_ground_cuckoo": {
+    "species_id": "sp_malay_ground_cuckoo",
+    "name": "Malay Ground-cuckoo",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#212529",
+      "secondary": "#EAA728",
+      "accent": "#FFFFFF",
+      "underbelly": "#FAF5E8"
+    },
+    "features": [
+      "vivid_lemon_yellow_rump_patch",
+      "crisp_white_wing_patch",
+      "slender_perching_posture"
+    ],
+    "markings": "yellow_rump",
+    "ear_variant": "rounded",
+    "tail_variant": "slender_notched",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_borneo_bay_cat": {
+    "species_id": "sp_borneo_bay_cat",
+    "name": "Borneo Bay Cat",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#9E4732",
+      "secondary": "#C2654D",
+      "accent": "#542016",
+      "underbelly": "#EDD5CB"
+    },
+    "features": [
+      "rich_chestnut_red_coat",
+      "whitish_underside_tail_streak",
+      "compact_rounded_head"
+    ],
+    "markings": "solid_rufous",
+    "ear_variant": "rounded_low",
+    "tail_variant": "long_white_keel",
+    "beak_variant": "none"
+  },
+  "sp_asiatic_golden_cat": {
+    "species_id": "sp_asiatic_golden_cat",
+    "name": "Asiatic Golden Cat",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C47D38",
+      "secondary": "#DE9D59",
+      "accent": "#663B14",
+      "underbelly": "#F4E5CC"
+    },
+    "features": [
+      "warm_fox_golden_coat",
+      "white_facial_streaks_bordered_black",
+      "sleek_build"
+    ],
+    "markings": "facial_lines",
+    "ear_variant": "round",
+    "tail_variant": "long_pale_tip",
+    "beak_variant": "none"
+  },
+  "sp_green_billed_coucal": {
+    "species_id": "sp_green_billed_coucal",
+    "name": "Green-billed Coucal",
+    "category": "Bird",
+    "role": "Control",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1D2124",
+      "secondary": "#994426",
+      "accent": "#5C8A53",
+      "underbelly": "#ECE6D8"
+    },
+    "features": [
+      "deep_chestnut_brown_wings_contrasting_jet_black_body",
+      "ruby_red_eyes",
+      "long_heavy_tail"
+    ],
+    "markings": "chestnut_wings",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_greater_coucal": {
+    "species_id": "sp_greater_coucal",
+    "name": "Greater Coucal",
+    "category": "Bird",
+    "role": "Control",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1D2124",
+      "secondary": "#994426",
+      "accent": "#5C8A53",
+      "underbelly": "#ECE6D8"
+    },
+    "features": [
+      "deep_chestnut_brown_wings_contrasting_jet_black_body",
+      "ruby_red_eyes",
+      "long_heavy_tail"
+    ],
+    "markings": "chestnut_wings",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_common_emerald_dove": {
+    "species_id": "sp_common_emerald_dove",
+    "name": "Common Emerald Dove",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "dove",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#735146",
+      "secondary": "#267B48",
+      "accent": "#BF7554",
+      "underbelly": "#FAF2EB"
+    },
+    "features": [
+      "shimmering_metallic_emerald_green_wings",
+      "vinous_pinkish_grey_breast",
+      "bright_coral_red_bill"
+    ],
+    "markings": "emerald_wings",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_cere"
+  },
+  "sp_white_rumped_shama": {
+    "species_id": "sp_white_rumped_shama",
+    "name": "White-rumped Shama",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2328",
+      "secondary": "#FFFFFF",
+      "accent": "#B8582B",
+      "underbelly": "#FFFDF8"
+    },
+    "features": [
+      "exceptionally_long_graduated_white_edged_tail",
+      "pure_white_rump_patch",
+      "rich_chestnut_belly",
+      "glossy_blue_black_hood"
+    ],
+    "markings": "white_rump_flash",
+    "ear_variant": "rounded",
+    "tail_variant": "very_long_stepped",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_rufous_tailed_shama": {
+    "species_id": "sp_rufous_tailed_shama",
+    "name": "Rufous-tailed shama",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2328",
+      "secondary": "#FFFFFF",
+      "accent": "#B8582B",
+      "underbelly": "#FFFDF8"
+    },
+    "features": [
+      "exceptionally_long_graduated_white_edged_tail",
+      "pure_white_rump_patch",
+      "rich_chestnut_belly",
+      "glossy_blue_black_hood"
+    ],
+    "markings": "white_rump_flash",
+    "ear_variant": "rounded",
+    "tail_variant": "very_long_stepped",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_oriental_magpie_robin": {
+    "species_id": "sp_oriental_magpie_robin",
+    "name": "Oriental Magpie-robin",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2328",
+      "secondary": "#FFFFFF",
+      "accent": "#B8582B",
+      "underbelly": "#FFFDF8"
+    },
+    "features": [
+      "exceptionally_long_graduated_white_edged_tail",
+      "pure_white_rump_patch",
+      "rich_chestnut_belly",
+      "glossy_blue_black_hood"
+    ],
+    "markings": "white_rump_flash",
+    "ear_variant": "rounded",
+    "tail_variant": "very_long_stepped",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_blue_breasted_quail": {
+    "species_id": "sp_blue_breasted_quail",
+    "name": "Blue-breasted Quail",
+    "category": "Bird",
+    "role": "Power",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#334860",
+      "secondary": "#A0522D",
+      "accent": "#FFFFFF",
+      "underbelly": "#F6F0E4"
+    },
+    "features": [
+      "deep_slate_blue_mantle",
+      "bold_white_throat_bib_outlined_in_black",
+      "chestnut_belly",
+      "tiny_round_body"
+    ],
+    "markings": "white_throat_bib",
+    "ear_variant": "rounded",
+    "tail_variant": "hidden",
+    "beak_variant": "short_stout"
+  },
+  "sp_dhole": {
+    "species_id": "sp_dhole",
+    "name": "Dhole",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#B84E29",
+      "secondary": "#DC6D45",
+      "accent": "#241F1C",
+      "underbelly": "#F8E8DF"
+    },
+    "features": [
+      "reddish_canid_pelage",
+      "dark_bushy_black_tail_tip",
+      "alert_upright_posture"
+    ],
+    "markings": "white_chest_patch",
+    "ear_variant": "erect_rounded",
+    "tail_variant": "bushy_black_tip",
+    "beak_variant": "none"
+  },
+  "sp_otter_civet": {
+    "species_id": "sp_otter_civet",
+    "name": "Otter civet",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  },
+  "sp_lesser_dog_faced_fruit_bat": {
+    "species_id": "sp_lesser_dog_faced_fruit_bat",
+    "name": "Lesser Dog-faced Fruit Bat",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "bat",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#4F443D",
+      "secondary": "#75665D",
+      "accent": "#D98943",
+      "underbelly": "#EFE7DD"
+    },
+    "features": [
+      "dog_like_canine_muzzle",
+      "tawny_orange_collar_mantle",
+      "leathery_folded_wing_struts"
+    ],
+    "markings": "orange_collar",
+    "ear_variant": "tall_oval_notched",
+    "tail_variant": "rudimentary_webbed",
+    "beak_variant": "none"
+  },
+  "sp_black_rumped_flameback": {
+    "species_id": "sp_black_rumped_flameback",
+    "name": "Black-rumped Flameback",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "woodpecker",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2022",
+      "secondary": "#D84B20",
+      "accent": "#E5A93B",
+      "underbelly": "#FAF7EE"
+    },
+    "features": [
+      "brilliant_flame_golden_olive_mantle",
+      "erect_crimson_crest",
+      "stout_chisel_shaped_bill",
+      "stiff_climbing_tail"
+    ],
+    "markings": "flame_golden_back",
+    "ear_variant": "rounded",
+    "tail_variant": "stiff_spine",
+    "beak_variant": "straight_chisel"
+  },
+  "sp_hose_s_civet": {
+    "species_id": "sp_hose_s_civet",
+    "name": "Hose's Civet",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  },
+  "sp_mountain_imperial_pigeon": {
+    "species_id": "sp_mountain_imperial_pigeon",
+    "name": "Mountain Imperial-pigeon",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "dove",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#686570",
+      "secondary": "#8A8492",
+      "accent": "#C45B64",
+      "underbelly": "#DED9DF"
+    },
+    "features": [
+      "vinous_pinkish_grey_breast",
+      "bronze_green_mantle_and_wings",
+      "bright_coral_red_bill"
+    ],
+    "markings": "clean_dorsal",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_cere"
+  },
+  "sp_moonrat": {
+    "species_id": "sp_moonrat",
+    "name": "Moonrat",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "shrew",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#2B2E30",
+      "secondary": "#FFFFFF",
+      "accent": "#4A5054",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "long_narrow_rostrum",
+      "harsh_black_and_white_bristled_coat",
+      "naked_whip_tail"
+    ],
+    "markings": "white_head_mask",
+    "ear_variant": "naked_round",
+    "tail_variant": "naked_whip",
+    "beak_variant": "none"
+  },
+  "sp_white_crowned_forktail": {
+    "species_id": "sp_white_crowned_forktail",
+    "name": "White-crowned Forktail",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#212529",
+      "secondary": "#EAA728",
+      "accent": "#FFFFFF",
+      "underbelly": "#FAF5E8"
+    },
+    "features": [
+      "vivid_lemon_yellow_rump_patch",
+      "crisp_white_wing_patch",
+      "slender_perching_posture"
+    ],
+    "markings": "yellow_rump",
+    "ear_variant": "rounded",
+    "tail_variant": "slender_notched",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_black_crowned_pitta": {
+    "species_id": "sp_black_crowned_pitta",
+    "name": "Black-crowned Pitta",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "pitta",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#A82522",
+      "secondary": "#1E2226",
+      "accent": "#3169B0",
+      "underbelly": "#F2E2C8"
+    },
+    "features": [
+      "glossy_black_crown_and_nape",
+      "bright_crimson_underparts",
+      "shimmering_blue_wing_covert_patches"
+    ],
+    "markings": "black_crown",
+    "ear_variant": "rounded",
+    "tail_variant": "stubby_vent",
+    "beak_variant": "strong_thrush"
+  },
+  "sp_malaysian_rail_babbler": {
+    "species_id": "sp_malaysian_rail_babbler",
+    "name": "Malaysian Rail-babbler",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_malaysian_mole": {
+    "species_id": "sp_malaysian_mole",
+    "name": "Malaysian Mole",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "mole",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#2B2D31",
+      "secondary": "#44484E",
+      "accent": "#E8B6B0",
+      "underbelly": "#707780"
+    },
+    "features": [
+      "enormous_broad_shovel_forefeet_with_outward_palms",
+      "velvety_directionless_dark_fur",
+      "vestigial_subcutaneous_eyes"
+    ],
+    "markings": "velvety_uniform",
+    "ear_variant": "none",
+    "tail_variant": "short_club",
+    "beak_variant": "none"
+  },
+  "sp_common_sun_skink": {
+    "species_id": "sp_common_sun_skink",
+    "name": "Common Sun Skink",
+    "category": "Reptile",
+    "role": "Agile",
+    "archetype": "skink",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B593E",
+      "secondary": "#9E865E",
+      "accent": "#D8BC54",
+      "underbelly": "#FFFDF4"
+    },
+    "features": [
+      "glistening_highly_polished_iridescent_scales",
+      "three_bold_dorsal_keels_per_scale",
+      "golden_bronze_flank_sheen"
+    ],
+    "markings": "bronze_stripes",
+    "ear_variant": "small_auditory_aperture",
+    "tail_variant": "long_tapered_smooth",
+    "beak_variant": "none"
+  },
+  "sp_yellow_rumped_flycatcher": {
+    "species_id": "sp_yellow_rumped_flycatcher",
+    "name": "Yellow-rumped Flycatcher",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#56606A",
+      "secondary": "#A3ADB6",
+      "accent": "#E7C53C",
+      "underbelly": "#F1EEE6"
+    },
+    "features": [
+      "bright_yellow_rump_patch",
+      "fine_flycatcher_bill",
+      "yellow_wing_bars"
+    ],
+    "markings": "yellow_rump",
+    "ear_variant": "tall_round",
+    "tail_variant": "medium_ringed",
+    "beak_variant": "none"
+  },
+  "sp_red_junglefowl": {
+    "species_id": "sp_red_junglefowl",
+    "name": "Red Junglefowl",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "owl",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#473E38",
+      "secondary": "#73665D",
+      "accent": "#D9CFC4",
+      "underbelly": "#F4EFEA"
+    },
+    "features": [
+      "long_barred_erect_ear_tufts",
+      "dark_herringbone_barred_breast",
+      "deep_set_dark_brown_eyes"
+    ],
+    "markings": "barred_chest",
+    "ear_variant": "tall_tufts",
+    "tail_variant": "short_barred",
+    "beak_variant": "hooked_raptor"
+  },
+  "sp_sunda_laughingthrush": {
+    "species_id": "sp_sunda_laughingthrush",
+    "name": "Sunda Laughingthrush",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6A5647",
+      "secondary": "#8F7866",
+      "accent": "#C7753A",
+      "underbelly": "#FAF2E6"
+    },
+    "features": [
+      "chestnut_brown_crown_cap",
+      "white_throat_with_dark_lateral_stripes"
+    ],
+    "markings": "chestnut_cap",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_orange_headed_thrush": {
+    "species_id": "sp_orange_headed_thrush",
+    "name": "Orange-headed Thrush",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C85C27",
+      "secondary": "#576775",
+      "accent": "#FFFFFF",
+      "underbelly": "#FDF5EC"
+    },
+    "features": [
+      "brilliant_deep_orange_head_and_breast",
+      "slaty_blue_wings_with_white_wing_bars"
+    ],
+    "markings": "orange_hood",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_chestnut_capped_thrush": {
+    "species_id": "sp_chestnut_capped_thrush",
+    "name": "Chestnut-capped Thrush",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6A5647",
+      "secondary": "#8F7866",
+      "accent": "#C7753A",
+      "underbelly": "#FAF2E6"
+    },
+    "features": [
+      "chestnut_brown_crown_cap",
+      "white_throat_with_dark_lateral_stripes"
+    ],
+    "markings": "chestnut_cap",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_broad",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_malayan_night_heron": {
+    "species_id": "sp_malayan_night_heron",
+    "name": "Malayan Night-Heron",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "waterbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#40525C",
+      "secondary": "#6F8490",
+      "accent": "#7A5E3C",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "retracted_s_shaped_neck_silhouette",
+      "dagger_like_spearing_bill",
+      "black_crowned_crest_plumes"
+    ],
+    "markings": "crowned_crest",
+    "ear_variant": "rounded",
+    "tail_variant": "short_compact",
+    "beak_variant": "spear_dagger"
+  },
+  "sp_common_hill_myna": {
+    "species_id": "sp_common_hill_myna",
+    "name": "Common Hill Myna",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1B1E22",
+      "secondary": "#F0B738",
+      "accent": "#FFFFFF",
+      "underbelly": "#FAF5EB"
+    },
+    "features": [
+      "bright_yellow_fleshy_head_wattles",
+      "heavy_orange_yellow_bill",
+      "white_wing_flight_patches"
+    ],
+    "markings": "yellow_wattles",
+    "ear_variant": "rounded",
+    "tail_variant": "short_square",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_crimson_headed_partridge": {
+    "species_id": "sp_crimson_headed_partridge",
+    "name": "Crimson-headed Partridge",
+    "category": "Bird",
+    "role": "Power",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#76523B",
+      "secondary": "#A8795B",
+      "accent": "#C94E34",
+      "underbelly": "#F4ECE1"
+    },
+    "features": [
+      "crimson_facial_skin_and_legs",
+      "barred_chest_necklace",
+      "compact_rotund_ground_silhouette"
+    ],
+    "markings": "barred_necklace",
+    "ear_variant": "rounded",
+    "tail_variant": "short_down",
+    "beak_variant": "short_stout"
+  },
+  "sp_banded_civet": {
+    "species_id": "sp_banded_civet",
+    "name": "Banded Civet",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#CBB78D",
+      "secondary": "#9A8256",
+      "accent": "#33291F",
+      "underbelly": "#F7F3EB"
+    },
+    "features": [
+      "transverse_dark_saddle_bars",
+      "long_slender_snout",
+      "semi_retractile_claws"
+    ],
+    "markings": "saddle_bars",
+    "ear_variant": "pointed",
+    "tail_variant": "half_ringed",
+    "beak_variant": "none"
+  },
+  "sp_cinereous_bulbul": {
+    "species_id": "sp_cinereous_bulbul",
+    "name": "Cinereous Bulbul",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#585341",
+      "secondary": "#A69E68",
+      "accent": "#DFBF38",
+      "underbelly": "#FAF6E6"
+    },
+    "features": [
+      "bright_yellow_vent_and_belly",
+      "slender_bushy_throat_feathers",
+      "cheerful_perching_profile"
+    ],
+    "markings": "yellow_vent",
+    "ear_variant": "rounded",
+    "tail_variant": "medium_straight",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_small_indian_mongoose": {
+    "species_id": "sp_small_indian_mongoose",
+    "name": "Small Indian Mongoose",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5C544B",
+      "secondary": "#83796E",
+      "accent": "#C2B8AA",
+      "underbelly": "#EEE9E2"
+    },
+    "features": [
+      "finely_speckled_grizzled_coat",
+      "sharp_pointed_snout",
+      "nimble_forepaws"
+    ],
+    "markings": "fine_grizzle",
+    "ear_variant": "low_rounded",
+    "tail_variant": "tapered_bushy",
+    "beak_variant": "none"
+  },
+  "sp_short_tailed_mongoose": {
+    "species_id": "sp_short_tailed_mongoose",
+    "name": "Short-tailed Mongoose",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5C544B",
+      "secondary": "#83796E",
+      "accent": "#C2B8AA",
+      "underbelly": "#EEE9E2"
+    },
+    "features": [
+      "reddish_brown_agouti_fur",
+      "remarkably_short_bushy_tail",
+      "pointed_face"
+    ],
+    "markings": "agouti",
+    "ear_variant": "low_rounded",
+    "tail_variant": "tapered_bushy",
+    "beak_variant": "none"
+  },
+  "sp_collared_mongoose": {
+    "species_id": "sp_collared_mongoose",
+    "name": "Collared Mongoose",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5C544B",
+      "secondary": "#83796E",
+      "accent": "#C2B8AA",
+      "underbelly": "#EEE9E2"
+    },
+    "features": [
+      "broad_white_neck_stripe",
+      "grizzled_iron_grey_fur",
+      "stout_body_profile"
+    ],
+    "markings": "neck_stripe",
+    "ear_variant": "low_rounded",
+    "tail_variant": "tapered_bushy",
+    "beak_variant": "none"
+  },
+  "sp_crab_eating_mongoose": {
+    "species_id": "sp_crab_eating_mongoose",
+    "name": "Crab-eating Mongoose",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5C544B",
+      "secondary": "#83796E",
+      "accent": "#C2B8AA",
+      "underbelly": "#EEE9E2"
+    },
+    "features": [
+      "prominent_white_stripe_along_neck",
+      "blackish_limbs",
+      "robust_crab_crushing_jaws"
+    ],
+    "markings": "lateral_neck_stripe",
+    "ear_variant": "low_rounded",
+    "tail_variant": "tapered_bushy",
+    "beak_variant": "none"
+  },
+  "sp_long_tailed_sibia": {
+    "species_id": "sp_long_tailed_sibia",
+    "name": "Long-tailed Sibia",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_blue_headed_pitta": {
+    "species_id": "sp_blue_headed_pitta",
+    "name": "Blue-headed Pitta",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "pitta",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#A82522",
+      "secondary": "#1E2226",
+      "accent": "#3169B0",
+      "underbelly": "#F2E2C8"
+    },
+    "features": [
+      "glossy_black_crown_and_nape",
+      "bright_crimson_underparts",
+      "shimmering_blue_wing_covert_patches"
+    ],
+    "markings": "black_crown",
+    "ear_variant": "rounded",
+    "tail_variant": "stubby_vent",
+    "beak_variant": "strong_thrush"
+  },
+  "sp_malay_banded_pitta": {
+    "species_id": "sp_malay_banded_pitta",
+    "name": "Malay Banded Pitta",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "pitta",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2528",
+      "secondary": "#D67228",
+      "accent": "#264E8C",
+      "underbelly": "#F3E8BA"
+    },
+    "features": [
+      "sharp_orange_yellow_supercilium_eyebrow",
+      "densely_barred_blue_and_orange_breast",
+      "compact_jewel_body"
+    ],
+    "markings": "zebra_chest_bars",
+    "ear_variant": "rounded",
+    "tail_variant": "stubby_vent",
+    "beak_variant": "strong_thrush"
+  },
+  "sp_bornean_banded_pitta": {
+    "species_id": "sp_bornean_banded_pitta",
+    "name": "Bornean Banded Pitta",
+    "category": "Bird",
+    "role": "Trickster",
+    "archetype": "pitta",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2528",
+      "secondary": "#D67228",
+      "accent": "#264E8C",
+      "underbelly": "#F3E8BA"
+    },
+    "features": [
+      "sharp_orange_yellow_supercilium_eyebrow",
+      "densely_barred_blue_and_orange_breast",
+      "compact_jewel_body"
+    ],
+    "markings": "zebra_chest_bars",
+    "ear_variant": "rounded",
+    "tail_variant": "stubby_vent",
+    "beak_variant": "strong_thrush"
+  },
+  "sp_lar_gibbon": {
+    "species_id": "sp_lar_gibbon",
+    "name": "Lar Gibbon",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "gibbon",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#232528",
+      "secondary": "#40454A",
+      "accent": "#FFFFFF",
+      "underbelly": "#EDEBE6"
+    },
+    "features": [
+      "complete_white_facial_ring",
+      "snow_white_hands_and_feet",
+      "extremely_long_brachiation_arms",
+      "tailless"
+    ],
+    "markings": "white_hands_mask",
+    "ear_variant": "hidden_in_fur",
+    "tail_variant": "tailless",
+    "beak_variant": "none"
+  },
+  "sp_malayan_porcupine": {
+    "species_id": "sp_malayan_porcupine",
+    "name": "Malayan Porcupine",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "porcupine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3E342F",
+      "secondary": "#78685E",
+      "accent": "#EDE6D6",
+      "underbelly": "#D6C7B2"
+    },
+    "features": [
+      "long_hollow_rattle_quills",
+      "banded_black_white_spines",
+      "crested_crown"
+    ],
+    "markings": "banded_quills",
+    "ear_variant": "small_quilled",
+    "tail_variant": "rattle_quill",
+    "beak_variant": "none"
+  },
+  "sp_thick_spined_porcupine": {
+    "species_id": "sp_thick_spined_porcupine",
+    "name": "Thick-spined Porcupine",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "porcupine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3E342F",
+      "secondary": "#78685E",
+      "accent": "#EDE6D6",
+      "underbelly": "#D6C7B2"
+    },
+    "features": [
+      "thick_white_tipped_quills",
+      "protective_rosette",
+      "defensive_crest"
+    ],
+    "markings": "banded_quills",
+    "ear_variant": "small_quilled",
+    "tail_variant": "short_spined",
+    "beak_variant": "none"
+  },
+  "sp_striped_wren_babbler": {
+    "species_id": "sp_striped_wren_babbler",
+    "name": "Striped Wren-babbler",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_buffy_fish_owl": {
+    "species_id": "sp_buffy_fish_owl",
+    "name": "Buffy Fish-owl",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "owl",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#473E38",
+      "secondary": "#73665D",
+      "accent": "#D9CFC4",
+      "underbelly": "#F4EFEA"
+    },
+    "features": [
+      "long_barred_erect_ear_tufts",
+      "dark_herringbone_barred_breast",
+      "deep_set_dark_brown_eyes"
+    ],
+    "markings": "barred_chest",
+    "ear_variant": "tall_tufts",
+    "tail_variant": "short_barred",
+    "beak_variant": "hooked_raptor"
+  },
+  "sp_tiger_shrike": {
+    "species_id": "sp_tiger_shrike",
+    "name": "Tiger Shrike",
+    "category": "Bird",
+    "role": "Power",
+    "archetype": "raptor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B584B",
+      "secondary": "#968070",
+      "accent": "#C5B29D",
+      "underbelly": "#F4EFEB"
+    },
+    "features": [
+      "slender_raptorial_hooked_bill",
+      "scaled_protective_facial_feathering",
+      "broad_tail_with_dark_bands"
+    ],
+    "markings": "tail_bands",
+    "ear_variant": "rounded",
+    "tail_variant": "wedge_tail",
+    "beak_variant": "raptor_hook"
+  },
+  "sp_borneo_earless_monitor": {
+    "species_id": "sp_borneo_earless_monitor",
+    "name": "Borneo Earless Monitor",
+    "category": "Reptile",
+    "role": "Control",
+    "archetype": "monitor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#744A32",
+      "secondary": "#9C6848",
+      "accent": "#CBB285",
+      "underbelly": "#EFE5D5"
+    },
+    "features": [
+      "cylindrical_snout_without_external_ear_openings",
+      "beaded_longitudinal_tuberculate_scales",
+      "prehensile_tail"
+    ],
+    "markings": "beaded_tubercles",
+    "ear_variant": "none",
+    "tail_variant": "long_whip_keeled",
+    "beak_variant": "none"
+  },
+  "sp_four_striped_ground_squirrel": {
+    "species_id": "sp_four_striped_ground_squirrel",
+    "name": "Four-striped Ground Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8E7356",
+      "secondary": "#B29779",
+      "accent": "#F0EBD9",
+      "underbelly": "#2E2319"
+    },
+    "features": [
+      "sharp_parallel_black_and_cream_dorsal_stripes",
+      "slender_agile_limbs",
+      "narrow_tail"
+    ],
+    "markings": "longitudinal_stripes",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "slender_striped",
+    "beak_variant": "none"
+  },
+  "sp_three_striped_ground_squirrel": {
+    "species_id": "sp_three_striped_ground_squirrel",
+    "name": "Three-striped Ground Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8E7356",
+      "secondary": "#B29779",
+      "accent": "#F0EBD9",
+      "underbelly": "#2E2319"
+    },
+    "features": [
+      "sharp_parallel_black_and_cream_dorsal_stripes",
+      "slender_agile_limbs",
+      "narrow_tail"
+    ],
+    "markings": "longitudinal_stripes",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "slender_striped",
+    "beak_variant": "none"
+  },
+  "sp_noisy_rat": {
+    "species_id": "sp_noisy_rat",
+    "name": "Noisy Rat",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "rodent",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#66574C",
+      "secondary": "#88776B",
+      "accent": "#D0C4B8",
+      "underbelly": "#ECE6DF"
+    },
+    "features": [
+      "scaly_annulated_tail",
+      "pointed_snout_with_long_vibrissae",
+      "sleek_agile_body"
+    ],
+    "markings": "agouti_ticked",
+    "ear_variant": "thin_membranous",
+    "tail_variant": "long_naked_scaly",
+    "beak_variant": "none"
+  },
+  "sp_white_tailed_wattled_pheasant": {
+    "species_id": "sp_white_tailed_wattled_pheasant",
+    "name": "White-tailed Wattled Pheasant",
+    "category": "Bird",
+    "role": "Power",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#222830",
+      "secondary": "#A83B25",
+      "accent": "#4285B4",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "elongated_fleshy_blue_facial_wattles",
+      "contrasting_pure_white_tail_plumes",
+      "glossy_body_sheen"
+    ],
+    "markings": "white_tail_contrast",
+    "ear_variant": "rounded",
+    "tail_variant": "arching_white",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_rufous_tailed_pheasant": {
+    "species_id": "sp_rufous_tailed_pheasant",
+    "name": "Rufous-tailed Pheasant",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#222830",
+      "secondary": "#A83B25",
+      "accent": "#4285B4",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "elongated_fleshy_blue_facial_wattles",
+      "contrasting_pure_white_tail_plumes",
+      "glossy_body_sheen"
+    ],
+    "markings": "white_tail_contrast",
+    "ear_variant": "rounded",
+    "tail_variant": "arching_white",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_vieillot_s_fireback": {
+    "species_id": "sp_vieillot_s_fireback",
+    "name": "Vieillot's Fireback",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2B3E",
+      "secondary": "#A6381C",
+      "accent": "#DDAA32",
+      "underbelly": "#FAF7ED"
+    },
+    "features": [
+      "fiery_golden_amber_lower_back",
+      "bare_cobalt_blue_facial_wattles",
+      "dense_bushy_crest_and_white_curved_tail"
+    ],
+    "markings": "fire_back",
+    "ear_variant": "rounded",
+    "tail_variant": "arching_plumes",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_malay_crested_fireback": {
+    "species_id": "sp_malay_crested_fireback",
+    "name": "Malay Crested Fireback",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2B3E",
+      "secondary": "#A6381C",
+      "accent": "#DDAA32",
+      "underbelly": "#FAF7ED"
+    },
+    "features": [
+      "fiery_golden_amber_lower_back",
+      "bare_cobalt_blue_facial_wattles",
+      "dense_bushy_crest_and_white_curved_tail"
+    ],
+    "markings": "fire_back",
+    "ear_variant": "rounded",
+    "tail_variant": "arching_plumes",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_smooth_coated_otter": {
+    "species_id": "sp_smooth_coated_otter",
+    "name": "Smooth-coated Otter",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "otter",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5E4A3E",
+      "secondary": "#876D5D",
+      "accent": "#D9C8B4",
+      "underbelly": "#F4EDE4"
+    },
+    "features": [
+      "smooth_sleek_dense_pelage",
+      "flattened_paddle_tail",
+      "webbed_swimming_paws"
+    ],
+    "markings": "throat_bib",
+    "ear_variant": "small_valvular",
+    "tail_variant": "flattened_paddle",
+    "beak_variant": "none"
+  },
+  "sp_stump_tailed_macaque": {
+    "species_id": "sp_stump_tailed_macaque",
+    "name": "Stump-tailed Macaque",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#766856",
+      "secondary": "#9E8D77",
+      "accent": "#C8B9A6",
+      "underbelly": "#EFE9E0"
+    },
+    "features": [
+      "bright_pink_red_bare_face",
+      "rudimentary_stump_tail",
+      "dense_shaggy_fur"
+    ],
+    "markings": "red_face",
+    "ear_variant": "bare_humanoid",
+    "tail_variant": "bare_stump",
+    "beak_variant": "none"
+  },
+  "sp_crab_eating_macaque": {
+    "species_id": "sp_crab_eating_macaque",
+    "name": "Crab-eating Macaque",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#766856",
+      "secondary": "#9E8D77",
+      "accent": "#C8B9A6",
+      "underbelly": "#EFE9E0"
+    },
+    "features": [
+      "backward_directed_facial_cheek_whiskers",
+      "extremely_long_balancing_tail",
+      "agile_hands"
+    ],
+    "markings": "solid",
+    "ear_variant": "bare_humanoid",
+    "tail_variant": "long_sinuous",
+    "beak_variant": "none"
+  },
+  "sp_southern_pig_tailed_macaque": {
+    "species_id": "sp_southern_pig_tailed_macaque",
+    "name": "Southern Pig-tailed Macaque",
+    "category": "Mammal",
+    "role": "Support",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B5B49",
+      "secondary": "#8A7965",
+      "accent": "#C48A68",
+      "underbelly": "#EAE3D6"
+    },
+    "features": [
+      "short_pig_like_arching_tail",
+      "backward_directed_facial_cheek_whiskers",
+      "dense_olive_brown_coat"
+    ],
+    "markings": "solid",
+    "ear_variant": "bare_humanoid",
+    "tail_variant": "short_stout",
+    "beak_variant": "none"
+  },
+  "sp_sooty_capped_babbler": {
+    "species_id": "sp_sooty_capped_babbler",
+    "name": "Sooty-capped Babbler",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_yellow_throated_marten": {
+    "species_id": "sp_yellow_throated_marten",
+    "name": "Yellow-throated Marten",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8E6738",
+      "secondary": "#B88B4F",
+      "accent": "#FFB834",
+      "underbelly": "#FFF3D4"
+    },
+    "features": [
+      "vibrant_golden_yellow_throat_bib",
+      "black_glossy_head_and_tail",
+      "long_supple_body"
+    ],
+    "markings": "bright_throat_bib",
+    "ear_variant": "triangular",
+    "tail_variant": "long_fluffy",
+    "beak_variant": "none"
+  },
+  "sp_bornean_yellow_muntjac": {
+    "species_id": "sp_bornean_yellow_muntjac",
+    "name": "Bornean Yellow Muntjac",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#B45F2B",
+      "secondary": "#D97E45",
+      "accent": "#3E2519",
+      "underbelly": "#F9ECE3"
+    },
+    "features": [
+      "short_ribbed_antlers_on_pedicels",
+      "v_shaped_facial_ridges",
+      "elongated_upper_canines"
+    ],
+    "markings": "facial_v_crest",
+    "ear_variant": "pointed",
+    "tail_variant": "medium_white_underside",
+    "beak_variant": "none"
+  },
+  "sp_southern_red_muntjac": {
+    "species_id": "sp_southern_red_muntjac",
+    "name": "Southern Red Muntjac",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#B45F2B",
+      "secondary": "#D97E45",
+      "accent": "#3E2519",
+      "underbelly": "#F9ECE3"
+    },
+    "features": [
+      "short_ribbed_antlers_on_pedicels",
+      "v_shaped_facial_ridges",
+      "elongated_upper_canines"
+    ],
+    "markings": "facial_v_crest",
+    "ear_variant": "pointed",
+    "tail_variant": "medium_white_underside",
+    "beak_variant": "none"
+  },
+  "sp_malay_weasel": {
+    "species_id": "sp_malay_weasel",
+    "name": "Malay Weasel",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "mongoose",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C87428",
+      "secondary": "#E29148",
+      "accent": "#F5E6CC",
+      "underbelly": "#FFF8EB"
+    },
+    "features": [
+      "uniform_warm_orange_rufous_coat",
+      "white_cervical_throat_patch",
+      "slender_sinuous_torso"
+    ],
+    "markings": "clean_dorsal",
+    "ear_variant": "small_round",
+    "tail_variant": "tapered_fine",
+    "beak_variant": "none"
+  },
+  "sp_sunda_stink_badger": {
+    "species_id": "sp_sunda_stink_badger",
+    "name": "Sunda Stink-badger",
+    "category": "Mammal",
+    "role": "Control",
+    "archetype": "rodent",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#66574C",
+      "secondary": "#88776B",
+      "accent": "#D0C4B8",
+      "underbelly": "#ECE6DF"
+    },
+    "features": [
+      "scaly_annulated_tail",
+      "pointed_snout_with_long_vibrissae",
+      "sleek_agile_body"
+    ],
+    "markings": "agouti_ticked",
+    "ear_variant": "thin_membranous",
+    "tail_variant": "long_naked_scaly",
+    "beak_variant": "none"
+  },
+  "sp_sunda_clouded_leopard": {
+    "species_id": "sp_sunda_clouded_leopard",
+    "name": "Sunda Clouded Leopard",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C89D66",
+      "secondary": "#9B6F38",
+      "accent": "#2B231B",
+      "underbelly": "#EAE3D2"
+    },
+    "features": [
+      "large_cloud_rosettes",
+      "exceptionally_long_canines",
+      "broad_heavy_paws",
+      "long_balancing_tail"
+    ],
+    "markings": "cloud_blotches",
+    "ear_variant": "short_rounded",
+    "tail_variant": "thick_ringed",
+    "beak_variant": "none"
+  },
+  "sp_clouded_leopard": {
+    "species_id": "sp_clouded_leopard",
+    "name": "Clouded Leopard",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#C89D66",
+      "secondary": "#9B6F38",
+      "accent": "#2B231B",
+      "underbelly": "#EAE3D2"
+    },
+    "features": [
+      "large_cloud_rosettes",
+      "exceptionally_long_canines",
+      "broad_heavy_paws",
+      "long_balancing_tail"
+    ],
+    "markings": "cloud_blotches",
+    "ear_variant": "short_rounded",
+    "tail_variant": "thick_ringed",
+    "beak_variant": "none"
+  },
+  "sp_blyth_s_hawk_eagle": {
+    "species_id": "sp_blyth_s_hawk_eagle",
+    "name": "Blyth's Hawk-Eagle",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "raptor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B584B",
+      "secondary": "#968070",
+      "accent": "#C5B29D",
+      "underbelly": "#F4EFEB"
+    },
+    "features": [
+      "slender_raptorial_hooked_bill",
+      "scaled_protective_facial_feathering",
+      "broad_tail_with_dark_bands"
+    ],
+    "markings": "tail_bands",
+    "ear_variant": "rounded",
+    "tail_variant": "wedge_tail",
+    "beak_variant": "raptor_hook"
+  },
+  "sp_changeable_hawk_eagle": {
+    "species_id": "sp_changeable_hawk_eagle",
+    "name": "Changeable Hawk-eagle",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "raptor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B584B",
+      "secondary": "#968070",
+      "accent": "#C5B29D",
+      "underbelly": "#F4EFEB"
+    },
+    "features": [
+      "slender_raptorial_hooked_bill",
+      "scaled_protective_facial_feathering",
+      "broad_tail_with_dark_bands"
+    ],
+    "markings": "tail_bands",
+    "ear_variant": "rounded",
+    "tail_variant": "wedge_tail",
+    "beak_variant": "raptor_hook"
+  },
+  "sp_dark_necked_tailorbird": {
+    "species_id": "sp_dark_necked_tailorbird",
+    "name": "Dark-necked Tailorbird",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_ashy_tailorbird": {
+    "species_id": "sp_ashy_tailorbird",
+    "name": "Ashy Tailorbird",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_masked_palm_civet": {
+    "species_id": "sp_masked_palm_civet",
+    "name": "Masked Palm Civet",
+    "category": "Mammal",
+    "role": "Control",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E6B5A",
+      "secondary": "#A89481",
+      "accent": "#F4F1EA",
+      "underbelly": "#EFEAE1"
+    },
+    "features": [
+      "white_facial_stripe_from_nose_to_forehead",
+      "black_eye_mask",
+      "unspotted_body_coat"
+    ],
+    "markings": "facial_mask_stripe",
+    "ear_variant": "erect_oval",
+    "tail_variant": "long_dark_tip",
+    "beak_variant": "none"
+  },
+  "sp_leopard": {
+    "species_id": "sp_leopard",
+    "name": "Leopard",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#DE9B43",
+      "secondary": "#A86D23",
+      "accent": "#231815",
+      "underbelly": "#F5EEDB"
+    },
+    "features": [
+      "dense_black_rosettes",
+      "lithe_arboreal_frame",
+      "stalking_low_profile"
+    ],
+    "markings": "rosettes",
+    "ear_variant": "round",
+    "tail_variant": "long_rosetted",
+    "beak_variant": "none"
+  },
+  "sp_common_palm_civet": {
+    "species_id": "sp_common_palm_civet",
+    "name": "Common Palm Civet",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  },
+  "sp_marbled_cat": {
+    "species_id": "sp_marbled_cat",
+    "name": "Marbled Cat",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#BFA075",
+      "secondary": "#8C6C43",
+      "accent": "#2B2117",
+      "underbelly": "#EFE7D8"
+    },
+    "features": [
+      "marbled_dorsal_blotches",
+      "bushy_cylindrical_tail",
+      "flexible_ankle_joints"
+    ],
+    "markings": "marbled_spots",
+    "ear_variant": "rounded",
+    "tail_variant": "very_long_bushy",
+    "beak_variant": "none"
+  },
+  "sp_rufous_browed_babbler": {
+    "species_id": "sp_rufous_browed_babbler",
+    "name": "Rufous-browed Babbler",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_short_tailed_babbler": {
+    "species_id": "sp_short_tailed_babbler",
+    "name": "Short-tailed Babbler",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_honey_buzzard": {
+    "species_id": "sp_honey_buzzard",
+    "name": "Honey Buzzard",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "raptor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6B584B",
+      "secondary": "#968070",
+      "accent": "#C5B29D",
+      "underbelly": "#F4EFEB"
+    },
+    "features": [
+      "slender_raptorial_hooked_bill",
+      "scaled_protective_facial_feathering",
+      "broad_tail_with_dark_bands"
+    ],
+    "markings": "tail_bands",
+    "ear_variant": "rounded",
+    "tail_variant": "wedge_tail",
+    "beak_variant": "raptor_hook"
+  },
+  "sp_spotted_giant_flying_squirrel": {
+    "species_id": "sp_spotted_giant_flying_squirrel",
+    "name": "Spotted Giant Flying Squirrel",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "glider",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#A85F3B",
+      "secondary": "#D17C55",
+      "accent": "#FFFFFF",
+      "underbelly": "#FCEFE8"
+    },
+    "features": [
+      "large_wing_like_gliding_membranes",
+      "white_spotted_dorsal_pelage",
+      "broad_rudder_tail"
+    ],
+    "markings": "white_spotted_dorsal",
+    "ear_variant": "round_membrane",
+    "tail_variant": "broad_feathered",
+    "beak_variant": "none"
+  },
+  "sp_crimson_winged_woodpecker": {
+    "species_id": "sp_crimson_winged_woodpecker",
+    "name": "Crimson-winged Woodpecker",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "woodpecker",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6E7C57",
+      "secondary": "#C4362A",
+      "accent": "#D9A443",
+      "underbelly": "#EFEAD8"
+    },
+    "features": [
+      "bright_crimson_wings_and_crest",
+      "checker_scaly_belly",
+      "olive_green_body_plumage"
+    ],
+    "markings": "crimson_wings",
+    "ear_variant": "rounded",
+    "tail_variant": "stiff_spine",
+    "beak_variant": "straight_chisel"
+  },
+  "sp_western_hooded_pitta": {
+    "species_id": "sp_western_hooded_pitta",
+    "name": "Western Hooded Pitta",
+    "category": "Bird",
+    "role": "Agile",
+    "archetype": "pitta",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1A7A4C",
+      "secondary": "#1D2022",
+      "accent": "#2889B8",
+      "underbelly": "#D8382E"
+    },
+    "features": [
+      "jet_black_hooded_head",
+      "glistening_moss_green_torso",
+      "vibrant_turquoise_rump_patch",
+      "scarlet_vent"
+    ],
+    "markings": "black_hood",
+    "ear_variant": "rounded",
+    "tail_variant": "stubby_vent",
+    "beak_variant": "strong_thrush"
+  },
+  "sp_malayan_peacock_pheasant": {
+    "species_id": "sp_malayan_peacock_pheasant",
+    "name": "Malayan Peacock-Pheasant",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "pheasant",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#222830",
+      "secondary": "#A83B25",
+      "accent": "#4285B4",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "elongated_fleshy_blue_facial_wattles",
+      "contrasting_pure_white_tail_plumes",
+      "glossy_body_sheen"
+    ],
+    "markings": "white_tail_contrast",
+    "ear_variant": "rounded",
+    "tail_variant": "arching_white",
+    "beak_variant": "curved_gamefowl"
+  },
+  "sp_bornean_orangutan": {
+    "species_id": "sp_bornean_orangutan",
+    "name": "Bornean Orangutan",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "orangutan",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#AF4424",
+      "secondary": "#D45E37",
+      "accent": "#632512",
+      "underbelly": "#EF9F7F"
+    },
+    "features": [
+      "coarse_shaggy_cinnamon_orange_hair",
+      "heavy_cheek_flanges_in_males",
+      "broad_deep_barrel_chest",
+      "tailless"
+    ],
+    "markings": "orange_shag",
+    "ear_variant": "small_bare",
+    "tail_variant": "tailless",
+    "beak_variant": "none"
+  },
+  "sp_banded_leaf_monkey": {
+    "species_id": "sp_banded_leaf_monkey",
+    "name": "Banded Leaf Monkey",
+    "category": "Mammal",
+    "role": "Support",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7B8C80",
+      "secondary": "#A8B7AB",
+      "accent": "#D8C39E",
+      "underbelly": "#F4EDE0"
+    },
+    "features": [
+      "compact_silhouette"
+    ],
+    "markings": "solid",
+    "ear_variant": "rounded",
+    "tail_variant": "medium",
+    "beak_variant": "none"
+  },
+  "sp_white_fronted_langur": {
+    "species_id": "sp_white_fronted_langur",
+    "name": "White-fronted Langur",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#585C60",
+      "secondary": "#7E848A",
+      "accent": "#F2ECC9",
+      "underbelly": "#E5E0CE"
+    },
+    "features": [
+      "striking_yellowish_hands_and_feet",
+      "divided_forehead_crest",
+      "slender_body"
+    ],
+    "markings": "yellow_hands",
+    "ear_variant": "tufted_sides",
+    "tail_variant": "very_long_tassel",
+    "beak_variant": "none"
+  },
+  "sp_hose_s_langur": {
+    "species_id": "sp_hose_s_langur",
+    "name": "Hose's Langur",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#585C60",
+      "secondary": "#7E848A",
+      "accent": "#F2ECC9",
+      "underbelly": "#E5E0CE"
+    },
+    "features": [
+      "striking_yellowish_hands_and_feet",
+      "divided_forehead_crest",
+      "slender_body"
+    ],
+    "markings": "yellow_hands",
+    "ear_variant": "tufted_sides",
+    "tail_variant": "very_long_tassel",
+    "beak_variant": "none"
+  },
+  "sp_yellow_handed_mitered_langur": {
+    "species_id": "sp_yellow_handed_mitered_langur",
+    "name": "Yellow-handed Mitered Langur",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#585C60",
+      "secondary": "#7E848A",
+      "accent": "#F2ECC9",
+      "underbelly": "#E5E0CE"
+    },
+    "features": [
+      "striking_yellowish_hands_and_feet",
+      "divided_forehead_crest",
+      "slender_body"
+    ],
+    "markings": "yellow_hands",
+    "ear_variant": "tufted_sides",
+    "tail_variant": "very_long_tassel",
+    "beak_variant": "none"
+  },
+  "sp_maroon_sureli": {
+    "species_id": "sp_maroon_sureli",
+    "name": "Maroon Sureli",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8C382A",
+      "secondary": "#AF4D3C",
+      "accent": "#4A1C15",
+      "underbelly": "#DFA398"
+    },
+    "features": [
+      "intense_maroon_red_fur",
+      "spiky_erect_head_crest",
+      "blue_tinged_facial_skin"
+    ],
+    "markings": "solid_maroon",
+    "ear_variant": "tufted_sides",
+    "tail_variant": "very_long_tassel",
+    "beak_variant": "none"
+  },
+  "sp_white_thighed_surili": {
+    "species_id": "sp_white_thighed_surili",
+    "name": "White-thighed Surili",
+    "category": "Mammal",
+    "role": "Support",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#2B3135",
+      "secondary": "#454E54",
+      "accent": "#E8ECED",
+      "underbelly": "#D9DFE2"
+    },
+    "features": [
+      "striking_white_outer_thigh_patches",
+      "blackish_body_coat",
+      "tall_frontal_crest"
+    ],
+    "markings": "white_thighs",
+    "ear_variant": "tufted_sides",
+    "tail_variant": "very_long_tassel",
+    "beak_variant": "none"
+  },
+  "sp_mainland_leopard_cat": {
+    "species_id": "sp_mainland_leopard_cat",
+    "name": "Mainland Leopard Cat",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#D49B4B",
+      "secondary": "#9E6A26",
+      "accent": "#211812",
+      "underbelly": "#F9F1DC"
+    },
+    "features": [
+      "longitudinal_head_stripes",
+      "leopard_spotted_flanks",
+      "slender_agile_limbs"
+    ],
+    "markings": "spotted",
+    "ear_variant": "tall_round",
+    "tail_variant": "medium_ringed",
+    "beak_variant": "none"
+  },
+  "sp_flat_headed_cat": {
+    "species_id": "sp_flat_headed_cat",
+    "name": "Flat-headed Cat",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "feline",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#D49B4B",
+      "secondary": "#9E6A26",
+      "accent": "#211812",
+      "underbelly": "#F9F1DC"
+    },
+    "features": [
+      "longitudinal_head_stripes",
+      "leopard_spotted_flanks",
+      "slender_agile_limbs"
+    ],
+    "markings": "spotted",
+    "ear_variant": "tall_round",
+    "tail_variant": "medium_ringed",
+    "beak_variant": "none"
+  },
+  "sp_banded_linsang": {
+    "species_id": "sp_banded_linsang",
+    "name": "Banded Linsang",
+    "category": "Mammal",
+    "role": "Control",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#CBB78D",
+      "secondary": "#9A8256",
+      "accent": "#33291F",
+      "underbelly": "#F7F3EB"
+    },
+    "features": [
+      "transverse_dark_saddle_bars",
+      "long_slender_snout",
+      "semi_retractile_claws"
+    ],
+    "markings": "saddle_bars",
+    "ear_variant": "pointed",
+    "tail_variant": "half_ringed",
+    "beak_variant": "none"
+  },
+  "sp_brown_rat": {
+    "species_id": "sp_brown_rat",
+    "name": "Brown Rat",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "rodent",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#66574C",
+      "secondary": "#88776B",
+      "accent": "#D0C4B8",
+      "underbelly": "#ECE6DF"
+    },
+    "features": [
+      "scaly_annulated_tail",
+      "pointed_snout_with_long_vibrissae",
+      "sleek_agile_body"
+    ],
+    "markings": "agouti_ticked",
+    "ear_variant": "thin_membranous",
+    "tail_variant": "long_naked_scaly",
+    "beak_variant": "none"
+  },
+  "sp_malaysian_field_rat": {
+    "species_id": "sp_malaysian_field_rat",
+    "name": "Malaysian Field Rat",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "rodent",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#66574C",
+      "secondary": "#88776B",
+      "accent": "#D0C4B8",
+      "underbelly": "#ECE6DF"
+    },
+    "features": [
+      "scaly_annulated_tail",
+      "pointed_snout_with_long_vibrissae",
+      "sleek_agile_body"
+    ],
+    "markings": "agouti_ticked",
+    "ear_variant": "thin_membranous",
+    "tail_variant": "long_naked_scaly",
+    "beak_variant": "none"
+  },
+  "sp_pale_giant_squirrel": {
+    "species_id": "sp_pale_giant_squirrel",
+    "name": "Pale Giant Squirrel",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#A17D62",
+      "secondary": "#C9A387",
+      "accent": "#F5ECD7",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "large_bicolor_physique",
+      "pale_grizzled_brown_dorsal",
+      "long_sweeping_cylindrical_tail"
+    ],
+    "markings": "pale_bicolor",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "massive_feathered",
+    "beak_variant": "none"
+  },
+  "sp_black_giant_squirrel": {
+    "species_id": "sp_black_giant_squirrel",
+    "name": "Black Giant Squirrel",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1C1F22",
+      "secondary": "#363C42",
+      "accent": "#EDE2C2",
+      "underbelly": "#FDFBF4"
+    },
+    "features": [
+      "massive_two_tone_squirrel_body",
+      "glossy_black_mantle",
+      "contrasting_buff_cream_underparts"
+    ],
+    "markings": "black_and_buff",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "massive_feathered",
+    "beak_variant": "none"
+  },
+  "sp_tufted_ground_squirrel": {
+    "species_id": "sp_tufted_ground_squirrel",
+    "name": "Tufted Ground Squirrel",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6E4731",
+      "secondary": "#946347",
+      "accent": "#E58A32",
+      "underbelly": "#F9EAD9"
+    },
+    "features": [
+      "prominent_tall_ear_tufts",
+      "fluffy_bottle_brush_tail",
+      "reddish_flank_bars"
+    ],
+    "markings": "flank_bars",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "bottle_brush",
+    "beak_variant": "none"
+  },
+  "sp_shrew_faced_squirrel": {
+    "species_id": "sp_shrew_faced_squirrel",
+    "name": "Shrew-faced Squirrel",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E6C58",
+      "secondary": "#A2907A",
+      "accent": "#DE8943",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "orange_chestnut_belly",
+      "pale_lateral_side_flash",
+      "arched_bushy_tail"
+    ],
+    "markings": "orange_belly",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "bushy_curled",
+    "beak_variant": "none"
+  },
+  "sp_sunda_pied_fantail": {
+    "species_id": "sp_sunda_pied_fantail",
+    "name": "Sunda Pied Fantail",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#272B2E",
+      "secondary": "#FFFFFF",
+      "accent": "#6E777D",
+      "underbelly": "#FFFFFF"
+    },
+    "features": [
+      "broad_frequently_fanned_tail_with_white_tips",
+      "white_supercilium_eyebrow",
+      "sooty_black_mantle"
+    ],
+    "markings": "fanned_white_tips",
+    "ear_variant": "rounded",
+    "tail_variant": "broad_fan",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_indomalayan_bamboo_rat": {
+    "species_id": "sp_indomalayan_bamboo_rat",
+    "name": "Indomalayan Bamboo Rat",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "rodent",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8B6A56",
+      "secondary": "#B08C76",
+      "accent": "#E58E52",
+      "underbelly": "#EEDCD1"
+    },
+    "features": [
+      "stout_cylindrical_fossorial_body",
+      "huge_orange_protruding_incisors",
+      "tiny_eyes_and_ears"
+    ],
+    "markings": "stout_solid",
+    "ear_variant": "minute_hidden",
+    "tail_variant": "short_scaly",
+    "beak_variant": "none"
+  },
+  "sp_crested_partridge": {
+    "species_id": "sp_crested_partridge",
+    "name": "Crested Partridge",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#1E2B38",
+      "secondary": "#6A2624",
+      "accent": "#D43733",
+      "underbelly": "#FAF5EE"
+    },
+    "features": [
+      "spectacular_tall_crimson_fan_crest",
+      "naked_scarlet_eye_orbital_skin",
+      "lustrous_glossy_greenish_black_body"
+    ],
+    "markings": "crimson_crest",
+    "ear_variant": "rounded",
+    "tail_variant": "short_tucked",
+    "beak_variant": "short_stout"
+  },
+  "sp_sambar": {
+    "species_id": "sp_sambar",
+    "name": "Sambar",
+    "category": "Mammal",
+    "role": "Power",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#544136",
+      "secondary": "#7A6253",
+      "accent": "#B89B7D",
+      "underbelly": "#E2D5C7"
+    },
+    "features": [
+      "large_three_tined_antlers",
+      "dense_coarse_throat_ruff",
+      "heavy_cervid_torso"
+    ],
+    "markings": "solid_dark",
+    "ear_variant": "broad_rounded",
+    "tail_variant": "short_bushy_dark",
+    "beak_variant": "none"
+  },
+  "sp_crested_serpent_eagle": {
+    "species_id": "sp_crested_serpent_eagle",
+    "name": "Crested Serpent-eagle",
+    "category": "Bird",
+    "role": "Precision",
+    "archetype": "raptor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#4C3B2F",
+      "secondary": "#78604F",
+      "accent": "#F0C948",
+      "underbelly": "#FAF6EB"
+    },
+    "features": [
+      "broad_bushy_nuchal_crest_behind_head",
+      "bold_white_spotted_underwings",
+      "bright_yellow_cere_and_eyes"
+    ],
+    "markings": "ocellated_spots",
+    "ear_variant": "rounded",
+    "tail_variant": "wedge_tail",
+    "beak_variant": "raptor_hook"
+  },
+  "sp_horse_tailed_squirrel": {
+    "species_id": "sp_horse_tailed_squirrel",
+    "name": "Horse-tailed Squirrel",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#7E6C58",
+      "secondary": "#A2907A",
+      "accent": "#DE8943",
+      "underbelly": "#F2ECE4"
+    },
+    "features": [
+      "orange_chestnut_belly",
+      "pale_lateral_side_flash",
+      "arched_bushy_tail"
+    ],
+    "markings": "orange_belly",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "bushy_curled",
+    "beak_variant": "none"
+  },
+  "sp_bearded_pig": {
+    "species_id": "sp_bearded_pig",
+    "name": "Bearded Pig",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "boar",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#5B4033",
+      "secondary": "#8B6B58",
+      "accent": "#E0A96D",
+      "underbelly": "#FFF0CE"
+    },
+    "features": [
+      "prominent_cheek_bristles",
+      "elongated_narrow_snout",
+      "curved_lower_canines"
+    ],
+    "markings": "facial_beard",
+    "ear_variant": "pointed_tuft",
+    "tail_variant": "thin_tufted",
+    "beak_variant": "none"
+  },
+  "sp_wild_boar": {
+    "species_id": "sp_wild_boar",
+    "name": "Wild Boar",
+    "category": "Mammal",
+    "role": "Tank",
+    "archetype": "boar",
+    "asset_status": "bespoke",
+    "palette": {
+      "primary": "#5B4033",
+      "secondary": "#8B6B58",
+      "accent": "#E0A96D",
+      "underbelly": "#FFF0CE"
+    },
+    "features": [
+      "stout_dorsal_crest",
+      "exposed_ivory_tusks",
+      "flattened_snout_disc"
+    ],
+    "markings": "bristled",
+    "ear_variant": "pointed_tuft",
+    "tail_variant": "thin_tufted",
+    "beak_variant": "none"
+  },
+  "sp_asian_blue_quail": {
+    "species_id": "sp_asian_blue_quail",
+    "name": "Asian Blue Quail",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#334860",
+      "secondary": "#A0522D",
+      "accent": "#FFFFFF",
+      "underbelly": "#F6F0E4"
+    },
+    "features": [
+      "deep_slate_blue_mantle",
+      "bold_white_throat_bib_outlined_in_black",
+      "chestnut_belly",
+      "tiny_round_body"
+    ],
+    "markings": "white_throat_bib",
+    "ear_variant": "rounded",
+    "tail_variant": "hidden",
+    "beak_variant": "short_stout"
+  },
+  "sp_asiatic_striped_squirrels": {
+    "species_id": "sp_asiatic_striped_squirrels",
+    "name": "Asiatic Striped Squirrels",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "squirrel",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#8E7356",
+      "secondary": "#B29779",
+      "accent": "#F0EBD9",
+      "underbelly": "#2E2319"
+    },
+    "features": [
+      "sharp_parallel_black_and_cream_dorsal_stripes",
+      "slender_agile_limbs",
+      "narrow_tail"
+    ],
+    "markings": "longitudinal_stripes",
+    "ear_variant": "rounded_alert",
+    "tail_variant": "slender_striped",
+    "beak_variant": "none"
+  },
+  "sp_chestnut_capped_babbler": {
+    "species_id": "sp_chestnut_capped_babbler",
+    "name": "Chestnut-capped Babbler",
+    "category": "Bird",
+    "role": "Support",
+    "archetype": "songbird",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#6C5849",
+      "secondary": "#927966",
+      "accent": "#B86638",
+      "underbelly": "#EFE7DE"
+    },
+    "features": [
+      "cocked_narrow_tail",
+      "prominent_supercilium_stripe",
+      "dense_protective_understory_plumage"
+    ],
+    "markings": "supercilium_stripe",
+    "ear_variant": "rounded",
+    "tail_variant": "cocked_slender",
+    "beak_variant": "slender_songbird"
+  },
+  "sp_dusky_leaf_monkey": {
+    "species_id": "sp_dusky_leaf_monkey",
+    "name": "Dusky Leaf Monkey",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "monkey",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3D4447",
+      "secondary": "#5B6468",
+      "accent": "#F4F7F6",
+      "underbelly": "#D6DEE0"
+    },
+    "features": [
+      "bright_white_spectacle_eye_rings",
+      "pale_white_lip_patch",
+      "ash_grey_peaked_crest"
+    ],
+    "markings": "spectacled",
+    "ear_variant": "dark_furred",
+    "tail_variant": "long_slender",
+    "beak_variant": "none"
+  },
+  "sp_greater_oriental_chevrotain": {
+    "species_id": "sp_greater_oriental_chevrotain",
+    "name": "Greater Oriental Chevrotain",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "deer",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#9C623B",
+      "secondary": "#BF7F54",
+      "accent": "#EAE0D0",
+      "underbelly": "#FFFBF5"
+    },
+    "features": [
+      "white_throat_chevron_stripes",
+      "dainty_pencil_thin_legs",
+      "protruding_canine_tushes_no_antlers"
+    ],
+    "markings": "throat_chevrons",
+    "ear_variant": "small_naked",
+    "tail_variant": "short_white_underside",
+    "beak_variant": "none"
+  },
+  "sp_long_tailed_porcupine": {
+    "species_id": "sp_long_tailed_porcupine",
+    "name": "Long-tailed Porcupine",
+    "category": "Mammal",
+    "role": "Defense",
+    "archetype": "porcupine",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#3E342F",
+      "secondary": "#78685E",
+      "accent": "#EDE6D6",
+      "underbelly": "#D6C7B2"
+    },
+    "features": [
+      "long_hollow_rattle_quills",
+      "banded_black_white_spines",
+      "crested_crown"
+    ],
+    "markings": "banded_quills",
+    "ear_variant": "small_quilled",
+    "tail_variant": "rattle_quill",
+    "beak_variant": "none"
+  },
+  "sp_chestnut_necklaced_partridge": {
+    "species_id": "sp_chestnut_necklaced_partridge",
+    "name": "Chestnut-necklaced Partridge",
+    "category": "Bird",
+    "role": "Balanced",
+    "archetype": "partridge",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#76523B",
+      "secondary": "#A8795B",
+      "accent": "#C94E34",
+      "underbelly": "#F4ECE1"
+    },
+    "features": [
+      "crimson_facial_skin_and_legs",
+      "barred_chest_necklace",
+      "compact_rotund_ground_silhouette"
+    ],
+    "markings": "barred_necklace",
+    "ear_variant": "rounded",
+    "tail_variant": "short_down",
+    "beak_variant": "short_stout"
+  },
+  "sp_white_crested_hornbill": {
+    "species_id": "sp_white_crested_hornbill",
+    "name": "White-crested hornbill",
+    "category": "Bird",
+    "role": "Guardian",
+    "archetype": "hornbill",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#2A3439",
+      "secondary": "#FFFFFF",
+      "accent": "#F0B843",
+      "underbelly": "#1B2F3D"
+    },
+    "features": [
+      "creamy_ivory_casque_with_black_patch",
+      "white_thighs_and_belly",
+      "white_outer_tail_feathers"
+    ],
+    "markings": "pied_contrast",
+    "ear_variant": "rounded",
+    "tail_variant": "long_broad",
+    "beak_variant": "heavy_casqued"
+  },
+  "sp_northern_treeshrew": {
+    "species_id": "sp_northern_treeshrew",
+    "name": "Northern Treeshrew",
+    "category": "Mammal",
+    "role": "Balanced",
+    "archetype": "shrew",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#75634D",
+      "secondary": "#99846C",
+      "accent": "#C4B4A1",
+      "underbelly": "#EEE8DF"
+    },
+    "features": [
+      "slender_pointed_muzzle",
+      "long_feathered_tail",
+      "sharp_clawed_arboreal_feet"
+    ],
+    "markings": "faint_shoulder_stripe",
+    "ear_variant": "prominent_oval",
+    "tail_variant": "bushy_feathered",
+    "beak_variant": "none"
+  },
+  "sp_common_treeshrew": {
+    "species_id": "sp_common_treeshrew",
+    "name": "Common Treeshrew",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "shrew",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#75634D",
+      "secondary": "#99846C",
+      "accent": "#C4B4A1",
+      "underbelly": "#EEE8DF"
+    },
+    "features": [
+      "slender_pointed_muzzle",
+      "long_feathered_tail",
+      "sharp_clawed_arboreal_feet"
+    ],
+    "markings": "faint_shoulder_stripe",
+    "ear_variant": "prominent_oval",
+    "tail_variant": "bushy_feathered",
+    "beak_variant": "none"
+  },
+  "sp_large_treeshrew": {
+    "species_id": "sp_large_treeshrew",
+    "name": "Large Treeshrew",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "shrew",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#75634D",
+      "secondary": "#99846C",
+      "accent": "#C4B4A1",
+      "underbelly": "#EEE8DF"
+    },
+    "features": [
+      "slender_pointed_muzzle",
+      "long_feathered_tail",
+      "sharp_clawed_arboreal_feet"
+    ],
+    "markings": "faint_shoulder_stripe",
+    "ear_variant": "prominent_oval",
+    "tail_variant": "bushy_feathered",
+    "beak_variant": "none"
+  },
+  "sp_roughneck_monitor": {
+    "species_id": "sp_roughneck_monitor",
+    "name": "Roughneck Monitor",
+    "category": "Reptile",
+    "role": "Control",
+    "archetype": "monitor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#363D39",
+      "secondary": "#5A635E",
+      "accent": "#D9C87B",
+      "underbelly": "#E8E4D5"
+    },
+    "features": [
+      "large_pointed_keeled_neck_scales",
+      "deeply_forked_yellow_snake_tongue",
+      "narrow_convex_snout"
+    ],
+    "markings": "rough_neck_scales",
+    "ear_variant": "none",
+    "tail_variant": "long_whip_keeled",
+    "beak_variant": "none"
+  },
+  "sp_common_water_monitor": {
+    "species_id": "sp_common_water_monitor",
+    "name": "Common Water Monitor",
+    "category": "Reptile",
+    "role": "Control",
+    "archetype": "monitor",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#363D39",
+      "secondary": "#5A635E",
+      "accent": "#D9C87B",
+      "underbelly": "#E8E4D5"
+    },
+    "features": [
+      "yellow_ocelli_rosette_bands_across_back",
+      "long_muscular_whip_tail",
+      "forked_sensory_tongue"
+    ],
+    "markings": "yellow_ocelli_bands",
+    "ear_variant": "none",
+    "tail_variant": "long_whip_keeled",
+    "beak_variant": "none"
+  },
+  "sp_large_spotted_civet": {
+    "species_id": "sp_large_spotted_civet",
+    "name": "Large-spotted Civet",
+    "category": "Mammal",
+    "role": "Trickster",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#9B8B77",
+      "secondary": "#C4B5A3",
+      "accent": "#2E271F",
+      "underbelly": "#F3EFE9"
+    },
+    "features": [
+      "large_dark_flank_spots",
+      "black_dorsal_crest",
+      "ringed_black_white_neck_stripes"
+    ],
+    "markings": "large_spots",
+    "ear_variant": "pointed",
+    "tail_variant": "ringed",
+    "beak_variant": "none"
+  },
+  "sp_malay_civet": {
+    "species_id": "sp_malay_civet",
+    "name": "Malay Civet",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  },
+  "sp_large_indian_civet": {
+    "species_id": "sp_large_indian_civet",
+    "name": "Large Indian Civet",
+    "category": "Mammal",
+    "role": "Agile",
+    "archetype": "civet",
+    "asset_status": "composed",
+    "palette": {
+      "primary": "#847466",
+      "secondary": "#AFA193",
+      "accent": "#2D2520",
+      "underbelly": "#ECE5DC"
+    },
+    "features": [
+      "dark_dorsal_ridge_lines",
+      "lateral_speckled_spots",
+      "masked_whisker_zone"
+    ],
+    "markings": "speckled_stripes",
+    "ear_variant": "pointed_erect",
+    "tail_variant": "ringed_long",
+    "beak_variant": "none"
+  }
+}

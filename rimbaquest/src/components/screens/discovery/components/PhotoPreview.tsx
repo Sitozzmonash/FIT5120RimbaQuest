@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { Image, Modal, StyleSheet, Text, View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import { FONTS } from "../../../../constants/fonts";
 import { useDiscoveryStore } from "../../../../store/useDiscoveryStore";
+import { ScaleTap } from "../../../common/ScaleTap";
 import { Tap } from "../../../common/Tap";
+import { DISCOVERY_COLORS, DISCOVERY_IMAGES } from "./discoveryTheme";
+
+const PHOTO_SIZE = 130;
 
 export function PhotoPreview() {
   const photoUri = useDiscoveryStore((state) => state.photoUri);
@@ -13,17 +18,26 @@ export function PhotoPreview() {
 
   return (
     <View style={styles.wrap}>
-      <Tap
-        label="Make photo bigger"
-        style={styles.photo}
-        onPress={() => setEnlarged(true)}
-      >
-        <Image source={photo} style={styles.image} />
-        <View style={styles.zoomBadge}>
-          <MaterialIcons name="add" size={18} color="#FFFFFF" />
-        </View>
-      </Tap>
-      <Text style={styles.caption}>Tap the photo to make it bigger</Text>
+      <View style={styles.tilt}>
+        <ScaleTap
+          label="Make photo bigger"
+          style={styles.polaroid}
+          onPress={() => setEnlarged(true)}
+        >
+          <View style={styles.photoFrame}>
+            <Image source={photo} style={styles.image} />
+          </View>
+          <View style={styles.zoom}>
+            <MaterialIcons name="add" size={24} color="#FFFFFF" />
+          </View>
+          <Image
+            source={DISCOVERY_IMAGES.foliage}
+            style={styles.foliage}
+            resizeMode="contain"
+          />
+        </ScaleTap>
+      </View>
+      <Text style={styles.caption}>Tap photo to enlarge</Text>
 
       <Modal
         visible={enlarged}
@@ -49,23 +63,49 @@ export function PhotoPreview() {
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: "center", gap: 8, width: "100%" },
-  photo: { width: 160, height: 160, borderRadius: 20, overflow: "hidden" },
+  // Top padding keeps the zoom badge clear of the scroll edge.
+  wrap: { alignItems: "center", gap: 8, width: "100%", paddingTop: 22 },
+  polaroid: {
+    padding: 8,
+    backgroundColor: "#FFFDF4",
+    borderWidth: 3,
+    borderBottomWidth: 8,
+    borderColor: DISCOVERY_COLORS.ink,
+    borderRadius: 15,
+  },
+  tilt: { transform: [{ rotate: "-2deg" }] },
+  photoFrame: {
+    width: PHOTO_SIZE,
+    height: PHOTO_SIZE,
+    backgroundColor: "#2F6B3E",
+    borderWidth: 2,
+    borderColor: DISCOVERY_COLORS.ink,
+    borderRadius: 9,
+    overflow: "hidden",
+  },
   image: { width: "100%", height: "100%" },
-  zoomBadge: {
+  zoom: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.13)",
+    top: -18,
+    right: -18,
+    width: 46,
+    height: 46 + 3,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: DISCOVERY_COLORS.green,
+    borderWidth: 3,
+    borderBottomWidth: 6,
+    borderColor: DISCOVERY_COLORS.ink,
+    borderRadius: 23,
   },
-  caption: { color: "#1A1A1A", fontSize: 13, fontWeight: "500" },
+  foliage: {
+    position: "absolute",
+    left: -27,
+    bottom: -18,
+    width: 54,
+    height: 50,
+  },
+  caption: { fontFamily: FONTS.bodyBold, color: "#5A6B5A", fontSize: 13 },
   modalBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.88)",
@@ -74,5 +114,5 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   modalImage: { width: "100%", height: 420 },
-  modalHint: { color: "#FFFFFF", marginTop: 12, fontWeight: "700" },
+  modalHint: { color: "#FFFFFF", marginTop: 12, fontFamily: FONTS.bodyBold },
 });

@@ -9,6 +9,8 @@ import {
   View,
 } from "react-native";
 import { useController } from "react-hook-form";
+import { FONTS } from "../../../../constants/fonts";
+import { AUTH_COLORS } from "../../auth/authTheme";
 import { AccountFormValues } from "../accountFormTypes";
 
 const AGE_MIN = 5;
@@ -86,7 +88,7 @@ export function AgeWheelPicker() {
           showsVerticalScrollIndicator={false}
           snapToInterval={AGE_ITEM_HEIGHT}
           decelerationRate="fast"
-          contentContainerStyle={{ paddingVertical: AGE_PADDING }}
+          contentContainerStyle={{ paddingVertical: AGE_PADDING - 2 }}
           {...(Platform.OS === "web"
             ? { scrollEventThrottle: 16, onScroll: handleScrollWeb }
             : { onMomentumScrollEnd: handleMomentumEnd })}
@@ -121,46 +123,52 @@ const styles = StyleSheet.create({
   createAgeWheelWrap: { alignItems: "center" },
   createAgeWheel: {
     width: 140,
-    height: 220,
+    height: AGE_WHEEL_HEIGHT,
     borderRadius: 20,
-    backgroundColor: "#F4FCF6",
+    borderWidth: 2,
+    borderColor: AUTH_COLORS.inputBorder,
+    backgroundColor: "#FFFFFF",
     overflow: "hidden",
   },
   createAgeWheelHighlight: {
     position: "absolute",
     left: 0,
     right: 0,
-    top: 88,
+    top: (AGE_WHEEL_HEIGHT - 4 - AGE_ITEM_HEIGHT) / 2,
     height: 44,
     borderTopWidth: 1.5,
     borderBottomWidth: 1.5,
-    borderColor: "#0A4D26",
-    backgroundColor: "rgba(10,77,38,0.05)",
+    borderColor: AUTH_COLORS.ink,
+    backgroundColor: "rgba(63, 154, 78, 0.12)",
   },
   createAgeWheelItem: {
     height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  createAgeWheelText: { fontSize: 18, color: "#9AB8A6", fontWeight: "600" },
+  createAgeWheelText: {
+    fontFamily: FONTS.bodyBold,
+    fontSize: 18,
+    color: AUTH_COLORS.placeholder,
+  },
   createAgeWheelTextActive: {
-    fontSize: 24,
-    color: "#0A4D26",
-    fontWeight: "900",
+    fontFamily: FONTS.display,
+    fontSize: 26,
+    color: AUTH_COLORS.title,
   },
   createAgeWheelPlaceholder: {
     position: "absolute",
     left: 0,
     right: 0,
-    top: 88,
+    top: (AGE_WHEEL_HEIGHT - 4 - AGE_ITEM_HEIGHT) / 2,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F4FCF6",
+    backgroundColor: "#FFFFFF",
   },
   createAgeWheelPlaceholderText: {
+    fontFamily: FONTS.bodyExtraBold,
     fontSize: 12,
-    color: "#6A9B7D",
-    fontWeight: "700",
+    color: AUTH_COLORS.icon,
   },
 });

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
-
-from sqlalchemy import create_engine, event, inspect, text
+from sqlalchemy import create_engine, event, inspect, text  
 from sqlalchemy.engine import Engine
 
 from app.core.config import DATABASE_URL
@@ -11,7 +11,7 @@ from app.core.schema import metadata
 from app.core.seed import (
     seed_iteration_one,
     seed_iteration_two_chat_evidence,
-    seed_iteration_two_fun_facts_pilot,
+    seed_iteration_three_fun_facts,
 )
 
 
@@ -63,9 +63,23 @@ def initialise_database() -> None:
     """
     _rename_child_profile_user_column()
     metadata.create_all(engine)
+    # Existing battle-count rows have no expiry and are treated as ready.
     with engine.begin() as connection:
+        rest_columns = {column["name"] for column in inspect(connection).get_columns("wildlife_card_rest")}
+        if "rest_until" not in rest_columns:
+            connection.exec_driver_sql("ALTER TABLE wildlife_card_rest ADD COLUMN rest_until TIMESTAMP WITH TIME ZONE")
+    with engine.begin() as connection:
+        # ``create_all`` does not add columns to an existing Render/SQLite
+        # database. Keep this narrow migration beside the seed it enables.
+        location_columns = {
+            column["name"] for column in inspect(connection).get_columns("locations")
+        }
+        if "official_website" not in location_columns:
+            connection.exec_driver_sql(
+                "ALTER TABLE locations ADD COLUMN official_website VARCHAR"
+            )
         seed_iteration_one(connection)
-        seed_iteration_two_fun_facts_pilot(connection)
+        seed_iteration_three_fun_facts(connection)
         seed_iteration_two_chat_evidence(connection)
 
 

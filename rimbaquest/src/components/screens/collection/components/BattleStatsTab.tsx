@@ -1,11 +1,14 @@
 import React from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import { Species } from "../../../../types";
+import { StyleSheet, Text, View } from "react-native";
+import { FONTS } from "../../../../constants/fonts";
 import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
-import { useBattleStore } from "../../../../store/useBattleStore";
-import { Tap } from "../../../common/Tap";
-import { CombatAttributesCard } from "./CombatAttributesCard";
-import { AbilityCard } from "./AbilityCard";
+import { Species } from "../../../../types";
+import { speciesAbilities } from "../speciesAbilities";
+import { AbilityRow } from "./detail/AbilityRow";
+import { DetailCard } from "./detail/DetailCard";
+import { DETAIL_COLORS, DETAIL_IMAGES } from "./detail/detailTheme";
+import { StatTile } from "./detail/StatTile";
+import { TabStatus } from "./detail/TabStatus";
 
 const EMPTY_ABILITIES: number[] = [];
 
@@ -17,39 +20,43 @@ export function BattleStatsTab({ item }: { item: Species }) {
     (state) => item.id in state.progressionBySpecies,
   );
 
-  const abilities = [
-    item.ability_1 || "Ability 1",
-    item.ability_2 || "Ability 2",
-    item.ability_3 || "Ability 3",
-  ];
-
   return (
-    <View style={styles.container}>
-      <CombatAttributesCard
-        hp={item.hp || 120}
-        damage={item.base_attack || 25}
-      />
+    <DetailCard>
+      <Text style={styles.heading}>Card Combat Attributes</Text>
+      <View style={styles.stats}>
+        <StatTile
+          label="HP"
+          value={item.hp ?? item.max_energy ?? "—"}
+          icon={DETAIL_IMAGES.heart}
+          iconSize={{ width: 30, height: 25.16 }}
+          color="#C7353A"
+        />
+        <StatTile
+          label="DAMAGE"
+          value={item.base_attack ?? "—"}
+          icon={DETAIL_IMAGES.swords}
+          iconSize={{ width: 30, height: 27.24 }}
+          color="#B85200"
+        />
+      </View>
 
-      <Text style={styles.sectionTitle}>SPECIAL ABILITIES</Text>
+      <Text style={[styles.heading, styles.spaced]}>Special Abilities</Text>
       {!isProgressionKnown ? (
-        <View style={styles.loadingRow}>
-          <ActivityIndicator size="small" color="#0A4D26" />
-          <Text style={styles.loadingText}>Checking your ability progress…</Text>
-        </View>
+        <TabStatus loading message="Checking your ability progress…" />
       ) : (
-        abilities.map((name, idx) => {
-          const slot = idx + 1;
+        speciesAbilities(item).map(({ slot, name, description }) => {
           const isUnlocked = unlockedAbilities.includes(slot);
-          const isNextToUnlock =
-            !isUnlocked && slot === unlockedAbilities.length + 1;
-
           return (
-            <AbilityCard
+            <AbilityRow
               key={slot}
               slot={slot}
               name={name}
+              description={description}
               isUnlocked={isUnlocked}
-              isNextToUnlock={isNextToUnlock}
+              isNextToUnlock={
+                !isUnlocked &&
+                (slot === 1 || unlockedAbilities.includes(slot - 1))
+              }
               onUnlock={() =>
                 useAbilityQuizStore.getState().openUnlockModal(item, slot)
               }
@@ -57,36 +64,16 @@ export function BattleStatsTab({ item }: { item: Species }) {
           );
         })
       )}
-
-      <Tap
-        label="Battle with this card"
-        style={styles.primary}
-        onPress={() => void useBattleStore.getState().startBattle(item)}
-      >
-        <Text style={styles.primaryText}>Battle with This Card</Text>
-      </Tap>
-    </View>
+    </DetailCard>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: "500", color: "#000000" },
-  loadingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 14,
+  heading: {
+    fontFamily: FONTS.display,
+    color: DETAIL_COLORS.heading,
+    fontSize: 19,
   },
-  loadingText: { fontSize: 13, color: "#667085", fontWeight: "600" },
-  primary: {
-    minHeight: 48,
-    marginTop: 6,
-    borderRadius: 24,
-    backgroundColor: "#0BA84A",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 14, fontWeight: "800" },
+  spaced: { paddingTop: 4 },
+  stats: { flexDirection: "row", gap: 12 },
 });

@@ -63,10 +63,12 @@ def chat_about_discovered_species(
                     WHERE is_active=TRUE AND id <> :species_id"""),
             {"species_id": species_id},
         ))
-        # Keep the full approval predicate here as a second layer of
-        # protection: a source-linked draft must never enter provider context.
+        # Every Iteration 3 row is team-verified, but retain the full approval
+        # predicate so a later draft or incomplete review cannot reach the
+        # provider context merely because it belongs to the current species.
         fun_facts = rows(connection.execute(
-            text("""SELECT id, fact_text, verification_status, verified_by, verified_at
+            text("""SELECT id, fact_text, source_name, source_url,
+                           verification_status, verified_by, verified_at
                     FROM species_fun_facts
                     WHERE species_id=:species_id
                       AND LOWER(verification_status) IN ('team-verified', 'approved', 'verified')
@@ -75,6 +77,25 @@ def chat_about_discovered_species(
                     ORDER BY display_order ASC"""),
             {"species_id": species_id},
         ))
+        fun_fact_sources = rows(connection.execute(
+            text("""SELECT sources.fact_id, sources.source_url
+                    FROM species_fun_fact_sources AS sources
+                    JOIN species_fun_facts AS facts ON facts.id=sources.fact_id
+                    WHERE facts.species_id=:species_id
+                      AND LOWER(facts.verification_status) IN ('team-verified', 'approved', 'verified')
+                      AND NULLIF(TRIM(facts.verified_by), '') IS NOT NULL
+                      AND facts.verified_at IS NOT NULL
+                    ORDER BY sources.id ASC"""),
+            {"species_id": species_id},
+        ))
+        sources_by_fact: dict[int, list[str]] = {}
+        for source in fun_fact_sources:
+            fact_id = source.get("fact_id")
+            source_url = str(source.get("source_url") or "").strip()
+            if isinstance(fact_id, int) and source_url:
+                sources_by_fact.setdefault(fact_id, []).append(source_url)
+        for fact in fun_facts:
+            fact["source_urls"] = sources_by_fact.get(int(fact["id"]), [])
         external_evidence = rows(connection.execute(
             text("""SELECT id, source_id, source_url, topic, excerpt,
                            verification_status, verified_by, verified_at
@@ -117,6 +138,7 @@ def chat_about_discovered_species(
                 "source_id": citation.source_id,
                 "source_name": citation.source_name,
                 "source_url": citation.source_url,
+                "source_urls": list(citation.source_urls),
                 "excerpt": citation.excerpt,
             }
             for citation in reply.citations

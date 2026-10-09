@@ -18,10 +18,25 @@ REPOSITORY_ROOT = BACKEND_ROOT.parent
 load_dotenv(REPOSITORY_ROOT / ".env")
 load_dotenv(BACKEND_ROOT / ".env")
 DEFAULT_DB = Path(os.getenv("LOCALAPPDATA", tempfile.gettempdir())) / "RimbaQuest" / "RimbaQuest.db"
+def _default_iteration_three_fun_facts_path() -> Path:
+    env_override = (
+        os.getenv("ITERATION_3_FUN_FACTS_PATH")
+        or os.getenv("FUN_FACTS_PATH")
+        or os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH")
+    )
+    if env_override:
+        return Path(env_override)
+    for candidate in (
+        Path("./data/iteration3_fun_facts.json"),
+        BACKEND_ROOT / "data" / "iteration3_fun_facts.json",
+    ):
+        if candidate.exists():
+            return candidate
+    return Path("./data/iteration3_fun_facts.json")
+
+
 SEED_SQL = Path(os.getenv("SEED_SQL_PATH", "./data/seed.sql"))
-ITERATION_2_FUN_FACTS_PILOT = Path(
-    os.getenv("ITERATION_2_FUN_FACTS_PILOT_PATH", "./data/iteration2_fun_facts_pilot.json")
-)
+ITERATION_3_FUN_FACTS = _default_iteration_three_fun_facts_path()
 ITERATION_2_CHAT_EVIDENCE = Path(
     os.getenv("ITERATION_2_CHAT_EVIDENCE_PATH", "./data/iteration2_chat_evidence.json")
 )
@@ -45,6 +60,9 @@ STORAGE_SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "").strip()
 STORAGE_REGION = os.getenv("AWS_REGION", "us-east-2").strip()
 STORAGE_BUCKET = os.getenv("DATABASE_STORAGE_BUCKET", "image").strip()
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
+# Discovery checks receive the original camera file so the screen-recapture
+# check sees full-resolution pixels; the server shrinks it afterwards.
+MAX_DISCOVERY_PHOTO_BYTES = 20 * 1024 * 1024
 SIGNED_PHOTO_TTL_SECONDS = 60 * 60
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-only-rimbaquest-secret-change-before-deploy")
@@ -111,8 +129,17 @@ PRIMARY_VISION_MODEL = {
     "zhipu": ZHIPU_VISION_MODEL,
 }.get(_PRIMARY_PROVIDER_NAME, "configured_sequence")
 VISION_MIN_CONFIDENCE = float(os.getenv("VISION_MIN_CONFIDENCE", "0.65"))
-VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "45"))
+VISION_TIMEOUT_SECONDS = float(os.getenv("VISION_TIMEOUT_SECONDS", "20"))
 DISCOVERY_VERIFICATION_TTL_MINUTES = int(os.getenv("DISCOVERY_VERIFICATION_TTL_MINUTES", "30"))
+
+RECAPTURE_THRESHOLD = (
+    float(os.environ["RECAPTURE_THRESHOLD"]) if os.getenv("RECAPTURE_THRESHOLD", "").strip() else None
+)
+RECAPTURE_BLOCK_THRESHOLD = float(os.getenv("RECAPTURE_BLOCK_THRESHOLD", "0.6"))
+RECAPTURE_TIMEOUT_SECONDS = float(os.getenv("RECAPTURE_TIMEOUT_SECONDS", "15"))
+RECAPTURE_MAX_UPLOAD_MB = int(os.getenv("RECAPTURE_MAX_UPLOAD_MB", "40"))
+RECAPTURE_THREADS = int(os.getenv("RECAPTURE_THREADS", "1"))
+RECAPTURE_API_ENABLED = os.getenv("RECAPTURE_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
 
 # Epic 6: server-side only.  No Expo environment variable may contain this
 # credential.  If it is absent, the endpoint uses a deterministic approved-
@@ -124,14 +151,31 @@ CHAT_TIMEOUT_SECONDS = float(os.getenv("CHAT_TIMEOUT_SECONDS", "20"))
 # The model returns only a small JSON evidence-ID list, not prose.
 CHAT_MAX_OUTPUT_TOKENS = int(os.getenv("CHAT_MAX_OUTPUT_TOKENS", "80"))
 
+# Iteration 3 source pages are the fixed, team-verified URLs bundled with the
+# Fun Fact workbook. They are never derived from a child's question or input.
+ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED = (
+    os.getenv("ITERATION_3_SOURCE_PAGE_CONTENT_ENABLED", "true").strip().casefold()
+    in {"1", "true", "yes"}
+)
+ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS = float(
+    os.getenv("ITERATION_3_SOURCE_PAGE_TIMEOUT_SECONDS", "6")
+)
+ITERATION_3_SOURCE_PAGE_MAX_BYTES = int(
+    os.getenv("ITERATION_3_SOURCE_PAGE_MAX_BYTES", str(8 * 1024 * 1024))
+)
+
 # Epic 6 evidence retrieval. GBIF's public taxonomy API needs no key and is
-# only used for taxonomy questions. Other sources are reviewed and stored in
-# the database; this avoids scraping arbitrary web pages at runtime.
+# only used for taxonomy questions. Wikipedia's Action API may provide a
+# current-species overview for safe, general questions. Other source material
+# is reviewed and stored in the database; this avoids arbitrary web scraping.
 # Opt in explicitly outside the Render blueprint. This prevents local tests
 # and unconfigured development environments from making a live request.
 GBIF_API_ENABLED = os.getenv("GBIF_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
 GBIF_API_BASE_URL = os.getenv("GBIF_API_BASE_URL", "https://api.gbif.org/v1").strip().rstrip("/")
 GBIF_TIMEOUT_SECONDS = float(os.getenv("GBIF_TIMEOUT_SECONDS", "8"))
+WIKIPEDIA_API_ENABLED = os.getenv("WIKIPEDIA_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
+WIKIPEDIA_API_BASE_URL = os.getenv("WIKIPEDIA_API_BASE_URL", "https://en.wikipedia.org/w/api.php").strip()
+WIKIPEDIA_TIMEOUT_SECONDS = float(os.getenv("WIKIPEDIA_TIMEOUT_SECONDS", "8"))
 
 DEFAULT_ORIGINS = (
     "http://localhost:3000,http://127.0.0.1:3000,"

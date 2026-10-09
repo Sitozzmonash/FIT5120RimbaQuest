@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import secrets
 import time
 from datetime import datetime, timezone
@@ -12,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.auth import AuthenticatedUser, require_child_access
 from app.core.database import engine
-from app.core.email import send_password_reset_email
+from app.core.email import email_provider_configured, send_password_reset_email
 from app.core.security import create_access_token, hash_password, verify_password
 from app.schemas.auth import (
     ForgotPasswordIn,
@@ -147,13 +146,19 @@ def forgot_password(payload: ForgotPasswordIn):
                 text("UPDATE users SET recovery_token=:token WHERE id=:id"),
                 {"token": stored_token, "id": user["id"]},
             )
-            send_password_reset_email(email, code)
+            if not send_password_reset_email(email, code):
+                # Delivery failed: roll back the stored token and surface the
+                # error instead of pretending the code reached the user's inbox.
+                raise HTTPException(
+                    502,
+                    "We could not send the reset email right now. Please try again in a moment.",
+                )
 
     resp: dict[str, Any] = {
         "success": True,
         "message": "If this email is registered, a password reset code has been sent to your email.",
     }
-    if not os.getenv("SMTP_USER"):
+    if not email_provider_configured():
         resp["dev_code"] = code
         resp["simulated_token"] = code
     return resp
@@ -171,12 +176,16 @@ def reset_password(payload: ResetPasswordIn):
         if not user:
             raise HTTPException(400, "Invalid or expired recovery code.")
 
-        stored = user["recovery_token"] or ""
+        stored = (user["recovery_token"] or "").strip()
         try:
             if ":" not in stored:
                 raise ValueError("Invalid stored format")
             stored_code, expiry = stored.split(":", 1)
-            valid = (stored_code.upper() == token.upper()) and (time.time() <= int(expiry))
+            clean_token = "".join(token.split()).upper()
+            clean_stored = "".join(stored_code.split()).upper()
+            now_ts = int(time.time())
+            expiry_ts = int(expiry)
+            valid = (clean_stored == clean_token) and (now_ts <= expiry_ts)
         except (ValueError, IndexError):
             valid = False
 

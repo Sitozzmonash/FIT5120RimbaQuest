@@ -1,0 +1,42 @@
+{
+  "inputs": {
+    "local_rgb": [
+      1,
+      224,
+      224,
+      3
+    ],
+    "global_rgb": [
+      1,
+      224,
+      224,
+      3
+    ]
+  },
+  "dtype": "float32",
+  "range": [
+    0,
+    1
+  ],
+  "layout": "NHWC",
+  "output": "probabilities",
+  "classes": [
+    "original",
+    "recapture"
+  ],
+  "recapture_index": 1,
+  "threshold": 0.6069220900535583,
+  "arch": "mnv3s",
+  "local_crops": 1,
+  "crop_positions": [
+    [
+      0.5,
+      0.5
+    ]
+  ],
+  "combine_crops": "mean",
+  "preprocessing": "EXIF transpose; RGB; 1 native-pixel 224 local crop(s) at [(0.5, 0.5)] (crop 0 = CenterCrop224); global bilinear Resize256x256 then CenterCrop224",
+  "normalization": "Divide RGB uint8 by 255. Normalization is inside the model. Do not apply it twice.",
+  "usage": "Run once with the centre crop and the global view.",
+  "int8_note": "INT8 internal operations; float32 inputs and outputs. Inspect interpreter input names/indices on mobile."
+}

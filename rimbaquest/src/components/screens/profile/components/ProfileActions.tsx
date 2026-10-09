@@ -1,10 +1,9 @@
 import React from "react";
-import { StyleSheet, Text } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useNavigationStore } from "../../../../store/useNavigationStore";
 import { useProfileEditStore } from "../../../../store/useProfileEditStore";
 import { useUserStore } from "../../../../store/useUserStore";
-import { Tap } from "../../../common/Tap";
-import { PrimaryButton } from "../../../common/PrimaryButton";
+import { GameButton } from "../../../common/game/GameButton";
 
 function openEdit() {
   useProfileEditStore
@@ -15,34 +14,17 @@ function openEdit() {
 
 export function ProfileActions() {
   return (
-    <>
-      <PrimaryButton
-        label="Edit Profile"
-        style={styles.primary}
-        onPress={openEdit}
-      />
-      <Tap
+    <View style={styles.actions}>
+      <GameButton label="Edit Profile" onPress={openEdit} size="m" />
+      <GameButton
         label="Log Out"
-        style={styles.secondary}
+        variant="secondary"
         onPress={() => useUserStore.getState().logout()}
-      >
-        <Text style={styles.secondaryText}>Log Out</Text>
-      </Tap>
-    </>
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  primary: { marginTop: 24 },
-  secondary: {
-    minHeight: 50,
-    marginTop: 10,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: "#C8D1CA",
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryText: { color: "#566159", fontSize: 14, fontWeight: "800" },
+  actions: { gap: 4 },
 });
