@@ -380,7 +380,8 @@ export function SpeciesChatDrawer({
             //     : insets.bottom + COMPOSER_BOTTOM_GAP
             // }
             bottomPadding={
-              COMPOSER_BOTTOM_GAP
+              insets.bottom
+              // COMPOSER_BOTTOM_GAP
             }
             onFocus={() => {
               inputFocusedRef.current = true;

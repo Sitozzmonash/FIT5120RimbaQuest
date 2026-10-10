@@ -84,6 +84,20 @@ function dimAround(t: Rect): ViewStyle[] {
 }
 const DIM_ALL: ViewStyle[] = [{ left: -FAR, right: -FAR, top: -FAR, bottom: -FAR }];
 
+const TUTORIAL_SIGN_TARGET = STEPS[STEPS.length - 1].target!;
+
+export function TutorialSignSpotlight({ children }: { children?: React.ReactNode }) {
+  return (
+    <View style={[styles.layer, styles.passThrough]}>
+      {dimAround(TUTORIAL_SIGN_TARGET).map((rect, i) => (
+        <TutorialDim key={i} style={rect} />
+      ))}
+      <View style={[styles.highlight, TUTORIAL_SIGN_TARGET]} pointerEvents="none" />
+      {children}
+    </View>
+  );
+}
+
 // Gold outline drawn over the resume sheet's peek during its tutorial step.
 export function ResumeSheetHighlight({ height }: { height: number }) {
   return <View pointerEvents="none" style={[styles.highlight, styles.sheetHighlight, { height }]} />;
@@ -171,6 +185,7 @@ const innerTail: Record<TailSide, ViewStyle> = {
 const styles = StyleSheet.create({
   // Above wandering critters (which use zIndex for depth) on both platforms.
   layer: { ...StyleSheet.absoluteFill, zIndex: 1000, elevation: 30 },
+  passThrough: { pointerEvents: "box-none" },
   dim: { position: "absolute", backgroundColor: TUTORIAL_DIM },
   highlight: {
     position: "absolute", borderWidth: 4, borderColor: HOME_COLORS.goldLight,
