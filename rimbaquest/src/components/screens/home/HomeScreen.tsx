@@ -12,6 +12,7 @@ import { useUserStore } from "../../../store/useUserStore";
 import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeMapCanvas } from "./components/HomeMapCanvas";
+import { HomeTutorial, ResumeSheetHighlight, TUTORIAL_STEP_COUNT, TutorialDim, tutorialHighlightsResumeSheet } from "./components/HomeTutorial";
 import { MapNodeButton } from "./components/MapNodeButton";
 import { MapCritters } from "./components/MapCritters";
 import { MapGroundLayer } from "./components/MapGroundLayer";
@@ -22,6 +23,7 @@ import { HomeMenu, MenuConfirmModal } from "./components/MenuConfirmModal";
 import { NoticeModal } from "./components/NoticeModal";
 import { ResumeList } from "./components/ResumeList";
 import { RESUME_SHEET_PEEK, ResumeSheet } from "./components/ResumeSheet";
+import { TutorialSign } from "./components/TutorialSign";
 import { HOME_COLORS } from "./homeTheme";
 import { SHOW_MAP_DEBUG } from "./mapPathing";
 import {
@@ -29,6 +31,7 @@ import {
   MAP_CAMP_POSITION,
   MAP_NODE_POSITIONS,
 } from "./homeMapLayout";
+import { hasSeenTutorialSign, markTutorialSignSeen } from "./tutorialStorage";
 
 export function HomeScreen() {
   const currentUser = useUserStore((state) => state.currentUser);
@@ -41,8 +44,36 @@ export function HomeScreen() {
   const [battleHintVisible, setBattleHintVisible] = useState(false);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pendingMenu, setPendingMenu] = useState<HomeMenu | null>(null);
+  const [showTutorialHint, setShowTutorialHint] = useState(false);
+  const [tutorialStep, setTutorialStep] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const avatar = avatarImageFor(currentUser.avatar);
+
+  useEffect(() => {
+    let active = true;
+    if (currentUser.id > 0) {
+      void hasSeenTutorialSign(currentUser.id).then((seen) => {
+        if (active && !seen) setShowTutorialHint(true);
+      });
+    }
+    return () => { active = false; };
+  }, [currentUser.id]);
+
+  const startTutorial = () => {
+    setPendingMenu(null);
+    setShowTutorialHint(false);
+    if (currentUser.id > 0) void markTutorialSignSeen(currentUser.id);
+    setTutorialStep(0);
+  };
+
+  const advanceTutorial = () => {
+    setTutorialStep((step) => step === null || step >= TUTORIAL_STEP_COUNT - 1 ? null : step + 1);
+  };
+
+  const selectMenu = (menu: HomeMenu) => {
+    if (tutorialStep !== null) return;
+    setPendingMenu(menu);
+  };
 
   const refreshHome = async () => {
     if (refreshing) return;
@@ -74,6 +105,12 @@ export function HomeScreen() {
     hintTimer.current = setTimeout(() => setBattleHintVisible(false), 2000);
   };
 
+  const onBattlePress = () => {
+    if (tutorialStep !== null) return;
+    if (battleReady) selectMenu("battle");
+    else showBattleHint();
+  };
+
   useEffect(
     () => () => {
       if (hintTimer.current) clearTimeout(hintTimer.current);
@@ -83,7 +120,10 @@ export function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
+      <View>
+        <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
+        {tutorialStep !== null && <TutorialDim style={StyleSheet.absoluteFill} />}
+      </View>
 
       <View
         style={styles.body}
@@ -99,7 +139,7 @@ export function HomeScreen() {
             icon={HOME_MAP_IMAGES.iconDiscover}
             iconSize={{ width: 54, height: 46.56 }}
             color="#D8ECCE"
-            onPress={() => setPendingMenu("discover")}
+            onPress={() => selectMenu("discover")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.capture}
@@ -109,7 +149,7 @@ export function HomeScreen() {
             icon={HOME_MAP_IMAGES.iconCapture}
             iconSize={{ width: 74, height: 57.03 }}
             color="#FFE7A8"
-            onPress={() => setPendingMenu("capture")}
+            onPress={() => selectMenu("capture")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.collection}
@@ -119,7 +159,7 @@ export function HomeScreen() {
             iconSize={{ width: 50, height: 56.25 }}
             color={HOME_COLORS.paper}
             badge={`${progress.found}/${progress.total}`}
-            onPress={() => setPendingMenu("collection")}
+            onPress={() => selectMenu("collection")}
           />
           <MapNodeButton
             {...MAP_NODE_POSITIONS.battle}
@@ -136,7 +176,7 @@ export function HomeScreen() {
             color="#FFD3BD"
             locked={!battleReady}
             badge={inviteCount > 0 ? String(inviteCount) : undefined}
-            onPress={battleReady ? () => setPendingMenu("battle") : showBattleHint}
+            onPress={onBattlePress}
           />
           {!battleReady && battleHintVisible && (
             <MapHintBubble
@@ -149,9 +189,23 @@ export function HomeScreen() {
             name={currentUser.display_name}
             level={progress.level || currentUser.level}
             avatar={avatar}
-            onPress={() => setPendingMenu("camp")}
+            onPress={() => selectMenu("camp")}
           />
+          <TutorialSign onPress={startTutorial} />
+          {showTutorialHint && tutorialStep === null && (
+            <MapHintBubble left={36} top={111} width={202} text="New explorer? Tap the Tutorial sign for a map tour!" />
+          )}
           <MapCritters layer="air" />
+          {tutorialStep !== null && (
+            <HomeTutorial
+              step={tutorialStep}
+              avatar={avatar}
+              battleReady={battleReady}
+              onBack={() => setTutorialStep(Math.max(0, tutorialStep - 1))}
+              onNext={advanceTutorial}
+              onClose={() => setTutorialStep(null)}
+            />
+          )}
           {SHOW_MAP_DEBUG && <MapPathingDebug />}
         </HomeMapCanvas>
 
@@ -163,6 +217,12 @@ export function HomeScreen() {
             <ResumeList />
           </ResumeSheet>
         )}
+        {tutorialStep !== null &&
+          (tutorialHighlightsResumeSheet(tutorialStep) ? (
+            <ResumeSheetHighlight height={RESUME_SHEET_PEEK + insets.bottom} />
+          ) : (
+            <TutorialDim style={[styles.sheetDim, { height: RESUME_SHEET_PEEK + insets.bottom }]} />
+          ))}
       </View>
 
       <MenuConfirmModal
@@ -179,4 +239,5 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: HOME_COLORS.ground, overflow: "hidden" },
   body: { flex: 1 },
+  sheetDim: { left: 0, right: 0, bottom: 0 },
 });

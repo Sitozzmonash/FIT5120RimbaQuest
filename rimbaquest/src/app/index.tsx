@@ -18,6 +18,7 @@ import { GlobalInvitePopup, WildlifeBattleExperience } from '../components/scree
 import { AppLoadingModal } from '../components/common/AppLoadingModal';
 import { AppLoadingScreen } from '../components/common/AppLoadingScreen';
 import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
+import { ScreenGuideModal } from '../components/common/game/ScreenGuideModal';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -145,6 +146,7 @@ export default function RimbaQuest() {
       </View>
 
       {isLoggedIn && screen !== 'battle_select' && <GlobalInvitePopup />}
+      <ScreenGuideModal />
       <AppLoadingModal />
       <ExitConfirmModal
         visible={exitConfirmVisible}

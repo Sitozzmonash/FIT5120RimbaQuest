@@ -69,7 +69,7 @@ export function SpeciesDetailScreen() {
 
   return (
     <View style={styles.root}>
-      <GameScreenHeader title={species.common_name} onBack={onBack} />
+      <GameScreenHeader title={species.common_name} onBack={onBack} guide="species" />
 
       <View style={styles.top}>
         <ViewPhotoCard name={species.common_name} image={imageFor(species)} />

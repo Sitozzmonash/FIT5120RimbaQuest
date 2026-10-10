@@ -2,6 +2,8 @@ import React, { useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GuideInfoButton } from "../../common/game/GuideInfoButton";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useUserStore } from "../../../store/useUserStore";
 import { photoContextFromExif } from "../../../utils/photoContext";
@@ -11,6 +13,7 @@ import { ViewfinderOverlay } from "./components/ViewfinderOverlay";
 import { CameraControlsBar } from "./components/CameraControlsBar";
 
 export function CameraScreen() {
+  const insets = useSafeAreaInsets();
   const lastCaptureUri = useUserStore(
     (state) => state.recentCaptures[0]?.photo_url ?? null,
   );
@@ -91,6 +94,9 @@ export function CameraScreen() {
           />
         </>
       )}
+      <View style={[styles.infoButton, { top: insets.top + 9 }]}>
+        <GuideInfoButton topic="capture" dark />
+      </View>
     </View>
   );
 }
@@ -103,4 +109,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#182019",
   },
+  infoButton: { position: "absolute", right: 16 },
 });
