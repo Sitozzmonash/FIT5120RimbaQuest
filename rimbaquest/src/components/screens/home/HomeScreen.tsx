@@ -12,7 +12,7 @@ import { useUserStore } from "../../../store/useUserStore";
 import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeMapCanvas } from "./components/HomeMapCanvas";
-import { HomeTutorial, ResumeSheetHighlight, TUTORIAL_STEP_COUNT, TutorialDim, tutorialHighlightsResumeSheet } from "./components/HomeTutorial";
+import { HomeTutorial, ResumeSheetHighlight, TUTORIAL_STEP_COUNT, TutorialDim, tutorialHighlightsResumeSheet, TutorialSignSpotlight } from "./components/HomeTutorial";
 import { MapNodeButton } from "./components/MapNodeButton";
 import { MapCritters } from "./components/MapCritters";
 import { MapGroundLayer } from "./components/MapGroundLayer";
@@ -48,6 +48,8 @@ export function HomeScreen() {
   const [tutorialStep, setTutorialStep] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const avatar = avatarImageFor(currentUser.avatar);
+  const signSpotlight = showTutorialHint && tutorialStep === null;
+  const homeDimmed = tutorialStep !== null || signSpotlight;
 
   useEffect(() => {
     let active = true;
@@ -122,7 +124,7 @@ export function HomeScreen() {
     <View style={styles.root}>
       <View>
         <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
-        {tutorialStep !== null && <TutorialDim style={StyleSheet.absoluteFill} />}
+        {homeDimmed && <TutorialDim style={StyleSheet.absoluteFill} />}
       </View>
 
       <View
@@ -192,10 +194,12 @@ export function HomeScreen() {
             onPress={() => selectMenu("camp")}
           />
           <TutorialSign onPress={startTutorial} />
-          {showTutorialHint && tutorialStep === null && (
-            <MapHintBubble left={36} top={111} width={202} text="New explorer? Tap the Tutorial sign for a map tour!" />
-          )}
           <MapCritters layer="air" />
+          {signSpotlight && (
+            <TutorialSignSpotlight>
+              <MapHintBubble left={36} top={111} width={202} text="New explorer? Tap the Tutorial sign for a map tour!" />
+            </TutorialSignSpotlight>
+          )}
           {tutorialStep !== null && (
             <HomeTutorial
               step={tutorialStep}
@@ -217,7 +221,7 @@ export function HomeScreen() {
             <ResumeList />
           </ResumeSheet>
         )}
-        {tutorialStep !== null &&
+        {homeDimmed &&
           (tutorialHighlightsResumeSheet(tutorialStep) ? (
             <ResumeSheetHighlight height={RESUME_SHEET_PEEK + insets.bottom} />
           ) : (
