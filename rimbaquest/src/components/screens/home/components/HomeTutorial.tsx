@@ -63,6 +63,27 @@ export function tutorialHighlightsResumeSheet(step: number | null) {
   return step !== null && STEPS[step]?.target === null;
 }
 
+// Shade that blocks taps and dims everything outside the current tutorial target.
+export const TUTORIAL_DIM = "rgba(6, 24, 12, 0.62)";
+
+export function TutorialDim({ style }: { style?: ViewStyle | ViewStyle[] }) {
+  return <Pressable style={[styles.dim, style]} onPress={() => {}} accessibilityLabel="Tutorial is showing" />;
+}
+
+// Map-space rectangles surrounding the target; they run far past the map edge
+// so the clipped map area is fully covered at any scale.
+const FAR = 4000;
+type Rect = { left: number; top: number; width: number; height: number };
+function dimAround(t: Rect): ViewStyle[] {
+  return [
+    { left: -FAR, right: -FAR, top: -FAR, height: FAR + t.top },
+    { left: -FAR, right: -FAR, top: t.top + t.height, bottom: -FAR },
+    { left: -FAR, width: FAR + t.left, top: t.top, height: t.height },
+    { left: t.left + t.width, right: -FAR, top: t.top, height: t.height },
+  ];
+}
+const DIM_ALL: ViewStyle[] = [{ left: -FAR, right: -FAR, top: -FAR, bottom: -FAR }];
+
 // Gold outline drawn over the resume sheet's peek during its tutorial step.
 export function ResumeSheetHighlight({ height }: { height: number }) {
   return <View pointerEvents="none" style={[styles.highlight, styles.sheetHighlight, { height }]} />;
@@ -86,8 +107,10 @@ export function HomeTutorial({
   const item = STEPS[step];
   const lockedBattle = step === 4 && !battleReady;
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={() => {}} accessibilityLabel="Tutorial is showing" />
+    <View style={styles.layer}>
+      {(item.target ? dimAround(item.target) : DIM_ALL).map((rect, i) => (
+        <TutorialDim key={i} style={rect} />
+      ))}
       {item.target && <View style={[styles.highlight, item.target]} pointerEvents="none" />}
       <View style={[styles.card, item.card]}>
         <BubbleTail side={item.tail.side} offset={item.tail.offset} />
@@ -146,6 +169,9 @@ const innerTail: Record<TailSide, ViewStyle> = {
 };
 
 const styles = StyleSheet.create({
+  // Above wandering critters (which use zIndex for depth) on both platforms.
+  layer: { ...StyleSheet.absoluteFill, zIndex: 1000, elevation: 30 },
+  dim: { position: "absolute", backgroundColor: TUTORIAL_DIM },
   highlight: {
     position: "absolute", borderWidth: 4, borderColor: HOME_COLORS.goldLight,
     borderRadius: 20, backgroundColor: "rgba(255, 214, 110, 0.13)",

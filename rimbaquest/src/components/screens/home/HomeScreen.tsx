@@ -12,7 +12,7 @@ import { useUserStore } from "../../../store/useUserStore";
 import { CampProfileButton } from "./components/CampProfileButton";
 import { HomeHeader } from "./components/HomeHeader";
 import { HomeMapCanvas } from "./components/HomeMapCanvas";
-import { HomeTutorial, ResumeSheetHighlight, TUTORIAL_STEP_COUNT, tutorialHighlightsResumeSheet } from "./components/HomeTutorial";
+import { HomeTutorial, ResumeSheetHighlight, TUTORIAL_STEP_COUNT, TutorialDim, tutorialHighlightsResumeSheet } from "./components/HomeTutorial";
 import { MapNodeButton } from "./components/MapNodeButton";
 import { MapCritters } from "./components/MapCritters";
 import { MapGroundLayer } from "./components/MapGroundLayer";
@@ -120,7 +120,10 @@ export function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
+      <View>
+        <HomeHeader onRefresh={() => void refreshHome()} refreshing={refreshing} />
+        {tutorialStep !== null && <TutorialDim style={StyleSheet.absoluteFill} />}
+      </View>
 
       <View
         style={styles.body}
@@ -214,9 +217,12 @@ export function HomeScreen() {
             <ResumeList />
           </ResumeSheet>
         )}
-        {tutorialHighlightsResumeSheet(tutorialStep) && (
-          <ResumeSheetHighlight height={RESUME_SHEET_PEEK + insets.bottom} />
-        )}
+        {tutorialStep !== null &&
+          (tutorialHighlightsResumeSheet(tutorialStep) ? (
+            <ResumeSheetHighlight height={RESUME_SHEET_PEEK + insets.bottom} />
+          ) : (
+            <TutorialDim style={[styles.sheetDim, { height: RESUME_SHEET_PEEK + insets.bottom }]} />
+          ))}
       </View>
 
       <MenuConfirmModal
@@ -233,4 +239,5 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: HOME_COLORS.ground, overflow: "hidden" },
   body: { flex: 1 },
+  sheetDim: { left: 0, right: 0, bottom: 0 },
 });
