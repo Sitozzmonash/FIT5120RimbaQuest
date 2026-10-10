@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GuideInfoButton } from "../../common/game/GuideInfoButton";
 import { useDiscoveryStore } from "../../../store/useDiscoveryStore";
 import { useUserStore } from "../../../store/useUserStore";
 import { photoContextFromExif } from "../../../utils/photoContext";
+import { pickGalleryPhoto, takeSystemCameraPhoto } from "../../../utils/systemCamera";
 import { CameraPermissionPrompt } from "./components/CameraPermissionPrompt";
 import { CameraHeaderBar } from "./components/CameraHeaderBar";
 import { ViewfinderOverlay } from "./components/ViewfinderOverlay";
@@ -23,11 +23,26 @@ export function CameraScreen() {
 
   const takePhoto = async () => {
     try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 1, exif: true });
-      if (photo?.uri) {
+      // Web normally skips this screen (see useDiscoveryStore.start); it is
+      // only reached when opening the phone's camera app failed.
+      const photo =
+        Platform.OS === "web"
+          ? await takeSystemCameraPhoto()
+          : await cameraRef.current
+              ?.takePictureAsync({ quality: 1, exif: true })
+              .then((shot) =>
+                shot?.uri
+                  ? {
+                      uri: shot.uri,
+                      mimeType: "image/jpeg",
+                      context: photoContextFromExif("camera", shot.exif),
+                    }
+                  : null,
+              );
+      if (photo) {
         useDiscoveryStore
           .getState()
-          .capturePhoto(photo.uri, "image/jpeg", photoContextFromExif("camera", photo.exif));
+          .capturePhoto(photo.uri, photo.mimeType, photo.context);
       }
     } catch {
       useDiscoveryStore
@@ -38,21 +53,11 @@ export function CameraScreen() {
 
   const pickFromGallery = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: false,
-        quality: 1,
-        exif: true,
-      });
-      const asset = result.canceled ? undefined : result.assets[0];
-      if (asset?.uri) {
+      const photo = await pickGalleryPhoto();
+      if (photo) {
         useDiscoveryStore
           .getState()
-          .capturePhoto(
-            asset.uri,
-            asset.mimeType || "image/jpeg",
-            photoContextFromExif("gallery", asset.exif),
-          );
+          .capturePhoto(photo.uri, photo.mimeType, photo.context);
       }
     } catch {
       useDiscoveryStore
@@ -63,7 +68,19 @@ export function CameraScreen() {
 
   return (
     <View style={styles.page}>
-      {!cameraPermission ? (
+      {Platform.OS === "web" ? (
+        <>
+          <CameraHeaderBar />
+
+          <ViewfinderOverlay />
+
+          <CameraControlsBar
+            lastCaptureUri={lastCaptureUri}
+            onPickFromGallery={() => void pickFromGallery()}
+            onTakePhoto={() => void takePhoto()}
+          />
+        </>
+      ) : !cameraPermission ? (
         <View style={styles.permissionWrap}>
           <ActivityIndicator color="#FFFFFF" size="large" />
         </View>

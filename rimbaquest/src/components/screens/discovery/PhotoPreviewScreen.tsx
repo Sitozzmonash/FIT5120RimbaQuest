@@ -105,6 +105,10 @@ export function PhotoPreviewScreen() {
     (state) => state.verificationCandidates,
   );
   const photoCheckStage = useDiscoveryStore((state) => state.photoCheckStage);
+  // Keep result popups out of the way while the web photo sheet is open.
+  const sourceSheetOpen = useDiscoveryStore(
+    (state) => state.photoSourceSheet !== null,
+  );
   const photoCheckAttempt = useDiscoveryStore(
     (state) => state.photoCheckAttempt,
   );
@@ -137,8 +141,23 @@ export function PhotoPreviewScreen() {
   }, [verifying]);
 
   const handleRetake = () => {
+    if (Platform.OS === "web") {
+      // Web has no in-app camera screen: ask camera or gallery. The new photo
+      // replaces this one in place; closing the sheet ends the discovery.
+      useDiscoveryStore.getState().openRetakeSheet();
+      return;
+    }
     useDiscoveryStore.getState().retake();
     useNavigationStore.getState().setScreen("photo");
+  };
+
+  // Native returns to the camera screen; web has none, so cancelling exits.
+  const handleCancelCheck = () => {
+    if (Platform.OS === "web") {
+      useDiscoveryStore.getState().discardAndExit();
+      return;
+    }
+    handleRetake();
   };
 
   const handleTryAgain = () => {
@@ -282,7 +301,7 @@ export function PhotoPreviewScreen() {
           <Tap
             label="Cancel photo check"
             style={styles.cancelCheckButton}
-            onPress={handleRetake}
+            onPress={handleCancelCheck}
           >
             <Text style={styles.cancelCheckText}>Cancel</Text>
           </Tap>
@@ -290,7 +309,7 @@ export function PhotoPreviewScreen() {
       </View>
 
       <WoodModal
-        visible={resultShown && succeeded}
+        visible={resultShown && succeeded && !sourceSheetOpen}
         onRequestClose={handleRetake}
         icon="check"
         positive
@@ -302,7 +321,7 @@ export function PhotoPreviewScreen() {
       />
 
       <WoodModal
-        visible={resultShown && Boolean(verificationError)}
+        visible={resultShown && Boolean(verificationError) && !sourceSheetOpen}
         onRequestClose={handleRetake}
         icon="alert"
         positive={false}

@@ -19,6 +19,7 @@ import { AppLoadingModal } from '../components/common/AppLoadingModal';
 import { AppLoadingScreen } from '../components/common/AppLoadingScreen';
 import { ExitConfirmModal } from '../components/common/ExitConfirmModal';
 import { ScreenGuideModal } from '../components/common/game/ScreenGuideModal';
+import { PhotoSourceSheet } from '../components/screens/discovery/components/PhotoSourceSheet';
 import { AccountEntryScreen } from '../components/screens/AccountEntryScreen';
 import { LoginScreen } from '../components/screens/login';
 import { AccountCreationScreen } from '../components/screens/account-creation';
@@ -147,6 +148,7 @@ export default function RimbaQuest() {
 
       {isLoggedIn && screen !== 'battle_select' && <GlobalInvitePopup />}
       <ScreenGuideModal />
+      {Platform.OS === 'web' && <PhotoSourceSheet />}
       <AppLoadingModal />
       <ExitConfirmModal
         visible={exitConfirmVisible}
