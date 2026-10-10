@@ -143,6 +143,7 @@ def _response(row, child_id: int, events: list[dict[str, Any]] | None = None) ->
         "id": row["id"],
         "mode": row["mode"],
         "habitat": row["habitat"],
+        "habitat_bonus": wildlife_battle.HABITAT_BONUSES.get(row["habitat"]),
         "status": row["status"],
         "version": row["version"],
         "viewer_side": side,
@@ -194,7 +195,7 @@ def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, dateti
     """Return owned active cards and cards whose two-hour rest has expired."""
     now = _now()
     rows = connection.execute(select(
-        species.c.id, species.c.habitat, wildlife_card_rest.c.rest_until,
+        species.c.id, wildlife_card_rest.c.rest_until,
     ).select_from(
         collection_entries.join(species, collection_entries.c.species_id == species.c.id)
         .outerjoin(wildlife_card_rest, and_(
@@ -205,8 +206,10 @@ def _rest_status(connection, child_id: int) -> tuple[list[tuple[str, str, dateti
         collection_entries.c.child_id == child_id,
         species.c.is_active.is_(True),
     ).order_by(species.c.id)).all()
-    cards = [(species_id, raw_habitat or "", _aware(rest_until) if rest_until else None)
-             for species_id, raw_habitat, rest_until in rows]
+    cards = [(
+        species_id, wildlife_battle.species_habitat_group(species_id),
+        _aware(rest_until) if rest_until else None,
+    ) for species_id, rest_until in rows]
     return cards, {species_id for species_id, _, rest_until in cards
                    if rest_until is None or rest_until <= now}
 
@@ -227,7 +230,7 @@ def _owned_card(connection, child_id: int, species_id: str) -> tuple[dict, str]:
 
 def _cards(connection, child_id: int, habitat: str) -> dict:
     cards, selectable = _rest_status(connection, child_id)
-    return {"habitat": habitat, "cards": [
+    return {"habitat": habitat, "habitat_bonus": wildlife_battle.HABITAT_BONUSES.get(habitat), "cards": [
         {
             "species_id": species_id,
             "habitat_match": wildlife_battle.habitat_matches(raw_habitat, habitat),
@@ -544,9 +547,7 @@ def join_match(code: str, payload: SelectCardIn, user: Annotated[AuthenticatedUs
             if row["owner_species_id"] not in owner_selectable:
                 raise HTTPException(409, "The host's card is resting. Ask the host to select another card.")
             owner_def = get_battle_definition(row["owner_species_id"])
-            owner_habitat = connection.execute(select(species.c.habitat).where(
-                species.c.id == row["owner_species_id"],
-            )).scalar_one() or ""
+            owner_habitat = wildlife_battle.species_habitat_group(row["owner_species_id"])
             state = wildlife_battle.new_match(
                 owner_def, guest_def, habitat=row["habitat"],
                 player_habitat=owner_habitat, opponent_habitat=guest_habitat,
@@ -621,9 +622,7 @@ def select_card(match_id: str, payload: SelectCardIn, user: Annotated[Authentica
                     )
                 except ValueError as error:
                     raise HTTPException(503, "No bot opponent is available.") from error
-                opponent_habitat = connection.execute(select(species.c.habitat).where(
-                    species.c.id == opponent_def["species_id"],
-                )).scalar_one() or ""
+                opponent_habitat = wildlife_battle.species_habitat_group(opponent_def["species_id"])
                 state = wildlife_battle.new_match(
                     player_def, opponent_def, habitat=row["habitat"],
                     player_habitat=player_habitat, opponent_habitat=opponent_habitat,

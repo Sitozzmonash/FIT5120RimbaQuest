@@ -16,7 +16,7 @@ export function BattleFXLayer({ fx }: { fx: FX }) {
   const ticks = s.r.numberTicks ?? 1;
 
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.layer]}>
       {s.overs.map((o) => <OverlayView key={o.key} o={o} />)}
       {s.parts.map((p) => <ParticleView key={p.key} p={p} />)}
 
@@ -186,6 +186,7 @@ function OverlayView({ o }: { o: Live<Overlay> }) {
 }
 
 const styles = StyleSheet.create({
+  layer: { zIndex: 10, elevation: 10 },
   toothDown: {
     position: "absolute", width: 0, height: 0, borderLeftWidth: 8, borderRightWidth: 8, borderTopWidth: 20,
     borderLeftColor: "transparent", borderRightColor: "transparent", borderTopColor: "#FFFFFF",

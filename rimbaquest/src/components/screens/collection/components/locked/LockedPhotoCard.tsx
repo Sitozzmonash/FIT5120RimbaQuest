@@ -47,9 +47,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
   },
-  photo: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
+  photo: { ...StyleSheet.absoluteFill, width: "100%", height: "100%" },
   tint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(14, 69, 39, 0.55)",
   },
   badgeSlot: { width: BADGE_SIZE, height: BADGE_SIZE + 5 },

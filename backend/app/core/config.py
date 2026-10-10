@@ -139,6 +139,7 @@ RECAPTURE_BLOCK_THRESHOLD = float(os.getenv("RECAPTURE_BLOCK_THRESHOLD", "0.6"))
 RECAPTURE_TIMEOUT_SECONDS = float(os.getenv("RECAPTURE_TIMEOUT_SECONDS", "15"))
 RECAPTURE_MAX_UPLOAD_MB = int(os.getenv("RECAPTURE_MAX_UPLOAD_MB", "40"))
 RECAPTURE_THREADS = int(os.getenv("RECAPTURE_THREADS", "1"))
+RECAPTURE_TILE_GRID = int(os.getenv("RECAPTURE_TILE_GRID", "3"))
 RECAPTURE_API_ENABLED = os.getenv("RECAPTURE_API_ENABLED", "false").strip().casefold() in {"1", "true", "yes"}
 
 # Epic 6: server-side only.  No Expo environment variable may contain this

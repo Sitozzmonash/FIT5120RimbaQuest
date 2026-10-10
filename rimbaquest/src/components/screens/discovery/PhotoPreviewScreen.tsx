@@ -324,7 +324,7 @@ export function PhotoPreviewScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: "#07120B" },
   photoShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.18)",
   },
   header: {

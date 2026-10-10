@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { FONTS } from "../../../../constants/fonts";
 import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
 import { Species } from "../../../../types";
-import { speciesAbilities } from "../speciesAbilities";
+import { SpeciesAbility, speciesAbilities } from "../speciesAbilities";
+import { AbilityDetailsModal } from "./AbilityDetailsModal";
 import { AbilityRow } from "./detail/AbilityRow";
 import { DetailCard } from "./detail/DetailCard";
 import { DETAIL_COLORS, DETAIL_IMAGES } from "./detail/detailTheme";
@@ -13,6 +14,7 @@ import { TabStatus } from "./detail/TabStatus";
 const EMPTY_ABILITIES: number[] = [];
 
 export function BattleStatsTab({ item }: { item: Species }) {
+  const [selected, setSelected] = useState<{ ability: SpeciesAbility; locked: boolean } | null>(null);
   const unlockedAbilities = useAbilityQuizStore(
     (state) => state.progressionBySpecies[item.id] ?? EMPTY_ABILITIES,
   );
@@ -21,6 +23,7 @@ export function BattleStatsTab({ item }: { item: Species }) {
   );
 
   return (
+    <>
     <DetailCard>
       <Text style={styles.heading}>Card Combat Attributes</Text>
       <View style={styles.stats}>
@@ -44,7 +47,8 @@ export function BattleStatsTab({ item }: { item: Species }) {
       {!isProgressionKnown ? (
         <TabStatus loading message="Checking your ability progress…" />
       ) : (
-        speciesAbilities(item).map(({ slot, name, description }) => {
+        speciesAbilities(item).map((ability) => {
+          const { slot, name, description } = ability;
           const isUnlocked = unlockedAbilities.includes(slot);
           return (
             <AbilityRow
@@ -60,11 +64,18 @@ export function BattleStatsTab({ item }: { item: Species }) {
               onUnlock={() =>
                 useAbilityQuizStore.getState().openUnlockModal(item, slot)
               }
+              onDetails={() => setSelected({ ability, locked: !isUnlocked })}
             />
           );
         })
       )}
     </DetailCard>
+    <AbilityDetailsModal
+      ability={selected?.ability ?? null}
+      locked={selected?.locked ?? false}
+      onClose={() => setSelected(null)}
+    />
+    </>
   );
 }
 

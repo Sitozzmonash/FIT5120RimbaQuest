@@ -6,6 +6,8 @@ import { GAME_COLORS } from "../../../common/game/gameTheme";
 import { useAbilityQuizStore } from "../../../../store/useAbilityQuizStore";
 import { Species } from "../../../../types";
 import { speciesAbilities } from "../../collection/speciesAbilities";
+import type { SpeciesAbility } from "../../collection/speciesAbilities";
+import { effectLine } from "../../collection/components/detail/AbilityStats";
 
 const INK = GAME_COLORS.ink;
 const SKILL_COSTS = [0, 1, 2, 4];
@@ -26,23 +28,31 @@ function SkillRow({
   name,
   cost,
   locked,
+  effects,
 }: {
   name: string;
   cost: number;
   locked: boolean;
+  effects?: SpeciesAbility["effects"];
 }) {
+  const stats = (effects ?? []).map(effectLine).filter((line) => line !== null);
   return (
     <View
       style={[styles.row, locked && styles.rowLocked]}
       accessible
-      accessibilityLabel={`${name}, ${cost} Energy${locked ? ". Locked, pass its quiz to unlock" : ""}`}
+      accessibilityLabel={`${name}, ${cost} Energy${stats.length ? `. ${stats.map((stat) => stat.text).join(", ")}` : ""}${locked ? ". Locked, pass its quiz to unlock" : ""}`}
     >
-      <Text
-        style={[styles.name, locked && styles.nameLocked]}
-        numberOfLines={1}
-      >
-        {name}
-      </Text>
+      <View style={styles.skillDetails}>
+        <Text style={[styles.name, locked && styles.nameLocked]} numberOfLines={1}>
+          {name}
+        </Text>
+        {stats.map((stat, index) => (
+          <View key={`${stat.text}-${index}`} style={styles.statRow}>
+            <Image source={stat.icon} style={styles.statIcon} resizeMode="contain" />
+            <Text style={[styles.statText, locked && styles.statTextLocked]}>{stat.text}</Text>
+          </View>
+        ))}
+      </View>
       {locked ? (
         <View style={[styles.pill, styles.pillLocked]}>
           <Image
@@ -68,12 +78,9 @@ function SkillRow({
 
 export function SkillList({ species }: { species: Species }) {
   const unlockedSlots = useUnlockedSlots(species.id);
-  const skills = [
-    { slot: 0, name: "Basic Attack" },
-    ...speciesAbilities(species),
-  ];
+  const skills = speciesAbilities(species);
   const isLocked = (slot: number) =>
-    slot > 0 && Boolean(unlockedSlots) && !unlockedSlots!.includes(slot);
+    Boolean(unlockedSlots) && !unlockedSlots!.includes(slot);
   return (
     <View style={styles.list}>
       {skills.map((skill) => (
@@ -82,6 +89,7 @@ export function SkillList({ species }: { species: Species }) {
           name={skill.name}
           cost={SKILL_COSTS[skill.slot]}
           locked={isLocked(skill.slot)}
+          effects={skill.effects}
         />
       ))}
     </View>
@@ -103,6 +111,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   rowLocked: { backgroundColor: GAME_COLORS.track, borderColor: "#6F6A55" },
+  skillDetails: { flex: 1, gap: 3 },
+  statRow: { flexDirection: "row", alignItems: "flex-start", gap: 5 },
+  statIcon: { width: 13, height: 13 },
+  statText: {
+    flex: 1,
+    fontFamily: FONTS.bodyBold,
+    fontSize: 11,
+    lineHeight: 14,
+    color: GAME_COLORS.body,
+  },
+  statTextLocked: { color: "#6F6A55" },
   name: {
     flexShrink: 1,
     fontFamily: FONTS.button,

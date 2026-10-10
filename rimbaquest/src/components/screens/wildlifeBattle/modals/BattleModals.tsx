@@ -47,6 +47,46 @@ export function GiveUpModal({
   );
 }
 
+export function LeaveBattleModal({
+  visible,
+  hasMatch,
+  leaving,
+  error,
+  onConfirm,
+  onStay,
+}: {
+  visible: boolean;
+  hasMatch: boolean;
+  leaving: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onStay: () => void;
+}) {
+  return (
+    <WoodModal
+      visible={visible}
+      onRequestClose={leaving ? undefined : onStay}
+      icon="alert"
+      positive={false}
+      stars={false}
+      title={leaving ? "Leaving Battle..." : "Leave Battle?"}
+      message={leaving
+        ? "Canceling your match..."
+        : hasMatch
+          ? "Your match will be canceled. Are you sure you want to leave?"
+          : "Are you sure you want to leave this battle?"}
+      actionLabel={leaving ? "Leaving Battle..." : "Leave Battle"}
+      actionVariant="danger"
+      actionLoading={leaving}
+      onAction={onConfirm}
+      secondaryLabel="Keep Choosing"
+      onSecondary={onStay}
+    >
+      {visible && error ? <Text style={errorTextStyle}>{error}</Text> : null}
+    </WoodModal>
+  );
+}
+
 export function RecoveryModal({
   visible,
   recovering,

@@ -22,6 +22,7 @@ const SCREEN_COLORS: Partial<Record<Screen, PageColors>> = {
   about: { top: GAME_GREEN, bottom: GAME_GREEN },
   facts: { top: GAME_GREEN, bottom: GAME_GREEN },
   battle_stats: { top: GAME_GREEN, bottom: GAME_GREEN },
+  battle_select: { top: GAME_GREEN, bottom: GAME_GREEN },
   gallery: { top: GAME_GREEN, bottom: GAME_GREEN },
   quiz: { top: GAME_GREEN, bottom: GAME_GREEN },
   locked: { top: GAME_GREEN, bottom: GAME_GREEN },

@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   image: { width: "100%", height: "100%" },
   dim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(60, 60, 60, 0.55)",
   },
   tag: {
