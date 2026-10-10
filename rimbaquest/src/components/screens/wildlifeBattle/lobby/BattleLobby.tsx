@@ -76,7 +76,7 @@ export function BattleLobby({
 
   return (
     <View style={styles.root}>
-      <GameScreenHeader title="Card Battle" onBack={onBack} />
+      <GameScreenHeader title="Card Battle" guide="battle" onBack={onBack} />
       <View style={[styles.content, { paddingBottom: 16 + insets.bottom }]}>
         <LobbyHero />
 

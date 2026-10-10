@@ -35,6 +35,7 @@ export function ProfileScreen() {
     <View style={styles.root}>
       <GameScreenHeader
         title="My Profile"
+        guide="profile"
         onBack={() => useNavigationStore.getState().goBack()}
       />
       <FitScrollView
