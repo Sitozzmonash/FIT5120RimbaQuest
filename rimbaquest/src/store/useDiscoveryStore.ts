@@ -12,11 +12,21 @@ import {
 } from "../types";
 import { OFFLINE_SPECIES } from "../constants/seed";
 import { PhotoContext } from "../utils/photoContext";
+import { SystemCameraPhoto } from "../utils/systemCamera";
 import { useNavigationStore } from "./useNavigationStore";
 import { useSelectedSpeciesStore } from "./useSelectedSpeciesStore";
 import { useUserStore } from "./useUserStore";
 
+// Web asks "camera or gallery?" in a sheet instead of showing the in-app
+// camera screen. "retake" replaces the photo on the preview screen in place,
+// or ends the discovery if closed.
+export type PhotoSourceSheet = {
+  mode: "start" | "retake";
+  presetLocation?: string;
+};
+
 type DiscoveryState = {
+  photoSourceSheet: PhotoSourceSheet | null;
   photoUri: string | null;
   photoMimeType: string | null;
   photoContext: PhotoContext | null;
@@ -95,6 +105,9 @@ type DiscoveryActions = {
   saveDiscovery: (speciesId: string) => Promise<SaveDiscoveryResult | null>;
 
   start: (presetLocation?: string) => void;
+  openRetakeSheet: () => void;
+  closePhotoSourceSheet: () => void;
+  choosePhotoSource: (pick: () => Promise<SystemCameraPhoto | null>) => void;
   capturePhoto: (uri: string, mimeType?: string, context?: PhotoContext) => void;
   discardAndExit: () => void;
   continueToConfirm: (item: Species) => void;
@@ -105,6 +118,12 @@ type DiscoveryActions = {
 export type DiscoveryStore = DiscoveryState & DiscoveryActions;
 
 let activePhotoVerification: AbortController | null = null;
+
+function beginDiscovery(get: () => DiscoveryStore, presetLocation?: string) {
+  get().resetSelections();
+  useSelectedSpeciesStore.getState().setSelected(OFFLINE_SPECIES[0]);
+  if (presetLocation) get().setDiscoveryLocation(presetLocation);
+}
 let activePhotoVerificationTraceId: string | null = null;
 
 function cancelActivePhotoVerification(): void {
@@ -128,6 +147,7 @@ function wait(ms: number): Promise<void> {
 const PHOTO_CHECK_POLL_INTERVAL_MS = 700;
 
 const initialState: DiscoveryState = {
+  photoSourceSheet: null,
   photoUri: null,
   photoMimeType: null,
   photoContext: null,
@@ -686,10 +706,53 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
   },
 
   start: (presetLocation) => {
-    get().resetSelections();
-    useSelectedSpeciesStore.getState().setSelected(OFFLINE_SPECIES[0]);
-    if (presetLocation) get().setDiscoveryLocation(presetLocation);
+    if (Platform.OS === "web") {
+      set({ photoSourceSheet: { mode: "start", presetLocation } });
+      return;
+    }
+    beginDiscovery(get, presetLocation);
     useNavigationStore.getState().resetTo("photo");
+  },
+
+  openRetakeSheet: () => set({ photoSourceSheet: { mode: "retake" } }),
+
+  // Closing the retake sheet ends the discovery, as leaving the native camera
+  // screen does: staying would bring the result popup straight back, and a
+  // "try another photo" popup has no other way out.
+  closePhotoSourceSheet: () => {
+    const sheet = get().photoSourceSheet;
+    set({ photoSourceSheet: null });
+    if (sheet?.mode === "retake") get().discardAndExit();
+  },
+
+  // `pick` must run synchronously inside the tap: browsers only open the
+  // camera or file picker from a user gesture.
+  choosePhotoSource: (pick) => {
+    const sheet = get().photoSourceSheet;
+    if (!sheet) return;
+    set({ photoSourceSheet: null });
+    pick()
+      .then((photo) => {
+        // Cancelling a new discovery leaves the user where they were;
+        // cancelling a retake ends the discovery, like closing the sheet.
+        if (!photo) {
+          if (sheet.mode === "retake") get().discardAndExit();
+          return;
+        }
+        if (sheet.mode === "start") {
+          beginDiscovery(get, sheet.presetLocation);
+          useNavigationStore.getState().resetTo("photo_preview");
+        }
+        void get().submitPhoto(photo.uri, photo.mimeType, photo.context);
+      })
+      .catch(() => {
+        // Fall back to the in-app camera screen, which has its own shutter
+        // and gallery buttons.
+        if (sheet.mode === "start") beginDiscovery(get, sheet.presetLocation);
+        else get().retake();
+        get().setPhotoError("We couldn't open your camera or photos. Please try again.");
+        useNavigationStore.getState().resetTo("photo");
+      });
   },
 
   capturePhoto: (uri, mimeType = "image/jpeg", context) => {
