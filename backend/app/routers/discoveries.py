@@ -201,6 +201,7 @@ def _check_authenticity(
                 key: recapture[key]
                 for key in ("p_recapture", "is_recapture", "threshold", "low_resolution", "width", "height")
             },
+            "recapture_tiles": recapture.get("tile_scores") or [],
         },
         "model_sha256": detector.info()["sha256"],
     }
@@ -220,6 +221,22 @@ def _log_authenticity_check(trace_id: str, child_id: int, source: str | None, ch
         check["signals"]["metadata"]["available"],
         check["model_sha256"],
     )
+    tiles = check["signals"]["recapture_tiles"]
+    if tiles:
+        # One entry per tile, row-major: r<row>c<col>=<p_recapture>, flagged tiles marked with "!".
+        threshold = recapture["threshold"]
+        logger.info(
+            "discovery_recapture_tiles trace_id=%s grid=%dx%d threshold=%.4f %s",
+            trace_id,
+            len(tiles),
+            len(tiles[0]),
+            threshold,
+            " ".join(
+                f"r{r}c{c}={p:.4f}{'!' if p >= threshold else ''}"
+                for r, row in enumerate(tiles)
+                for c, p in enumerate(row)
+            ),
+        )
 
 
 async def _run_verification_job(

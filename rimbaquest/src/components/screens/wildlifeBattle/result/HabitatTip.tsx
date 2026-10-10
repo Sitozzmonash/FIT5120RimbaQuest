@@ -13,8 +13,8 @@ export function HabitatTip({ habitat }: { habitat: string }) {
         resizeMode="contain"
       />
       <Text style={styles.text}>
-        <Text style={styles.bold}>Tip:</Text> a {habitat} card would have had
-        +20% here.
+        <Text style={styles.bold}>Tip:</Text> an animal that lives in {habitat}
+        would have received the habitat BOOST.
       </Text>
     </View>
   );

@@ -4,12 +4,18 @@ export type SpeciesAbility = {
   slot: number;
   name: string;
   description?: string;
+  effects?: Array<{ type: string; value: number; target: "self" | "opponent" }>;
 };
 
 export function speciesAbilities(item: Species): SpeciesAbility[] {
   const wildlifeAbilities = item.wildlife_abilities ?? [];
   if (wildlifeAbilities.length === 3) {
-    return wildlifeAbilities.map(({ slot, name, description }) => ({ slot, name, description }));
+    return wildlifeAbilities.map(({ slot, name, description, effects }) => ({
+      slot,
+      name,
+      description,
+      effects,
+    }));
   }
 
   const structured = item.abilities ?? [];

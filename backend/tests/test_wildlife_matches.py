@@ -11,7 +11,7 @@ from sqlalchemy import insert, or_, select, update
 from app.core.database import engine
 from app.core.schema import collection_entries, wildlife_card_rest, wildlife_leaderboard, wildlife_matches
 from app.main import app
-from app.services.wildlife_battle import HABITATS, habitat_matches
+from app.services.wildlife_battle import HABITATS, HABITAT_BONUSES, habitat_matches, species_habitat_group
 
 
 client = TestClient(app)
@@ -66,6 +66,7 @@ def test_auth_habitat_before_card_and_preview_ownership():
     match = _create(h1)
     assert match["status"] == "setup"
     assert match["state"] is None and match["habitat"] in HABITATS
+    assert match["habitat_bonus"] == HABITAT_BONUSES[match["habitat"]]
     assert datetime.fromisoformat(match["server_now"]).tzinfo is not None
     current = client.get(f"{BASE}/me/current", headers=h1)
     assert current.status_code == 200
@@ -75,12 +76,12 @@ def test_auth_habitat_before_card_and_preview_ownership():
     assert client.get(f"{BASE}/{match['id']}/cards-preview", headers=h2).status_code == 403
     preview = client.get(f"{BASE}/{match['id']}/cards-preview", headers=h1)
     assert preview.status_code == 200
+    assert preview.json()["habitat_bonus"] == HABITAT_BONUSES[match["habitat"]]
     cards = preview.json()["cards"]
     assert [card["species_id"] for card in cards] == [CARDS[0]]
-    with engine.connect() as connection:
-        from app.core.schema import species
-        raw = connection.execute(select(species.c.habitat).where(species.c.id == CARDS[0])).scalar_one()
-    assert cards[0]["habitat_match"] == habitat_matches(raw, match["habitat"])
+    assert cards[0]["habitat_match"] == habitat_matches(
+        species_habitat_group(CARDS[0]), match["habitat"]
+    )
     assert cards[0]["selectable"] is True
     assert client.post(f"{BASE}/{match['id']}/select", json={
         "species_id": CARDS[1], "client_request_id": str(uuid4()),
@@ -185,11 +186,7 @@ def test_new_match_habitat_splits_the_explorers_ready_cards():
     child_id, headers = _user("habitat")
     forest, coast = "sp_malayan_tiger", "sp_green_sea_turtle"
     _own(child_id, forest, coast)
-    with engine.connect() as connection:
-        from app.core.schema import species
-        raw = dict(connection.execute(select(species.c.id, species.c.habitat).where(
-            species.c.id.in_([forest, coast]),
-        )).all())
+    raw = {species_id: species_habitat_group(species_id) for species_id in (forest, coast)}
     for _ in range(8):
         setup = _create(headers)
         # One card matches and the other does not, so the choice matters.

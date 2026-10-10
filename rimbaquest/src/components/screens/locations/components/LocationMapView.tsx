@@ -292,6 +292,6 @@ export const LocationMapView = forwardRef<LocationMapHandle, {
 });
 
 const styles = StyleSheet.create({
-  map: { ...StyleSheet.absoluteFillObject, backgroundColor: '#F2F2F0' },
+  map: { ...StyleSheet.absoluteFill, backgroundColor: '#F2F2F0' },
   webView: { flex: 1, backgroundColor: '#F2F2F0' },
 });

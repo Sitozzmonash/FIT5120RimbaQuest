@@ -1,10 +1,12 @@
 import React from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image, ImageStyle, StyleSheet, Text, View } from "react-native";
 import { BATTLE_IMAGES } from "../../../../constants/images";
 import { FONTS } from "../../../../constants/fonts";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
 import { Tap } from "../../../common/Tap";
-import { WildlifeAction } from "../../../../types/wildlifeMatch";
+import { WildlifeAbility, WildlifeAction } from "../../../../types/wildlifeMatch";
+import { effectLine } from "../../collection/components/detail/AbilityStats";
 
 const INK = GAME_COLORS.ink;
 
@@ -13,6 +15,8 @@ export type BattleMove = {
   name: string;
   cost: number;
   description: string;
+  effects: WildlifeAbility["effects"];
+  habitatBonusDamage: number;
   unlocked: boolean;
   enabled: boolean;
   note: string;
@@ -29,10 +33,41 @@ export function MoveCard({
   disabled: boolean;
   tall?: boolean;
 }) {
+  const stats = (move.effects ?? []).flatMap((effect) => {
+    const line = effectLine(effect);
+    if (!line) return [];
+    const boosted = effect.type === "damage" && move.habitatBonusDamage > 0;
+    return [{
+      ...line,
+      boosted,
+      value: boosted ? `${effect.value + move.habitatBonusDamage}` : line.value,
+      text: boosted
+        ? `Deal ${effect.value} damage plus ${move.habitatBonusDamage} habitat damage, ${effect.value + move.habitatBonusDamage} total`
+        : line.text,
+    }];
+  });
+  const statsLabel = stats.length
+    ? ` ${stats.map((stat) => stat.text).join(", ")}.`
+    : "";
+  const moveStats = stats.length ? (
+    <View style={styles.stats}>
+      {stats.map((stat, index) => (
+        <View key={`${stat.text}-${index}`} style={[styles.stat, stat.boosted && styles.statBoosted]}>
+          <Image source={stat.icon} style={styles.statIcon} resizeMode="contain" />
+          <Text style={[styles.statText, !move.unlocked && styles.statTextLocked, stat.boosted && styles.statTextBoosted]}>
+            {stat.value} {stat.label}
+          </Text>
+          {stat.boosted ? (
+            <MaterialCommunityIcons name="chevron-double-up" size={14} color={GAME_COLORS.goldText} />
+          ) : null}
+        </View>
+      ))}
+    </View>
+  ) : null;
   if (!move.unlocked) {
     return (
       <Tap
-        label={`${move.name}, ${move.cost} Energy. Locked, pass its quiz to unlock.`}
+        label={`${move.name}, ${move.cost} Energy.${statsLabel} Locked, pass its quiz to unlock.`}
         onPress={onPress}
         disabled
         style={[
@@ -54,21 +89,22 @@ export function MoveCard({
             resizeMode="contain"
           />
         </View>
-        <Text
+        {moveStats}
+        {/* <Text
           style={[styles.moveNote, styles.moveNoteLocked]}
           numberOfLines={1}
         >
           Pass its quiz to unlock
-        </Text>
+        </Text> */}
       </Tap>
     );
   }
   const enabled = move.enabled && !disabled;
-  // The basic attack is free and always ready, so its big button is just the word.
+  // The basic attack is free and always ready.
   if (tall) {
     return (
       <Tap
-        label="Attack"
+        label={`Attack.${statsLabel}`}
         onPress={onPress}
         disabled={!enabled}
         style={[
@@ -78,6 +114,7 @@ export function MoveCard({
         ]}
       >
         <Text style={[styles.moveName, styles.moveNameTall]}>Attack</Text>
+        {moveStats}
       </Tap>
     );
   }
@@ -85,7 +122,7 @@ export function MoveCard({
   const blocked = move.note !== move.description;
   return (
     <Tap
-      label={`${move.name}, ${move.cost} Energy. ${move.note}`}
+      label={`${move.name}, ${move.cost} Energy.${statsLabel} ${blocked ? move.note : ""}`}
       onPress={onPress}
       disabled={!enabled}
       style={[styles.moveCard, !enabled && styles.moveCardInactive]}
@@ -102,12 +139,15 @@ export function MoveCard({
           <Text style={styles.costText}>{move.cost}</Text>
         </View>
       </View>
-      <Text
-        style={[styles.moveDescription, blocked && styles.moveNote]}
-        numberOfLines={1}
-      >
-        {blocked ? move.note : move.description}
-      </Text>
+      {moveStats}
+      {blocked || !stats.length ? (
+        <Text
+          style={[styles.moveDescription, blocked && styles.moveNote]}
+          numberOfLines={1}
+        >
+          {blocked ? move.note : move.description}
+        </Text>
+      ) : null}
     </Tap>
   );
 }
@@ -146,6 +186,13 @@ const styles = StyleSheet.create({
   },
   moveNameTall: { fontSize: 26, textAlign: "center" },
   moveNameLocked: { fontSize: 16, color: "#4E4A3A" },
+  stats: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-start", columnGap: 6, rowGap: 2 },
+  stat: { flexDirection: "row", alignItems: "center", gap: 2 },
+  statBoosted: { paddingHorizontal: 4, paddingVertical: 2, backgroundColor: GAME_COLORS.goldLight, borderRadius: 6 },
+  statIcon: { width: 12, height: 12 },
+  statText: { fontFamily: FONTS.bodyBold, fontSize: 10, lineHeight: 12, color: GAME_COLORS.body },
+  statTextLocked: { color: "#6F6A55" },
+  statTextBoosted: { color: GAME_COLORS.goldText },
   costPill: {
     flexDirection: "row",
     alignItems: "center",

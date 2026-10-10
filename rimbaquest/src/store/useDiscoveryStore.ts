@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { File } from "expo-file-system";
 import * as Location from "expo-location";
 import { create } from "zustand";
 import { API_BASE } from "../constants/config";
@@ -300,10 +301,11 @@ export const useDiscoveryStore = create<DiscoveryStore>((set, get) => ({
       const blob = await fetch(uri).then((response) => response.blob());
       form.append("photo", blob, `discovery.${ext}`);
     } else {
+      const file = new File(uri);
       form.append("photo", {
-        uri,
         name: `discovery.${ext}`,
         type: mimeType,
+        bytes: () => file.bytes(),
       } as unknown as Blob);
     }
     

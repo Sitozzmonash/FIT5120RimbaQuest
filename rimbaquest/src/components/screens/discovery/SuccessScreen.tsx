@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   raysWrap: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -12,7 +12,7 @@ from app.services.wildlife_ai import _load_policy, _score_action
 from app.services.wildlife_battle import (
     HABITATS, HABITAT_BONUSES, ability_previews, choose_ai_action,
     choose_habitat, forfeit, habitat_matches, legal_actions, new_match,
-    perform_action, skip_turn,
+    perform_action, skip_turn, species_habitat_group, species_habitat_groups,
 )
 
 
@@ -40,8 +40,8 @@ def definition(species_id: str, *, hp: int = 50, attack: int = 10,
 
 
 def match(*, player: dict | None = None, opponent: dict | None = None,
-          habitat: str = "Rainforest",
-          player_habitat: str = "forest", opponent_habitat: str = "coast",
+          habitat: str = "Rainforest & Forest",
+          player_habitat: str = "Rainforest & Forest", opponent_habitat: str = "Coastal & Marine",
           player_unlocked: list[int] | None = None,
           opponent_unlocked: list[int] | None = None,
           initiative: str = "player") -> dict:
@@ -61,23 +61,25 @@ def clear_shields(state: dict) -> dict:
     return state
 
 
-def test_habitat_is_known_before_selection_and_matching_uses_species_text():
-    assert HABITATS == ("Rainforest", "Mangrove", "Wetland", "Grassland", "Coastal", "Montane")
+def test_habitat_is_known_before_selection_and_matching_uses_csv_group():
+    assert HABITATS == (
+        "Rainforest & Forest", "Rivers, Wetlands & Mangroves",
+        "Grassland, Scrub & Farmland", "Gardens, Parks & Urban",
+        "Highland & Montane Forest", "Coastal & Marine",
+    )
     assert set(HABITAT_BONUSES) == set(HABITATS)
-    assert habitat_matches("Mangrove and riverine forest", "Mangrove")
-    assert habitat_matches("Mangrove and riverine forest", "Wetland")
-    assert habitat_matches("Coastal waters and seagrass beds", "Coastal")
-    assert habitat_matches("Montane forests of Borneo", "Montane")
-    assert habitat_matches("Lowland and hill forests", "Montane")
-    assert habitat_matches("Tropical forest", "Rainforest")
-    assert not habitat_matches("Mangrove forest", "Rainforest")
-    assert not habitat_matches("Montane forests of Borneo", "Rainforest")
-    assert not habitat_matches(None, "Rainforest")
-    assert not habitat_matches("forest", "Coastal")
+    assert len(species_habitat_groups()) == 152
+    assert set(species_habitat_groups().values()) == set(HABITATS)
+    assert species_habitat_group("sp_malayan_tiger") == "Rainforest & Forest"
+    assert species_habitat_group("sp_green_sea_turtle") == "Coastal & Marine"
+    assert habitat_matches("Rainforest & Forest", "Rainforest & Forest")
+    assert not habitat_matches("Rivers, Wetlands & Mangroves", "Rainforest & Forest")
+    assert not habitat_matches(None, "Rainforest & Forest")
+    assert not habitat_matches("Rainforest & Forest", "Coastal & Marine")
     state = match()
-    assert state["habitat"] == "Rainforest"
+    assert state["habitat"] == "Rainforest & Forest"
     assert state["player"]["habitat_advantage"]
-    assert state["player"]["habitat_bonus"] == HABITAT_BONUSES["Rainforest"]
+    assert state["player"]["habitat_bonus"] == HABITAT_BONUSES["Rainforest & Forest"]
     assert not state["opponent"]["habitat_advantage"]
     assert state["opponent"]["habitat_bonus"] is None
 
@@ -92,7 +94,7 @@ def test_second_mover_gets_tiered_opening_shield():
 
 def test_habitat_attack_and_defence_apply_whole_match():
     state = clear_shields(match(player=definition("player", attack=13),
-                                opponent_habitat="tropical forest"))
+                                opponent_habitat="Rainforest & Forest"))
     original = copy.deepcopy(state)
     state, events = perform_action(state, "player", "basic")
     # Half-up rounding: 13 * 1.2 = 15.6 -> 16, then 16 * .8 = 12.8 -> 13.
@@ -110,31 +112,31 @@ def test_habitat_attack_and_defence_apply_whole_match():
 def test_habitat_bonus_rounds_half_up_for_catalogue_attacks(attack):
     # Plain floor() turned the 20% bonus into about 15% for catalogue attacks
     # of 11-13 while making the 20% defence cut closer to 25%.
-    bonus = clear_shields(match(player=definition("player", attack=attack), opponent_habitat="coast"))
+    bonus = clear_shields(match(player=definition("player", attack=attack), opponent_habitat="Coastal & Marine"))
     damage = next(e for e in perform_action(bonus, "player", "basic")[1] if e["type"] == "damage")
     assert damage["value"] == round(attack * 1.2)
-    defence = clear_shields(match(player=definition("player", attack=attack), player_habitat="coast",
-                                  opponent_habitat="forest"))
+    defence = clear_shields(match(player=definition("player", attack=attack), player_habitat="Coastal & Marine",
+                                  opponent_habitat="Rainforest & Forest"))
     damage = next(e for e in perform_action(defence, "player", "basic")[1] if e["type"] == "damage")
     assert damage["value"] == round(attack * 0.8)
 
 
 def test_each_habitat_uses_its_own_attack_and_defence_bonus():
     grass = clear_shields(match(
-        habitat="Grassland",
+        habitat="Grassland, Scrub & Farmland",
         player=definition("player", attack=10),
-        player_habitat="open grassland",
-        opponent_habitat="forest",
+        player_habitat="Grassland, Scrub & Farmland",
+        opponent_habitat="Rainforest & Forest",
     ))
     damage = next(e for e in perform_action(grass, "player", "basic")[1] if e["type"] == "damage")
     assert grass["player"]["habitat_bonus"]["attack_percent"] == 25
     assert damage["value"] == 13  # 10 * 1.25 rounds half-up.
 
     montane = clear_shields(match(
-        habitat="Montane",
+        habitat="Highland & Montane Forest",
         player=definition("player", attack=12),
-        player_habitat="lowland forest",
-        opponent_habitat="montane forests",
+        player_habitat="Rainforest & Forest",
+        opponent_habitat="Highland & Montane Forest",
     ))
     damage = next(e for e in perform_action(montane, "player", "basic")[1] if e["type"] == "damage")
     assert montane["opponent"]["habitat_bonus"]["defence_percent"] == 25
@@ -142,12 +144,12 @@ def test_each_habitat_uses_its_own_attack_and_defence_bonus():
 
 
 def test_habitat_draw_prefers_habitats_that_split_the_ready_cards():
-    forest, turtle = "Lowland rainforests.", "Coastal waters, seagrass beds and nesting beaches."
+    forest, turtle = "Rainforest & Forest", "Coastal & Marine"
     rng = random.Random(4)
-    # With a forest card and a coastal card, only Rainforest and Coastal make
+    # With a forest card and a coastal card, only their two groups make
     # one card match and the other not.
     draws = {choose_habitat([forest, turtle], rng) for _ in range(60)}
-    assert draws == {"Rainforest", "Coastal"}
+    assert draws == {"Rainforest & Forest", "Coastal & Marine"}
     # A single card or an all-forest collection has no split, so any habitat
     # remains possible.
     assert {choose_habitat([forest], rng) for _ in range(200)} == set(HABITATS)
@@ -159,12 +161,12 @@ def test_ability_previews_match_the_battle_and_drop_legacy_dice_text():
     for species in get_catalogue().values():
         previews = ability_previews(species)
         state = new_match(
-            species, species, habitat="Rainforest", player_habitat=None,
+            species, species, habitat="Rainforest & Forest", player_habitat=None,
             opponent_habitat=None, player_unlocked=[], opponent_unlocked=[],
             mode="bot", initiative="player",
         )
         assert previews == [
-            {key: ability[key] for key in ("slot", "name", "description", "cost")}
+            {key: ability[key] for key in ("slot", "name", "description", "cost", "effects")}
             for ability in state["player"]["abilities"]
         ]
         assert [preview["cost"] for preview in previews] == [1, 2, 4]
@@ -212,8 +214,8 @@ def test_slot_three_adapts_dice_and_original_passive_effects():
     catalogue = get_catalogue()
     for species in catalogue.values():
         state = new_match(
-            species, species, habitat="Rainforest", player_habitat="forest",
-            opponent_habitat="forest", player_unlocked=[1, 2, 3],
+            species, species, habitat="Rainforest & Forest", player_habitat="Rainforest & Forest",
+            opponent_habitat="Rainforest & Forest", player_unlocked=[1, 2, 3],
             opponent_unlocked=[1, 2, 3], mode="bot", initiative="player",
         )
         third = state["player"]["abilities"][2]
@@ -272,7 +274,7 @@ def test_one_hit_defences_and_hp_healing_are_bounded():
     striker = definition("striker", attack=10, passive={
         "name": "Silent Stalker", "effects": [{"type": "damage", "value": 4, "target": "opponent"}],
     })
-    state = match(player=striker, player_habitat="coast", opponent_habitat="forest")
+    state = match(player=striker, player_habitat="Coastal & Marine", opponent_habitat="Rainforest & Forest")
     state["opponent"]["guard"] = 25
     state["opponent"]["block"] = 2
     state["opponent"]["shield"] = 3
@@ -290,8 +292,8 @@ def test_one_hit_defences_and_hp_healing_are_bounded():
 def test_ai_uses_only_legal_actions_and_same_rules():
     specimen = get_battle_definition("sp_malayan_tiger")
     state = new_match(
-        specimen, specimen, habitat="Rainforest", player_habitat="forest",
-        opponent_habitat="forest", player_unlocked=[1, 2, 3],
+        specimen, specimen, habitat="Rainforest & Forest", player_habitat="Rainforest & Forest",
+        opponent_habitat="Rainforest & Forest", player_unlocked=[1, 2, 3],
         opponent_unlocked=[1, 2, 3], mode="bot", initiative="opponent",
     )
     assert state["player"]["hp"] == state["opponent"]["hp"]

@@ -3,7 +3,7 @@ import threading
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 
-from app.core.config import RECAPTURE_MAX_UPLOAD_MB, RECAPTURE_THREADS, RECAPTURE_THRESHOLD
+from app.core.config import RECAPTURE_MAX_UPLOAD_MB, RECAPTURE_THREADS, RECAPTURE_THRESHOLD, RECAPTURE_TILE_GRID
 
 from .recapture_detector import InvalidImage, RecaptureDetector
 
@@ -19,7 +19,8 @@ def get_detector() -> RecaptureDetector:
     if _detector is None:
         with _load_lock:
             if _detector is None:
-                _detector = RecaptureDetector(threshold=RECAPTURE_THRESHOLD, num_threads=RECAPTURE_THREADS)
+                _detector = RecaptureDetector(threshold=RECAPTURE_THRESHOLD, num_threads=RECAPTURE_THREADS,
+                                              tile_grid=(RECAPTURE_TILE_GRID, RECAPTURE_TILE_GRID))
     return _detector
 
 

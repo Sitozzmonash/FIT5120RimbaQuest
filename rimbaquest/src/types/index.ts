@@ -64,6 +64,7 @@ export type Species = {
     name: string;
     description: string;
     cost: number;
+    effects: Array<{ type: string; value: number; target: "self" | "opponent" }>;
   }>;
 };
 
