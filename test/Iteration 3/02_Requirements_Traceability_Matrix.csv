@@ -1,0 +1,97 @@
+Acceptance Criterion,Requirement summary,Result,Evidence / rationale,Test Case ID,Defect ID,Commit,Test Date
+AC4.5.15,Prevent duplicate questions across difficulty levels [Align with UT2-F6],Fail,E-I3-10-05: focused contract check found one Easy/Medium duplicate for Four-striped Ground Squirrel.,TC-I3-01,DEF-I3-001,39fd0d8,10 October 2026
+AC4.5.16,Verify quiz questions and answers against approved sources [Align with UT2-F6],Pass,E-I3-10-02 and E-I3-10-05: quiz API/data regression and approved-source fields.,TC-I3-01,,39fd0d8,10 October 2026
+AC4.5.17,Show relevant hint after an unsuccessful quiz attempt without revealing the answer,Pass,E-I3-10-02 and E-I3-10-05: quiz API/data regression and approved-source fields.,TC-I3-01,,39fd0d8,10 October 2026
+AC6.1.9,Provide clickable source links,Pass,E-I3-10-02 and E-I3-10-05: chatbot regression plus visible View source UI contract.,TC-I3-02,,39fd0d8,10 October 2026
+UT2-F4,Chatbot answer depth is inconsistent for more complex questions,Pass,E-I3-10-02 and E-I3-10-05: chatbot regression plus visible View source UI contract.,TC-I3-02,,39fd0d8,10 October 2026
+UT2-F5,Some chatbot terminology is not understandable,Pass,E-I3-10-02 and E-I3-10-05: chatbot regression plus visible View source UI contract.,TC-I3-02,,39fd0d8,10 October 2026
+AC2.3.1,Display location category filter,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.3.2,Apply location category filter,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.3.3,Clear location category filter,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.3.4,Combine search and category filtering,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.3.5,Handle no matching locations,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.4.1,Provide List View and Map View,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.4.2,Display location summaries in List View,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-03,,39fd0d8,10 October 2026
+AC2.4.3,Display locations in Map View,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-04,,39fd0d8,10 October 2026
+AC2.4.4,Display location preview from map marker,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-04,,39fd0d8,10 October 2026
+AC2.4.5,Keep List and Map results consistent,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-04,,39fd0d8,10 October 2026
+AC2.5.1,Request location permission,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-05,,39fd0d8,10 October 2026
+AC2.5.2,Display approximate distance,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-06,,39fd0d8,10 October 2026
+AC2.5.3,Display distance across location views,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-06,,39fd0d8,10 October 2026
+AC2.5.4,Support nearby-location comparison,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-06,,39fd0d8,10 October 2026
+AC2.5.5,Continue without location permission,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-05,,39fd0d8,10 October 2026
+AC2.5.6,Protect raw current-location coordinate information,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-05,,39fd0d8,10 October 2026
+AC2.6.1,Display enhanced location details,Pass,E-I3-10-04 and E-I3-10-05: local web location smoke and static/data contract checks.,TC-I3-07,,39fd0d8,10 October 2026
+AC2.6.2,Open Location in Google Maps,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-08,,39fd0d8,10 October 2026
+AC2.6.3,Handle unavailable enhanced information,Pass,"E-I3-10-08: local browser completion run verified markers, previews, List/Map consistency, fixed-coordinate distance and nearest ordering, Google Maps hand-off, and safe omission of unavailable optional detail fields.",TC-I3-08,,39fd0d8,10 October 2026
+AC7.1.1,Perform authenticity validation before wildlife verification,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.2,Evaluate multiple authenticity signals,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.3,Detect screen recapture using AI,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.4,Evaluate image metadata,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.5,Combine signals into one authenticity outcome,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.6,Allow likely genuine photos to continue,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.7,Block only when there is strong evidence of external sourcing or recapture,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.8,Continue when authenticity cannot be determined,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.9,Handle authenticity-validation service failure,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.10,Use simple and age-appropriate guidance,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.1.11,Show simple photo guidance before submission,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-09,,39fd0d8,10 October 2026
+AC7.2.1,Use additional signals for uploaded images,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC7.2.2,Do not rely on pixels alone to detect downloaded images,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC7.2.3,Do not block when downloaded-image evidence is insufficient,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC7.3.1,Minimise metadata used for validation,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC7.3.2,Restrict authenticity results to validation purposes,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC7.3.3,Keep technical authenticity results hidden from the child,Pass,"E-I3-10-02: automated authenticity, upload-signal, privacy and failure-path regression tests passed.",TC-I3-10,,39fd0d8,10 October 2026
+AC8.3.1,Explain how Battle works,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.2,Select Battle mode,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.3,Display a Battle habitat,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.4,Select one available Wildlife Card,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.5,Apply Habitat Advantage,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.6,Keep normal stats for non-matching cards,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.3.7,Communicate Habitat Advantage,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-11,,39fd0d8,10 October 2026
+AC8.4.1,Start Battle with Energy,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.2,Apply Battle action Energy costs,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.3,Prevent abilities without sufficient Energy,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.4,Allow one action per turn,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.5,Restore Energy after a completed turn,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.6,Resolve Battle actions,Fail,E-I3-10-02: full backend suite had two battle assertion failures after the opening-shield tuning change.,TC-I3-12,DEF-I3-002,39fd0d8,10 October 2026
+AC8.4.7,End Battle when HP reaches zero,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
+AC8.4.8,Display current Battle state,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.4.9,Provide visual feedback for Battle actions,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.4.10,Animate HP and Energy changes,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.4.11,Display specialised ability animations,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.4.12,Display post-Battle result information,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.5.1,Display the child’s friend code,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.2,Add a friend using a valid code,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.3,Prevent invalid or self friend codes,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.4,Show existing friendship on the system,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.5,Add friends to Friends list,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.6,Restrict direct Battle invitations to friends,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.7,Send a Friend Battle invitation,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.8,Accept or decline a Friend Battle invitation,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.5.9,Continue to Battle setup after acceptance,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-14,,39fd0d8,10 October 2026
+AC8.6.1,Create a shared Friend Battle,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.2,Display the same habitat to both players,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.3,Complete Wildlife Card selection before Battle starts,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.4,Randomise first player,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.5,Apply a 30-second turn limit,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.6,Skip an expired turn,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.7,Synchronise Battle state,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.8,Update leaderboard after Friend Battle,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.9,Display Friend Battle leaderboard,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.6.10,Reflect Friend Battle results,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
+AC8.7.1,Start an AI Bot Battle,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.2,Use Battle state for AI decisions,Fail,E-I3-10-07: source/evaluation review confirms the acceptance gap remains.,TC-I3-16,DEF-I3-003,39fd0d8,10 October 2026
+AC8.7.3,Restrict AI to valid Battle actions,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.4,Keep Battle calculations outside the AI model,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.5,Use one standard AI difficulty,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.6,Exclude AI Bot Battles from leaderboard,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.7,Train the Strategic AI using simulated Battles,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.8,Use Battle outcomes as internal training rewards,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
+AC8.7.9,Evaluate AI across representative Battle scenarios,Fail,E-I3-10-07: source/evaluation review confirms the acceptance gap remains.,TC-I3-16,DEF-I3-004,39fd0d8,10 October 2026
+AC8.7.10,Monitor Strategic AI performance,Fail,E-I3-10-07: source/evaluation review confirms the acceptance gap remains.,TC-I3-16,DEF-I3-005,39fd0d8,10 October 2026
+AC8.7.11,Review consistently unbalanced AI behaviour,Fail,E-I3-10-07: source/evaluation review confirms the acceptance gap remains.,TC-I3-16,DEF-I3-006,39fd0d8,10 October 2026
+AC8.8.1,Start rest period after a completed Battle,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.8.2,Prevent resting Wildlife Cards from being selected,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.8.3,Display remaining rest period,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.8.4,Calculate rest period using elapsed time,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
+AC8.8.5,Restore card availability,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026

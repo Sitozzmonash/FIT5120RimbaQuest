@@ -1,0 +1,22 @@
+Evidence ID: E-I3-10-04
+Date: 10 October 2026
+Environment: local Expo web export at 127.0.0.1:8081 with local FastAPI/SQLite backend
+Synthetic account: i3_ui_child (local .test email; no production account or data)
+
+Discover / locations observations:
+- List View loaded 22 Kuala Lumpur/Selangor locations.
+- Category control showed All types, Zoos, Wildlife Parks, Petting Zoos, Aquariums, Forest Parks, Nature Parks and Botanical Gardens.
+- Aquariums returned one place: Aquaria KLCC.
+- Search “Aquaria” and combined search “KLCC” + Aquariums returned Aquaria KLCC.
+- An impossible query displayed: “No matching locations found. Try another search or filter.”
+- Aquaria KLCC detail showed address, Aquarium type, About, Why it’s fun, opening hours, facilities, official website and Open in Google Maps.
+- Switching to Map raised a plain-language “Share your location?” prompt stating location is used only while the app is open and never saved. “Not Now” was selected; browser geolocation itself was not granted.
+- Map markers, distance/nearest sorting and external Google Maps launch were therefore not executed.
+
+Battle observations (local fixture: Malayan Tiger discovered and all three abilities unlocked):
+- Lobby explained random habitat and +20% Attack & Defence; deck showed Ready and Resting counts and two-hour rest copy.
+- Mode dialog offered Practice vs Bot (No points) and Challenge a Friend (Win +5 / Loss −3).
+- Bot setup showed Rainforest arena, one-card selection and three unlocked abilities with Energy costs 1, 2 and 4.
+- Live battle displayed HP, Energy, habitat bonuses, shields, turn indicator, legal actions and one-move-per-turn guidance.
+- The completed 13-move Bot battle showed Defeat, winner, final HP, Practice/No points, Battle Recap and a two-hour card rest.
+- Returning to the lobby showed Ready 0 and Resting 1.

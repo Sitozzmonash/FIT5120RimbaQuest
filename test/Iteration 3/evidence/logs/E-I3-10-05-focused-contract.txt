@@ -1,0 +1,16 @@
+Evidence ID: E-I3-10-05
+Date: 10 October 2026
+Script: automated/test_iteration3_plan_contract.py
+Command: python test_iteration3_plan_contract.py /Users/lilia/Documents/ChatGPT/5120/FIT5120RimbaQuest_iteration3_latest
+
+Result: FAIL — exit code 1.
+
+Assertion:
+Duplicate questions across difficulty levels: sp_four_striped_ground_squirrel: easy/medium: what is the scientific name of the four-striped ground squirrel?
+
+Scope before the failing gate:
+- Parsed 6,840 quiz rows for 152 species.
+- Confirmed every row has source_refs and a correct answer present among its options.
+- Compared normalized question text across Easy, Medium and Hard for each species.
+
+The duplicate is recorded as DEF-I3-001 and causes AC4.5.15 to fail. The script remains in the package as a reproducible retest.

@@ -1,0 +1,39 @@
+Evidence ID: E-I3-10-08
+Title: Location map, distance, external hand-off and missing-field completion
+Date: 10 October 2026
+Baseline: branch test-jiating, commit 39fd0d899eb3838270a9b625e0a8473fea9b947d
+Environment: local Expo web export with local FastAPI and isolated SQLite test database
+
+Test location control
+- Browser geolocation did not return reliably in the in-app browser.
+- A fixed Kuala Lumpur coordinate (3.1390, 101.6869) was injected only into the generated local web export as a test harness.
+- Repository source files were not changed. No production account or production data was used.
+
+AC2.4.3 to AC2.4.5 — Pass
+- Map View rendered 22 accessible location markers.
+- Map carousel rendered the same 22 location cards.
+- Programmatic read-only comparison returned markerCount=22, cardCount=22, missing=[], extra=[].
+- Selecting the Zoo Negara marker highlighted it and displayed a preview with name, address, 11.2 km distance and opening hours.
+- Choosing View Details opened the full Zoo Negara detail page.
+
+AC2.5.2 to AC2.5.4 — Pass
+- After Share Location, the app selected Nearest first automatically.
+- Distances were approximate and ordered ascending, including Perdana Botanical Gardens 600 m, KL Bird Park 600 m, KL Butterfly Park 700 m, Taman Tugu 1.6 km, KL Forest Eco Park 2.3 km and Aquaria KLCC 3.3 km.
+- Aquaria KLCC showed 3.3 km away in List/Map and 3.3 km straight-line in detail.
+- Zoo Negara showed 11.2 km away in the map preview and 11.2 km straight-line in detail.
+
+AC2.6.2 — Pass
+- Open in Google Maps displayed the Leaving RimbaQuest confirmation.
+- Open Maps created a Google Maps route tab for Zoo Negara.
+- Initial target URL: https://www.google.com/maps/dir/?api=1&destination=Zoo%20Negara%2C%20Zoo%20Negara%2C%20Jalan%20Ulu%20Klang%2C%2068000%20Ampang%2C%20Selangor
+- Google Maps resolved the destination as Zoo Negara Malaysia and displayed route options.
+
+AC2.6.3 — Pass
+- In the isolated test database, Aquaria KLCC optional description, facilities, opening hours, recommendation, wildlife and website fields were temporarily set unavailable.
+- The detail page still rendered Aquaria KLCC, address, type, 3.3 km straight-line distance and Open in Google Maps.
+- Unavailable optional sections were omitted without an error or broken placeholder.
+- The original database row was restored after the observation; description, three facilities and website were confirmed present.
+
+Result
+- All eight previously Not Run criteria passed.
+- Updated Iteration 3 totals: 90 Pass, 6 Fail, 0 Not Run across 96 plan items.

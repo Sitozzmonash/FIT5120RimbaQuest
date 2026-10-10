@@ -1,0 +1,24 @@
+Evidence ID: E-I3-10-07
+Date: 10 October 2026
+Reviewed files:
+- backend/app/services/wildlife_ai.py
+- backend/tools/train_wildlife_ai.py
+- backend/data/wildlife_ai_policy.json
+- backend/tests/test_wildlife_engine.py
+- Iteration 3 Plan.docx acceptance criteria AC8.7.1–AC8.7.11
+
+Confirmed implemented:
+- Bot uses the shared battle engine and returns an action identifier only.
+- Legal actions enforce unlocked abilities and Energy costs.
+- One standard difficulty is used without hidden stat advantages.
+- Bot battles award zero leaderboard points.
+- Offline self-play uses +1/-1 outcomes; committed policy records 1,500 completed training matches.
+- Evaluation supports random and simple opponents and reports wins, length, actions, habitat and card rates.
+
+Open acceptance gaps:
+- AC8.7.2: the state key contains AI Energy but not the child’s Energy; threat scoring uses the child’s Basic Attack and does not model available child abilities or next-action threat.
+- AC8.7.9: generated matches vary cards, habitats, unlock tiers, initiative and opponent profile, but start at full HP and 5 Energy; low/full HP and low/high Energy coverage is neither constructed nor asserted.
+- AC8.7.10: metrics are printed, but a retained review of ability concentration and persistent card/habitat outliers with adequate samples is absent.
+- AC8.7.11: no completed pre-release review artefact shows how consistent imbalance was investigated or corrected. The plan records an 84.4% AI win rate against random actions under the limited standard-start evaluation.
+
+Recorded as DEF-I3-003 through DEF-I3-006.
