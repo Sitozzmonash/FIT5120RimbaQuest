@@ -1,0 +1,11 @@
+Evidence ID: E-I3-10-01
+Date: 10 October 2026
+Repository: https://github.com/Sitozzmonash/FIT5120RimbaQuest
+Local clean clone: /Users/lilia/Documents/ChatGPT/5120/FIT5120RimbaQuest_iteration3_latest
+Branch created for this test cycle: test-jiating
+Baseline commit: 39fd0d899eb3838270a9b625e0a8473fea9b947d
+Commit date: 2026-10-09T23:46:19+08:00
+Subject: Merge pull request #41 from clee0084-stack/victor/shorter-battle-tuning
+Working tree at baseline: clean
+
+An older dirty checkout already existed in the workspace. It was preserved untouched; testing used the clean clone above.

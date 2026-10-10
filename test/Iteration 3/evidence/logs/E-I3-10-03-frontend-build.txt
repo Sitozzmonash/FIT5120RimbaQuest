@@ -1,0 +1,14 @@
+Evidence ID: E-I3-10-03
+Date: 10 October 2026
+Environment: Node v26.8.1; npm 11.19.0
+
+1. npm ci
+   Result: PASS — 805 packages installed and 806 audited from the lockfile.
+
+2. npx tsc --noEmit
+   Result: PASS — exit code 0; no TypeScript diagnostics.
+
+3. npx expo export --platform web --output-dir /Users/lilia/Documents/ChatGPT/5120/.tmp_iteration3/expo-web
+   Result: PASS — web bundle exported successfully; one 2.38 MB JavaScript bundle and three static routes produced.
+
+Dependency vulnerability findings are separated into E-I3-10-06 and DEF-I3-007.

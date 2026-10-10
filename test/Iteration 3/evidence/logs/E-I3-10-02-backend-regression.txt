@@ -1,0 +1,18 @@
+Evidence ID: E-I3-10-02
+Date: 10 October 2026
+Environment: Python 3.12.14; pytest 8.3.4; SQLite temporary test database
+Command: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run --python <bundled-python-3.12> --no-project --with-requirements requirements.txt python -m pytest -q --junitxml=<Iteration3>/evidence/backend-pytest-junit.xml
+
+Result: FAIL — 2 failed, 196 passed, 137 warnings in 27.13 seconds.
+
+Failures:
+1. tests/test_battle_rules.py::test_low_energy_passive_no_resurrection_at_zero
+   Expected opponent energy/legacy HP 23; actual 25.
+2. tests/test_battle_rules.py::test_consuming_next_attack_boost_and_weaken
+   Expected opponent energy/legacy HP 81; actual 83.
+
+Focused repetition produced the same two failures. The tuned slot-3 second-mover opening shield is 10, while these assertions still calculate as if it were 8. The newer battle-engine tests explicitly expect the 10-point shield. This is recorded as DEF-I3-002 because the regression contract is not clean even though the production value appears intentional.
+
+Coverage in the passing tests includes quizzes, chatbot, photo authenticity, locations/API support, battle catalogue/rules/matching/sessions, friends, AI legality/training-policy integration, leaderboard and two-hour rest.
+
+Machine-readable evidence: ../backend-pytest-junit.xml

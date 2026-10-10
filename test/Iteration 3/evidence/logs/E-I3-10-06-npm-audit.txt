@@ -1,0 +1,14 @@
+Evidence ID: E-I3-10-06
+Date: 10 October 2026
+Command: npm audit --json (after npm ci)
+
+Result: FAIL release security gate.
+Total vulnerabilities: 48
+- Critical: 1
+- High: 31
+- Moderate: 16
+- Low: 0
+
+The critical result is shell-quote command injection in a transitive React Native tooling path. High findings include Expo/Metro tooling, node-forge, postcss, undici, image-size, source-map-js, XML processing and related transitive packages. Some automated remediation proposals imply major-version or dependency-graph changes and were not applied during testing.
+
+Recorded as DEF-I3-007.
