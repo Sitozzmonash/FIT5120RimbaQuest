@@ -1,0 +1,18 @@
+Evidence ID: E-I3-11-02
+Date: 11 October 2026
+Baseline: 4740c2f7507dceb755686133b3689d9c1bad724b
+
+DEF-I3-001 — PASS / CLOSED
+Command scope: parse backend/data/ai_quiz_questions.json; normalize question text; compare Easy, Medium and Hard within each species.
+Result: questions=6840 species=152 cross_difficulty_duplicates=0.
+Fix commit: 5e2c140789abc2f58e34ec8a4142f6dc7326ed13.
+
+DEF-I3-002 — FAIL / OPEN
+Command: pytest -q tests/test_battle_rules.py::test_low_energy_passive_no_resurrection_at_zero tests/test_battle_rules.py::test_consuming_next_attack_boost_and_weaken
+Result: 2 failed in 0.06 seconds.
+- test_low_energy_passive_no_resurrection_at_zero: expected opponent HP 23; actual 25.
+- test_consuming_next_attack_boost_and_weaken: expected opponent HP 81; actual 83.
+
+Conclusion: the quiz duplicate is fixed. The battle regression mismatch is unchanged, so the full-regression gate did not pass.
+
+Test-asset observation: the broad automated/test_iteration3_plan_contract.py now proceeds past the quiz duplicate gate and stops later at its legacy exact-location-count assertion (expects 22 from seed.sql; the fixture contains 14). The quiz closure above uses a dedicated all-row duplicate scan and does not reclassify location acceptance in this gated retest cycle.

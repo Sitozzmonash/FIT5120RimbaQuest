@@ -1,0 +1,18 @@
+Evidence ID: E-I3-11-03
+Date: 11 October 2026
+Baseline: 4740c2f7507dceb755686133b3689d9c1bad724b
+
+DEF-I3-007 — FAIL / OPEN
+Commands: npm ci; npm audit --json
+
+npm ci result: 649 packages installed and 650 packages audited.
+npm audit result:
+- Critical: 0
+- High: 18
+- Moderate: 12
+- Low: 0
+- Total: 30
+
+High-severity package paths include @expo/cli, @expo/code-signing-certificates, @expo/metro, @expo/metro-config, React Native community/Metro packages, braces, Expo, Metro packages, micromatch, node-forge, React Native, react-native-reanimated and react-native-worklets.
+
+Conclusion: the previous critical finding is cleared and the total fell from 48 to 30, but 18 high findings remain. The release security gate still fails.

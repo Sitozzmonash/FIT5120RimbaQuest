@@ -1,0 +1,20 @@
+Evidence ID: E-I3-11-04
+Date: 11 October 2026
+Baseline: 4740c2f7507dceb755686133b3689d9c1bad724b
+
+Focused engine check: pytest -q tests/test_wildlife_engine.py -k 'ai or threat or energy or evaluation or policy'
+Result: 4 passed, 13 deselected.
+
+DEF-I3-003 — FAIL / OPEN
+An acceptance-specific probe removed the child side's Energy and unlocked abilities while holding the remaining match state constant. The AI action key remained 2|2|1|0|basic and the score remained 7.7. Child Energy and available-ability threat are therefore still absent from the decision representation.
+
+DEF-I3-004 — FAIL / OPEN
+Source inspection and a seeded evaluation confirm make_match still initializes each evaluation match at full HP and 5 Energy. Cards, habitats, unlock tiers, initiative and opponent profile vary, but required controlled low/full HP and low/high Energy coverage is not constructed or asserted.
+
+DEF-I3-005 — FAIL / OPEN
+Evaluation prints win rate, turns, action counts, habitat rates and card rates to stdout. No retained completed review of persistent card/habitat outliers or ability concentration was found.
+
+DEF-I3-006 — FAIL / OPEN
+No completed pre-release review artefact documenting investigation or correction of consistently unbalanced AI behaviour was found.
+
+Illustrative 20-game seeded evaluation output (small diagnostic sample, not acceptance evidence): AI win rate 0.75 against random and 0.35 against simple; habitat rates varied widely and no card reached the five-game reporting threshold. This reinforces the need for the representative retained review required by AC8.7.9–AC8.7.11.
