@@ -1,5 +1,5 @@
 Acceptance Criterion,Requirement summary,Result,Evidence / rationale,Test Case ID,Defect ID,Commit,Test Date
-AC4.5.15,Prevent duplicate questions across difficulty levels [Align with UT2-F6],Pass,"E-I3-11-02: retest parsed 6,840 questions for 152 species and found zero cross-difficulty duplicates; DEF-I3-001 closed.",TC-I3-01,DEF-I3-001,4740c2f,11 October 2026
+AC4.5.15,Prevent duplicate questions across difficulty levels [Align with UT2-F6],Pass,"E-I3-11-02: retest parsed 6,840 questions for 152 species and found zero cross-difficulty duplicates; DEF-I3-001 closed.",TC-I3-01,DEF-I3-001,795cacd,11 October 2026
 AC4.5.16,Verify quiz questions and answers against approved sources [Align with UT2-F6],Pass,E-I3-10-02 and E-I3-10-05: quiz API/data regression and approved-source fields.,TC-I3-01,,39fd0d8,10 October 2026
 AC4.5.17,Show relevant hint after an unsuccessful quiz attempt without revealing the answer,Pass,E-I3-10-02 and E-I3-10-05: quiz API/data regression and approved-source fields.,TC-I3-01,,39fd0d8,10 October 2026
 AC6.1.9,Provide clickable source links,Pass,E-I3-10-02 and E-I3-10-05: chatbot regression plus visible View source UI contract.,TC-I3-02,,39fd0d8,10 October 2026
@@ -53,7 +53,7 @@ AC8.4.2,Apply Battle action Energy costs,Pass,E-I3-10-02 and E-I3-10-04: automat
 AC8.4.3,Prevent abilities without sufficient Energy,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
 AC8.4.4,Allow one action per turn,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
 AC8.4.5,Restore Energy after a completed turn,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
-AC8.4.6,Resolve Battle actions,Fail,E-I3-11-02: the same two shield-sensitive battle assertions still fail (actual HP 25/83 versus expected 23/81).,TC-I3-12,DEF-I3-002,4740c2f,11 October 2026
+AC8.4.6,Resolve Battle actions,Pass,E-I3-11-05: shield-sensitive expectations now match the approved 10-point tier-3 opening shield; full backend regression passed 204/204.,TC-I3-12,DEF-I3-002,795cacd,11 October 2026
 AC8.4.7,End Battle when HP reaches zero,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-12,,39fd0d8,10 October 2026
 AC8.4.8,Display current Battle state,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
 AC8.4.9,Provide visual feedback for Battle actions,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
@@ -80,16 +80,16 @@ AC8.6.8,Update leaderboard after Friend Battle,Pass,"E-I3-10-02: friends, invita
 AC8.6.9,Display Friend Battle leaderboard,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
 AC8.6.10,Reflect Friend Battle results,Pass,"E-I3-10-02: friends, invitations, shared-session, timeout and leaderboard API regressions passed.",TC-I3-15,,39fd0d8,10 October 2026
 AC8.7.1,Start an AI Bot Battle,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
-AC8.7.2,Use Battle state for AI decisions,Fail,"E-I3-11-04: focused tests passed, but state-feature, scenario-coverage and retained-review acceptance gaps remain.",TC-I3-16,DEF-I3-003,4740c2f,11 October 2026
+AC8.7.2,Use Battle state for AI decisions,Pass,"E-I3-11-05: state schema, threat probe, eight controlled scenarios, 1,520 games per profile and retained release review all passed.",TC-I3-16,DEF-I3-003,795cacd,11 October 2026
 AC8.7.3,Restrict AI to valid Battle actions,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
 AC8.7.4,Keep Battle calculations outside the AI model,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
 AC8.7.5,Use one standard AI difficulty,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
 AC8.7.6,Exclude AI Bot Battles from leaderboard,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
 AC8.7.7,Train the Strategic AI using simulated Battles,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
 AC8.7.8,Use Battle outcomes as internal training rewards,Pass,"E-I3-10-02, E-I3-10-04 and E-I3-10-07: AI engine tests, local Bot battle and policy/source inspection.",TC-I3-16,,39fd0d8,10 October 2026
-AC8.7.9,Evaluate AI across representative Battle scenarios,Fail,"E-I3-11-04: focused tests passed, but state-feature, scenario-coverage and retained-review acceptance gaps remain.",TC-I3-16,DEF-I3-004,4740c2f,11 October 2026
-AC8.7.10,Monitor Strategic AI performance,Fail,"E-I3-11-04: focused tests passed, but state-feature, scenario-coverage and retained-review acceptance gaps remain.",TC-I3-16,DEF-I3-005,4740c2f,11 October 2026
-AC8.7.11,Review consistently unbalanced AI behaviour,Fail,"E-I3-11-04: focused tests passed, but state-feature, scenario-coverage and retained-review acceptance gaps remain.",TC-I3-16,DEF-I3-006,4740c2f,11 October 2026
+AC8.7.9,Evaluate AI across representative Battle scenarios,Pass,"E-I3-11-05: state schema, threat probe, eight controlled scenarios, 1,520 games per profile and retained release review all passed.",TC-I3-16,DEF-I3-004,795cacd,11 October 2026
+AC8.7.10,Monitor Strategic AI performance,Pass,"E-I3-11-05: state schema, threat probe, eight controlled scenarios, 1,520 games per profile and retained release review all passed.",TC-I3-16,DEF-I3-005,795cacd,11 October 2026
+AC8.7.11,Review consistently unbalanced AI behaviour,Pass,"E-I3-11-05: state schema, threat probe, eight controlled scenarios, 1,520 games per profile and retained release review all passed.",TC-I3-16,DEF-I3-006,795cacd,11 October 2026
 AC8.8.1,Start rest period after a completed Battle,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
 AC8.8.2,Prevent resting Wildlife Cards from being selected,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026
 AC8.8.3,Display remaining rest period,Pass,E-I3-10-02 and E-I3-10-04: automated battle regression and completed local Bot battle UI smoke.,TC-I3-13,,39fd0d8,10 October 2026

@@ -1,0 +1,1580 @@
+{
+  "training": {
+    "completed_training_matches": 1500,
+    "average_training_turns": 12.78,
+    "learned_state_actions": 1116
+  },
+  "evaluation": {
+    "seed": 2027,
+    "games_per_profile": 1520,
+    "minimum_card_samples": 10,
+    "outlier_thresholds": {
+      "low": 0.2,
+      "high": 0.8
+    },
+    "profiles": {
+      "random": {
+        "games_completed": 1520,
+        "ai_win_rate": 0.627,
+        "player_win_rate": 0.373,
+        "average_turns": 7.1,
+        "action_frequency": {
+          "ability_1": {
+            "count": 3431,
+            "rate": 0.624
+          },
+          "ability_2": {
+            "count": 620,
+            "rate": 0.113
+          },
+          "ability_3": {
+            "count": 1275,
+            "rate": 0.232
+          },
+          "basic": {
+            "count": 170,
+            "rate": 0.031
+          }
+        },
+        "ability_usage_rate": 0.969,
+        "by_habitat": {
+          "Coastal & Marine": {
+            "games": 9,
+            "ai_win_rate": 0.444
+          },
+          "Gardens, Parks & Urban": {
+            "games": 86,
+            "ai_win_rate": 0.651
+          },
+          "Grassland, Scrub & Farmland": {
+            "games": 173,
+            "ai_win_rate": 0.607
+          },
+          "Highland & Montane Forest": {
+            "games": 83,
+            "ai_win_rate": 0.675
+          },
+          "Rainforest & Forest": {
+            "games": 334,
+            "ai_win_rate": 0.614
+          },
+          "Rivers, Wetlands & Mangroves": {
+            "games": 835,
+            "ai_win_rate": 0.631
+          }
+        },
+        "by_card": {
+          "sp_ashy_tailorbird": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_asian_blue_quail": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_asian_elephant": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_asian_small_clawed_otter": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_asiatic_brush_tailed_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_asiatic_golden_cat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_asiatic_striped_squirrels": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_banded_civet": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_banded_leaf_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_banded_linsang": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_banteng": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_barred_eagle_owl": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_bearded_pig": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_binturong": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_black_crowned_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_black_giant_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_black_rumped_flameback": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_blue_breasted_quail": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_blue_headed_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_blyth_s_hawk_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_bornean_banded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_bornean_orangutan": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_bornean_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_bornean_yellow_muntjac": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_borneo_bay_cat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_borneo_earless_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_brown_rat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_buffy_fish_owl": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_changeable_hawk_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_chestnut_capped_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_chestnut_capped_thrush": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_chestnut_necklaced_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_cinereous_bulbul": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_clouded_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_collared_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_common_emerald_dove": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_common_hill_myna": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_common_mormon": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_common_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_common_sun_skink": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_common_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_common_water_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_crab_eating_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_crab_eating_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_crested_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_crested_serpent_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_crimson_headed_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_crimson_winged_woodpecker": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_dark_necked_tailorbird": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_dhole": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_dusky_leaf_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_flat_headed_cat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_four_striped_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_gaur": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_great_argus": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_greater_coucal": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_greater_oriental_chevrotain": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_green_backed_heron": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_green_billed_coucal": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_green_sea_turtle": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_grey_bellied_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_honey_buzzard": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_horse_tailed_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_hose_s_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_hose_s_langur": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_indomalayan_bamboo_rat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_lar_gibbon": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_large_indian_civet": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_large_spotted_civet": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_large_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_lesser_dog_faced_fruit_bat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_long_tailed_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_long_tailed_sibia": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_mainland_leopard_cat": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malay_banded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malay_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malay_crested_fireback": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malay_ground_cuckoo": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malay_weasel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malayan_night_heron": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malayan_pangolin": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malayan_peacock_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_malayan_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_malayan_tapir": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_malayan_tiger": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malaysian_field_rat": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malaysian_mole": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_malaysian_rail_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_marbled_cat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_maroon_sureli": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_masked_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_moonrat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_mountain_imperial_pigeon": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_mouse_deer": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_noisy_rat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_northern_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_orange_headed_thrush": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_oriental_magpie_robin": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_oriental_pied_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_otter_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_pale_giant_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_plantain_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_prevost_s_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_proboscis_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_red_junglefowl": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_reticulated_python": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_rhinoceros_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_roughneck_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_rufous_browed_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_rufous_tailed_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_rufous_tailed_shama": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_saltwater_crocodile": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_sambar": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_serow": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_short_tailed_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_short_tailed_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_shrew_faced_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_small_indian_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_small_toothed_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_smooth_coated_otter": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_sooty_capped_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_southern_pig_tailed_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_southern_red_muntjac": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_spotted_giant_flying_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_striped_wren_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_stump_tailed_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_sun_bear": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_sunda_clouded_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sunda_colugo": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sunda_laughingthrush": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_sunda_pied_fantail": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_sunda_stink_badger": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_tailed_jay": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_thick_spined_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_three_striped_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_tiger_shrike": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_tufted_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_vieillot_s_fireback": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_western_hooded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_white_breasted_waterhen": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_white_crested_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_white_crowned_forktail": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_white_fronted_langur": {
+            "games": 10,
+            "ai_win_rate": 0.8
+          },
+          "sp_white_rumped_shama": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_white_tailed_wattled_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_white_thighed_surili": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_wild_boar": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_yellow_bellied_bulbul": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_yellow_handed_mitered_langur": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_yellow_rumped_flycatcher": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_yellow_throated_marten": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          }
+        },
+        "by_scenario": {
+          "both_full_hp_locked_abilities": {
+            "games": 190,
+            "ai_win_rate": 0.558
+          },
+          "both_low_hp_low_child_energy": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          },
+          "full_hp_high_energy_ai_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.995
+          },
+          "full_hp_low_ai_energy_no_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.458
+          },
+          "low_ai_hp_high_energy_player_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.0
+          },
+          "low_ai_hp_low_energy_defence": {
+            "games": 190,
+            "ai_win_rate": 0.005
+          },
+          "low_child_hp_high_threat": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          },
+          "low_child_hp_low_energy_recovery": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          }
+        },
+        "coverage": {
+          "advantage:none": 570,
+          "advantage:opponent": 570,
+          "advantage:player": 380,
+          "initiative:opponent": 760,
+          "initiative:player": 760,
+          "opponent_energy:high": 950,
+          "opponent_energy:low": 570,
+          "opponent_hp:full": 950,
+          "opponent_hp:low": 570,
+          "opponent_unlocks:1": 380,
+          "opponent_unlocks:2": 380,
+          "opponent_unlocks:3": 760,
+          "player_energy:high": 760,
+          "player_energy:low": 760,
+          "player_hp:full": 950,
+          "player_hp:low": 570,
+          "player_unlocks:1": 380,
+          "player_unlocks:2": 380,
+          "player_unlocks:3": 760,
+          "scenario:both_full_hp_locked_abilities": 190,
+          "scenario:both_low_hp_low_child_energy": 190,
+          "scenario:full_hp_high_energy_ai_advantage": 190,
+          "scenario:full_hp_low_ai_energy_no_advantage": 190,
+          "scenario:low_ai_hp_high_energy_player_advantage": 190,
+          "scenario:low_ai_hp_low_energy_defence": 190,
+          "scenario:low_child_hp_high_threat": 190,
+          "scenario:low_child_hp_low_energy_recovery": 190
+        },
+        "outliers": [
+          {
+            "dimension": "card",
+            "name": "sp_asiatic_brush_tailed_porcupine",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_banded_civet",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_bearded_pig",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_black_rumped_flameback",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_bornean_banded_pitta",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_bornean_yellow_muntjac",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_common_emerald_dove",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_four_striped_ground_squirrel",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_oriental_pied_hornbill",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_rhinoceros_hornbill",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_roughneck_monitor",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_short_tailed_mongoose",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_tiger_shrike",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          },
+          {
+            "dimension": "card",
+            "name": "sp_white_fronted_langur",
+            "games": 10,
+            "ai_win_rate": 0.8,
+            "direction": "high"
+          }
+        ]
+      },
+      "simple": {
+        "games_completed": 1520,
+        "ai_win_rate": 0.509,
+        "player_win_rate": 0.491,
+        "average_turns": 6.94,
+        "action_frequency": {
+          "ability_1": {
+            "count": 3205,
+            "rate": 0.607
+          },
+          "ability_2": {
+            "count": 608,
+            "rate": 0.115
+          },
+          "ability_3": {
+            "count": 1312,
+            "rate": 0.248
+          },
+          "basic": {
+            "count": 155,
+            "rate": 0.029
+          }
+        },
+        "ability_usage_rate": 0.971,
+        "by_habitat": {
+          "Coastal & Marine": {
+            "games": 9,
+            "ai_win_rate": 0.444
+          },
+          "Gardens, Parks & Urban": {
+            "games": 86,
+            "ai_win_rate": 0.558
+          },
+          "Grassland, Scrub & Farmland": {
+            "games": 173,
+            "ai_win_rate": 0.52
+          },
+          "Highland & Montane Forest": {
+            "games": 83,
+            "ai_win_rate": 0.542
+          },
+          "Rainforest & Forest": {
+            "games": 334,
+            "ai_win_rate": 0.521
+          },
+          "Rivers, Wetlands & Mangroves": {
+            "games": 835,
+            "ai_win_rate": 0.495
+          }
+        },
+        "by_card": {
+          "sp_ashy_tailorbird": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_asian_blue_quail": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_asian_elephant": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_asian_small_clawed_otter": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_asiatic_brush_tailed_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_asiatic_golden_cat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_asiatic_striped_squirrels": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_banded_civet": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_banded_leaf_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_banded_linsang": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_banteng": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_barred_eagle_owl": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_bearded_pig": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_binturong": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_black_crowned_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_black_giant_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_black_rumped_flameback": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_blue_breasted_quail": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_blue_headed_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_blyth_s_hawk_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_bornean_banded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_bornean_orangutan": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_bornean_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_bornean_yellow_muntjac": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_borneo_bay_cat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_borneo_earless_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_brown_rat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_buffy_fish_owl": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_changeable_hawk_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_chestnut_capped_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_chestnut_capped_thrush": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_chestnut_necklaced_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_cinereous_bulbul": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_clouded_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_collared_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_common_emerald_dove": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_common_hill_myna": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_common_mormon": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_common_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_common_sun_skink": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_common_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_common_water_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_crab_eating_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_crab_eating_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_crested_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_crested_serpent_eagle": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_crimson_headed_partridge": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_crimson_winged_woodpecker": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_dark_necked_tailorbird": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_dhole": {
+            "games": 10,
+            "ai_win_rate": 0.3
+          },
+          "sp_dusky_leaf_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_flat_headed_cat": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_four_striped_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_gaur": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_great_argus": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_greater_coucal": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_greater_oriental_chevrotain": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_green_backed_heron": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_green_billed_coucal": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_green_sea_turtle": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_grey_bellied_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_honey_buzzard": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_horse_tailed_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_hose_s_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_hose_s_langur": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_indomalayan_bamboo_rat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_lar_gibbon": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_large_indian_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_large_spotted_civet": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_large_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_lesser_dog_faced_fruit_bat": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_long_tailed_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_long_tailed_sibia": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_mainland_leopard_cat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malay_banded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malay_civet": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malay_crested_fireback": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_malay_ground_cuckoo": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malay_weasel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malayan_night_heron": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malayan_pangolin": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malayan_peacock_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malayan_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_malayan_tapir": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malayan_tiger": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malaysian_field_rat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_malaysian_mole": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_malaysian_rail_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_marbled_cat": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_maroon_sureli": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_masked_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_moonrat": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_mountain_imperial_pigeon": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_mouse_deer": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_noisy_rat": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_northern_treeshrew": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_orange_headed_thrush": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_oriental_magpie_robin": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_oriental_pied_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_otter_civet": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_pale_giant_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.3
+          },
+          "sp_plantain_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_prevost_s_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_proboscis_monkey": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_red_junglefowl": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_reticulated_python": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_rhinoceros_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.7
+          },
+          "sp_roughneck_monitor": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_rufous_browed_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_rufous_tailed_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_rufous_tailed_shama": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_saltwater_crocodile": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sambar": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_serow": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_short_tailed_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_short_tailed_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_shrew_faced_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.3
+          },
+          "sp_small_indian_mongoose": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_small_toothed_palm_civet": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_smooth_coated_otter": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sooty_capped_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.3
+          },
+          "sp_southern_pig_tailed_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_southern_red_muntjac": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_spotted_giant_flying_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_striped_wren_babbler": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_stump_tailed_macaque": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sun_bear": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sunda_clouded_leopard": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_sunda_colugo": {
+            "games": 10,
+            "ai_win_rate": 0.3
+          },
+          "sp_sunda_laughingthrush": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_sunda_pied_fantail": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_sunda_stink_badger": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_tailed_jay": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_thick_spined_porcupine": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_three_striped_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_tiger_shrike": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_tufted_ground_squirrel": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_vieillot_s_fireback": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_western_hooded_pitta": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_white_breasted_waterhen": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_white_crested_hornbill": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_white_crowned_forktail": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_white_fronted_langur": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_white_rumped_shama": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_white_tailed_wattled_pheasant": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_white_thighed_surili": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_wild_boar": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          },
+          "sp_yellow_bellied_bulbul": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_yellow_handed_mitered_langur": {
+            "games": 10,
+            "ai_win_rate": 0.4
+          },
+          "sp_yellow_rumped_flycatcher": {
+            "games": 10,
+            "ai_win_rate": 0.5
+          },
+          "sp_yellow_throated_marten": {
+            "games": 10,
+            "ai_win_rate": 0.6
+          }
+        },
+        "by_scenario": {
+          "both_full_hp_locked_abilities": {
+            "games": 190,
+            "ai_win_rate": 0.179
+          },
+          "both_low_hp_low_child_energy": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          },
+          "full_hp_high_energy_ai_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.884
+          },
+          "full_hp_low_ai_energy_no_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.011
+          },
+          "low_ai_hp_high_energy_player_advantage": {
+            "games": 190,
+            "ai_win_rate": 0.0
+          },
+          "low_ai_hp_low_energy_defence": {
+            "games": 190,
+            "ai_win_rate": 0.0
+          },
+          "low_child_hp_high_threat": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          },
+          "low_child_hp_low_energy_recovery": {
+            "games": 190,
+            "ai_win_rate": 1.0
+          }
+        },
+        "coverage": {
+          "advantage:none": 570,
+          "advantage:opponent": 570,
+          "advantage:player": 380,
+          "initiative:opponent": 760,
+          "initiative:player": 760,
+          "opponent_energy:high": 950,
+          "opponent_energy:low": 570,
+          "opponent_hp:full": 950,
+          "opponent_hp:low": 570,
+          "opponent_unlocks:1": 380,
+          "opponent_unlocks:2": 380,
+          "opponent_unlocks:3": 760,
+          "player_energy:high": 760,
+          "player_energy:low": 760,
+          "player_hp:full": 950,
+          "player_hp:low": 570,
+          "player_unlocks:1": 380,
+          "player_unlocks:2": 380,
+          "player_unlocks:3": 760,
+          "scenario:both_full_hp_locked_abilities": 190,
+          "scenario:both_low_hp_low_child_energy": 190,
+          "scenario:full_hp_high_energy_ai_advantage": 190,
+          "scenario:full_hp_low_ai_energy_no_advantage": 190,
+          "scenario:low_ai_hp_high_energy_player_advantage": 190,
+          "scenario:low_ai_hp_low_energy_defence": 190,
+          "scenario:low_child_hp_high_threat": 190,
+          "scenario:low_child_hp_low_energy_recovery": 190
+        },
+        "outliers": []
+      }
+    },
+    "review": {
+      "status": "completed",
+      "release_readiness": "ready",
+      "corrective_action_required": false,
+      "persistent_outliers": [],
+      "simple_opponent_parity_band": [
+        0.35,
+        0.65
+      ],
+      "simple_opponent_ai_win_rate": 0.509,
+      "random_opponent_interpretation": "The random-action profile is a deliberately weak benchmark; its win rate is reviewed but is not used alone as the release balance gate.",
+      "release_decision": "No consistent card/habitat outlier was reproduced across both opponent profiles, and the simple-opponent result is within the parity review band."
+    }
+  }
+}
