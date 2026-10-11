@@ -15,6 +15,8 @@ import {
   MODAL_GLOW_SVG,
 } from "./detail/detailTheme";
 import { GameButton } from "../../../common/game/GameButton";
+import { speciesAbilities } from "../speciesAbilities";
+import { AbilityStats } from "./detail/AbilityStats";
 
 const DIFFICULTY_TONE: Record<QuizDifficulty, "mint" | "amber" | "red"> = {
   easy: "mint",
@@ -28,7 +30,12 @@ const BADGE_SIZE = 96;
 export function AbilityUnlockModal() {
   const visible = useAbilityQuizStore((state) => state.unlockModalVisible);
   const abilityName = useAbilityQuizStore((state) => state.pendingAbilityName);
+  const pendingSlot = useAbilityQuizStore((state) => state.pendingSlot);
+  const activeSpecies = useAbilityQuizStore((state) => state.activeSpecies);
   const difficulty = useAbilityQuizStore((state) => state.pendingDifficulty);
+  const effects = activeSpecies && pendingSlot
+    ? speciesAbilities(activeSpecies).find((ability) => ability.slot === pendingSlot)?.effects
+    : undefined;
   const close = () => useAbilityQuizStore.getState().closeUnlockModal();
 
   return (
@@ -57,6 +64,7 @@ export function AbilityUnlockModal() {
 
           <Text style={styles.kicker}>Unlock This Ability</Text>
           <Text style={styles.name}>{abilityName}</Text>
+          <AbilityStats effects={effects} />
           {difficulty ? (
             <DetailPill
               label={difficultyLabel(difficulty)}

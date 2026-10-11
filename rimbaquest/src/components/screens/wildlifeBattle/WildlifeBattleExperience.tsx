@@ -15,7 +15,7 @@ import { FriendsScreen, FriendsTab } from "./friends/FriendsScreen";
 import { useAndroidBack, useBattleMusic, usePendingInvite, useRankBefore, useTicker } from "./hooks/battleHooks";
 import { InvitePopup } from "./invites/InvitePopup";
 import { BattleLobby } from "./lobby/BattleLobby";
-import { GiveUpModal, MatchEndedModal, RecoveryModal } from "./modals/BattleModals";
+import { GiveUpModal, LeaveBattleModal, MatchEndedModal, RecoveryModal } from "./modals/BattleModals";
 import { CardPicker } from "./picker/CardPicker";
 import { BattleResult } from "./result/BattleResult";
 import { ErrorNote } from "./shared/ErrorNote";
@@ -32,6 +32,8 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
   const dismissedInvites = useBattleInviteStore((state) => state.dismissed);
   const [view, setView] = useState<"lobby" | FriendsTab>("lobby");
   const [leaveVisible, setLeaveVisible] = useState(false);
+  const [pickerLeaveVisible, setPickerLeaveVisible] = useState(false);
+  const [pickerLeaveAttempted, setPickerLeaveAttempted] = useState(false);
   const [editingWaitingCard, setEditingWaitingCard] = useState(false);
   // Last battle event the arena finished animating, so the final hit plays before the results.
   const [replayedEventId, setReplayedEventId] = useState<number | null>(null);
@@ -71,6 +73,10 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
       setLeaveVisible(false);
       return;
     }
+    if (pickerLeaveVisible) {
+      setPickerLeaveVisible(false);
+      return;
+    }
     if (match?.status === "active") {
       setLeaveVisible(true);
       return;
@@ -79,7 +85,12 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
       setEditingWaitingCard(false);
       return;
     }
-    if (match?.status === "setup" || match?.status === "waiting" || battle.invite) {
+    if (match?.status === "setup" || battle.invite) {
+      setPickerLeaveAttempted(false);
+      setPickerLeaveVisible(true);
+      return;
+    }
+    if (match?.status === "waiting") {
       void cancelAndClear();
       return;
     }
@@ -92,7 +103,7 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
       return;
     }
     onBack();
-  }, [match, battle.pending, battle.invite, battle.clear, editingWaitingCard, cancelAndClear, leaveVisible, view, onBack]);
+  }, [match, battle.pending, battle.invite, battle.clear, editingWaitingCard, cancelAndClear, leaveVisible, pickerLeaveVisible, view, onBack]);
   useAndroidBack(handleBack);
 
   const confirmLeave = useCallback(async () => {
@@ -123,6 +134,7 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
       <View style={styles.root}>
         <BattleArena
           habitat={match.habitat}
+          habitatBonus={match.habitat_bonus}
           mySide={mySide}
           opponentTag={match.mode === "bot" ? "BOT" : "FRIEND"}
           myCard={myCard}
@@ -184,25 +196,48 @@ export function WildlifeBattleExperience({ onBack }: { onBack: () => void }) {
         ? `Tap a card to see its skills, then use it to battle ${invitedFriend.friend_display_name}. They get your invitation once you choose.`
         : undefined;
     return (
-      <CardPicker
-        key={`${match?.id ?? battle.invite?.code}-${editingWaitingCard}`}
-        habitat={habitat}
-        inviteCode={battle.invite?.code}
-        hint={hint}
-        species={species}
-        cardOptions={battle.cardOptions}
-        useLabel={battle.invite ? "Join Match" : editingWaitingCard ? "Switch Card" : "Use This Card"}
-        onBack={handleBack}
-        onUse={async (speciesId) => {
-          if (battle.invite) return battle.joinInvite(speciesId);
-          const success = await battle.selectCard(speciesId);
-          if (success) setEditingWaitingCard(false);
-          return success;
-        }}
-        onRetry={() => void battle.refreshCardOptions(match ? { matchId: match.id } : { code: battle.invite?.code })}
-        pending={battle.pending === "Selecting card" || battle.pending === "Joining match"}
-        error={battle.error}
-      />
+      <>
+        <CardPicker
+          key={`${match?.id ?? battle.invite?.code}-${editingWaitingCard}`}
+          habitat={habitat}
+          habitatBonus={battle.habitatBonus}
+          inviteCode={battle.invite?.code}
+          hint={hint}
+          species={species}
+          cardOptions={battle.cardOptions}
+          useLabel={battle.invite ? "Join Match" : editingWaitingCard ? "Switch Card" : "Use This Card"}
+          onBack={handleBack}
+          onUse={async (speciesId) => {
+            if (battle.invite) return battle.joinInvite(speciesId);
+            const success = await battle.selectCard(speciesId);
+            if (success) setEditingWaitingCard(false);
+            return success;
+          }}
+          onRetry={() => void battle.refreshCardOptions(match ? { matchId: match.id } : { code: battle.invite?.code })}
+          pending={battle.pending === "Selecting card" || battle.pending === "Joining match"}
+          error={battle.error}
+        />
+        <LeaveBattleModal
+          visible={pickerLeaveVisible}
+          hasMatch={Boolean(match)}
+          leaving={battle.pending === "Canceling match"}
+          error={pickerLeaveAttempted ? battle.error : null}
+          onConfirm={() => {
+            if (battle.pending) return;
+            setPickerLeaveAttempted(true);
+            if (!match) {
+              setPickerLeaveVisible(false);
+              battle.clear();
+              return;
+            }
+            void cancelAndClear();
+          }}
+          onStay={() => {
+            if (battle.pending) return;
+            setPickerLeaveVisible(false);
+          }}
+        />
+      </>
     );
   }
 

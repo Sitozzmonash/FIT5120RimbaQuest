@@ -7,13 +7,14 @@ import {
   View,
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { habitatBackground } from "../../../../constants/images";
 import { FONTS } from "../../../../constants/fonts";
 import { GameScreenHeader } from "../../../common/game/GameScreenHeader";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
 import { WoodenTabBar } from "../../../common/game/WoodenTabBar";
 import { Species } from "../../../../types";
-import { WildlifeCardOption } from "../../../../types/wildlifeMatch";
+import { WildlifeCardOption, WildlifeHabitatBonus } from "../../../../types/wildlifeMatch";
 import { ErrorNote } from "../shared/ErrorNote";
 import { Tab, Card } from "./cardTypes";
 import { CardTile } from "./CardTile";
@@ -24,6 +25,7 @@ const COLUMNS = 2;
 
 export function CardPicker({
   habitat,
+  habitatBonus,
   inviteCode,
   hint,
   species,
@@ -36,6 +38,7 @@ export function CardPicker({
   error,
 }: {
   habitat: string;
+  habitatBonus: WildlifeHabitatBonus | null;
   inviteCode?: string;
   hint?: string;
   species: Species[];
@@ -47,6 +50,7 @@ export function CardPicker({
   pending: boolean;
   error: string | null;
 }) {
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<Tab>("ready");
   const [selected, setSelected] = useState<Card | null>(null);
 
@@ -73,7 +77,7 @@ export function CardPicker({
         disabled={pending}
       />
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: 24 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.arena}>
@@ -87,11 +91,13 @@ export function CardPicker({
             <Text style={styles.pillText}>CURRENT ARENA</Text>
           </View>
           <Text style={styles.arenaTitle}>{habitat}</Text>
-          <View style={styles.boostPill}>
-            <Text style={styles.pillText}>
-              {habitat} animals get +20% Attack & Defence
-            </Text>
-          </View>
+          {habitatBonus ? (
+            <View style={styles.boostPill}>
+              <Text style={styles.pillText}>
+                Matching animals get +{habitatBonus.attack_percent}% Attack and +{habitatBonus.defence_percent}% Defence
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <Text style={styles.hint}>
@@ -171,7 +177,6 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     gap: 16,
     paddingTop: 20,
-    paddingBottom: 24,
     paddingHorizontal: 16,
   },
   arena: {
@@ -202,6 +207,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   boostPill: {
+    maxWidth: "100%",
     backgroundColor: GAME_COLORS.goldLight,
     borderWidth: 2,
     borderColor: INK,

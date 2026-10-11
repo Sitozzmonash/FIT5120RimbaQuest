@@ -93820,17 +93820,17 @@
     "difficulty": "medium",
     "set_no": 2,
     "question_no": 3,
-    "question": "What is the scientific name of the Four-striped Ground Squirrel?",
+    "question": "What do the Four-striped Ground Squirrel, tree squirrels and flying squirrels have in common?",
     "options": [
-      "Lariscus insignis",
-      "Sciurus hosei",
-      "Lariscus hosei"
+      "They all belong to the squirrel family Sciuridae",
+      "They all live only on Borneo",
+      "They all have four stripes"
     ],
-    "correct_option": "C",
-    "correct_answer": "Lariscus hosei",
+    "correct_option": "A",
+    "correct_answer": "They all belong to the squirrel family Sciuridae",
     "source_type": "fun_fact",
     "source_refs": [
-      3
+      2
     ]
   },
   {

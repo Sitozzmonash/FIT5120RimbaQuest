@@ -73,8 +73,7 @@ export function InvitePopup({
               {invite.friend_display_name} challenges you!
             </Text>
             <Text style={styles.message}>
-              Pick a <Text style={styles.bold}>{habitat}</Text> card for +20%
-              Attack & Defence.
+              Pick an animal that lives in <Text style={styles.bold}>{habitat}</Text> to get a habitat BOOST.
             </Text>
             <View style={styles.chips}>
               <Chip text="Win +5" tone="win" />

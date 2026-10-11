@@ -45,3 +45,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Unused cropped tutorial screenshots (the app uses assets/guides-full)
+guide-drafts/

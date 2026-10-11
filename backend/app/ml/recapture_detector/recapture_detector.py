@@ -52,13 +52,27 @@ def center_crop(im, size=224):
     return im.crop((left, top, left + size, top + size))
 
 
-def make_views(im):
-    """PIL image -> (local, global) float32 arrays of shape [1, 224, 224, 3] in [0, 1]."""
+def tile_crops(im, rows, cols, size=224):
+    """Split `im` into a rows x cols grid; return a native-pixel `size` centre crop of each cell, row-major.
+
+    Crops stay at native resolution (no resizing) so each tile keeps the fine moire the model relies on."""
+    w, h = im.size
+    tiles = []
+    for r in range(rows):
+        for c in range(cols):
+            box = (c * w // cols, r * h // rows, (c + 1) * w // cols, (r + 1) * h // rows)
+            tiles.append(center_crop(im.crop(box), size))
+    return tiles
+
+
+def make_views(im, rows=1, cols=1):
+    """PIL image -> (list of local tile arrays, global array), each float32 [1, 224, 224, 3] in [0, 1].
+
+    rows = cols = 1 reproduces training's single centre crop."""
     im = ImageOps.exif_transpose(im).convert('RGB')
-    local = center_crop(im)
     global_view = center_crop(im.resize((256, 256), Image.Resampling.BILINEAR))
     to_input = lambda v: (np.asarray(v, dtype=np.float32) / 255.)[None]
-    return to_input(local), to_input(global_view)
+    return [to_input(t) for t in tile_crops(im, rows, cols)], to_input(global_view)
 
 
 class InvalidImage(ValueError):
@@ -66,11 +80,14 @@ class InvalidImage(ValueError):
 
 
 class RecaptureDetector:
-    def __init__(self, model_path=None, threshold=None, num_threads=None):
+    def __init__(self, model_path=None, threshold=None, num_threads=None, tile_grid=None):
         model_path = Path(model_path or os.environ.get('RECAPTURE_MODEL', MODEL_DIR / 'recapture_float16.tflite'))
         self.contract = json.loads((model_path.parent / 'mobile_contract.json').read_text())
         env_threshold = os.environ.get('RECAPTURE_THRESHOLD')
         self.threshold = float(threshold if threshold is not None else env_threshold if env_threshold else self.contract['threshold'])
+        self.tile_grid = tuple(tile_grid or (int(os.environ.get('RECAPTURE_TILE_GRID', '3')),) * 2)
+        if min(self.tile_grid) < 1:
+            raise ValueError(f'tile_grid must be at least 1x1, got {self.tile_grid}')
         self.model_sha256 = hashlib.sha256(model_path.read_bytes()).hexdigest()
         self.model_name = model_path.name
         threads = num_threads or int(os.environ.get('RECAPTURE_THREADS', '1'))
@@ -91,17 +108,21 @@ class RecaptureDetector:
     def info(self):
         return dict(model=self.model_name, sha256=self.model_sha256, arch=self.contract.get('arch'),
                     threshold=self.threshold, classes=self.contract.get('classes'),
-                    min_reliable_long_side=MIN_RELIABLE_LONG_SIDE)
+                    tile_grid=list(self.tile_grid), min_reliable_long_side=MIN_RELIABLE_LONG_SIDE)
 
     def predict_image(self, im):
-        """PIL image -> result dict."""
+        """PIL image -> result dict. `p_recapture` is the highest tile score, so one flagged tile flags the photo."""
         width, height = ImageOps.exif_transpose(im).size
-        local, global_view = make_views(im)
+        rows, cols = self.tile_grid
+        tiles, global_view = make_views(im, rows, cols)
+        probs = []
         with self._lock:
-            self._interpreter.set_tensor(self._inputs['local_rgb'], local)
             self._interpreter.set_tensor(self._inputs['global_rgb'], global_view)
-            self._interpreter.invoke()
-            prob = float(self._interpreter.get_tensor(self._output)[0, self._recapture_index])
+            for local in tiles:
+                self._interpreter.set_tensor(self._inputs['local_rgb'], local)
+                self._interpreter.invoke()
+                probs.append(float(self._interpreter.get_tensor(self._output)[0, self._recapture_index]))
+        prob = max(probs)
         is_recapture = prob >= self.threshold
         low_res = max(width, height) < MIN_RELIABLE_LONG_SIDE
         return dict(
@@ -109,6 +130,9 @@ class RecaptureDetector:
             is_recapture=is_recapture,
             verdict='recapture' if is_recapture else 'genuine',
             threshold=self.threshold,
+            tile_grid=[rows, cols],
+            flagged_tiles=[[i // cols, i % cols] for i, p in enumerate(probs) if p >= self.threshold],
+            tile_scores=[[round(p, 6) for p in probs[r * cols:(r + 1) * cols]] for r in range(rows)],
             width=width, height=height,
             low_resolution=low_res,
             note=(f'Image is only {max(width, height)} px on its long side; downscaled images lose the fine '

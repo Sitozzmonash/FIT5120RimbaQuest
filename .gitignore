@@ -30,3 +30,15 @@ lit_runs/
 AGENTS.md
 CLAUDE.md
 rimbaquest-preview-qr.png
+
+# Recapture detector local test images
+backend/app/ml/recapture_detector/testing_ds/
+
+# Local Python pin and generated analysis files
+/.python-version
+/outputs/
+
+# Local iteration planning files kept outside the app
+/FIT5120 2026S2 TM03 - Iteration 3 AC.csv
+/FIT5120 2026S2 TM03.csv
+/Iteration 3 Plan.docx

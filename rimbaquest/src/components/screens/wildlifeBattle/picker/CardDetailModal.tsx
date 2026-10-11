@@ -13,6 +13,7 @@ import { FONTS } from "../../../../constants/fonts";
 import { GameButton } from "../../../common/game/GameButton";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
 import { ScaleTap } from "../../../common/ScaleTap";
+import { DETAIL_IMAGES } from "../../collection/components/detail/detailTheme";
 import { errorTextStyle } from "../shared/ErrorNote";
 import { Card } from "./cardTypes";
 import { SpeciesPhoto } from "./CardTile";
@@ -46,15 +47,34 @@ export function CardDetailModal({
       <View style={styles.backdrop}>
         {card ? (
           <View style={styles.detail}>
-            <View style={styles.media}>
-              {picture ? <SpeciesPhoto source={picture} /> : null}
-            </View>
             <ScrollView
               style={styles.scroll}
               contentContainerStyle={styles.body}
             >
-              <Text style={styles.name}>{card.species.common_name}</Text>
-              <Text style={styles.skillsLabel}>SKILLS</Text>
+              <View style={styles.summaryRow}>
+                <View style={styles.photo}>
+                  {picture ? <SpeciesPhoto source={picture} /> : null}
+                </View>
+                <View style={styles.summary}>
+                  <Text style={styles.name}>{card.species.common_name}</Text>
+                  <View style={styles.basic}>
+                    <Text style={styles.basicName}>Basic Attack</Text>
+                    {card.species.base_attack != null ? (
+                      <View style={styles.basicStat}>
+                        <Image
+                          source={DETAIL_IMAGES.swords}
+                          style={styles.basicIcon}
+                          resizeMode="contain"
+                        />
+                        <Text style={styles.basicText}>
+                          {card.species.base_attack} damage
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+              </View>
+              <Text style={styles.skillsLabel}>ABILITIES</Text>
               <SkillList species={card.species} />
               {error ? <Text style={errorTextStyle}>{error}</Text> : null}
               <GameButton label={useLabel} onPress={onUse} loading={pending} />
@@ -90,7 +110,7 @@ const styles = StyleSheet.create({
   detail: {
     width: "100%",
     maxWidth: 420,
-    maxHeight: "82%",
+    maxHeight: "90%",
     alignSelf: "center",
     overflow: "hidden",
     backgroundColor: GAME_COLORS.paper,
@@ -99,20 +119,45 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     boxShadow: `0px 8px 0px ${INK}`,
   },
-  media: {
-    height: 170,
+  photo: {
+    width: "35%",
+    maxWidth: 120,
+    aspectRatio: 1,
     overflow: "hidden",
-    borderBottomWidth: 3,
-    borderBottomColor: INK,
     backgroundColor: "#2F6B3E",
+    borderWidth: 2,
+    borderColor: INK,
+    borderRadius: 14,
   },
   scroll: { flexGrow: 0 },
   body: { gap: 10, paddingTop: 14, paddingBottom: 18, paddingHorizontal: 16 },
+  summaryRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  summary: { flex: 1, gap: 8 },
   name: {
     fontFamily: FONTS.display,
     fontSize: 20,
     color: GAME_COLORS.headerGreen,
-    textAlign: "center",
+  },
+  basic: {
+    gap: 3,
+    padding: 8,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: INK,
+    borderRadius: 12,
+  },
+  basicName: {
+    fontFamily: FONTS.button,
+    fontSize: 13,
+    color: GAME_COLORS.headerGreen,
+  },
+  basicStat: { flexDirection: "row", alignItems: "center", gap: 5 },
+  basicIcon: { width: 14, height: 14 },
+  basicText: {
+    flexShrink: 1,
+    fontFamily: FONTS.bodyBold,
+    fontSize: 11,
+    color: GAME_COLORS.body,
   },
   skillsLabel: {
     fontFamily: FONTS.button,

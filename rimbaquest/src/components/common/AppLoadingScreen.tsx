@@ -7,6 +7,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FONTS } from "../../constants/fonts";
 
 const LOADING_BACKGROUND = require("../../../assets/loading-bg.png");
@@ -21,6 +22,7 @@ export function AppLoadingScreen() {
   const [messageIndex, setMessageIndex] = useState(0);
   const opacity = useRef(new Animated.Value(0)).current;
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const animation = Animated.sequence([
@@ -44,13 +46,13 @@ export function AppLoadingScreen() {
   }, [messageIndex, opacity]);
 
   return (
-    <View style={[styles.root, { height }]}>
+    <View style={[styles.root, { minHeight: height }]}>
       <ImageBackground
         source={LOADING_BACKGROUND}
         resizeMode="cover"
         style={styles.image}
       >
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: 32 + insets.bottom }]}>
           <View style={styles.caption}>
             <Text style={styles.label} accessibilityRole="text">
               Loading
@@ -70,6 +72,7 @@ export function AppLoadingScreen() {
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
     width: "100%",
     justifyContent: "center",
     overflow: "hidden",

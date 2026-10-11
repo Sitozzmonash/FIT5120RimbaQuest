@@ -56,11 +56,11 @@ export function AnimalCard({
         <Text style={styles.cardName} numberOfLines={2}>
           {combatant.name}
         </Text>
-        {species?.scientific_name && photoHeight > 90 ? (
+        {/* {species?.scientific_name && photoHeight > 90 ? (
           <Text style={styles.cardScientific} numberOfLines={1}>
             {species.scientific_name}
           </Text>
-        ) : null}
+        ) : null} */}
         {species?.category ? (
           <View style={styles.categoryPill}>
             <Text style={styles.categoryText}>{species.category}</Text>

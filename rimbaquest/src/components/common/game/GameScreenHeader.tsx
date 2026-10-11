@@ -2,6 +2,8 @@ import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScaleTap } from "../ScaleTap";
+import { ScreenGuideTopic } from "../../../store/useScreenGuideStore";
+import { GuideInfoButton } from "./GuideInfoButton";
 import { GAME_COLORS, outlinedTitleStyle } from "./gameTheme";
 
 const BACK_SIZE = 46;
@@ -12,10 +14,12 @@ export function GameScreenHeader({
   title,
   onBack,
   disabled = false,
+  guide,
 }: {
   title: string;
   onBack: () => void;
   disabled?: boolean;
+  guide?: ScreenGuideTopic;
 }) {
   const insets = useSafeAreaInsets();
 
@@ -41,6 +45,7 @@ export function GameScreenHeader({
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
+        {guide && <GuideInfoButton topic={guide} />}
       </View>
     </View>
   );
@@ -90,7 +95,7 @@ const styles = StyleSheet.create({
   title: {
     ...outlinedTitleStyle,
     textShadowColor: GAME_COLORS.ink,
-    flexShrink: 1,
+    flex: 1,
     fontSize: 24,
     lineHeight: 26.4,
   },

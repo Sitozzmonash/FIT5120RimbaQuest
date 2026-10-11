@@ -61,14 +61,14 @@ const HABITAT_BACKGROUNDS = {
   urban: require('../../assets/battle/bg_gardens_parks_urban.png'),
 };
 
-// Battle habitat names from the server ("Mangrove", "Wetland"...) mapped to their background.
+// Battle habitat groups from the server mapped to their background.
 const HABITAT_BACKGROUND_WORDS: Array<[RegExp, keyof typeof HABITAT_BACKGROUNDS]> = [
-  [/rainforest|forest/i, 'rainforest'],
+  [/highland|montane|mountain/i, 'highland'],
   [/mangrove|wetland|river|swamp/i, 'wetland'],
   [/grassland|scrub|farm/i, 'grassland'],
   [/coast|marine|beach|sea/i, 'coastal'],
-  [/highland|montane|mountain/i, 'highland'],
   [/garden|park|urban/i, 'urban'],
+  [/rainforest|forest/i, 'rainforest'],
 ];
 
 /** The background for a battle habitat; rainforest if the name isn't recognised. */

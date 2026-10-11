@@ -7,7 +7,6 @@ import { GAME_COLORS } from "../../../common/game/gameTheme";
 import { ScaleTap } from "../../../common/ScaleTap";
 import { WildlifeMatch } from "../../../../types/wildlifeMatch";
 import { ErrorNote } from "../shared/ErrorNote";
-import { friendlyHabitat } from "../shared/battleText";
 import { Chip } from "../shared/Chip";
 import { HabitatPhotoBanner } from "../shared/HabitatPhotoBanner";
 import { ShareCodeCard } from "./ShareCodeCard";
@@ -38,7 +37,6 @@ export function BattleWaiting({
   onCancel: () => void;
 }) {
   const insets = useSafeAreaInsets();
-  const habitat = friendlyHabitat(match.habitat);
 
   return (
     <View style={styles.root}>
@@ -58,7 +56,7 @@ export function BattleWaiting({
           habitat={match.habitat}
           height={132}
           style={styles.banner}
-          bottomRight={<Chip text={`${habitat} cards +20%`} tone="gold" />}
+          bottomRight={<Chip text="Habitat BOOST" tone="gold" />}
         />
         <WaitingStatus
           friendName={invitedFriendName}

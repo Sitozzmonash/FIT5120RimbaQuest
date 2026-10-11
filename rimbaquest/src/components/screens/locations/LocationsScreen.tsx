@@ -137,6 +137,7 @@ export function LocationsScreen() {
     <>
       <GameScreenHeader
         title="Wildlife Locations"
+        guide="discover"
         onBack={() => useNavigationStore.getState().goBack()}
       />
       <LocationSearchBar />

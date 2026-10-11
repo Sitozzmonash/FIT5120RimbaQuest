@@ -19,11 +19,23 @@ export function buildMoves(card: WildlifeCombatant | undefined, canAct: boolean)
     const unlocked = entry.slot === undefined || Boolean(skill?.unlocked);
     const affordable = card.energy >= cost;
     const description = entry.slot === undefined ? "Always available." : skill?.description || "Ready";
+    const rawEffects = entry.slot === undefined
+      ? card.base_attack == null ? [] : [{ type: "damage", value: card.base_attack, target: "opponent" as const }]
+      : skill?.effects ?? [];
+    const attackBonus = card.habitat_advantage ? card.habitat_bonus?.attack_percent ?? 0 : 0;
+    const baseDamage = rawEffects.reduce((total, effect) =>
+      total + (effect.type === "damage" ? effect.value : 0), 0);
+    // Match the server's rounding after it combines all damage effects.
+    const habitatBonusDamage = baseDamage > 0 && attackBonus > 0
+      ? Math.floor((baseDamage * (100 + attackBonus) + 50) / 100) - baseDamage
+      : 0;
     return {
       action: entry.action,
       name: entry.slot === undefined ? entry.fallback : skill?.name || entry.fallback,
       cost,
       description,
+      effects: rawEffects,
+      habitatBonusDamage,
       unlocked,
       enabled: Boolean(canAct && unlocked && affordable),
       note: !unlocked ? "Locked · pass its quiz" : !affordable ? "Not enough Energy" : description,

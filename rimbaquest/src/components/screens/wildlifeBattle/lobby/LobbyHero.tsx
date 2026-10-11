@@ -20,8 +20,8 @@ export function LobbyHero() {
       </View>
       <Text style={styles.title}>Ready for Battle?</Text>
       <Text style={styles.body}>
-        A habitat is picked at random. Match it for{" "}
-        <Text style={styles.highlight}>+20% ATK & DEF</Text>.
+        A habitat is picked at random. Pick an animal that lives there to get a{" "}
+        <Text style={styles.highlight}>BOOST</Text>.
       </Text>
     </View>
   );

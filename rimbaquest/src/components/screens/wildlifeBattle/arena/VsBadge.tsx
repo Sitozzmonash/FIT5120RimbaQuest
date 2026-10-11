@@ -8,7 +8,7 @@ import { outlined } from "./arenaText";
 
 const INK = GAME_COLORS.ink;
 const SIZE = 54;
-const LIFT = -5; // sits a little above centre so it covers less of the cards
+const LIFT = -20; // sits a little above centre so it covers less of the cards
 
 export function VsBadge() {
   const pulse = useLoop(900);

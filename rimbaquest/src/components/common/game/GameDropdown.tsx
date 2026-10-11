@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: GAME_COLORS.heading,
   },
-  backdrop: { ...StyleSheet.absoluteFillObject },
+  backdrop: { ...StyleSheet.absoluteFill },
   menu: {
     position: "absolute",
     width: MENU_WIDTH,

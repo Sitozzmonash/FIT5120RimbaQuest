@@ -16,12 +16,14 @@ export interface WildlifeAbility {
 export interface WildlifeCombatant {
   species_id: string;
   name: string;
+  base_attack?: number;
   hp: number;
   max_hp: number;
   energy: number;
   max_energy: number;
   shield?: number;
   habitat_advantage?: boolean;
+  habitat_bonus?: WildlifeHabitatBonus | null;
   /** Mammal, Bird, Reptile or Butterfly. */
   category?: string;
   role?: string;
@@ -54,6 +56,7 @@ export interface WildlifeMatch {
   id: string;
   mode: WildlifeMode;
   habitat: string;
+  habitat_bonus?: WildlifeHabitatBonus | null;
   status: "setup" | "waiting" | "active" | "completed" | "expired" | "canceled";
   version: number;
   server_now: string;
@@ -119,6 +122,11 @@ export interface WildlifeCardOption {
   habitat_match: boolean;
   rest_until: string | null;
   selectable: boolean;
+}
+
+export interface WildlifeHabitatBonus {
+  attack_percent: number;
+  defence_percent: number;
 }
 
 export interface WildlifeLeaderboardEntry {

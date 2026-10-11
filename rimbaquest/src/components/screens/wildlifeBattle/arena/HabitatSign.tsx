@@ -2,30 +2,31 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { FONTS } from "../../../../constants/fonts";
 import { GAME_COLORS } from "../../../common/game/gameTheme";
+import type { WildlifeHabitatBonus } from "../../../../types/wildlifeMatch";
 import { outlined } from "./arenaText";
 
 const INK = GAME_COLORS.ink;
 
-// Backend habitats are single words; the sign reads like the design.
-function habitatTitle(habitat: string): string {
-  return habitat === "Rainforest" ? "Rainforest & Forest" : habitat;
-}
-
-export function HabitatSign({ habitat }: { habitat: string }) {
+export function HabitatSign({ habitat, bonus }: { habitat: string; bonus?: WildlifeHabitatBonus | null }) {
   return (
     <View style={styles.sign}>
       <View style={styles.tag}>
         <Text style={styles.tagText}>HABITAT</Text>
       </View>
       <View style={styles.board}>
-        <Text style={styles.title}>{habitatTitle(habitat)}</Text>
+        <Text style={styles.title}>{habitat}</Text>
+        {bonus ? (
+          <Text style={styles.bonusInfo}>
+            Animals living here get BOOST: +{bonus.attack_percent}% ATK, +{bonus.defence_percent}% DEF.
+          </Text>
+        ) : null}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sign: { alignSelf: "center", alignItems: "center" },
+  sign: { alignSelf: "stretch", alignItems: "center" },
   tag: {
     zIndex: 2,
     marginBottom: -6,
@@ -42,6 +43,8 @@ const styles = StyleSheet.create({
     color: GAME_COLORS.heading,
   },
   board: {
+    alignItems: "center",
+    maxWidth: "100%",
     backgroundColor: "#2F7A3D",
     borderWidth: 3,
     borderColor: INK,
@@ -55,6 +58,14 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.display,
     fontSize: 21,
     color: "#FFFFFF",
+    textAlign: "center",
     ...outlined(INK),
+  },
+  bonusInfo: {
+    fontFamily: FONTS.bodyBlack,
+    fontSize: 10.5,
+    lineHeight: 14,
+    color: GAME_COLORS.woodText,
+    textAlign: "center",
   },
 });

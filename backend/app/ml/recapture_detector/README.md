@@ -7,7 +7,8 @@ Tells whether a photo was taken of a **screen** (a "recapture") or is a **genuin
 | Model | D: dual-view MobileNetV3-Small, distilled from a DINOv2 teacher, FP16 TensorFlow Lite |
 | File | `model/recapture_float16.tflite`, 2.1 MB, sha256 `e22049033c831970…` |
 | Threshold | 0.607 (chosen on validation data; `p_recapture ≥ 0.607` means recapture) |
-| Speed | about 10 ms of model time per image on one desktop CPU core; decoding a 12 MP JPEG takes longer than that |
+| Speed | about 10 ms of model time per tile on one desktop CPU core (9 tiles by default); decoding a 12 MP JPEG takes longer than that |
+| Tiling | The photo is split into a 3 × 3 grid and flagged if any tile is flagged. The accuracy figures below were measured with a single centre crop; flagging on any of 9 tiles catches more screens but also flags more genuine photos, so re-check the threshold on your own photos |
 | Held-out accuracy | detects 93.6% (FHDMi) and 97.8% (UHDM) of screen photos; wrongly flags 2.6% of genuine Unsplash photos |
 
 Do not swap in the INT8 file from the training runs: with this model INT8 wrongly flags 3–10× as many genuine photos and misses 17% more FHDMi screens.
@@ -118,8 +119,10 @@ Response:
 
 | Field | Meaning |
 | --- | --- |
-| `p_recapture` | Model probability that the photo is of a screen (0 to 1) |
-| `is_recapture`, `verdict` | `p_recapture ≥ threshold` |
+| `p_recapture` | Highest model probability across all tiles that the photo is of a screen (0 to 1) |
+| `is_recapture`, `verdict` | `p_recapture ≥ threshold`, i.e. at least one tile is flagged |
+| `tile_grid` | `[rows, cols]` the photo was split into |
+| `flagged_tiles` | `[row, col]` of each tile scoring at or above the threshold |
 | `low_resolution` | `true` when the long side is under 1,600 px; the verdict is then less reliable (see below) |
 | `note` | Human-readable explanation when `low_resolution` is true |
 
@@ -141,6 +144,7 @@ Supported formats: JPEG, PNG, WebP, BMP, TIFF, AVIF, and HEIC/HEIF if `pillow-he
 | `RECAPTURE_THRESHOLD` | 0.607 (from `mobile_contract.json`) | Raise it to flag fewer genuine photos (and catch fewer screens); lower it for the opposite |
 | `RECAPTURE_MODEL` | `model/recapture_float16.tflite` | Path to a different model file; its `mobile_contract.json` must sit next to it |
 | `RECAPTURE_THREADS` | 1 | CPU threads per model call |
+| `RECAPTURE_TILE_GRID` | 3 | The photo is split into an N × N grid; the model scores a native-pixel 224 crop from the centre of each cell (with the same global view) and flags the photo if any tile is flagged. `1` restores the original single centre crop |
 | `RECAPTURE_MAX_UPLOAD_MB` | 40 | Upload size limit |
 
 **Scaling.** Each process holds one model (about 2 MB) and handles one prediction at a time (thread-safe, behind a lock). For more throughput, run more uvicorn workers (`--workers N`, about one per CPU core) rather than more threads.

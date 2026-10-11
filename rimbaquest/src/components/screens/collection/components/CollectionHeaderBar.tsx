@@ -12,6 +12,7 @@ export function CollectionHeaderBar({
     <View style={styles.fixed} onLayout={onLayout}>
       <GameScreenHeader
         title="My Collection"
+        guide="collection"
         onBack={() => useNavigationStore.getState().goBack()}
       />
     </View>

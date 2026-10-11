@@ -11,10 +11,12 @@ export function CameraControlsBar({
   onToggleTorch,
 }: {
   lastCaptureUri: string | null;
-  torchOn: boolean;
+  torchOn?: boolean;
   onPickFromGallery: () => void;
   onTakePhoto: () => void;
-  onToggleTorch: () => void;
+  // Omitted when the flash cannot be controlled (the web hands off to the
+  // phone's own camera app); a spacer keeps the shutter centred.
+  onToggleTorch?: () => void;
 }) {
   return (
     <View style={styles.bottomBar}>
@@ -32,17 +34,21 @@ export function CameraControlsBar({
       <Tap label="Take photo" style={styles.shutterOuter} onPress={onTakePhoto}>
         <View style={styles.shutterInner} />
       </Tap>
-      <Tap
-        label={torchOn ? "Turn flash off" : "Turn flash on"}
-        style={styles.flashBtn}
-        onPress={onToggleTorch}
-      >
-        <MaterialIcons
-          name={torchOn ? "flash-on" : "flash-off"}
-          size={22}
-          color="#FFFFFF"
-        />
-      </Tap>
+      {onToggleTorch ? (
+        <Tap
+          label={torchOn ? "Turn flash off" : "Turn flash on"}
+          style={styles.flashBtn}
+          onPress={onToggleTorch}
+        >
+          <MaterialIcons
+            name={torchOn ? "flash-on" : "flash-off"}
+            size={22}
+            color="#FFFFFF"
+          />
+        </Tap>
+      ) : (
+        <View style={styles.flashSpacer} />
+      )}
     </View>
   );
 }
@@ -96,4 +102,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  flashSpacer: { width: 52, height: 52 },
 });

@@ -14,7 +14,6 @@ from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import random
-import sqlite3
 import sys
 
 BACKEND = Path(__file__).resolve().parents[1]
@@ -23,17 +22,12 @@ sys.path.insert(0, str(BACKEND))
 from app.services.battle_catalogue import get_catalogue  # noqa: E402
 from app.services.wildlife_ai import POLICY_PATH, choose_for_side, state_action_key  # noqa: E402
 from app.services.wildlife_battle import (  # noqa: E402
-    HABITATS, legal_actions, new_match, perform_action,
+    HABITATS, legal_actions, new_match, perform_action, species_habitat_groups,
 )
 
 
 def load_habitats() -> dict[str, str | None]:
-    connection = sqlite3.connect(":memory:")
-    try:
-        connection.executescript((BACKEND / "data" / "seed.sql").read_text(encoding="utf-8"))
-        return dict(connection.execute("SELECT id, habitat FROM species"))
-    finally:
-        connection.close()
+    return species_habitat_groups()
 
 
 def make_match(rng: random.Random, definitions: dict, habitats: dict):

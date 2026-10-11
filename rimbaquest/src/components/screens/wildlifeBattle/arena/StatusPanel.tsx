@@ -9,20 +9,14 @@ import { Tag } from "./Tag";
 
 const INK = GAME_COLORS.ink;
 
-function habitatBonusLabel(habitat: string): string {
-  return `${habitat === "Rainforest" ? "Forest" : habitat} bonus +20%`;
-}
-
 export function StatusPanel({
   combatant,
   tag,
   tagColor,
-  habitat,
 }: {
   combatant: WildlifeCombatant;
   tag: string;
   tagColor: string;
-  habitat: string;
 }) {
   const hpPercent =
     combatant.max_hp > 0
@@ -36,9 +30,14 @@ export function StatusPanel({
     <View style={styles.statusPanel}>
       <View style={styles.statusHeader}>
         <Tag label={tag} color={tagColor} light />
-        <Text style={styles.statusName} numberOfLines={1}>
+        {combatant.habitat_advantage ? (
+          <View style={styles.boostBadge}>
+            <Text style={styles.boostText}>BOOST</Text>
+          </View>
+        ) : null}
+        {/* <Text style={styles.statusName} numberOfLines={1}>
           {combatant.name}
-        </Text>
+        </Text> */}
       </View>
       <View style={styles.statusRow}>
         <Image
@@ -95,22 +94,16 @@ export function StatusPanel({
           {combatant.energy}/{combatant.max_energy}
         </Text>
       </View>
-      <View style={styles.statusFooter}>
-        {combatant.habitat_advantage ? (
-          <View style={styles.bonusPill}>
-            <Image
-              source={BATTLE_IMAGES.habitatBonus}
-              style={styles.bonusIcon as ImageStyle}
-              resizeMode="contain"
-            />
-            <Text style={styles.bonusText}>{habitatBonusLabel(habitat)}</Text>
-          </View>
-        ) : (
-          <Text style={styles.noBonusText}>No habitat bonus</Text>
-        )}
-        {combatant.shield ? (
-          <Text style={styles.shieldText}>Shield {combatant.shield}</Text>
-        ) : null}
+      <View style={styles.statusRow}>
+        <Image
+          source={BATTLE_IMAGES.leafShield}
+          style={styles.shieldIcon as ImageStyle}
+          resizeMode="contain"
+        />
+        <Text style={styles.shieldLabel}>Shield</Text>
+        <Text style={[styles.statusValue, styles.shieldValue]}>
+          {combatant.shield ?? 0}
+        </Text>
       </View>
     </View>
   );
@@ -130,6 +123,15 @@ const styles = StyleSheet.create({
     boxShadow: "0px 4px 0px rgba(7, 60, 29, 0.6)",
   },
   statusHeader: { flexDirection: "row", alignItems: "center", gap: 6 },
+  boostBadge: {
+    backgroundColor: GAME_COLORS.goldLight,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    borderRadius: 999,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  boostText: { fontFamily: FONTS.bodyBlack, fontSize: 9.5, color: GAME_COLORS.goldText },
   statusName: {
     flexShrink: 1,
     fontFamily: FONTS.display,
@@ -140,6 +142,9 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   healthIcon: { width: 16, height: 14 },
   energyIcon: { width: 16, height: 20 },
+  shieldIcon: { width: 16, height: 16 },
+  shieldLabel: { flex: 1, fontFamily: FONTS.bodyBlack, fontSize: 11, color: "#6FC3E8" },
+  shieldValue: { color: "#6FC3E8" },
   barTrack: {
     flex: 1,
     height: 14,
@@ -171,35 +176,4 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   energyValue: { color: GAME_COLORS.goldLight },
-  statusFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  bonusPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: GAME_COLORS.goldLight,
-    borderWidth: 2,
-    borderColor: INK,
-    borderRadius: 999,
-    paddingLeft: 4,
-    paddingRight: 8,
-    paddingVertical: 1,
-  },
-  bonusIcon: { width: 13, height: 12 },
-  bonusText: {
-    fontFamily: FONTS.bodyBlack,
-    fontSize: 10.5,
-    color: GAME_COLORS.goldText,
-  },
-  noBonusText: {
-    fontFamily: FONTS.bodyExtraBold,
-    fontSize: 10.5,
-    color: "rgba(255, 246, 220, 0.6)",
-    paddingVertical: 2,
-  },
-  shieldText: { fontFamily: FONTS.bodyBlack, fontSize: 10.5, color: "#6FC3E8" },
 });

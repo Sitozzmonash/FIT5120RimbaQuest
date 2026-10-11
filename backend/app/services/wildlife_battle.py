@@ -12,34 +12,28 @@ retain their meaning. No passive fires automatically in this battle mode.
 from __future__ import annotations
 
 import copy
+import csv
 import math
-import re
+from functools import lru_cache
+from pathlib import Path
 from typing import Any
 
 HABITATS: tuple[str, ...] = (
-    "Rainforest",
-    "Mangrove",
-    "Wetland",
-    "Grassland",
-    "Coastal",
-    "Montane",
+    "Rainforest & Forest",
+    "Rivers, Wetlands & Mangroves",
+    "Grassland, Scrub & Farmland",
+    "Gardens, Parks & Urban",
+    "Highland & Montane Forest",
+    "Coastal & Marine",
 )
 
-_HABITAT_WORDS = {
-    "Rainforest": r"\brain\s*forests?\b|\bjungles?\b|\bforests?\b|\bwoodlands?\b",
-    "Mangrove": r"\bmangroves?\b",
-    "Wetland": r"\bwetlands?\b|\bswamps?\b|\bmarsh(?:es)?\b|\brivers?\b|\briverine\b|\blakes?\b|\bstreams?\b|\bponds?\b|\bfreshwater\b|\bestuar(?:y|ies)\b",
-    "Grassland": r"\bgrasslands?\b|\bgrasses\b|\bgrass\b|\bsavannas?\b|\bscrublands?\b|\bscrub\b|\bmeadows?\b",
-    "Coastal": r"\bcoasts?\b|\bcoastal\b|\bbeaches?\b|\bseas?\b|\boceans?\b|\bmarine\b|\bcorals?\b|\bseagrass\b|\bestuar(?:y|ies)\b",
-    "Montane": r"\bmontane\b|\bmountains?\b|\bhighlands?\b|\buplands?\b|\bhill(?:s|y)?\b|\bhillsides?\b",
-}
 HABITAT_BONUSES = {
-    "Rainforest": {"attack_percent": 20, "defence_percent": 20, "theme": "dense cover"},
-    "Mangrove": {"attack_percent": 15, "defence_percent": 25, "theme": "root maze"},
-    "Wetland": {"attack_percent": 15, "defence_percent": 20, "theme": "water movement"},
-    "Grassland": {"attack_percent": 25, "defence_percent": 10, "theme": "open ground"},
-    "Coastal": {"attack_percent": 20, "defence_percent": 15, "theme": "shoreline mobility"},
-    "Montane": {"attack_percent": 10, "defence_percent": 25, "theme": "highland endurance"},
+    "Rainforest & Forest": {"attack_percent": 20, "defence_percent": 20, "theme": "dense cover"},
+    "Rivers, Wetlands & Mangroves": {"attack_percent": 15, "defence_percent": 20, "theme": "water movement"},
+    "Grassland, Scrub & Farmland": {"attack_percent": 25, "defence_percent": 10, "theme": "open ground"},
+    "Gardens, Parks & Urban": {"attack_percent": 20, "defence_percent": 20, "theme": "urban cover"},
+    "Highland & Montane Forest": {"attack_percent": 10, "defence_percent": 25, "theme": "highland endurance"},
+    "Coastal & Marine": {"attack_percent": 20, "defence_percent": 15, "theme": "shoreline mobility"},
 }
 _COSTS = {1: 1, 2: 2, 3: 4}
 _SHIELD_CAP = 25
@@ -48,34 +42,41 @@ _HARD_SKILL_DAMAGE_BONUS = 10
 _OPENING_SHIELD_BY_MAX_SLOT = {0: 3, 1: 7, 2: 8, 3: 10}
 
 
-def habitat_matches(habitat_text: str | None, habitat: str) -> bool:
-    """Classify a species' free-text habitat; unknown data grants no bonus."""
-    if not isinstance(habitat_text, str) or habitat not in HABITATS:
-        return False
-    text = habitat_text.casefold()
-    if habitat == "Rainforest" and "mangrove" in text:
-        # A mangrove forest alone is not necessarily a tropical rainforest.
-        text = re.sub(r"\bmangrove\s+forests?\b", "mangrove", text)
-    if habitat == "Rainforest" and re.search(r"\bmontane\b|\bmountains?\b|\bhighlands?\b|\buplands?\b", text):
-        # Clearly high-elevation forest text gets its own arena instead of
-        # always falling into the generic forest bonus. Mixed lowland/hill
-        # phrases can still qualify for Rainforest and Montane.
-        text = re.sub(r"\b(?:montane|mountain|highland|upland)\s+(?:rain)?forests?\b", "montane", text)
-        text = re.sub(r"\b(?:rocky\s+)?hillsides?\b", "montane", text)
-    return re.search(_HABITAT_WORDS[habitat], text) is not None
+@lru_cache(maxsize=1)
+def species_habitat_groups() -> dict[str, str]:
+    """Read battle groups from the curated CSV, without changing species storage."""
+    path = Path(__file__).resolve().parents[2] / "data" / "all_species_with_habitat_groups.csv"
+    with path.open(encoding="utf-8-sig", newline="") as source:
+        records = list(csv.DictReader(source))
+    groups: dict[str, str] = {}
+    for record in records:
+        species_id = (record.get("species_id") or "").strip()
+        group = (record.get("habitat_group") or "").strip()
+        if not species_id or group not in HABITATS or species_id in groups:
+            raise ValueError(f"Invalid battle habitat group for {species_id!r}: {group!r}")
+        groups[species_id] = group
+    return groups
+
+
+def species_habitat_group(species_id: str) -> str:
+    return species_habitat_groups()[species_id]
+
+
+def habitat_matches(species_group: str | None, habitat: str) -> bool:
+    """A card gets the arena bonus only in its curated habitat group."""
+    return habitat in HABITATS and species_group == habitat
 
 
 def choose_habitat(card_habitats: list[str | None], rng: Any) -> str:
     """Randomly pick a habitat that makes the explorer's card choice matter.
 
-    Most catalogued species live in forest, so a uniform draw usually gives
-    every card (Rainforest) or no card (Coastal) the bonus. Habitats where the
-    explorer's ready cards are split between matching and not matching are
-    preferred; otherwise any habitat can be drawn.
+    Most catalogued species live in forest, so a uniform draw often gives
+    every card or no card the bonus. Prefer arenas that split the explorer's
+    ready cards; otherwise any habitat can be drawn.
     """
     mixed = [
         habitat for habitat in HABITATS
-        if 0 < sum(habitat_matches(text, habitat) for text in card_habitats) < len(card_habitats)
+        if 0 < sum(habitat_matches(group, habitat) for group in card_habitats) < len(card_habitats)
     ]
     return rng.choice(mixed or list(HABITATS))
 
@@ -201,7 +202,7 @@ def _abilities(definition: dict[str, Any], attack: int) -> list[dict[str, Any]]:
 def ability_previews(definition: dict[str, Any]) -> list[dict[str, Any]]:
     """The three abilities exactly as this battle mode resolves them."""
     return [
-        {key: ability[key] for key in ("slot", "name", "description", "cost")}
+        {key: ability[key] for key in ("slot", "name", "description", "cost", "effects")}
         for ability in _abilities(definition, int(definition["base_attack"]))
     ]
 

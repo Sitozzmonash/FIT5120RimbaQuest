@@ -468,11 +468,33 @@ def test_real_model_returns_a_probability():
     assert result["low_resolution"] is True
 
 
+def test_real_model_flags_the_photo_when_any_tile_is_flagged():
+    detector = get_detector()
+    result = detector.predict(_jpeg())
+    rows, cols = result["tile_grid"]
+    assert (rows, cols) == detector.tile_grid
+    assert all(0 <= r < rows and 0 <= c < cols for r, c in result["flagged_tiles"])
+    assert result["is_recapture"] == bool(result["flagged_tiles"])
+
+
+def test_tile_crops_cover_the_grid_at_native_resolution():
+    from PIL import Image
+    from app.ml.recapture_detector.recapture_detector import tile_crops
+
+    im = Image.new("RGB", (1200, 900))
+    for i in range(3):   # paint each column a different shade to check placement
+        im.paste((i * 100, 0, 0), (i * 400, 0, (i + 1) * 400, 900))
+    tiles = tile_crops(im, 3, 3)
+    assert len(tiles) == 9
+    assert all(t.size == (224, 224) for t in tiles)
+    assert [tiles[c].getpixel((0, 0))[0] for c in range(3)] == [0, 100, 200]
+
+
 def test_detector_router_predicts_a_valid_jpeg():
     response = detector_client.post("/predict", files={"file": ("photo.jpg", _jpeg(), "image/jpeg")})
     assert response.status_code == 200, response.text
     assert set(response.json()) == {"filename", "p_recapture", "is_recapture", "verdict", "threshold",
-                                    "width", "height", "low_resolution", "note"}
+                                    "tile_grid", "flagged_tiles", "tile_scores", "width", "height", "low_resolution", "note"}
 
 
 @pytest.mark.parametrize("content", [b"", b"plain text, not an image"])

@@ -11,6 +11,7 @@ export function AbilityRow({
   isUnlocked,
   isNextToUnlock,
   onUnlock,
+  onDetails,
 }: {
   slot: number;
   name: string;
@@ -18,12 +19,18 @@ export function AbilityRow({
   isUnlocked: boolean;
   isNextToUnlock: boolean;
   onUnlock: () => void;
+  onDetails: () => void;
 }) {
   const title = `Ability ${slot}: ${name}`;
 
   if (isUnlocked) {
     return (
-      <View style={[styles.row, styles.unlocked]}>
+      <ScaleTap
+        label={`View ${title} details`}
+        style={[styles.row, styles.unlocked]}
+        onPress={onDetails}
+        pressedScale={0.96}
+      >
         <View style={styles.highlight} />
         <View style={styles.text}>
           <Text style={[styles.title, styles.titleUnlocked]}>{title}</Text>
@@ -33,7 +40,7 @@ export function AbilityRow({
             </Text>
           ) : null}
         </View>
-      </View>
+      </ScaleTap>
     );
   }
 
@@ -42,7 +49,7 @@ export function AbilityRow({
       <View style={styles.text}>
         <Text style={[styles.title, isNextToUnlock ? styles.titleAvailable : styles.titleLocked]}>{title}</Text>
         <Text style={[styles.subtitle, isNextToUnlock ? styles.subtitleAvailable : styles.subtitleLocked]}>
-          {isNextToUnlock ? "Complete a quiz to unlock" : "Locked"}
+          {isNextToUnlock ? "Complete a quiz to unlock" : "Locked • Tap for details"}
         </Text>
       </View>
       {isNextToUnlock ? (
@@ -69,7 +76,14 @@ export function AbilityRow({
       {content}
     </ScaleTap>
   ) : (
-    <View style={[styles.row, styles.locked]}>{content}</View>
+    <ScaleTap
+      label={`View locked ${title} details`}
+      style={[styles.row, styles.locked]}
+      onPress={onDetails}
+      pressedScale={0.96}
+    >
+      {content}
+    </ScaleTap>
   );
 }
 

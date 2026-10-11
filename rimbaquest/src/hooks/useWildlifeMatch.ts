@@ -7,6 +7,7 @@ import {
   WildlifeCardOption,
   WildlifeFriend,
   WildlifeFriends,
+  WildlifeHabitatBonus,
   WildlifeInvite,
   WildlifeLeaderboardEntry,
   WildlifeMatch,
@@ -15,7 +16,7 @@ import {
 } from "../types/wildlifeMatch";
 
 type MatchResponse = { match: WildlifeMatch };
-type CardPreviewResponse = { habitat: string; cards: WildlifeCardOption[] };
+type CardPreviewResponse = { habitat: string; habitat_bonus?: WildlifeHabitatBonus | null; cards: WildlifeCardOption[] };
 export type WildlifeServerClock = { serverEpochMs: number; receivedMonotonicMs: number };
 
 export function monotonicNow(): number {
@@ -44,6 +45,7 @@ export function useWildlifeMatch() {
   const [serverClock, setServerClock] = useState<WildlifeServerClock | null>(null);
   const [invite, setInvite] = useState<WildlifeInvite | null>(null);
   const [cardOptions, setCardOptions] = useState<WildlifeCardOption[] | null>(null);
+  const [habitatBonus, setHabitatBonus] = useState<WildlifeHabitatBonus | null>(null);
   const [restCards, setRestCards] = useState<WildlifeRestCard[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<WildlifeLeaderboardEntry[] | null>(null);
   const [friends, setFriends] = useState<WildlifeFriends | null>(null);
@@ -207,6 +209,7 @@ export function useWildlifeMatch() {
   const refreshCardOptions = useCallback(async (target: { matchId?: string; code?: string }) => {
     const captured = generation.current;
     setCardOptions(null);
+    setHabitatBonus(null);
     const path = target.matchId
       ? `/api/v1/wildlife-battles/${encodeURIComponent(target.matchId)}/cards-preview`
       : `/api/v1/wildlife-battles/invites/${encodeURIComponent(target.code ?? "")}/cards-preview`;
@@ -214,6 +217,7 @@ export function useWildlifeMatch() {
       const data = await request<CardPreviewResponse>(path);
       if (isCurrent(captured)) {
         setCardOptions(Array.isArray(data.cards) ? data.cards : []);
+        setHabitatBonus(data.habitat_bonus ?? null);
         setError(null);
       }
     } catch (caught) {
@@ -231,6 +235,7 @@ export function useWildlifeMatch() {
       if (!isCurrent(captured)) return;
       setInvite(null);
       setCardOptions(null);
+      setHabitatBonus(null);
       if (data.match) {
         applyMatch(data.match);
         if (data.match.status === "setup") {
@@ -405,6 +410,7 @@ export function useWildlifeMatch() {
     setServerClock(null);
     setInvite(null);
     setCardOptions(null);
+    setHabitatBonus(null);
     setError(null);
     setRecovering(false);
     setRecoveryError(null);
@@ -423,6 +429,7 @@ export function useWildlifeMatch() {
     setServerClock(null);
     setInvite(null);
     setCardOptions(null);
+    setHabitatBonus(null);
     setRestCards(null);
     setLeaderboard(null);
     setFriends(null);
@@ -495,6 +502,7 @@ export function useWildlifeMatch() {
     serverClock,
     invite,
     cardOptions,
+    habitatBonus,
     restCards,
     leaderboard,
     friends,

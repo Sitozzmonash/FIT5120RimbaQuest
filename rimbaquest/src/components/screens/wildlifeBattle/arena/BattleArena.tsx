@@ -16,6 +16,7 @@ import {
   WildlifeAction,
   WildlifeCombatant,
   WildlifeEvent,
+  WildlifeHabitatBonus,
   WildlifeSide,
 } from "../../../../types/wildlifeMatch";
 import { ErrorNote } from "../shared/ErrorNote";
@@ -40,6 +41,7 @@ const OPPONENT_TAG_COLOR = "#B8431F";
 
 export function BattleArena({
   habitat,
+  habitatBonus,
   mySide,
   opponentTag,
   myCard,
@@ -57,6 +59,7 @@ export function BattleArena({
   onReplayed,
 }: {
   habitat: string;
+  habitatBonus?: WildlifeHabitatBonus | null;
   mySide: WildlifeSide;
   opponentTag: string;
   myCard: WildlifeCombatant;
@@ -157,20 +160,18 @@ export function BattleArena({
           { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 12 },
         ]}
       >
-        <HabitatSign habitat={habitat} />
+        <HabitatSign habitat={habitat} bonus={habitatBonus} />
 
         <View style={styles.statusRow}>
           <StatusPanel
             combatant={shown[mySide]}
             tag="YOU"
             tagColor={MY_TAG_COLOR}
-            habitat={habitat}
           />
           <StatusPanel
             combatant={shown[opponentSide]}
             tag={opponentTag}
             tagColor={OPPONENT_TAG_COLOR}
-            habitat={habitat}
           />
         </View>
 
