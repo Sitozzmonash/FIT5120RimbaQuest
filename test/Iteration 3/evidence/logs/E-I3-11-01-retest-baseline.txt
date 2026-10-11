@@ -1,0 +1,10 @@
+Evidence ID: E-I3-11-01
+Date: 11 October 2026
+Branch: test-jiating
+Retest commit: 4740c2f7507dceb755686133b3689d9c1bad724b
+Latest origin/master merged: 73da55b173ab6a0a9c751343d8cd7173cfb88a2d
+
+The latest default-branch code was fetched and merged into the requested test-jiating branch before defect retesting. The branch was clean before the merge. Changes since the original 39fd0d8 baseline included battle, AI-training habitat integration, quiz, frontend dependency, tutorial and camera work.
+
+Gate: retest DEF-I3-001 through DEF-I3-007 first. Start full regression only if every defect retest passes.
+Observed gate result: one defect passed and six failed. Full regression was therefore not started.
