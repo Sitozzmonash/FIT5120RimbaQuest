@@ -1,0 +1,34 @@
+Evidence ID: E-I3-11-05
+Date: 11 October 2026
+Branch: test-jiating
+Product fix commit: 795cacd
+
+Remediation retest
+- Battle and Wildlife AI targeted suite: 33 passed.
+- Iteration 3 focused contract: PASS.
+- Quiz questions: 6,840 across 152 species.
+- Runtime locations: 22 across 7 approved categories.
+- Wildlife AI training: 1,500 completed matches and 1,116 learned state-actions.
+- Wildlife AI evaluation: 1,520 completed games per profile.
+- Random-opponent AI win rate: 0.627; simple-opponent AI win rate: 0.509.
+- Persistent card/habitat outliers reproduced across both profiles: 0.
+- Retained AI release review: completed; release readiness: ready.
+
+Full regression
+- Backend pytest: 204 passed, 0 failed, 137 warnings in 17.95 seconds.
+- TypeScript: npx tsc --noEmit passed.
+- Expo web production export: passed; 3 static routes exported.
+- Expo Doctor: 21/21 checks passed.
+- Iteration 3 focused contract: PASS.
+
+Defect conclusions
+- DEF-I3-002: Closed. Legacy expectations now follow the approved tier-3 opening shield.
+- DEF-I3-003: Closed. AI state and threat scoring include child Energy and available abilities.
+- DEF-I3-004: Closed. Evaluation covers controlled HP/Energy, advantage, unlock and initiative states.
+- DEF-I3-005: Closed. Metrics and persistent-outlier findings are retained in JSON.
+- DEF-I3-006: Closed. A completed pre-release review is retained and records Ready.
+
+Machine-readable result
+- evidence/backend-pytest-junit.xml
+- backend/data/wildlife_ai_evaluation.json
+- backend/reports/wildlife_ai_release_review.md

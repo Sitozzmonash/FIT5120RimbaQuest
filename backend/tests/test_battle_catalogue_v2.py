@@ -14,9 +14,6 @@ from app.services.battle_catalogue import (
     get_source_catalogue,
     validate_catalogue,
 )
-from app.services.wildlife_battle import HABITAT_BONUSES
-
-
 def test_catalogue_v2_has_all_152_species_bounded():
     catalogue = get_catalogue()
     assert len(catalogue) == 152
@@ -137,12 +134,15 @@ def test_catalogue_rules_and_immutability():
     assert rules["lucky_basic_bonus"] == 3
     assert rules["max_rounds"] == 30
     assert rules.get("brace_shield") == 6
+    # The legacy dice Battle catalogue keeps its six source habitat names;
+    # Wildlife Battle uses a separate child-facing grouped habitat taxonomy.
     assert rules["habitat_bonuses"] == {
-        habitat: {
-            "attack_percent": bonus["attack_percent"],
-            "defence_percent": bonus["defence_percent"],
-        }
-        for habitat, bonus in HABITAT_BONUSES.items()
+        "Rainforest": {"attack_percent": 20, "defence_percent": 20},
+        "Mangrove": {"attack_percent": 15, "defence_percent": 25},
+        "Wetland": {"attack_percent": 15, "defence_percent": 20},
+        "Grassland": {"attack_percent": 25, "defence_percent": 10},
+        "Coastal": {"attack_percent": 20, "defence_percent": 15},
+        "Montane": {"attack_percent": 10, "defence_percent": 25},
     }
 
     # Test deepcopy immutability
