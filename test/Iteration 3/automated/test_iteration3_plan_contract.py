@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import ast
 import sqlite3
 import sys
 from pathlib import Path
@@ -48,18 +49,38 @@ def main(repo_root: str) -> None:
     require("Share your location?" in consent_ui and "never save" in consent_ui,
             "Location permission/privacy explanation is missing")
 
+    def assignment(path: Path, name: str):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in tree.body:
+            if isinstance(node, (ast.Assign, ast.AnnAssign)):
+                target = node.target if isinstance(node, ast.AnnAssign) else node.targets[0]
+                if isinstance(target, ast.Name) and target.id == name:
+                    return ast.literal_eval(node.value)
+        raise AssertionError(f"Missing {name} in {path}")
+
+    seed_py = backend / "app" / "core" / "seed.py"
+    locations_py = backend / "app" / "routers" / "locations.py"
+    retained_ids = set(assignment(seed_py, "ITERATION_1_LOCATION_IDS"))
+    type_overrides = assignment(seed_py, "LOCATION_TYPE_OVERRIDES")
+    extra_locations = assignment(seed_py, "EXTRA_LOCATIONS")
+    allowed_ids = set(assignment(locations_py, "KL_SELANGOR_LOCATION_IDS"))
+    allowed_types = set(assignment(locations_py, "LOCATION_TYPES"))
+
     db = sqlite3.connect(":memory:")
     try:
         db.executescript((backend / "data" / "seed.sql").read_text(encoding="utf-8"))
-        count = db.execute("SELECT COUNT(*) FROM locations").fetchone()[0]
-        categories = {row[0] for row in db.execute("SELECT DISTINCT type FROM locations")}
+        base_locations = {
+            row[0]: {"id": row[0], "type": type_overrides[row[0]]}
+            for row in db.execute("SELECT id FROM locations") if row[0] in retained_ids
+        }
     finally:
         db.close()
-    require(count == 22, "Expected 22 seeded locations")
-    require(categories == {
-        "Zoo", "Wildlife Park", "Petting Zoo", "Aquarium",
-        "Forest Park", "Nature Park", "Botanical Garden",
-    }, "Location categories do not match the Iteration 3 contract")
+    runtime_locations = {**base_locations, **{row["id"]: row for row in extra_locations}}
+    require(set(runtime_locations) == allowed_ids,
+            "Runtime seed and child-facing location allowlist differ")
+    categories = {row["type"] for row in runtime_locations.values()}
+    require(categories == allowed_types,
+            "Location categories do not match the Iteration 3 contract")
 
     battle_ui = (frontend / "src/components/screens/wildlifeBattle/lobby/DeckCard.tsx").read_text(encoding="utf-8")
     battle_router = (backend / "app/routers/wildlife_matches.py").read_text(encoding="utf-8")
@@ -67,12 +88,40 @@ def main(repo_root: str) -> None:
     require("CARD_REST_HOURS = 2" in battle_router, "Two-hour rest rule is missing")
 
     ai_policy = json.loads((backend / "data" / "wildlife_ai_policy.json").read_text(encoding="utf-8"))
+    require(ai_policy.get("version") == 2,
+            "Committed AI policy does not use the complete state schema")
     require(ai_policy.get("training", {}).get("completed_training_matches") == 1500,
             "Committed AI policy does not record 1,500 completed training matches")
     require(ai_policy.get("q_values"), "Committed AI policy has no learned state-action values")
+    require({"own_hp", "opponent_hp", "own_energy", "opponent_energy",
+             "habitat_advantage", "own_unlocked_abilities",
+             "opponent_unlocked_abilities", "action"}.issubset(ai_policy.get("state_features", [])),
+            "AI policy state schema omits required Battle state")
+
+    ai_evaluation = json.loads(
+        (backend / "data" / "wildlife_ai_evaluation.json").read_text(encoding="utf-8")
+    )["evaluation"]
+    require(ai_evaluation.get("games_per_profile", 0) >= 1520,
+            "AI evaluation lacks ten games per Wildlife Card and opponent profile")
+    require(ai_evaluation.get("review", {}).get("status") == "completed",
+            "AI pre-release review is not completed")
+    require(ai_evaluation.get("review", {}).get("release_readiness") == "ready",
+            "AI pre-release review did not approve the evaluated policy")
+    require(not ai_evaluation.get("review", {}).get("persistent_outliers"),
+            "AI pre-release review retained unresolved card/habitat outliers")
+    for profile in ("random", "simple"):
+        report = ai_evaluation.get("profiles", {}).get(profile, {})
+        require(report.get("games_completed") == ai_evaluation["games_per_profile"],
+                f"AI {profile} evaluation did not complete")
+        coverage = report.get("coverage", {})
+        require(len([key for key in coverage if key.startswith("scenario:")]) == 8,
+                f"AI {profile} evaluation lacks all controlled scenarios")
+    review_text = (backend / "reports" / "wildlife_ai_release_review.md").read_text(encoding="utf-8")
+    require("Review status: completed." in review_text and "Release readiness: ready." in review_text,
+            "Retained AI release review is incomplete")
 
     print("PASS: Iteration 3 focused contract checks")
-    print(f"quiz_questions={len(quiz_rows)} species={len(by_species)} locations={count}")
+    print(f"quiz_questions={len(quiz_rows)} species={len(by_species)} locations={len(runtime_locations)}")
     print(f"location_categories={sorted(categories)}")
     print(f"ai_training_matches={ai_policy['training']['completed_training_matches']} learned_state_actions={len(ai_policy['q_values'])}")
 

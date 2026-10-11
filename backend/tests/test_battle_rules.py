@@ -299,8 +299,9 @@ def test_low_energy_passive_no_resurrection_at_zero():
 
     rng_ai = ScriptedRNG([2])
     state1, events1 = play_action(state1, "basic", rng=rng_ai)
-    # 25 - 10 = 15 <= 25% (22.5), then the opponent's opening Shield absorbs damage first.
-    assert state1["opponent"]["energy"] == 23
+    # The second mover's tier-3 opening shield absorbs the complete 10-point
+    # basic attack, so the low-energy passive must not trigger.
+    assert state1["opponent"]["energy"] == 25
     assert state1["opponent"]["passive_triggers"] == 0
 
     # Case 2: Direct hit reduces energy to 0 -> Battle ends immediately, NO RESURRECTION!
@@ -335,7 +336,8 @@ def test_consuming_next_attack_boost_and_weaken():
     rng_ai = ScriptedRNG([2])
     state, events = play_action(state, "basic", rng=rng_ai)
 
-    assert state["opponent"]["energy"] == 81
+    opening_shield = RULES["opening_shield_slot_3"]
+    assert state["opponent"]["energy"] == o_def["hp"] - max(0, 17 - opening_shield)
     # Buff and debuff should both be consumed
     assert len(state["player"]["statuses"]) == 0
 

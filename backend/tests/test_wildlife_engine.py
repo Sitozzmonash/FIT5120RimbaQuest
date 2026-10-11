@@ -8,7 +8,7 @@ import random
 import pytest
 
 from app.services.battle_catalogue import get_battle_definition, get_catalogue
-from app.services.wildlife_ai import _load_policy, _score_action
+from app.services.wildlife_ai import _incoming_threat, _load_policy, _score_action, state_action_key
 from app.services.wildlife_battle import (
     HABITATS, HABITAT_BONUSES, ability_previews, choose_ai_action,
     choose_habitat, forfeit, habitat_matches, legal_actions, new_match,
@@ -319,7 +319,34 @@ def test_ai_finishes_when_possible_and_loads_trained_policy():
     # The learned value contributes to tactical scoring without changing state.
     action = "basic"
     base = _score_action(state, "opponent", action, {})
-    from app.services.wildlife_ai import state_action_key
     key = state_action_key(state, "opponent", action)
     adjusted = _score_action(state, "opponent", action, {key: 1.0})
     assert adjusted == base + 2
+
+
+def test_ai_state_and_threat_include_child_energy_and_unlocked_abilities():
+    defender = definition(
+        "defender",
+        first_effects=[{"type": "shield", "value": 10, "target": "self"}],
+    )
+    state = match(
+        opponent=defender,
+        initiative="opponent",
+        player_unlocked=[1, 2, 3],
+        opponent_unlocked=[1, 2, 3],
+    )
+    action = "ability_1"
+    high_threat_key = state_action_key(state, "opponent", action)
+    high_threat_damage, _ = _incoming_threat(state, "opponent")
+    high_threat_score = _score_action(state, "opponent", action, {})
+
+    low_threat = copy.deepcopy(state)
+    low_threat["player"]["energy"] = 0
+    low_threat["player"]["unlocked_abilities"] = []
+    for ability in low_threat["player"]["abilities"]:
+        ability["unlocked"] = False
+
+    assert state_action_key(low_threat, "opponent", action) != high_threat_key
+    low_threat_damage, _ = _incoming_threat(low_threat, "opponent")
+    assert high_threat_damage > low_threat_damage
+    assert _score_action(low_threat, "opponent", action, {}) < high_threat_score
