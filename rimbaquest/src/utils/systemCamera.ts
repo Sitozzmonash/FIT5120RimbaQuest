@@ -1,5 +1,11 @@
 import * as ImagePicker from "expo-image-picker";
-import { PhotoContext, PhotoSource, photoContextFromExif } from "./photoContext";
+import {
+  PhotoContext,
+  PhotoSource,
+  fileOriginFromName,
+  isScreenSized,
+  photoContextFromExif,
+} from "./photoContext";
 
 export type SystemCameraPhoto = {
   uri: string;
@@ -42,9 +48,26 @@ function toPhoto(
 ): SystemCameraPhoto | null {
   const asset = result.canceled ? undefined : result.assets[0];
   if (!asset?.uri) return null;
+  // TEMP debug: inspect what the picker returns besides EXIF
+  // console.log(`[${source}] picker asset`, JSON.stringify({
+  //   fileName: asset.fileName,
+  //   fileSize: asset.fileSize,
+  //   mimeType: asset.mimeType,
+  //   assetId: asset.assetId,
+  //   type: asset.type,
+  //   width: asset.width,
+  //   height: asset.height,
+  //   uri: asset.uri,
+  //   exif: asset.exif,
+  //   screenSized: isScreenSized(asset.width, asset.height),
+  //   fileOrigin: fileOriginFromName(asset.fileName),
+  // }, null, 2));
+  const context = photoContextFromExif(source, asset.exif);
+  if (isScreenSized(asset.width, asset.height)) context.metadata.screen_sized = true;
+  if (source === "gallery") context.metadata.file_origin = fileOriginFromName(asset.fileName);
   return {
     uri: asset.uri,
     mimeType: asset.mimeType || "image/jpeg",
-    context: photoContextFromExif(source, asset.exif),
+    context,
   };
 }
