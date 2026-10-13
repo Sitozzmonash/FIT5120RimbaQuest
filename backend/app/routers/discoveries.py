@@ -456,7 +456,7 @@ async def verify_discovery_photo(
     photo: UploadFile = File(...),
     source: str | None = Form(None, description="camera or gallery (supporting context only)"),
     metadata: str | None = Form(
-        None, description="JSON of whitelisted EXIF fields read by the app: make, model, software, datetime_original"
+        None, description="JSON of whitelisted EXIF fields read by the app: make, model, software, datetime_original, user_comment, plus screen_sized (bool)"
     ),
 ):
     """Kick off a photo verification job. The app polls the status endpoint

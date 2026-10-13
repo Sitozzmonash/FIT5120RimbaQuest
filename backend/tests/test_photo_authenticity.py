@@ -64,7 +64,9 @@ def _recapture(p: float, low_resolution: bool = False) -> dict:
             "low_resolution": low_resolution, "width": 4000, "height": 3000}
 
 
-_NOT_SCREENSHOT = {"marked_screenshot": False, "is_png": False, "screen_shaped": False}
+_NOT_SCREENSHOT = {"marked_screenshot": False, "is_png": False, "screen_shaped": False,
+                   "screen_sized": False, "android_screenshot_software": False,
+                   "tiny_image": False, "file_origin": None}
 NO_METADATA = {"available": False, "has_camera_exif": False, "edited_by_app": False, **_NOT_SCREENSHOT}
 CAMERA_METADATA = {"available": True, "has_camera_exif": True, "edited_by_app": False, **_NOT_SCREENSHOT}
 EDITED_METADATA = {"available": True, "has_camera_exif": True, "edited_by_app": True, **_NOT_SCREENSHOT}
@@ -82,9 +84,10 @@ EDITED_METADATA = {"available": True, "has_camera_exif": True, "edited_by_app": 
     ("camera", CAMERA_METADATA, 0.70, False, UNABLE_TO_DETERMINE),
     # Low resolution makes the model unreliable, so even a high score is uncertain.
     ("camera", CAMERA_METADATA, 0.95, True, UNABLE_TO_DETERMINE),
-    # A gallery photo without camera metadata may be downloaded; pixels alone
-    # cannot tell, so it is uncertain, never blocked.
-    ("gallery", NO_METADATA, 0.10, False, UNABLE_TO_DETERMINE),
+    # Phone cameras always write Make/Model, so a gallery photo without them
+    # was downloaded or stripped by a chat app.
+    ("gallery", NO_METADATA, 0.10, False, POTENTIALLY_EXTERNAL),
+    # A real camera photo touched up in an editor is uncertain, not blocked.
     ("gallery", EDITED_METADATA, 0.10, False, UNABLE_TO_DETERMINE),
     # Strong evidence only.
     ("camera", CAMERA_METADATA, 0.90, False, POTENTIALLY_EXTERNAL),
@@ -149,7 +152,8 @@ def test_app_metadata_is_used_only_when_the_file_has_none():
 def test_gps_is_never_read_or_kept():
     """GPS in the file or in the app's copy never enters the signals."""
     client_copy = parse_client_metadata(json.dumps({"make": "X", "GPSLatitude": 3.1, "gps": "3.1,101.6"}))
-    assert set(client_copy) == {"make", "model", "software", "datetime_original", "user_comment"}
+    assert set(client_copy) == {"make", "model", "software", "datetime_original", "user_comment", "screen_sized",
+                                "file_origin"}
     metadata = evaluate_metadata(_jpeg(exif=_camera_exif(gps=True), noise=False), {})
     assert "gps" not in json.dumps(metadata).casefold()
 
@@ -197,14 +201,103 @@ def test_screen_shaped_png_without_camera_exif_blocks():
     _jpeg(1080, 2400, noise=False),  # screen-shaped, but a JPEG
 ], ids=["camera_shaped_png", "screen_shaped_jpeg"])
 def test_one_screenshot_hint_alone_is_never_blocked(photo):
-    """A single weak hint is uncertainty, not suspicion."""
+    """A single weak hint is uncertainty, not suspicion (camera source, since a
+    gallery photo without camera metadata is blocked on its own)."""
     metadata = evaluate_metadata(photo, {})
-    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85)[0] == UNABLE_TO_DETERMINE
+    assert classify("camera", metadata, _recapture(0.05), block_threshold=0.85)[0] != POTENTIALLY_EXTERNAL
 
 
 def test_screen_shaped_png_with_camera_exif_is_not_a_screenshot():
     metadata = evaluate_metadata(_png(1080, 2400, exif=_camera_exif()), {})
     assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85)[0] == LIKELY_GENUINE
+
+
+def _android_screenshot_exif() -> Image.Exif:
+    exif = Image.Exif()
+    exif[0x0131] = "Android BP2A.250605.031.A3"
+    exif.get_ifd(0x8769)[0x9003] = "2026:10:13 20:58:32"
+    return exif
+
+
+def test_android_jpeg_screenshot_blocks():
+    """Some Android phones save screenshots as JPEG tagged only with the OS build."""
+    metadata = evaluate_metadata(_jpeg(1220, 2712, exif=_android_screenshot_exif(), noise=False), {})
+    assert metadata["android_screenshot_software"] and metadata["screen_shaped"]
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (POTENTIALLY_EXTERNAL, ["screenshot_shape"])
+
+
+def test_android_build_software_alone_is_uncertain():
+    metadata = evaluate_metadata(_jpeg(1200, 900, exif=_android_screenshot_exif(), noise=False), {})
+    outcome, reasons = classify("camera", metadata, _recapture(0.05), block_threshold=0.85)
+    assert outcome == UNABLE_TO_DETERMINE and "possible_screenshot" in reasons
+
+
+def test_android_build_software_with_camera_make_is_not_a_screenshot():
+    exif = _camera_exif("Android BP2A.250605.031.A3")
+    metadata = evaluate_metadata(_jpeg(1220, 2712, exif=exif, noise=False), {})
+    assert metadata["android_screenshot_software"] is False
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85)[0] == LIKELY_GENUINE
+
+
+def test_screen_sized_photo_from_the_app_blocks():
+    client_copy = parse_client_metadata(json.dumps({"screen_sized": True}))
+    metadata = evaluate_metadata(_jpeg(1200, 900, noise=False), client_copy)
+    assert metadata["screen_sized"] and metadata["available"] is False
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (POTENTIALLY_EXTERNAL, ["screenshot_shape"])
+
+
+def test_screen_sized_photo_with_camera_exif_is_not_a_screenshot():
+    client_copy = parse_client_metadata(json.dumps({"screen_sized": True}))
+    metadata = evaluate_metadata(_jpeg(1200, 900, exif=_camera_exif(), noise=False), client_copy)
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85)[0] == LIKELY_GENUINE
+
+
+def test_screen_sized_only_accepts_a_real_boolean():
+    assert parse_client_metadata(json.dumps({"screen_sized": "yes"}))["screen_sized"] is False
+
+
+def _picsart_exif() -> Image.Exif:
+    exif = Image.Exif()
+    exif[0x0131] = "Picsart"
+    return exif
+
+
+def test_gallery_edit_without_camera_metadata_blocks():
+    metadata = evaluate_metadata(_jpeg(1600, 1200, exif=_picsart_exif(), noise=False), {})
+    assert metadata["edited_by_app"] and not metadata["has_camera_exif"]
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (
+        POTENTIALLY_EXTERNAL, ["edited_without_camera_metadata"])
+
+
+def test_tiny_gallery_image_blocks_even_with_camera_metadata():
+    metadata = evaluate_metadata(_jpeg(363, 238, exif=_camera_exif(), noise=False), {})
+    assert metadata["tiny_image"]
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (POTENTIALLY_EXTERNAL, ["tiny_image"])
+
+
+def test_gallery_without_camera_metadata_blocks():
+    metadata = evaluate_metadata(_jpeg(1600, 1200, noise=False), {})
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (
+        POTENTIALLY_EXTERNAL, ["gallery_without_camera_metadata"])
+
+
+@pytest.mark.parametrize("file_origin, reason", [
+    ("screenshot", "screenshot_filename"),
+    ("downloaded", "downloaded_filename"),
+])
+def test_filename_origin_from_the_app_blocks_even_with_camera_metadata(file_origin, reason):
+    client_copy = parse_client_metadata(json.dumps({"file_origin": file_origin}))
+    metadata = evaluate_metadata(_jpeg(1600, 1200, exif=_camera_exif(), noise=False), client_copy)
+    assert classify("gallery", metadata, _recapture(0.05), block_threshold=0.85) == (POTENTIALLY_EXTERNAL, [reason])
+
+
+def test_unknown_filename_origin_is_discarded():
+    assert parse_client_metadata(json.dumps({"file_origin": "IMG_1234.jpg"}))["file_origin"] is None
+
+
+def test_camera_source_is_not_held_to_gallery_rules():
+    metadata = evaluate_metadata(_jpeg(363, 238, exif=_picsart_exif(), noise=False), {})
+    assert classify("camera", metadata, _recapture(0.05), block_threshold=0.85)[0] == UNABLE_TO_DETERMINE
 
 
 def test_screenshot_comment_text_is_never_kept():
@@ -380,15 +473,15 @@ def test_moderate_score_with_editing_app_blocks(flow):
 
 
 def test_unable_to_determine_continues_and_is_logged(flow):
-    """A low-resolution gallery photo with no metadata, where
+    """A low-resolution camera photo with no metadata, where
     the detector's flag is unreliable."""
     calls = flow(_FakeDetector(0.7, low_resolution=True))
-    trace_id, status = _submit(_jpeg(noise=False), source="gallery")
+    trace_id, status = _submit(_jpeg(noise=False), source="camera")
     assert status["stage"] == "done", status
     assert len(calls["vision"]) == 1
     record = _logged(trace_id)
     assert record["outcome"] == UNABLE_TO_DETERMINE
-    assert set(record["reasons"]) == {"possible_screen_recapture_low_resolution", "gallery_without_camera_metadata"}
+    assert set(record["reasons"]) == {"possible_screen_recapture_low_resolution"}
     assert record["signals"]["metadata"]["available"] is False
     _assert_child_safe(status)
 
@@ -396,7 +489,7 @@ def test_unable_to_determine_continues_and_is_logged(flow):
 def test_app_metadata_reaches_the_check(flow):
     """the app's EXIF copy is used when the file has none."""
     flow(_FakeDetector(0.1))
-    trace_id, status = _submit(_jpeg(noise=False), source="gallery",
+    trace_id, status = _submit(_jpeg(1600, 1200, noise=False), source="gallery",
                                metadata={"make": "Samsung", "model": "SM-S921B"})
     assert status["stage"] == "done"
     record = _logged(trace_id)

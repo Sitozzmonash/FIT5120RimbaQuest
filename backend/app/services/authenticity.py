@@ -34,8 +34,17 @@ _EDITING_SOFTWARE = re.compile(
 # iOS writes "Screenshot" into UserComment; desktop tools name themselves in
 # the Software tag.
 _SCREENSHOT_MARK = re.compile(r"screenshot|screen ?capture|snipping", re.IGNORECASE)
+# Android screenshots carry only the OS build (e.g. "Android BP2A.250605.031.A3")
+# in Software and no Make/Model; camera apps always write Make/Model.
+_ANDROID_BUILD_SOFTWARE = re.compile(r"^Android\s+\S+$")
 # Phone screens are 18:9 or taller; camera photos are 4:3 or 16:9 (1.78).
 _SCREEN_ASPECT_RATIO = 1.9
+# Below this long side a gallery image is a thumbnail, sticker or web image,
+# never an original phone photo, and is too small to identify wildlife.
+_TINY_LONG_SIDE = 640
+# Categories the app derives from the filename on the device (the name itself
+# is never sent).
+_FILE_ORIGINS = {"screenshot", "downloaded"}
 
 
 def _clean(value: Any) -> str | None:
@@ -53,6 +62,7 @@ def _file_metadata(content: bytes) -> tuple[dict[str, str | None], str | None, t
     try:
         with Image.open(io.BytesIO(content)) as image:
             exif = image.getexif()
+            print(exif)
             exif_ifd = exif.get_ifd(_EXIF_IFD)
             fields = {
                 "make": _clean(exif.get(_TAG_MAKE)),
@@ -77,7 +87,12 @@ def parse_client_metadata(raw: str | None) -> dict[str, str | None]:
         return {}
     if not isinstance(data, dict):
         return {}
-    return {key: _clean(data.get(key)) for key in _CLIENT_METADATA_KEYS}
+    fields = {key: _clean(data.get(key)) for key in _CLIENT_METADATA_KEYS}
+    # Yes/no from the app: the photo's pixel size equals this phone's screen.
+    fields["screen_sized"] = data.get("screen_sized") is True
+    file_origin = data.get("file_origin")
+    fields["file_origin"] = file_origin if file_origin in _FILE_ORIGINS else None
+    return fields
 
 
 def evaluate_metadata(content: bytes, client_metadata: dict[str, str | None]) -> dict[str, Any]:
@@ -88,14 +103,18 @@ def evaluate_metadata(content: bytes, client_metadata: dict[str, str | None]) ->
     shape = {
         "is_png": image_format == "PNG",
         "screen_shaped": bool(size and min(size) and max(size) / min(size) >= _SCREEN_ASPECT_RATIO),
+        "screen_sized": bool(client_metadata.get("screen_sized")),
+        "tiny_image": bool(size and max(size) < _TINY_LONG_SIDE),
+        "file_origin": client_metadata.get("file_origin"),
     }
     origin = "file"
     if not any(fields.values()):
-        fields, origin = client_metadata, "app"
+        fields = {key: client_metadata.get(key) for key in _CLIENT_METADATA_KEYS}
+        origin = "app"
     if not any(fields.values()):
         return {"available": False, "origin": None, "has_camera_exif": False,
                 "created_by_camera": False, "edited_by_app": False, "software": None,
-                "marked_screenshot": False, **shape}
+                "marked_screenshot": False, "android_screenshot_software": False, **shape}
     has_camera_exif = bool(fields.get("make") or fields.get("model"))
     software = fields.get("software")
     marks = (software, fields.get("user_comment"))
@@ -108,6 +127,9 @@ def evaluate_metadata(content: bytes, client_metadata: dict[str, str | None]) ->
         "software": software,
         # Only the yes/no is kept, never the comment text.
         "marked_screenshot": any(bool(mark and _SCREENSHOT_MARK.search(mark)) for mark in marks),
+        "android_screenshot_software": not has_camera_exif and bool(
+            software and _ANDROID_BUILD_SOFTWARE.match(software)
+        ),
         **shape,
     }
 
@@ -125,6 +147,9 @@ def classify(
     edited = metadata["edited_by_app"]
     # Phone cameras save JPEG or HEIC; screenshots are PNG without camera EXIF.
     png_without_camera = metadata["is_png"] and not metadata["has_camera_exif"]
+    # Some Android phones save screenshots as JPEG with only the OS build tag.
+    android_screenshot = metadata["android_screenshot_software"]
+    screen_sized_without_camera = metadata["screen_sized"] and not metadata["has_camera_exif"]
 
     if strong_recapture:
         return POTENTIALLY_EXTERNAL, ["strong_screen_recapture"]
@@ -132,20 +157,33 @@ def classify(
         return POTENTIALLY_EXTERNAL, ["screen_recapture", "edited_by_app"]
     if metadata["marked_screenshot"]:
         return POTENTIALLY_EXTERNAL, ["screenshot"]
-    if png_without_camera and metadata["screen_shaped"]:
+    if (png_without_camera or android_screenshot) and metadata["screen_shaped"]:
         return POTENTIALLY_EXTERNAL, ["screenshot_shape"]
+    if screen_sized_without_camera:
+        return POTENTIALLY_EXTERNAL, ["screenshot_shape"]
+    if metadata["file_origin"] == "screenshot":
+        return POTENTIALLY_EXTERNAL, ["screenshot_filename"]
+
+    if source == "gallery":
+        # Saved from the web, a chat app, a stock site or an AI generator.
+        if metadata["file_origin"] == "downloaded":
+            return POTENTIALLY_EXTERNAL, ["downloaded_filename"]
+        if metadata["tiny_image"]:
+            return POTENTIALLY_EXTERNAL, ["tiny_image"]
+        if edited and not metadata["has_camera_exif"]:
+            return POTENTIALLY_EXTERNAL, ["edited_without_camera_metadata"]
+        # Phone cameras always write Make/Model; web downloads and chat-app
+        # copies have them stripped.
+        if not metadata["has_camera_exif"]:
+            return POTENTIALLY_EXTERNAL, ["gallery_without_camera_metadata"]
 
     reasons: list[str] = []
     if moderate_recapture:
         reasons.append("possible_screen_recapture_low_resolution" if not reliable else "possible_screen_recapture")
     if edited:
         reasons.append("edited_by_app")
-    if png_without_camera:
+    if png_without_camera or android_screenshot:
         reasons.append("possible_screenshot")
-    # A gallery photo without camera metadata may have been downloaded; pixels
-    # alone cannot tell, so this is uncertainty, not suspicion.
-    if source == "gallery" and not metadata["has_camera_exif"]:
-        reasons.append("gallery_without_camera_metadata")
     if reasons:
         return UNABLE_TO_DETERMINE, reasons
     return LIKELY_GENUINE, []
