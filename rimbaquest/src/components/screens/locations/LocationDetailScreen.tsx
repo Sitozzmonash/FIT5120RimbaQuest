@@ -51,7 +51,9 @@ export function LocationDetailScreen() {
   const openDirections = async () => {
     const url = directionsUrl(location);
     try {
-      if (!(await Linking.canOpenURL(url))) throw new Error("unsupported");
+      // No canOpenURL precheck: on Android 11+ it only sees apps listed in the
+      // manifest's <queries> and can say false for an https link that opens
+      // fine. openURL itself rejects when nothing can handle the link.
       await Linking.openURL(url);
       setNavigationError(null);
     } catch {
